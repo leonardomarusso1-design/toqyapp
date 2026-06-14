@@ -1,0 +1,81 @@
+"use client";
+
+import type { ToqySite } from "./types";
+import { mockSites, getMockSiteBySlug } from "./mockSites";
+import { generateSlug } from "./security";
+
+const STORAGE_KEY = "toqy_sites_v4";
+
+function isBrowser() { return typeof window !== "undefined"; }
+
+export function getStoredSites(): ToqySite[] {
+  if (!isBrowser()) return [];
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function setStoredSites(sites: ToqySite[]) {
+  if (!isBrowser()) return;
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sites));
+}
+
+export function getStoredSite(slugOrId: string) {
+  return getStoredSites().find((site) => site.slug === slugOrId || site.id === slugOrId);
+}
+
+export function saveStoredSite(site: ToqySite) {
+  const sites = getStoredSites();
+  const normalized = { ...site, slug: generateSlug(site.slug || site.profile.name), updatedAt: new Date().toISOString() };
+  const index = sites.findIndex((item) => item.id === normalized.id || item.slug === normalized.slug);
+  if (index >= 0) sites[index] = normalized;
+  else sites.push(normalized);
+  setStoredSites(sites);
+  return normalized;
+}
+
+export function createStoredSite(site: ToqySite) {
+  return saveStoredSite({ ...site, status: "active", slug: generateSlug(site.slug || site.profile.name) });
+}
+
+export function deleteStoredSite(id: string) {
+  setStoredSites(getStoredSites().filter((site) => site.id !== id));
+}
+
+export function mergeMockAndStoredSites(): ToqySite[] {
+  const stored = getStoredSites();
+  const bySlug = new Map<string, ToqySite>();
+  mockSites.forEach((site) => bySlug.set(site.slug, site));
+  stored.forEach((site) => bySlug.set(site.slug, site));
+  return Array.from(bySlug.values());
+}
+
+export function getSiteBySlug(slug: string) {
+  return getStoredSite(slug) ?? getMockSiteBySlug(slug);
+}
+
+export function validateClientKey(slug: string, key: string) {
+  const site = getSiteBySlug(slug);
+  if (!site) return null;
+  return site.editKey.trim() === key.trim() ? site : null;
+}
+
+export function createPublicUrl(slug: string) {
+  return `/b/${generateSlug(slug)}`;
+}
+
+export function createEditUrl(slug: string) {
+  return `/editar/${generateSlug(slug)}`;
+}
+
+export { generateSlug };
+
+// Compatibilidade com versões antigas do editor.
+export function validateAccessKey(slug: string, key: string) {
+  return Boolean(validateClientKey(slug, key));
+}

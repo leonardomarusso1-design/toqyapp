@@ -1,0 +1,12 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#030712"/>
+  <circle cx="960" cy="80" r="280" fill="#22D3EE" opacity=".18"/>
+  <circle cx="220" cy="560" r="260" fill="#7C3AED" opacity=".22"/>
+  <rect x="80" y="80" width="1040" height="470" rx="56" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.16)"/>
+  <text x="120" y="235" fill="#E0F2FE" font-family="Arial" font-size="88" font-weight="800">Toqy</text>
+  <text x="120" y="330" fill="#FFFFFF" font-family="Arial" font-size="54" font-weight="800">Bio sites para QR Code, NFC e plaquinhas</text>
+  <text x="120" y="405" fill="#A5F3FC" font-family="Arial" font-size="32">WhatsApp, Pix, Wi-Fi, catalogo, mapas e editor por chave.</text>
+  <rect x="910" y="210" width="120" height="120" rx="24" fill="url(#g)"/>
+  <path d="M936 236h26v26h-26v-26Zm42 0h26v26h-26v-26Zm-42 42h26v26h-26v-26Zm43 4h10v10h15v12h-26v-22h1Z" fill="#06111F"/>
+  <defs><linearGradient id="g" x1="910" y1="210" x2="1030" y2="330"><stop stop-color="#22D3EE"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs>
+</svg>

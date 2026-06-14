@@ -1,0 +1,1407 @@
+Você está com o projeto **Toqy** aberto no Trae. Quero que você aja como arquiteto de produto, UI/UX designer e desenvolvedor full-stack sênior.
+
+O projeto atual existe, mas está confuso, com telas repetidas, componentes duplicados, layout inconsistente, preview que nem sempre funciona e formulários técnicos demais para o usuário final. Quero que você refatore o projeto como se estivesse começando do zero, mas aproveitando o que estiver bom. Antes de apagar qualquer coisa, analise a estrutura atual, identifique duplicações e organize a base corretamente.
+
+# 1. O que é o Toqy
+
+O Toqy é uma plataforma de **bio site profissional, cartão digital, QR Code e NFC para comércios locais**.
+
+Ele será usado no ecossistema do Leonardo Marusso para:
+
+1. Leonardo vender plaquinhas QR/NFC com bio site premium.
+2. Alunos/revendedores criarem bio sites para clientes.
+3. Clientes finais editarem o próprio bio site com uma chave de acesso.
+4. Futuramente integrar com comunidade, curso, planos, créditos, afiliados, Supabase, uploads reais e pagamentos.
+
+O Toqy **não é apenas um link na bio**. Ele deve parecer uma plataforma profissional para:
+
+* Bio site editável.
+* Cartão digital.
+* QR Code.
+* NFC.
+* Plaquinhas físicas.
+* Catálogo de produtos e serviços.
+* Pix/Pix Hub.
+* Wi-Fi com QR Code.
+* Avaliação Google.
+* WhatsApp.
+* Agendamento.
+* Salvar contato.
+* Painel para alunos/admin.
+* Área simples para cliente final editar.
+
+# 2. Regra principal do produto
+
+O sistema deve servir para qualquer negócio local, não apenas barbearia.
+
+Segmentos obrigatórios:
+
+* Barbearia
+* Salão de beleza
+* Restaurante
+* Lanchonete
+* Loja
+* Clínica
+* Pet shop
+* Oficina
+* Delivery
+* Prestador de serviço
+* Fotógrafo
+* Dentista
+* Outro
+
+A Barbearia Andrian é apenas uma demonstração. O sistema não pode ficar preso em dados, textos, imagens ou lógica de barbearia.
+
+# 3. Experiência desejada
+
+O Toqy precisa ter três áreas bem separadas:
+
+## 3.1 Landing pública
+
+Rota:
+
+`/`
+
+Função:
+
+Apresentar e vender o Toqy.
+
+A landing não é painel. Ela não deve confundir o usuário com links demais. Ela deve explicar o produto, mostrar exemplos, benefícios, funcionalidades e chamar para criar/comprar.
+
+Menu ideal:
+
+* Início
+* Funcionalidades
+* Exemplos
+* Como funciona
+* Para quem é
+* Entrar
+
+CTA principal:
+
+* Criar meu bio site
+
+CTA secundário:
+
+* Ver exemplo
+
+O botão “Entrar” deve levar para `/me`.
+
+O botão “Criar meu bio site” pode levar para `/app/novo` no MVP. Futuramente será trocado por checkout ou fluxo comercial.
+
+A landing deve ter visual moderno, premium, responsivo e comercial.
+
+Seções da landing:
+
+1. Hero:
+
+   * Headline: “Bio sites profissionais para QR Code, NFC e plaquinhas.”
+   * Subheadline: “Crie páginas editáveis com WhatsApp, Pix, Wi-Fi, catálogo, localização, avaliações e links importantes para qualquer negócio local.”
+   * CTA: “Criar meu bio site”
+   * CTA secundário: “Ver exemplo”
+   * Mockup de celular mostrando um bio site bonito.
+
+2. Como funciona:
+
+   * Crie o bio site.
+   * Use o link no QR Code ou NFC.
+   * O cliente edita quando quiser com a chave de acesso.
+
+3. Funcionalidades:
+
+   * WhatsApp
+   * Pix
+   * Wi-Fi com QR Code
+   * Catálogo
+   * Google Maps
+   * Avaliações Google
+   * Salvar contato
+   * QR Code
+   * NFC
+   * Cores e fundos personalizados
+   * Chave de edição para o cliente
+
+4. Exemplos:
+
+   * Barbearia
+   * Restaurante
+   * Salão
+   * Loja
+   * Clínica
+
+5. Para quem é:
+
+   * Comércios locais
+   * Prestadores de serviço
+   * Alunos/revendedores
+   * Quem vende plaquinhas QR/NFC
+
+6. Personalização:
+
+   * Foto
+   * Logo
+   * Fundo
+   * Cores
+   * Botões
+   * Catálogo
+   * Pix
+   * Wi-Fi
+
+7. Plaquinhas QR/NFC:
+
+   * Explicar que o Toqy foi pensado para balcão, mesa, vitrine, recepção, delivery e atendimento presencial.
+
+8. CTA final:
+
+   * “Crie uma página profissional para seu cliente em poucos minutos.”
+
+## 3.2 Área do cliente final
+
+Rota:
+
+`/me`
+
+Função:
+
+Cliente final entra para editar o próprio bio site com chave de acesso.
+
+Fluxo:
+
+1. Cliente acessa `/me`.
+2. Digita o link da página ou nome do bio site.
+3. Digita a chave de acesso.
+4. Se a chave estiver correta, entra na área de edição.
+5. Vê apenas o próprio bio site.
+6. Pode editar apenas informações permitidas.
+7. Pode copiar link público.
+8. Pode ver QR Code do próprio bio site.
+9. Pode abrir a página pública.
+
+Linguagem simples. Não usar termos técnicos como “slug”, “schema”, “HEX” ou “módulo” para o cliente.
+
+Usar termos:
+
+* Link da página
+* Chave de acesso
+* Cores
+* Botões
+* Imagem de fundo
+* Catálogo
+* Salvar alterações
+
+## 3.3 Painel admin/aluno
+
+Rotas:
+
+`/app`
+
+`/app/novo`
+
+`/app/qr`
+
+Função:
+
+Área de gestão para Leonardo, alunos ou revendedores.
+
+O painel deve permitir:
+
+* Criar novo bio site.
+* Listar bio sites criados.
+* Copiar link público.
+* Copiar chave de acesso.
+* Ver QR Code.
+* Editar bio site.
+* Ver status.
+* Futuramente gerenciar clientes, planos, uploads e permissões.
+
+No `/app/qr`, pode mostrar todos os QR Codes porque é área admin/aluno. Mas deixe isso explícito:
+
+Título:
+
+“QR Codes dos seus bio sites”
+
+Subtítulo:
+
+“Área de gestão para admin/aluno. Escolha um cliente para gerar QR Code, link público e prévia da plaquinha.”
+
+# 4. Rotas obrigatórias
+
+Crie/refatore para deixar funcionando:
+
+* `/` — landing pública.
+* `/me` — entrada do cliente final por chave.
+* `/app` — painel admin/aluno.
+* `/app/novo` — construtor completo de bio site.
+* `/app/qr` — gestão de QR Codes.
+* `/[slug]` — bio site público dinâmico.
+* `/editar/[slug]` — editor por chave, podendo reaproveitar o mesmo construtor do `/app/novo`.
+
+Exemplos públicos obrigatórios:
+
+* `/barbearia-andrian`
+* `/restaurante-demo`
+* `/salao-demo`
+* `/loja-demo`
+* `/clinica-demo`
+
+# 5. Refatoração obrigatória
+
+Antes de implementar novas telas, analise o projeto e remova/organize duplicações.
+
+Procure duplicações como:
+
+* Vários modelos de dados diferentes para bio site.
+* `clientData.ts` antigo.
+* `mockSites.ts` duplicado.
+* Componentes públicos duplicados.
+* `PremiumBioSite`, `PublicBioSite`, `StoredPublicBioSite`, `ToqyPremiumBioSite` ou similares fazendo a mesma coisa.
+* Formulário de criação e formulário de edição duplicados.
+* Helpers repetidos.
+
+Quero uma arquitetura limpa:
+
+* Um único modelo principal: `ToqySite`.
+* Uma única fonte de mocks: `src/lib/mockSites.ts`.
+* Um único componente público principal: `PublicBioSite`.
+* Um único construtor compartilhado: `SiteBuilder`.
+* Um único sistema de temas: `themePresets`.
+* Um único sistema de templates por segmento: `segmentTemplates`.
+* Um único helper de localStorage: `siteStorage`.
+
+Não apague arquivos sem verificar impacto. Se um arquivo antigo não for mais usado, remova imports e deixe o projeto limpo.
+
+Crie um arquivo de anotação:
+
+`REFACTOR_NOTES.md`
+
+Com:
+
+* Arquivos removidos.
+* Arquivos substituídos.
+* Componentes principais.
+* Rotas testadas.
+* O que ficou preparado para Supabase futuro.
+
+# 6. Modelo de dados principal
+
+Criar ou consolidar:
+
+`src/lib/types.ts`
+
+Com o modelo principal:
+
+```ts
+export type ButtonStyle = "full" | "icon";
+export type ButtonFill = "solid" | "gradient";
+export type BackgroundType = "solid" | "gradient" | "image";
+
+export type Segment =
+  | "barbearia"
+  | "salao"
+  | "restaurante"
+  | "lanchonete"
+  | "loja"
+  | "clinica"
+  | "petshop"
+  | "oficina"
+  | "delivery"
+  | "servicos"
+  | "fotografo"
+  | "dentista"
+  | "outro";
+
+export type ToqyLinkType =
+  | "whatsapp"
+  | "instagram"
+  | "linkedin"
+  | "email"
+  | "facebook"
+  | "pix"
+  | "pixHub"
+  | "phone"
+  | "maps"
+  | "telegram"
+  | "youtube"
+  | "tiktok"
+  | "spotify"
+  | "pdf"
+  | "drive"
+  | "image"
+  | "website"
+  | "menu"
+  | "booking"
+  | "review"
+  | "catalog"
+  | "event"
+  | "custom";
+
+export type ToqySite = {
+  id: string;
+  slug: string;
+  segment: Segment;
+  status: "active" | "draft" | "disabled";
+
+  profile: {
+    name: string;
+    title?: string;
+    description: string;
+    location: string;
+    profileImageUrl?: string;
+    logoUrl?: string;
+    logoSize: "small" | "medium" | "large";
+    logoShape: "circle" | "rounded" | "square";
+    backgroundImageUrl?: string;
+  };
+
+  themePresetId?: string;
+
+  theme: {
+    mode: "dark" | "light";
+    backgroundType: BackgroundType;
+    background: string;
+    gradientFrom: string;
+    gradientTo: string;
+    card: string;
+    text: string;
+    muted: string;
+    primary: string;
+    secondary: string;
+    accent: string;
+    buttonFill: ButtonFill;
+    buttonStyle: ButtonStyle;
+    buttonRadius: "soft" | "rounded" | "pill";
+    useBackgroundOverlay: boolean;
+  };
+
+  plaqueTheme?: {
+    useSameBackground: boolean;
+    backgroundImageUrl?: string;
+    backgroundStyle: "solid" | "gradient" | "image";
+  };
+
+  contact: {
+    phone: string;
+    whatsapp: string;
+    whatsappMessage: string;
+    instagram?: string;
+    facebook?: string;
+    email?: string;
+    website?: string;
+  };
+
+  links: {
+    googleMapsUrl?: string;
+    googleReviewUrl?: string;
+    bookingUrl?: string;
+    menuUrl?: string;
+  };
+
+  pix: {
+    enabled: boolean;
+    key: string;
+    receiver: string;
+    bank?: string;
+    quickAmounts: number[];
+    allowCustomAmount: boolean;
+    whatsappProofNumber: string;
+  };
+
+  wifi: {
+    enabled: boolean;
+    ssid: string;
+    password: string;
+    encryption: "WPA" | "WEP" | "nopass";
+  };
+
+  modules: {
+    saveContact: boolean;
+    whatsapp: boolean;
+    instagram: boolean;
+    phone: boolean;
+    maps: boolean;
+    wifi: boolean;
+    pix: boolean;
+    pixHub: boolean;
+    googleReview: boolean;
+    booking: boolean;
+    catalog: boolean;
+  };
+
+  buttons: Array<{
+    id: string;
+    label: string;
+    type: ToqyLinkType;
+    url?: string;
+    enabled: boolean;
+  }>;
+
+  catalog: Array<{
+    id: string;
+    name: string;
+    description: string;
+    price?: string;
+    imageUrl?: string;
+    imageLayout: "square" | "horizontal";
+    enabled: boolean;
+    actionLabel?: string;
+    actionUrl?: string;
+  }>;
+
+  editKey: string;
+  createdAt: string;
+  updatedAt: string;
+};
+```
+
+# 7. Mocks e localStorage
+
+Criar/consolidar:
+
+`src/lib/mockSites.ts`
+
+Com demos:
+
+* barbearia-andrian
+* restaurante-demo
+* salao-demo
+* loja-demo
+* clinica-demo
+
+Criar/consolidar:
+
+`src/lib/siteStorage.ts`
+
+Funções:
+
+```ts
+getStoredSites()
+getStoredSite(slug)
+saveStoredSite(site)
+createStoredSite(site)
+deleteStoredSite(slug)
+getSiteBySlug(slug)
+mergeMockAndStoredSites()
+generateEditKey()
+generateSlug(name)
+```
+
+Importante:
+
+A rota pública `/:slug` precisa funcionar com mocks e também com sites salvos no localStorage durante o MVP.
+
+Como localStorage só existe no browser, faça assim:
+
+* `src/app/[slug]/page.tsx` busca mock inicial no server, se existir.
+* Renderiza um client component `StoredPublicBioSite`.
+* `StoredPublicBioSite` tenta carregar localStorage.
+* Se existir site salvo com aquele slug, usa localStorage.
+* Se não existir, usa mock.
+* Se não existir nenhum, mostra “Bio site não encontrado”.
+
+# 8. Templates por segmento
+
+Criar/consolidar:
+
+`src/lib/segmentTemplates.ts`
+
+Funções obrigatórias:
+
+```ts
+getSegmentTemplate(segment)
+createSiteFromSegmentTemplate(segment, overrides?)
+applySegmentTemplate(site, segment)
+```
+
+Cada template deve preencher:
+
+* Tema sugerido.
+* Módulos ativos.
+* Botões padrão.
+* Catálogo inicial.
+* Texto inicial.
+* Campos padrão.
+
+Segmentos mínimos:
+
+## Barbearia
+
+Tema: Dark Gold
+
+Catálogo:
+
+* Corte masculino
+* Barba
+* Corte + Barba
+* Sobrancelha
+* Combo premium
+
+Botões:
+
+* WhatsApp
+* Instagram
+* Como chegar
+* Wi-Fi
+* Pix
+* Agendar horário
+* Avaliar no Google
+* Catálogo
+
+## Restaurante
+
+Tema: Food Red
+
+Catálogo:
+
+* Prato principal
+* Bebida
+* Combo
+* Sobremesa
+* Delivery
+
+Botões:
+
+* WhatsApp
+* Cardápio
+* Como chegar
+* Pix
+* Avaliar no Google
+* Delivery
+* Catálogo
+
+## Salão
+
+Tema: Beauty Rose
+
+Catálogo:
+
+* Escova
+* Manicure
+* Progressiva
+* Sobrancelha
+* Tratamento
+
+Botões:
+
+* WhatsApp
+* Instagram
+* Agendamento
+* Como chegar
+* Pix
+* Avaliar no Google
+* Catálogo
+
+## Clínica
+
+Tema: Clinic Blue
+
+Catálogo:
+
+* Consulta
+* Avaliação
+* Procedimento
+* Retorno
+
+Botões:
+
+* WhatsApp
+* Agendamento
+* Como chegar
+* Avaliação Google
+* Serviços
+
+## Loja
+
+Tema: Minimal White ou Blue Neon
+
+Catálogo:
+
+* Produto destaque
+* Promoção
+* Novidades
+* Atendimento
+
+Botões:
+
+* WhatsApp
+* Instagram
+* Catálogo
+* Como chegar
+* Pix
+* Site
+
+## Pet Shop
+
+Tema: Pet Fun
+
+Catálogo:
+
+* Banho
+* Tosa
+* Consulta
+* Produtos
+* Pacotes
+
+## Serviços
+
+Tema: Blue Neon
+
+Catálogo:
+
+* Serviço principal
+* Pacote básico
+* Pacote premium
+
+# 9. Sistema de temas
+
+Criar/consolidar:
+
+`src/lib/themePresets.ts`
+
+Paletas obrigatórias:
+
+* Dark Gold
+* Blue Neon
+* Clean Green
+* Orange Tech
+* Minimal White
+* Luxury Black
+* Beauty Rose
+* Food Red
+* Clinic Blue
+* Pet Fun
+
+Cada paleta deve ter:
+
+```ts
+{
+  id: string;
+  name: string;
+  description: string;
+  background: string;
+  gradientFrom: string;
+  gradientTo: string;
+  card: string;
+  text: string;
+  muted: string;
+  primary: string;
+  secondary: string;
+  accent: string;
+}
+```
+
+Criar componente:
+
+`src/components/ThemePresetPicker.tsx`
+
+Ele deve mostrar:
+
+* Cards visuais.
+* Nome da paleta.
+* Bolinhas de cores.
+* Mini preview de fundo/card.
+* Mini preview de botão.
+* Estado selecionado.
+
+O usuário deve escolher clicando no card, não digitando código.
+
+Campos HEX só podem aparecer dentro de:
+
+“Personalizar cores avançadas”
+
+Essa área deve ficar fechada por padrão.
+
+No editor, trocar labels técnicos:
+
+* `primary` → Cor principal
+* `secondary` → Cor secundária
+* `accent` → Cor de destaque
+* `background` → Fundo
+* `card` → Cor dos cards
+* `text` → Cor do texto
+
+# 10. Construtor principal
+
+Criar/consolidar:
+
+`src/components/SiteBuilder.tsx`
+
+Props:
+
+```ts
+type SiteBuilderProps = {
+  mode: "create" | "edit";
+  initialSite: ToqySite;
+  onSave: (site: ToqySite) => void;
+};
+```
+
+Esse componente deve ser usado por:
+
+* `/app/novo`
+* `/editar/[slug]`
+* Área autenticada do `/me`, se fizer sentido.
+
+Não deixe `/app/novo` e `/editar/[slug]` com dois formulários diferentes. Isso está causando bugs.
+
+O `SiteBuilder` deve ser um wizard/construtor em etapas:
+
+1. Modelo
+2. Perfil
+3. Visual
+4. Botões
+5. Pix e Wi-Fi
+6. Catálogo
+7. Publicar/Salvar
+
+Layout:
+
+Desktop:
+
+* Esquerda: formulário.
+* Direita: preview fixo no formato de celular.
+
+Mobile:
+
+* Tabs ou botão alternando “Editar” e “Preview”.
+
+## Etapa 1 — Modelo
+
+Campos:
+
+* Segmento
+* Nome do negócio
+* Link da página
+
+Ao escolher segmento:
+
+* Mostrar template recomendado.
+* Botão “Aplicar template”.
+* Botão “Manter minhas alterações”.
+
+Ao aplicar template, usar:
+
+`applySegmentTemplate(site, segment)`
+
+E atualizar:
+
+* Tema
+* `themePresetId`
+* Botões
+* Módulos
+* Catálogo
+* Textos sugeridos
+
+O preview deve mudar imediatamente.
+
+## Etapa 2 — Perfil
+
+Campos:
+
+* Foto de perfil
+* Logo
+* Tamanho da logo: pequeno, médio, grande
+* Formato da logo: círculo, arredondada, quadrada
+* Descrição
+* Localização
+* Telefone
+* WhatsApp
+* Instagram
+* E-mail
+* Site
+
+## Etapa 3 — Visual
+
+Campos:
+
+* Paleta visual com `ThemePresetPicker`
+* Tipo de fundo: sólido, gradiente, imagem
+* Imagem de fundo por URL
+* Ativar overlay
+* Estilo dos botões: esticado ou ícone
+* Preenchimento dos botões: sólido ou gradiente
+* Formato dos botões: soft, arredondado ou pill
+* Usar mesmo fundo da plaquinha
+
+Opção:
+
+“Usar mesmo fundo/tema da plaquinha”
+
+Quando ativar:
+
+* Permitir colar URL da arte/fundo da plaquinha.
+* Usar como fundo do bio site.
+* Aplicar overlay para legibilidade.
+* Mostrar recomendação: “Plaquinha 10x15 cm: 1181x1772 px em 300 DPI.”
+
+## Etapa 4 — Botões
+
+Cards para ativar/desativar:
+
+* WhatsApp
+* Instagram
+* Telefone
+* Como chegar
+* Wi-Fi
+* Pix
+* Pix Hub
+* Catálogo
+* Avaliação Google
+* Agendamento
+* Site
+* E-mail
+* Link personalizado
+
+Cada botão deve permitir:
+
+* Ativar/desativar
+* Trocar nome
+* Configurar link ou valor relacionado
+
+## Etapa 5 — Pix e Wi-Fi
+
+Campos:
+
+* Chave Pix
+* Recebedor Pix
+* Banco Pix
+* Valores rápidos
+* Número WhatsApp para receber comprovante
+* Nome da rede Wi-Fi
+* Senha Wi-Fi
+* Tipo de segurança: WPA, WEP, sem senha
+
+## Etapa 6 — Catálogo
+
+Cada item:
+
+* Nome
+* Descrição
+* Preço
+* Imagem
+* Layout da imagem: quadrada ou horizontal
+* Ativo/inativo
+* Botão de ação
+* Link do botão
+
+Ações:
+
+* Adicionar item
+* Remover
+* Duplicar
+
+Mostrar recomendações:
+
+* Produto/serviço quadrado: 1080x1080 px
+* Produto/serviço horizontal: 1200x800 px
+
+## Etapa 7 — Publicar/Salvar
+
+No modo create:
+
+* Gerar chave de acesso.
+* Salvar no localStorage.
+* Mostrar sucesso.
+* Mostrar link público.
+* Mostrar link de edição.
+* Mostrar QR Code.
+* Botão copiar link.
+* Botão copiar chave.
+* Botão abrir bio site.
+
+No modo edit:
+
+* Salvar alterações no localStorage.
+* Mostrar feedback.
+* Botão abrir bio site.
+* Botão copiar link.
+
+# 11. Preview ao vivo
+
+Criar/consolidar:
+
+`src/components/LiveBioSitePreview.tsx`
+
+O preview precisa usar exatamente o objeto `site` atual do estado do formulário.
+
+Não buscar mock antigo.
+Não buscar localStorage durante edição.
+Não usar dados fixos.
+
+O preview deve atualizar imediatamente quando mudar:
+
+* Nome
+* Descrição
+* Segmento
+* Foto
+* Logo
+* Tamanho da logo
+* Formato da logo
+* Fundo
+* Overlay
+* Paleta
+* Estilo dos botões
+* Preenchimento dos botões
+* Formato dos botões
+* Módulos ativos
+* Pix
+* Wi-Fi
+* Catálogo
+* Layout do catálogo
+* Fundo da plaquinha
+
+# 12. Bio site público
+
+Criar/consolidar:
+
+`src/components/PublicBioSite.tsx`
+
+Esse componente recebe:
+
+```ts
+site: ToqySite
+```
+
+Ele não pode ter dados hardcoded da Barbearia Andrian.
+
+Deve respeitar:
+
+## Logo size
+
+* small: 72px
+* medium: 104px
+* large: 136px
+
+## Logo shape
+
+* circle: redonda
+* rounded: arredondada
+* square: quadrada
+
+## Botões
+
+Respeitar:
+
+* `buttonStyle: full | icon`
+* `buttonFill: solid | gradient`
+* `buttonRadius: soft | rounded | pill`
+
+Se `full`:
+
+* Lista vertical de botões grandes.
+
+Se `icon`:
+
+* Grade de ícones compactos.
+
+Se `solid`:
+
+* Botões com cor sólida da paleta.
+
+Se `gradient`:
+
+* Botões com gradiente da paleta.
+
+## Fundo
+
+Respeitar:
+
+* Fundo sólido
+* Fundo gradiente
+* Fundo imagem
+* Fundo da plaquinha
+* Overlay
+
+## Catálogo
+
+Não empilhar imagens gigantes.
+
+Usar:
+
+* Carrossel horizontal no mobile.
+* Cards compactos.
+* Imagem com altura controlada.
+* Placeholder bonito quando não houver imagem.
+
+Cada card:
+
+* Imagem ou placeholder
+* Nome
+* Descrição
+* Preço
+* Botão de ação
+
+## Funcionalidades públicas
+
+O bio site público deve ter:
+
+* Header com foto/logo/nome/descrição/localização
+* Botões rápidos
+* Salvar contato `.vcf`
+* WhatsApp
+* Instagram
+* Telefone
+* Maps
+* Wi-Fi modal
+* Pix modal
+* Avaliação Google
+* Agendamento
+* Catálogo
+* Rodapé “Criado por Leonardo Marusso” ou “Criado com Toqy”
+
+# 13. Ícones, imagens e identidade visual
+
+Como você tem capacidade de gerar/usar assets no Trae, crie uma identidade visual simples para o Toqy.
+
+Criar:
+
+* Logo simples do Toqy em SVG.
+* Ícone/favicons.
+* Apple touch icon.
+* Open Graph image básica.
+* Ícones internos consistentes.
+* Placeholders premium para templates.
+
+Sugestão de identidade:
+
+Nome:
+
+`Toqy`
+
+Ideia visual:
+
+* Um símbolo que misture QR Code, toque/NFC e link.
+* Visual moderno, tecnológico, amigável.
+* Cores principais: azul/ciano/roxo ou azul/ciano em dark mode.
+* Não copiar TaggyContact.
+
+Arquivos sugeridos:
+
+* `public/brand/toqy-logo.svg`
+* `public/brand/toqy-icon.svg`
+* `public/favicon.ico`
+* `public/apple-touch-icon.png`
+* `public/og-image.png`
+
+Se conseguir gerar imagens com IA ou asset generator, crie imagens para landing e templates:
+
+Landing:
+
+* Mockup de celular com bio site.
+* Ilustração de plaquinha QR/NFC.
+* Ilustração de painel.
+* Ilustração de cliente editando.
+
+Templates:
+
+* Barbearia: placeholder premium dark/gold.
+* Restaurante: placeholder food red.
+* Salão: placeholder beauty rose.
+* Clínica: placeholder clinic blue.
+* Loja: placeholder minimal/commerce.
+* Pet shop: placeholder pet fun.
+* Serviços: placeholder blue neon.
+
+Se não puder gerar imagens reais, crie placeholders SVG/gradientes bonitos em `public/templates`.
+
+# 14. Recomendações de imagem
+
+Criar componente:
+
+`src/components/ImageGuidelineHint.tsx`
+
+Usar nos campos de imagem.
+
+Recomendações:
+
+* Foto de perfil: 512x512 px, proporção 1:1.
+* Logo: 800x800 px, PNG transparente, proporção 1:1.
+* Fundo vertical: 1080x1920 px, proporção 9:16.
+* Banner horizontal: 1200x675 px, proporção 16:9.
+* Produto/serviço quadrado: 1080x1080 px, proporção 1:1.
+* Produto/serviço horizontal: 1200x800 px, proporção 3:2.
+* Arte de plaquinha 10x15 cm: 1181x1772 px em 300 DPI, proporção 2:3.
+
+# 15. Segurança preparada para o futuro
+
+Mesmo que o MVP use localStorage, deixe a arquitetura preparada para segurança real.
+
+Criar ou preparar:
+
+`src/lib/security.ts`
+
+Com helpers futuros:
+
+* `normalizeSlug`
+* `sanitizeText`
+* `isValidUrl`
+* `isValidPhone`
+* `generateEditKey`
+* `hashEditKeyPlaceholder`
+* `validateEditKeyPlaceholder`
+
+Não precisa implementar hash real ainda, mas deixe comentários claros:
+
+* No Supabase futuro, chave de edição não será salva em texto puro.
+* Será salva com hash.
+* Service Role nunca irá para o client.
+* Uploads serão validados por tipo, tamanho e extensão.
+* Edição de cliente terá permissão limitada.
+* Cliente não poderá alterar slug, plano, status, owner, nem assinatura.
+
+Preparar também:
+
+`src/lib/validation.ts`
+
+Usar Zod se já estiver no projeto ou instalar se fizer sentido.
+
+Validar:
+
+* Nome do negócio obrigatório.
+* Link da página obrigatório.
+* WhatsApp opcional, mas se preencher precisa ser válido.
+* URL opcional, mas se preencher precisa ser válida.
+* Chave Pix opcional.
+* Catálogo com nome obrigatório quando item ativo.
+
+Não expor secrets no front-end.
+Não criar `.env` com valores reais.
+Se criar `.env.example`, usar placeholders:
+
+```env
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+```
+
+# 16. Layout e responsividade
+
+Corrigir todos os lugares espremidos.
+
+Problemas comuns para revisar:
+
+* Cards com texto cortado.
+* Inputs apertados.
+* Grid quebrando no mobile.
+* Preview espremido.
+* Botões colados.
+* Formulário muito largo.
+* Texto branco em fundo branco.
+* Títulos sem contraste.
+* Seções repetidas.
+* Espaçamento inconsistente.
+
+Padrão visual:
+
+Editor/admin:
+
+* Fundo claro ou escuro consistente.
+* Cards com contraste.
+* Inputs legíveis.
+* Labels bem visíveis.
+* Espaçamento generoso.
+* Botões grandes.
+* Textos humanos.
+
+Preview/bio site:
+
+* Mobile-first.
+* Máximo 430px.
+* Aparência de app/celular.
+* Fundo premium.
+* Botões bonitos.
+* Catálogo sem empilhar imagem gigante.
+
+Landing:
+
+* Desktop bonito.
+* Mobile bonito.
+* Sem links demais.
+* Sem seções repetidas.
+* CTA claro.
+
+# 17. Páginas específicas
+
+## `/`
+
+Refatorar landing completa.
+
+Não repetir seções.
+Não colocar “Painel” como destaque principal.
+O visitante precisa conhecer o produto.
+
+## `/app`
+
+Painel admin/aluno.
+
+Mostrar:
+
+* Total de bio sites.
+* QR/NFC ativos.
+* Clientes.
+* Pix Hubs ativos.
+* Lista de sites.
+* Criar novo.
+* Copiar link.
+* Copiar chave.
+* Ver QR.
+* Editar.
+
+## `/app/novo`
+
+Usar `SiteBuilder` em modo create.
+
+Precisa ser completo, com preview ao vivo.
+
+## `/editar/[slug]`
+
+Validar chave e usar `SiteBuilder` em modo edit.
+
+Não mostrar campos técnicos por padrão.
+
+## `/me`
+
+Entrada cliente.
+
+Depois da chave, mostrar:
+
+* Botão editar.
+* Link público.
+* QR Code próprio.
+* Copiar link.
+* Abrir bio site.
+
+## `/app/qr`
+
+Área admin/aluno para ver todos os QR Codes.
+
+## `/[slug]`
+
+Bio site público, bonito e funcional.
+
+# 18. Bibliotecas
+
+Use o que já existir no projeto.
+
+Se precisar de QR Code, use a lib já instalada ou instale uma leve e confiável.
+
+Para ícones, pode usar `lucide-react`.
+
+Atenção:
+
+Não importar `Instagram` do `lucide-react` se essa versão não tiver esse ícone.
+
+Usar ícones seguros:
+
+* Camera
+* MessageCircle
+* MapPin
+* Phone
+* Wifi
+* CreditCard
+* Star
+* CalendarCheck
+* Copy
+* Check
+* Download
+* ExternalLink
+* Scissors
+* Globe2
+* QrCode
+* Image
+* Palette
+* Mail
+* Link
+* FileText
+* Store
+* Utensils
+* Heart
+* PawPrint
+* Stethoscope
+* ShoppingBag
+
+# 19. Testes obrigatórios
+
+Depois de refatorar, rodar:
+
+```bash
+npm run build
+```
+
+Corrigir todos os erros.
+
+Testar rotas:
+
+* `/`
+* `/me`
+* `/app`
+* `/app/novo`
+* `/app/qr`
+* `/barbearia-andrian`
+* `/restaurante-demo`
+* `/salao-demo`
+* `/loja-demo`
+* `/clinica-demo`
+* `/editar/barbearia-andrian`
+
+Fluxo de teste:
+
+1. Abrir landing `/`.
+2. Ver se está clara e sem repetição.
+3. Clicar em “Criar meu bio site”.
+4. Entrar em `/app/novo`.
+5. Escolher segmento Restaurante.
+6. Aplicar template.
+7. Ver preview mudar tema, botões e catálogo.
+8. Escolher paleta Food Red.
+9. Ver preview mudar.
+10. Trocar botões para ícone.
+11. Ver preview virar grade.
+12. Trocar botões para esticado.
+13. Ver preview virar lista.
+14. Trocar logo para círculo, arredondado e quadrado.
+15. Ver preview mudar.
+16. Trocar tamanho da logo.
+17. Ver preview mudar.
+18. Ativar fundo da plaquinha.
+19. Colar URL de imagem.
+20. Ver preview mudar com overlay.
+21. Editar catálogo.
+22. Ver catálogo em carrossel.
+23. Publicar.
+24. Copiar link público.
+25. Abrir link público.
+26. Entrar em `/me`.
+27. Usar chave gerada.
+28. Ver apenas o próprio site.
+29. Editar.
+30. Salvar.
+31. Confirmar que o bio site público atualizou.
+
+# 20. Resultado esperado
+
+Quero que o Toqy pareça uma plataforma real e profissional.
+
+No final, o projeto precisa estar assim:
+
+* Landing clara e comercial.
+* Área `/me` simples para cliente.
+* Painel `/app` claro para aluno/admin.
+* Criador `/app/novo` completo, com preview ao vivo.
+* Editor `/editar/[slug]` usando o mesmo construtor.
+* Templates por segmento funcionando.
+* Paletas visuais funcionando.
+* Bio site público bonito.
+* Catálogo em carrossel/grade.
+* Fundo da plaquinha opcional.
+* QR Code organizado.
+* Código sem duplicação desnecessária.
+* Build passando.
+* Segurança preparada para Supabase futuro.
+* Assets básicos do Toqy criados: logo, favicon, placeholders e imagens/ilustrações se possível.
+
+Não implemente Supabase ainda.
+Não implemente pagamento real ainda.
+Não implemente upload real ainda.
+
+Primeiro deixe o produto bonito, organizado, fácil de usar e funcional com mocks/localStorage. Depois conectaremos banco, uploads, planos e autenticação real.
