@@ -1,5 +1,38 @@
 "use client";
 
+/**
+ * Camada de dados do TOQY (fase atual: mock + localStorage)
+ * ------------------------------------------------------------
+ * Fonte dos dados hoje:
+ * - `src/lib/mockSites.ts`  -> bio sites de demonstração (somente leitura, fixos no código).
+ * - `src/lib/siteStorage.ts` -> bio sites criados/editados pelo usuário, persistidos em
+ *    `window.localStorage` (chave "toqy_sites_v4") e mesclados com os mocks via
+ *    `mergeMockAndStoredSites()`.
+ * - Este arquivo (`dataProvider.ts`) é o único ponto de entrada usado pelas páginas
+ *   (`/app`, `/app/novo`, `/app/qr`, `/me`, `/editar/[slug]`) para listar, criar,
+ *   salvar, duplicar, pausar/publicar e excluir bio sites, além de validar a chave
+ *   de acesso do cliente.
+ *
+ * Próxima fase (Supabase) — NÃO conectado ainda, apenas o contrato sugerido:
+ * - Criar `src/lib/dataProvider.supabase.ts` implementando as MESMAS funções
+ *   exportadas aqui (mesma assinatura), porém:
+ *     listBiosites()        -> SELECT * FROM sites (com RLS por usuário/conta)
+ *     getBiositeById(id)     -> SELECT ... WHERE id = :id
+ *     getBiositeBySlug(slug) -> SELECT ... WHERE slug = :slug
+ *     saveBiosite(site)      -> UPSERT em sites (+ tabelas relacionadas: buttons, catalog)
+ *     createBiosite(site)    -> INSERT em sites
+ *     deleteBiosite(id)      -> DELETE (ou soft delete) em sites
+ *     publishBiosite/pauseBiosite -> UPDATE status
+ *     duplicateBiosite(id)   -> INSERT a partir de um SELECT existente
+ *     validateClientKey(key, slug) -> SELECT comparando editKey (idealmente hash)
+ * - Trocar a implementação por um "switch" simples baseado em
+ *   `hasSupabaseBrowserEnv()` (já existe em `src/lib/supabaseBrowser.ts`):
+ *   se houver env configurada, usar a versão Supabase; caso contrário, manter o
+ *   fallback atual em localStorage. Assim o app continua funcionando em demos
+ *   sem variáveis de ambiente.
+ * - Nenhuma tabela, autenticação ou conexão Supabase foi criada nesta revisão.
+ */
+
 import { generateEditKey, generateId, generateSlug } from "./security";
 import {
   createStoredSite,

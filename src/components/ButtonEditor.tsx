@@ -36,9 +36,9 @@ export function ButtonEditor({ site, onChange }: Props) {
       case "website": return <Field title="Link do site" value={site.contact.website ?? ""} onChange={(v) => updateContact({ website: v })} placeholder="https://..." />;
       case "email": return <Field title="E-mail" value={site.contact.email ?? ""} onChange={(v) => updateContact({ email: v })} placeholder="contato@empresa.com" />;
       case "menu": return <Field title="Link do cardápio" value={site.links.menuUrl ?? ""} onChange={(v) => updateLinks({ menuUrl: v })} placeholder="https://..." />;
-      case "wifi": return <Notice text="Este botão abre o modal de Wi-Fi. Configure rede e senha na etapa Pix e Wi-Fi." />;
-      case "pix": return <Notice text="Este botão abre o modal Pix. Configure chave Pix na etapa Pix e Wi-Fi." />;
-      case "pixHub": return <Notice text="Este botão abre a experiência Pix Hub. Configure os dados Pix na etapa Pix e Wi-Fi." />;
+      case "wifi": return <Notice text="Este botão abre o modal de Wi-Fi com check-in/avaliação. Configure rede e senha na etapa Pix e Wi-Fi." />;
+      case "pix": return <Notice text="Este botão abre o Pix inteligente (chave, QR Code, valores rápidos e comprovante). Configure os dados na etapa Pix e Wi-Fi." />;
+      case "pixHub": return <Notice text="Tipo legado: agora abre o mesmo Pix inteligente do tipo “Pix”. Configure os dados na etapa Pix e Wi-Fi." />;
       case "catalog": return <Notice text="Este botão leva até o catálogo. Configure produtos/serviços na etapa Catálogo." />;
       default: return <Field title="Link de destino" value={button.url ?? ""} onChange={(v) => updateButton(button.id, { url: v })} placeholder="https://..." />;
     }

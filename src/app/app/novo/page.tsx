@@ -1,12 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { SiteBuilder } from "@/components/SiteBuilder";
 import { createSiteFromSegmentTemplate } from "@/lib/segmentTemplates";
 import { createBiosite } from "@/lib/dataProvider";
 
 export default function NewBioSitePage() {
-  const initialSite = createSiteFromSegmentTemplate("servicos", {
+  const [initialSite] = useState(() => createSiteFromSegmentTemplate("servicos", {
     profile: {
       name: "Novo negócio",
       title: "Cartão digital TOQY",
@@ -16,7 +17,7 @@ export default function NewBioSitePage() {
       logoShape: "circle",
     },
     slug: "novo-negocio",
-  });
+  }));
 
   return (
     <DashboardShell>

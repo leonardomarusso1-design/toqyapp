@@ -248,26 +248,62 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
 }
 
 function CatalogSection({ site, items, layout }: { site: ToqySite; items: CatalogItem[]; layout: CatalogLayout }) {
+  const [activeCategory, setActiveCategory] = useState<string>("Todas");
+  const categories = useMemo(() => Array.from(new Set(items.map((item) => item.category?.trim() || "Destaques"))), [items]);
+  const filteredItems = activeCategory === "Todas" ? items : items.filter((item) => (item.category?.trim() || "Destaques") === activeCategory);
+  const whatsapp = whatsappUrl(site);
+  const chipStyle = (active: boolean): React.CSSProperties => active
+    ? { background: site.theme.primary, color: site.theme.mode === "light" ? "#fff" : "#06111F", borderColor: "transparent" }
+    : { background: site.theme.mode === "light" ? "rgba(255,255,255,0.66)" : "rgba(255,255,255,0.10)", color: site.theme.text, borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.10)" : "rgba(255,255,255,0.16)" };
+
   return (
     <section id="catalogo-toqy" className="mt-8 scroll-mt-8">
       <p className="text-xs font-black uppercase tracking-[0.22em]" style={{ color: site.theme.accent }}>Catálogo</p>
       <h2 className="mt-1 text-2xl font-black">Produtos e serviços</h2>
-      {layout === "grouped" || layout === "category-carousel" ? (
-        <div className="mt-5 space-y-7">
-          {uniqueGroups(items).map(([group, groupItems]) => (
-            <div key={group}>
-              <h3 className="mb-3 text-base font-black" style={{ color: site.theme.muted }}>{group}</h3>
-              <CatalogScroller site={site} items={groupItems} />
-            </div>
+      <p className="mt-1 text-sm leading-relaxed" style={{ color: site.theme.muted }}>Selecionados para você. Toque em um item para pedir ou agendar.</p>
+
+      {categories.length > 1 ? (
+        <div className="mt-4 flex snap-x gap-2 overflow-x-auto pb-1">
+          <button type="button" onClick={() => setActiveCategory("Todas")} className="shrink-0 snap-start rounded-full border px-4 py-2 text-xs font-black transition" style={chipStyle(activeCategory === "Todas")}>Todas</button>
+          {categories.map((category) => (
+            <button key={category} type="button" onClick={() => setActiveCategory(category)} className="shrink-0 snap-start rounded-full border px-4 py-2 text-xs font-black transition" style={chipStyle(activeCategory === category)}>{category}</button>
           ))}
         </div>
-      ) : layout === "grid" ? (
-        <div className="mt-4 grid grid-cols-2 gap-3">{items.map((item) => <CatalogCard key={item.id} site={site} item={item} compact />)}</div>
-      ) : layout === "stack" ? (
-        <div className="mt-4 space-y-4">{items.map((item) => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
-      ) : (
-        <CatalogScroller site={site} items={items} />
-      )}
+      ) : null}
+
+      <div className="mt-5">
+        {activeCategory !== "Todas" ? (
+          layout === "grid" ? (
+            <div className="grid grid-cols-2 gap-3">{filteredItems.map((item) => <CatalogCard key={item.id} site={site} item={item} compact />)}</div>
+          ) : layout === "stack" ? (
+            <div className="space-y-4">{filteredItems.map((item) => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
+          ) : (
+            <CatalogScroller site={site} items={filteredItems} />
+          )
+        ) : layout === "grouped" || layout === "category-carousel" ? (
+          <div className="space-y-7">
+            {uniqueGroups(filteredItems).map(([group, groupItems]) => (
+              <div key={group}>
+                <h3 className="mb-3 text-base font-black" style={{ color: site.theme.muted }}>{group}</h3>
+                <CatalogScroller site={site} items={groupItems} />
+              </div>
+            ))}
+          </div>
+        ) : layout === "grid" ? (
+          <div className="grid grid-cols-2 gap-3">{filteredItems.map((item) => <CatalogCard key={item.id} site={site} item={item} compact />)}</div>
+        ) : layout === "stack" ? (
+          <div className="space-y-4">{filteredItems.map((item) => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
+        ) : (
+          <CatalogScroller site={site} items={filteredItems} />
+        )}
+      </div>
+
+      {whatsapp ? (
+        <div className="mt-5 rounded-[1.5rem] border p-4 text-center backdrop-blur-xl" style={{ background: site.theme.mode === "light" ? "rgba(255,255,255,0.66)" : "rgba(255,255,255,0.08)", borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.16)" }}>
+          <p className="text-sm font-black">Não encontrou o que procura?</p>
+          <button type="button" onClick={() => window.open(whatsapp, "_blank", "noopener,noreferrer")} className="mt-3 inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-xs font-black" style={{ background: site.theme.primary, color: site.theme.mode === "light" ? "#fff" : "#06111F" }}><MessageCircle className="h-4 w-4" />Fale com a gente no WhatsApp</button>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -279,6 +315,7 @@ function CatalogScroller({ site, items }: { site: ToqySite; items: CatalogItem[]
 function CatalogCard({ site, item, compact = false, stacked = false }: { site: ToqySite; item: CatalogItem; compact?: boolean; stacked?: boolean }) {
   const width = stacked ? "w-full" : compact ? "w-full" : "min-w-[275px]";
   const imageHeight = compact ? "h-28" : item.imageLayout === "horizontal" ? "h-36" : "h-52";
+  const whatsapp = whatsappUrl(site);
   return (
     <article className={`${width} snap-start overflow-hidden rounded-[1.6rem] border shadow-xl backdrop-blur`} style={{ background: site.theme.card, borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.14)" }}>
       <div className={imageHeight} style={{ background: `linear-gradient(135deg, ${site.theme.primary}33, ${site.theme.secondary}44)` }}>
@@ -289,7 +326,10 @@ function CatalogCard({ site, item, compact = false, stacked = false }: { site: T
         <p className={compact ? "mt-1 line-clamp-3 text-xs leading-relaxed" : "mt-2 text-sm leading-relaxed"} style={{ color: site.theme.muted }}>{item.description}</p>
         <div className="mt-4 flex items-center justify-between gap-3">
           {item.price ? <span className={compact ? "text-xs font-black" : "font-black"} style={{ color: site.theme.accent }}>{item.price}</span> : <span />}
-          <button type="button" onClick={() => { const href = item.actionUrl ? ensureUrl(item.actionUrl) : whatsappUrl(site); if (href) window.open(href, "_blank", "noopener,noreferrer"); }} className="rounded-full px-4 py-2 text-xs font-black" style={{ background: site.theme.primary, color: site.theme.mode === "light" ? "#fff" : "#06111F" }}>{item.actionLabel || "Ver"}</button>
+          <div className="flex items-center gap-2">
+            {whatsapp ? <button type="button" aria-label="Falar no WhatsApp" onClick={() => window.open(whatsapp, "_blank", "noopener,noreferrer")} className="flex h-9 w-9 items-center justify-center rounded-full border" style={{ borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.12)" : "rgba(255,255,255,0.18)", color: site.theme.text }}><MessageCircle className="h-4 w-4" /></button> : null}
+            <button type="button" onClick={() => { const href = item.actionUrl ? ensureUrl(item.actionUrl) : whatsapp; if (href) window.open(href, "_blank", "noopener,noreferrer"); }} className="rounded-full px-4 py-2 text-xs font-black" style={{ background: site.theme.primary, color: site.theme.mode === "light" ? "#fff" : "#06111F" }}>{item.actionLabel || "Ver"}</button>
+          </div>
         </div>
       </div>
     </article>
@@ -297,7 +337,7 @@ function CatalogCard({ site, item, compact = false, stacked = false }: { site: T
 }
 
 function PixModal({ site, onClose, copied, copyText, selectedAmount, setSelectedAmount }: { site: ToqySite; onClose: () => void; copied: string; copyText: (value: string, key: string) => Promise<void>; selectedAmount?: number; setSelectedAmount: (value?: number) => void }) {
-  const proofPhone = site.pix.whatsappProofNumber.replace(/\D/g, "");
+  const proofPhone = (site.pix.whatsappProofNumber || site.contact.whatsapp || site.contact.phone).replace(/\D/g, "");
   const proofUrl = proofPhone ? `https://wa.me/${proofPhone}?text=${encodeURIComponent(`Olá! Já realizei o pagamento via Pix${selectedAmount ? ` no valor de R$ ${selectedAmount.toFixed(2).replace(".", ",")}` : ""} e vou enviar o comprovante.`)}` : "";
   return (
     <ModalShell title="Pix inteligente" onClose={onClose} site={site} icon={<CreditCard className="h-6 w-6" />}>
@@ -323,6 +363,15 @@ function PixModal({ site, onClose, copied, copyText, selectedAmount, setSelected
 function WifiModal({ site, onClose, copied, copyText }: { site: ToqySite; onClose: () => void; copied: string; copyText: (value: string, key: string) => Promise<void> }) {
   const rawCheckinUrl = site.wifi.checkinUrl || site.links.googleReviewUrl || site.contact.facebook || site.contact.instagram || "";
   const checkinUrl = rawCheckinUrl === site.contact.instagram ? normalizeInstagram(rawCheckinUrl) : ensureUrl(rawCheckinUrl);
+  const defaultCheckinLabel = site.wifi.checkinUrl
+    ? "Fazer check-in"
+    : site.links.googleReviewUrl
+    ? "Avaliar no Google"
+    : site.contact.facebook
+    ? "Curtir no Facebook"
+    : site.contact.instagram
+    ? "Seguir no Instagram"
+    : "Fazer check-in / avaliar";
   return (
     <ModalShell title="Rede Wi-Fi" onClose={onClose} site={site} icon={<Wifi className="h-6 w-6" />}>
       <div className="rounded-[1.75rem] bg-white p-4 text-center text-slate-950 shadow-xl">
@@ -334,7 +383,7 @@ function WifiModal({ site, onClose, copied, copyText }: { site: ToqySite; onClos
         </div>
         <div className="mt-4 border-t border-slate-200 pt-4">
           <p className="text-xs font-black text-slate-400">Depois de conectar</p>
-          {checkinUrl ? <button onClick={() => window.open(checkinUrl, "_blank", "noopener,noreferrer")} className="mt-3 w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-black text-white"><MapPin className="mr-2 inline h-4 w-4" />{site.wifi.checkinLabel || "Fazer check-in / avaliar"}</button> : null}
+          {checkinUrl ? <button onClick={() => window.open(checkinUrl, "_blank", "noopener,noreferrer")} className="mt-3 w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-black text-white"><MapPin className="mr-2 inline h-4 w-4" />{site.wifi.checkinLabel || defaultCheckinLabel}</button> : null}
           <div className="mt-2 grid grid-cols-2 gap-2">
             {site.contact.instagram ? <button onClick={() => window.open(normalizeInstagram(site.contact.instagram), "_blank", "noopener,noreferrer")} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700"><Camera className="mr-1 inline h-4 w-4" />Instagram</button> : null}
             {site.contact.facebook ? <button onClick={() => window.open(ensureUrl(site.contact.facebook), "_blank", "noopener,noreferrer")} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700"><Globe2 className="mr-1 inline h-4 w-4" />Facebook</button> : null}
