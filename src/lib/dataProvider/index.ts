@@ -27,3 +27,5 @@ export {
 } from "./localProvider";
 
 export { generateSlug } from "../security";
+
+export { isDemoSlug, demoSlugs } from "../mockSites";

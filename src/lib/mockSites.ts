@@ -102,3 +102,9 @@ export const mockSites: ToqySite[] = [
 export function getMockSiteBySlug(slug: string) {
   return mockSites.find((site) => site.slug === slug);
 }
+
+export const demoSlugs = mockSites.map((site) => site.slug);
+
+export function isDemoSlug(slug: string) {
+  return demoSlugs.includes(slug);
+}

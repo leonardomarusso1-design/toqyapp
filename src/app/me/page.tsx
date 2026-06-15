@@ -3,26 +3,33 @@
 import Link from "next/link";
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Copy, ExternalLink, KeyRound, LockKeyhole } from "lucide-react";
+import { Copy, Edit3, ExternalLink, LockKeyhole } from "lucide-react";
+import { ClientShell } from "@/components/ClientShell";
 import type { ToqySite } from "@/lib/types";
 import { createEditUrl, createPublicUrl, validateClientKey } from "@/lib/dataProvider";
 
 export default function MePage() {
-  const [slug, setSlug] = useState("barbearia-andrian");
+  const [username, setUsername] = useState("");
   const [key, setKey] = useState("");
   const [site, setSite] = useState<ToqySite | null>(null);
+  const [unlockedKey, setUnlockedKey] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
   function enter() {
-    const cleanSlug = slug.replace(/^\/b\//, "").replace(/^\//, "");
-    const found = validateClientKey(key, cleanSlug);
+    const cleanUser = username.trim().replace(/^https?:\/\/[^/]+/i, "").replace(/^\/b\//, "").replace(/^\//, "");
+    if (!key.trim()) {
+      setError("Digite a sua chave de acesso.");
+      return;
+    }
+    const found = validateClientKey(key, cleanUser || undefined);
     if (!found) {
-      setError("Chave inválida ou bio site não encontrado.");
+      setError("Usuário ou chave incorretos. Confira os dados que o criador enviou para você.");
       setSite(null);
       return;
     }
     setError("");
+    setUnlockedKey(key.trim());
     setSite(found);
   }
 
@@ -34,58 +41,79 @@ export default function MePage() {
     setTimeout(() => setCopied(false), 1500);
   }
 
-  return (
-    <main className="min-h-screen bg-[#f6faf8] px-5 py-10 text-slate-950">
-      <div className="mx-auto max-w-4xl">
-        <Link href="/" className="text-sm font-black text-[#1f9f87]">← Voltar</Link>
+  const publicUrl = site ? `${typeof window !== "undefined" ? window.location.origin : ""}${createPublicUrl(site.slug)}` : "";
 
-        <section className="mt-6 rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm md:p-8">
+  return (
+    <ClientShell action={site ? <button onClick={() => { setSite(null); setKey(""); setUsername(""); }} className="text-sm font-black text-slate-600 transition hover:text-[#20b99d]">Sair</button> : <span />}>
+      {!site ? (
+        <div className="mx-auto max-w-xl rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm md:p-8">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-[#31c4a8]">
             <LockKeyhole className="h-7 w-7" />
           </div>
-          <p className="mt-6 text-sm font-black uppercase tracking-[0.18em] text-[#31c4a8]">Área do cliente</p>
-          <h1 className="mt-2 text-4xl font-black md:text-5xl">Acesse seu Toqy</h1>
-          <p className="mt-3 max-w-2xl text-slate-500">Digite o slug do bio site e a chave de acesso entregue pelo criador.</p>
+          <h1 className="mt-6 text-3xl font-black md:text-4xl">Acesse a sua página</h1>
+          <p className="mt-3 text-slate-500">Use o usuário e a chave de acesso que você recebeu para abrir e editar a sua página.</p>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-[1fr_220px_auto]">
-            <input value={slug} onChange={(event) => setSlug(event.target.value)} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-slate-950 outline-none focus:border-[#31c4a8] focus:ring-4 focus:ring-emerald-100" placeholder="barbearia-andrian" />
-            <input value={key} onChange={(event) => setKey(event.target.value)} onKeyDown={(event) => event.key === "Enter" && enter()} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 font-mono font-black text-slate-950 outline-none focus:border-[#31c4a8] focus:ring-4 focus:ring-emerald-100" placeholder="8392-1147" />
-            <button onClick={enter} className="rounded-2xl bg-[#31c4a8] px-5 py-3 font-black text-white transition hover:-translate-y-0.5 hover:bg-[#25b69a]">Entrar</button>
+          <div className="mt-6 grid gap-4">
+            <label className="block">
+              <span className="text-sm font-black text-slate-800">Usuário (o link da sua página)</span>
+              <input
+                value={username}
+                onChange={(event) => { setUsername(event.target.value); setError(""); }}
+                onKeyDown={(event) => event.key === "Enter" && enter()}
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-slate-950 outline-none focus:border-[#31c4a8] focus:ring-4 focus:ring-emerald-100"
+                placeholder="ex.: barbearia-andrian"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-black text-slate-800">Chave de acesso</span>
+              <input
+                value={key}
+                onChange={(event) => { setKey(event.target.value); setError(""); }}
+                onKeyDown={(event) => event.key === "Enter" && enter()}
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-mono text-lg font-black text-slate-950 outline-none focus:border-[#31c4a8] focus:ring-4 focus:ring-emerald-100"
+                placeholder="0000-0000"
+                inputMode="numeric"
+              />
+            </label>
+            <button onClick={enter} className="rounded-2xl bg-[#31c4a8] px-5 py-3.5 font-black text-white transition hover:-translate-y-0.5 hover:bg-[#25b69a]">Entrar</button>
           </div>
 
           {error ? <p className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-3 text-sm font-bold text-red-600">{error}</p> : null}
-          <p className="mt-4 text-xs font-semibold text-slate-400">Demo: barbearia-andrian / 8392-1147</p>
-        </section>
-
-        {site ? (
-          <section className="mt-6 rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm md:p-8">
+          <p className="mt-5 text-xs font-semibold text-slate-400">Demonstração: usuário <span className="font-black">barbearia-andrian</span> · chave <span className="font-black">8392-1147</span></p>
+        </div>
+      ) : (
+        <div className="mx-auto max-w-3xl">
+          <div className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm md:p-8">
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div>
-                <p className="text-2xl font-black">{site.profile.name}</p>
-                <p className="mt-1 text-sm text-slate-500">Chave validada. Você está vendo apenas este bio site.</p>
+                <p className="text-sm font-black uppercase tracking-[0.18em] text-[#31c4a8]">Minha página</p>
+                <h1 className="mt-1 text-3xl font-black">{site.profile.name}</h1>
+                <p className="mt-1 text-sm text-slate-500">Acesso liberado. Você gerencia apenas a sua página.</p>
               </div>
-              <Link href={createEditUrl(site.slug)} className="rounded-2xl bg-[#31c4a8] px-5 py-3 text-center font-black text-white transition hover:-translate-y-0.5 hover:bg-[#25b69a]">Editar bio site</Link>
+              <Link href={`${createEditUrl(site.slug)}?key=${encodeURIComponent(unlockedKey)}`} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#31c4a8] px-5 py-3 text-center font-black text-white transition hover:-translate-y-0.5 hover:bg-[#25b69a]">
+                <Edit3 className="h-4 w-4" /> Editar minha página
+              </Link>
             </div>
 
-            <div className="mt-6 grid gap-5 md:grid-cols-[220px_1fr]">
+            <div className="mt-6 grid gap-5 md:grid-cols-[200px_1fr]">
               <div className="w-fit rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
-                <QRCodeSVG value={`${window.location.origin}${createPublicUrl(site.slug)}`} size={190} />
+                <QRCodeSVG value={publicUrl} size={170} />
               </div>
               <div>
                 <p className="text-sm font-black uppercase tracking-[0.18em] text-[#31c4a8]">Link público</p>
-                <p className="mt-2 break-all text-slate-600">{`${window.location.origin}${createPublicUrl(site.slug)}`}</p>
+                <p className="mt-2 break-all text-slate-600">{publicUrl}</p>
                 <div className="mt-4 flex flex-wrap gap-3">
                   <button onClick={copyLink} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-black text-slate-700">
                     <Copy className="h-4 w-4" />{copied ? "Copiado" : "Copiar link"}
                   </button>
                   <Link href={createPublicUrl(site.slug)} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-black text-slate-700">Abrir <ExternalLink className="h-4 w-4" /></Link>
-                  <span className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-black text-[#1f9f87]"><KeyRound className="h-4 w-4" />{site.editKey}</span>
                 </div>
+                <p className="mt-5 text-xs font-semibold text-slate-400">Guarde a sua chave de acesso para entrar novamente: <span className="font-mono font-black text-slate-600">{site.editKey}</span></p>
               </div>
             </div>
-          </section>
-        ) : null}
-      </div>
-    </main>
+          </div>
+        </div>
+      )}
+    </ClientShell>
   );
 }
