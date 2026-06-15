@@ -26,6 +26,8 @@ export {
   validateClientKey,
 } from "./localProvider";
 
+export { supabaseProvider } from "./supabaseProvider";
+
 export { generateSlug } from "../security";
 
 export { isDemoSlug, demoSlugs } from "../mockSites";

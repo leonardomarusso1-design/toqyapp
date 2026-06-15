@@ -1,12 +1,10 @@
-import { getBiositeBySlug } from "@/lib/dataProvider";
+import { validateClientKey } from "@/lib/dataProvider";
 
-export async function GET(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
+type VerifyBody = { edit_key?: string };
+
+export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const site = getBiositeBySlug(slug);
-
-  if (!site) {
-    return Response.json({ error: "Bio site nao encontrado", source: "dataProvider:local" }, { status: 404 });
-  }
-
-  return Response.json({ site, source: "dataProvider:local" });
+  const body = (await request.json().catch(() => ({}))) as VerifyBody;
+  const ok = Boolean(validateClientKey(body.edit_key ?? "", slug));
+  return Response.json({ ok, source: "dataProvider:local" }, { status: ok ? 200 : 401 });
 }

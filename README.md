@@ -15,8 +15,7 @@ Plataforma MVP de bio sites/cartões digitais para QR Code, NFC e plaquinhas fí
 ## Demo
 
 - `/b/barbearia-andrian` — chave `8392-1147`
-- `/b/pastel-da-praca` — chave `2222-3333`
-- `/b/my-cell` — chave `4444-5555`
+- `/demo` — exemplos futuros de modelos
 
 ## Rodar local
 

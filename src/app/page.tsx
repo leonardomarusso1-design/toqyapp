@@ -26,10 +26,6 @@ const features = [
 
 const examples = [
   ["Barbearia", "barbearia-andrian"],
-  ["Pastelaria", "pastel-da-praca"],
-  ["Assistência técnica", "my-cell"],
-  ["Salão", "salao-demo"],
-  ["Clínica", "clinica-demo"],
 ] as const;
 
 const plans = [
@@ -225,7 +221,7 @@ export default function LandingPage() {
             {examples.map(([name, slug]) => (
               <Link key={slug} href={`/b/${slug}`} className="group rounded-[2rem] border border-slate-100 bg-[#f8fbfa] p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                 <div className="overflow-hidden rounded-[1.5rem] bg-slate-100">
-                  <img src={slug === "barbearia-andrian" ? "/templates/template-bg-barbearia.png" : slug === "pastel-da-praca" ? "/templates/template-bg-restaurante.png" : slug === "my-cell" ? "/templates/template-bg-assistencia-tecnica.png" : slug === "salao-demo" ? "/templates/template-bg-salao.png" : slug === "clinica-demo" ? "/templates/template-bg-clinica.png" : "/templates/template-bg-loja.png"} alt={name} className="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105" />
+                  <img src="/templates/template-bg-barbearia.png" alt={name} className="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105" />
                 </div>
                 <p className="mt-4 font-black">{name}</p>
                 <p className="mt-1 text-sm font-bold text-[#31c4a8]">Ver exemplo</p>

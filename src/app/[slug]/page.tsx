@@ -1,7 +1,7 @@
-import StoredPublicBioSite from "@/components/StoredPublicBioSite";
+import StoredPixHub from "@/components/StoredPixHub";
 import { getBiositeBySlug } from "@/lib/dataProvider";
 
-export default async function PublicSlugPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function PixPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  return <StoredPublicBioSite slug={slug} initialSite={getBiositeBySlug(slug) ?? undefined} />;
+  return <StoredPixHub slug={slug} initialSite={getBiositeBySlug(slug) ?? undefined} />;
 }
