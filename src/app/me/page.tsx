@@ -5,8 +5,7 @@ import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Copy, ExternalLink, KeyRound, LockKeyhole } from "lucide-react";
 import type { ToqySite } from "@/lib/types";
-import { createEditUrl, createPublicUrl } from "@/lib/siteStorage";
-import { validateClientKey } from "@/lib/dataProvider";
+import { createEditUrl, createPublicUrl, validateClientKey } from "@/lib/dataProvider";
 
 export default function MePage() {
   const [slug, setSlug] = useState("barbearia-andrian");

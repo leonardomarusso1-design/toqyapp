@@ -5,8 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Copy, Download, ExternalLink, QrCode, Smartphone } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
-import { listBiosites } from "@/lib/dataProvider";
-import { createPublicUrl } from "@/lib/siteStorage";
+import { createPublicUrl, listBiosites } from "@/lib/dataProvider";
 import type { ToqySite } from "@/lib/types";
 
 export default function QRPage() {

@@ -5,7 +5,7 @@ import { LockKeyhole } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { SiteBuilder } from "@/components/SiteBuilder";
 import type { ToqySite } from "@/lib/types";
-import { getSiteBySlug, saveStoredSite } from "@/lib/siteStorage";
+import { getBiositeBySlug, saveBiosite } from "@/lib/dataProvider";
 
 export default function EditPage({ params }: { params: Promise<{ slug: string }> }) {
   const [site, setSite] = useState<ToqySite | null>(null);
@@ -14,7 +14,7 @@ export default function EditPage({ params }: { params: Promise<{ slug: string }>
   const [error, setError] = useState("");
 
   useEffect(() => {
-    params.then(({ slug }) => setSite(getSiteBySlug(slug) ?? null));
+    params.then(({ slug }) => setSite(getBiositeBySlug(slug) ?? null));
   }, [params]);
 
   function verifyKey() {
@@ -68,7 +68,7 @@ export default function EditPage({ params }: { params: Promise<{ slug: string }>
   return (
     <DashboardShell>
       <SiteBuilder mode="edit" initialSite={site} onSave={(updated) => {
-        saveStoredSite(updated);
+        saveBiosite(updated);
         setSite(updated);
       }} />
     </DashboardShell>

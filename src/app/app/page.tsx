@@ -23,7 +23,7 @@ import {
   pauseBiosite,
   publishBiosite,
 } from "@/lib/dataProvider";
-import { createEditUrl, createPublicUrl } from "@/lib/siteStorage";
+import { createEditUrl, createPublicUrl } from "@/lib/dataProvider";
 import type { ToqySite } from "@/lib/types";
 
 const roleCards = [

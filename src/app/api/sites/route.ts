@@ -1,5 +1,5 @@
-import { mockSites } from "@/lib/mockSites";
+import { listBiosites } from "@/lib/dataProvider";
 
 export async function GET() {
-  return Response.json({ sites: mockSites, source: "mock" });
+  return Response.json({ sites: listBiosites(), source: "dataProvider:local" });
 }

@@ -6,7 +6,7 @@ import { CheckCircle2, Copy, ExternalLink, Plus, Save, Trash2 } from "lucide-rea
 import { QRCodeSVG } from "qrcode.react";
 import type { CatalogItem, CatalogLayout, Segment, ThemePreset, ToqySite } from "@/lib/types";
 import { applySegmentTemplate, getSegmentTemplate, segmentOptions } from "@/lib/segmentTemplates";
-import { createEditUrl, createPublicUrl, generateSlug } from "@/lib/siteStorage";
+import { createEditUrl, createPublicUrl, generateSlug } from "@/lib/dataProvider";
 import { validateSite } from "@/lib/validation";
 import { ImageGuidelineHint } from "./ImageGuidelineHint";
 import { ImageUploadField } from "./ImageUploadField";
@@ -264,4 +264,3 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
     </div>
   );
 }
-
