@@ -8,8 +8,6 @@ import {
   ChevronRight,
   Copy,
   CreditCard,
-  Download,
-  ExternalLink,
   FileText,
   Globe2,
   Image as ImageIcon,

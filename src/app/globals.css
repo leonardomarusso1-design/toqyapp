@@ -14,14 +14,23 @@ html {
 
 body {
   margin: 0;
-  background: linear-gradient(135deg, #0f172a 0%, #020617 50%, #020617 100%);
-  color: #f8fafc;
+  background: #f6faf8;
+  color: #0f172a;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 ::selection {
-  background: rgba(59, 130, 246);
+  background: #31c4a8;
   color: white;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .bg-radial-premium {
