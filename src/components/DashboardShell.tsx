@@ -1,15 +1,26 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
-import { Home, Plus, QrCode, Settings, Sparkles, UserRound, Users } from "lucide-react";
+import { Home, Plus, QrCode, Settings, UserRound, Users } from "lucide-react";
+
+const navItems = [
+  { href: "/app", icon: Home, label: "Painel" },
+  { href: "/app/qr", icon: QrCode, label: "QR Codes" },
+  { href: "/app/clientes", icon: Users, label: "Clientes" },
+  { href: "/app/configuracoes", icon: Settings, label: "Configurações" },
+];
 
 export function DashboardShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+
   return (
     <main className="min-h-screen bg-[#f6faf8] text-slate-950 lg:grid lg:grid-cols-[280px_1fr]">
       <aside className="bg-[#11171a] p-4 text-white lg:min-h-screen">
         <div className="flex h-full flex-col">
-          <Link href="/" className="flex items-center gap-3 px-2 py-3">
-            <img src="/brand/toqy-icon-transparent.png" alt="TOQY" className="h-10 w-10 rounded-2xl object-contain shadow-sm" />
-            <img src="/brand/logo-toqy-horizontal-white.png" alt="TOQY" className="h-7 w-auto object-contain" />
+          <Link href="/" className="flex items-center px-2 py-3">
+            <img src="/brand/logo-toqy-horizontal-white.png" alt="TOQY" className="h-9 w-auto object-contain" />
           </Link>
 
           <Link href="/app/novo" className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white shadow-lg shadow-emerald-950/20 transition hover:-translate-y-0.5 hover:bg-[#25b69a]">
@@ -17,11 +28,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </Link>
 
           <nav className="mt-8 grid gap-2">
-            <Nav href="/app" icon={<Home className="h-5 w-5" />} label="Painel" />
-            <Nav href="/app" icon={<Sparkles className="h-5 w-5" />} label="Bio sites" active />
-            <Nav href="/app/qr" icon={<QrCode className="h-5 w-5" />} label="QR Codes" />
-            <Nav href="/me" icon={<Users className="h-5 w-5" />} label="Clientes" />
-            <Nav href="/app" icon={<Settings className="h-5 w-5" />} label="Configurações" />
+            {navItems.map((item) => {
+              const active = item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
+              return <Nav key={item.href} href={item.href} icon={<item.icon className="h-5 w-5" />} label={item.label} active={active} />;
+            })}
           </nav>
 
           <div className="mt-auto hidden border-t border-white/10 pt-5 lg:block">

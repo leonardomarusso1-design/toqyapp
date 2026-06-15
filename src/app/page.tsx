@@ -33,9 +33,10 @@ const examples = [
 ] as const;
 
 const plans = [
-  ["Grátis", "R$0", "Para testar e conhecer a plataforma.", ["1 bio site ativo", "QR Code", "Preview em tempo real", "URL pública"]],
-  ["Starter", "R$29,90", "Para profissionais e pequenos negócios.", ["Até 5 bio sites", "Catálogo de produtos", "Pix + Wi-Fi", "Chave de acesso"]],
-  ["Pro", "R$69,90", "Para agências e equipes que criam para clientes.", ["Até 30 bio sites", "Backgrounds personalizados", "Métricas mockadas", "Planos futuros"]],
+  { name: "Gratuito", price: "R$0", period: "", description: "Para conhecer a plataforma e gerar seus primeiros leads.", highlight: false, items: ["1 bio site", "Domínio toqy.app/seunome", "QR Code básico", "Preview em tempo real", "Marca TOQY na página"] },
+  { name: "Comunidade", price: "R$29,90", period: "/mês", description: "Para quem está na comunidade e cria páginas para clientes.", highlight: true, items: ["Até 20 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "QR personalizado", "Acesso à comunidade"] },
+  { name: "Freelancer", price: "R$59,90", period: "/mês", description: "Para profissionais que criam para clientes, sem comunidade.", highlight: false, items: ["Até 20 bio sites", "QR personalizado", "Pix e Wi-Fi", "Catálogo completo", "Suporte prioritário"] },
+  { name: "Agência", price: "R$149,90", period: "/mês", description: "Para equipes e agências em escala.", highlight: false, items: ["Até 100 bio sites", "White label parcial", "Domínio próprio", "Gestão de equipe", "Tudo do Freelancer"] },
 ] as const;
 
 const featureShowcase = [
@@ -193,16 +194,19 @@ export default function LandingPage() {
           <p className="text-sm font-black uppercase tracking-[0.18em] text-[#31c4a8]">Planos</p>
           <h2 className="mt-3 text-4xl font-black tracking-tight md:text-5xl">Escolha o plano ideal para o seu negócio</h2>
         </div>
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          {plans.map(([name, price, description, items], index) => (
-            <article key={name} className={`relative rounded-[2rem] border bg-white p-8 shadow-sm ${index === 1 ? "border-[#31c4a8] shadow-xl shadow-emerald-100" : "border-slate-100"}`}>
-              {index === 1 ? <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#31c4a8] px-5 py-2 text-xs font-black text-white">Mais popular</span> : null}
-              <h3 className="text-2xl font-black">{name}</h3>
-              <p className="mt-2 min-h-12 text-slate-500">{description}</p>
-              <p className="mt-6 text-4xl font-black">{price}<span className="text-base font-bold text-slate-500">{price !== "R$0" ? "/mês" : ""}</span></p>
-              <div className="mt-6 grid gap-4">
-                {items.map((item) => <p key={item} className="flex items-center gap-3 text-sm font-bold text-slate-700"><Check className="h-4 w-4 text-[#31c4a8]" />{item}</p>)}
+        <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {plans.map((plan) => (
+            <article key={plan.name} className={`relative flex flex-col rounded-[2rem] border bg-white p-7 shadow-sm ${plan.highlight ? "border-[#31c4a8] shadow-xl shadow-emerald-100" : "border-slate-100"}`}>
+              {plan.highlight ? <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#31c4a8] px-5 py-2 text-xs font-black text-white">Mais popular</span> : null}
+              <h3 className="text-2xl font-black">{plan.name}</h3>
+              <p className="mt-2 min-h-16 text-sm text-slate-500">{plan.description}</p>
+              <p className="mt-4 text-4xl font-black">{plan.price}<span className="text-base font-bold text-slate-500">{plan.period}</span></p>
+              <div className="mt-6 grid gap-3">
+                {plan.items.map((item) => <p key={item} className="flex items-center gap-3 text-sm font-bold text-slate-700"><Check className="h-4 w-4 shrink-0 text-[#31c4a8]" />{item}</p>)}
               </div>
+              <Link href="/app/novo" className={`mt-7 inline-flex w-full items-center justify-center rounded-2xl px-5 py-3 text-sm font-black transition hover:-translate-y-0.5 ${plan.highlight ? "bg-[#31c4a8] text-white hover:bg-[#25b69a]" : "border border-slate-200 text-slate-900 hover:border-[#31c4a8]"}`}>
+                {plan.price === "R$0" ? "Começar grátis" : "Assinar"}
+              </Link>
             </article>
           ))}
         </div>
