@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import type { CatalogItem, CatalogLayout, ToqyButton, ToqyLinkType, ToqySite } from "@/lib/types";
 import { buttonHref, createVCard, pixPayload, whatsappUrl, wifiPayload } from "@/lib/buttonUtils";
+import { ensureUrl, normalizeInstagram } from "@/lib/security";
 
 const iconByType: Partial<Record<ToqyLinkType, React.ComponentType<{ className?: string }>>> = {
   whatsapp: MessageCircle,
@@ -205,7 +206,7 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
             <section className="mt-4 flex items-center justify-between gap-2">
               <ChevronLeft className="h-5 w-5 opacity-80" />
               <div className="flex flex-1 justify-center gap-3">
-                {socialButtons.map((button) => <button key={button.id} type="button" onClick={() => handleButton(button)} className="flex h-14 w-14 items-center justify-center rounded-2xl border text-white shadow-lg backdrop-blur-xl transition active:scale-95" style={glassCard(site)}><ButtonIcon type={button.type} /></button>)}
+                {socialButtons.map((button) => <button key={button.id} type="button" onClick={() => handleButton(button)} className="flex h-14 w-14 items-center justify-center rounded-2xl border text-white shadow-lg backdrop-blur-xl transition active:scale-95" style={{ ...glassCard(site), color: site.theme.text }}><ButtonIcon type={button.type} /></button>)}
               </div>
               <ChevronRight className="h-5 w-5 opacity-80" />
             </section>
@@ -288,7 +289,7 @@ function CatalogCard({ site, item, compact = false, stacked = false }: { site: T
         <p className={compact ? "mt-1 line-clamp-3 text-xs leading-relaxed" : "mt-2 text-sm leading-relaxed"} style={{ color: site.theme.muted }}>{item.description}</p>
         <div className="mt-4 flex items-center justify-between gap-3">
           {item.price ? <span className={compact ? "text-xs font-black" : "font-black"} style={{ color: site.theme.accent }}>{item.price}</span> : <span />}
-          <button type="button" onClick={() => window.open(item.actionUrl || whatsappUrl(site), "_blank")} className="rounded-full px-4 py-2 text-xs font-black" style={{ background: site.theme.primary, color: site.theme.mode === "light" ? "#fff" : "#06111F" }}>{item.actionLabel || "Ver"}</button>
+          <button type="button" onClick={() => { const href = item.actionUrl ? ensureUrl(item.actionUrl) : whatsappUrl(site); if (href) window.open(href, "_blank", "noopener,noreferrer"); }} className="rounded-full px-4 py-2 text-xs font-black" style={{ background: site.theme.primary, color: site.theme.mode === "light" ? "#fff" : "#06111F" }}>{item.actionLabel || "Ver"}</button>
         </div>
       </div>
     </article>
@@ -320,7 +321,8 @@ function PixModal({ site, onClose, copied, copyText, selectedAmount, setSelected
 }
 
 function WifiModal({ site, onClose, copied, copyText }: { site: ToqySite; onClose: () => void; copied: string; copyText: (value: string, key: string) => Promise<void> }) {
-  const checkinUrl = site.wifi.checkinUrl || site.links.googleReviewUrl || site.contact.facebook || site.contact.instagram || "";
+  const rawCheckinUrl = site.wifi.checkinUrl || site.links.googleReviewUrl || site.contact.facebook || site.contact.instagram || "";
+  const checkinUrl = rawCheckinUrl === site.contact.instagram ? normalizeInstagram(rawCheckinUrl) : ensureUrl(rawCheckinUrl);
   return (
     <ModalShell title="Rede Wi-Fi" onClose={onClose} site={site} icon={<Wifi className="h-6 w-6" />}>
       <div className="rounded-[1.75rem] bg-white p-4 text-center text-slate-950 shadow-xl">
@@ -332,10 +334,10 @@ function WifiModal({ site, onClose, copied, copyText }: { site: ToqySite; onClos
         </div>
         <div className="mt-4 border-t border-slate-200 pt-4">
           <p className="text-xs font-black text-slate-400">Depois de conectar</p>
-          {checkinUrl ? <button onClick={() => window.open(checkinUrl, "_blank")} className="mt-3 w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-black text-white"><MapPin className="mr-2 inline h-4 w-4" />{site.wifi.checkinLabel || "Fazer check-in / avaliar"}</button> : null}
+          {checkinUrl ? <button onClick={() => window.open(checkinUrl, "_blank", "noopener,noreferrer")} className="mt-3 w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-black text-white"><MapPin className="mr-2 inline h-4 w-4" />{site.wifi.checkinLabel || "Fazer check-in / avaliar"}</button> : null}
           <div className="mt-2 grid grid-cols-2 gap-2">
-            {site.contact.instagram ? <button onClick={() => window.open(site.contact.instagram, "_blank")} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700"><Camera className="mr-1 inline h-4 w-4" />Instagram</button> : null}
-            {site.contact.facebook ? <button onClick={() => window.open(site.contact.facebook, "_blank")} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700"><Globe2 className="mr-1 inline h-4 w-4" />Facebook</button> : null}
+            {site.contact.instagram ? <button onClick={() => window.open(normalizeInstagram(site.contact.instagram), "_blank", "noopener,noreferrer")} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700"><Camera className="mr-1 inline h-4 w-4" />Instagram</button> : null}
+            {site.contact.facebook ? <button onClick={() => window.open(ensureUrl(site.contact.facebook), "_blank", "noopener,noreferrer")} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700"><Globe2 className="mr-1 inline h-4 w-4" />Facebook</button> : null}
           </div>
         </div>
       </div>

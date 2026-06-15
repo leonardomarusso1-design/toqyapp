@@ -9,7 +9,7 @@ type Body = {
 
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as Body;
-  const businessName = body.businessName?.trim() || "Novo negocio";
+  const businessName = body.businessName?.trim() || "Novo negócio";
   const site = createSiteFromSegmentTemplate(body.segment ?? "servicos", {
     slug: generateSlug(businessName),
     status: "active",
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   return Response.json({
     site,
     slug: site.slug,
-    public_url: `/${site.slug}`,
+    public_url: `/b/${site.slug}`,
     edit_url: `/editar/${site.slug}`,
     edit_key: site.editKey,
     source: "mock",

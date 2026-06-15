@@ -71,7 +71,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-40 border-b border-emerald-950/5 bg-white/88 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
           <Link href="/" className="flex items-center gap-3">
-            <img src="/brand/logo-toqy-horizontal.png" alt="TOQY" className="h-9 w-auto object-contain md:h-10" />
+            <img src="/brand/logo-toqy-horizontal-dark.png" alt="TOQY" className="h-8 w-auto object-contain md:h-9" />
           </Link>
           <nav className="hidden items-center gap-9 text-sm font-bold text-slate-600 md:flex">
             <a className="transition hover:text-[#20b99d]" href="#recursos">Recursos</a>
@@ -221,7 +221,7 @@ export default function LandingPage() {
             {examples.map(([name, slug]) => (
               <Link key={slug} href={`/b/${slug}`} className="group rounded-[2rem] border border-slate-100 bg-[#f8fbfa] p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                 <div className="overflow-hidden rounded-[1.5rem] bg-slate-100">
-                  <img src={slug === "barbearia-andrian" ? "/templates/template-bg-barbearia.png" : slug === "pastel-da-praca" ? "/templates/template-bg-restaurante.png" : slug === "my-cell" ? "/templates/template-bg-assistencia-tecnica.png" : "/images/landing-feature-editor-preview.png"} alt={name} className="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105" />
+                  <img src={slug === "barbearia-andrian" ? "/templates/template-bg-barbearia.png" : slug === "pastel-da-praca" ? "/templates/template-bg-restaurante.png" : slug === "my-cell" ? "/templates/template-bg-assistencia-tecnica.png" : slug === "salao-demo" ? "/templates/template-bg-salao.png" : slug === "clinica-demo" ? "/templates/template-bg-clinica.png" : "/templates/template-bg-loja.png"} alt={name} className="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105" />
                 </div>
                 <p className="mt-4 font-black">{name}</p>
                 <p className="mt-1 text-sm font-bold text-[#31c4a8]">Ver exemplo</p>

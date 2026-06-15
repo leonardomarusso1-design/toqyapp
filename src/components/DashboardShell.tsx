@@ -8,8 +8,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <aside className="bg-[#11171a] p-4 text-white lg:min-h-screen">
         <div className="flex h-full flex-col">
           <Link href="/" className="flex items-center gap-3 px-2 py-3">
-            <img src="/brand/favicon-toqy.png" alt="TOQY" className="h-10 w-10 rounded-2xl object-contain shadow-sm" />
-            <img src="/brand/logo-toqy-horizontal.png" alt="TOQY" className="h-8 w-auto object-contain" />
+            <img src="/brand/toqy-icon-transparent.png" alt="TOQY" className="h-10 w-10 rounded-2xl object-contain shadow-sm" />
+            <img src="/brand/logo-toqy-horizontal-white.png" alt="TOQY" className="h-7 w-auto object-contain" />
           </Link>
 
           <Link href="/app/novo" className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white shadow-lg shadow-emerald-950/20 transition hover:-translate-y-0.5 hover:bg-[#25b69a]">

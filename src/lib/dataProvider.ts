@@ -3,10 +3,9 @@
 import { generateEditKey, generateId, generateSlug } from "./security";
 import {
   createStoredSite,
-  getStoredSites,
   mergeMockAndStoredSites,
   saveStoredSite,
-  setStoredSites,
+  deleteStoredSite,
 } from "./siteStorage";
 import type { ToqySite } from "./types";
 
@@ -31,7 +30,7 @@ export function createBiosite(site: ToqySite) {
 }
 
 export function deleteBiosite(id: string) {
-  setStoredSites(getStoredSites().filter((site) => site.id !== id));
+  deleteStoredSite(id);
 }
 
 function updateStatus(id: string, status: ToqySite["status"]) {

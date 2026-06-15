@@ -4,7 +4,7 @@ import { ensureUrl, normalizeInstagram, normalizePhone } from "./security";
 export function whatsappUrl(site: ToqySite) {
   const phone = normalizePhone(site.contact.whatsapp || site.contact.phone);
   if (!phone) return "";
-  return `https://wa.me/${phone}?text=${encodeURIComponent(site.contact.whatsappMessage || "Ola! Vim pelo Toqy.")}`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(site.contact.whatsappMessage || "Olá! Vim pelo Toqy.")}`;
 }
 
 export function buttonHref(site: ToqySite, button: ToqyButton): string {
@@ -36,7 +36,8 @@ export function buttonHref(site: ToqySite, button: ToqyButton): string {
 
 export function wifiPayload(site: ToqySite) {
   const enc = site.wifi.encryption === "nopass" ? "nopass" : site.wifi.encryption;
-  return `WIFI:T:${enc};S:${site.wifi.ssid};P:${site.wifi.password};H:false;;`;
+  const password = enc === "nopass" ? "" : site.wifi.password;
+  return `WIFI:T:${enc};S:${site.wifi.ssid};P:${password};H:false;;`;
 }
 
 export function pixPayload(site: ToqySite, amount?: number) {

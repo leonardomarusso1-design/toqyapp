@@ -5,8 +5,26 @@ import { mockSites, getMockSiteBySlug } from "./mockSites";
 import { generateSlug } from "./security";
 
 const STORAGE_KEY = "toqy_sites_v4";
+const DELETED_MOCKS_KEY = "toqy_deleted_mock_sites_v1";
 
 function isBrowser() { return typeof window !== "undefined"; }
+
+
+function getDeletedMockSiteIds(): string[] {
+  if (!isBrowser()) return [];
+  try {
+    const raw = window.localStorage.getItem(DELETED_MOCKS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function setDeletedMockSiteIds(ids: string[]) {
+  if (!isBrowser()) return;
+  window.localStorage.setItem(DELETED_MOCKS_KEY, JSON.stringify(Array.from(new Set(ids))));
+}
 
 export function getStoredSites(): ToqySite[] {
   if (!isBrowser()) return [];
@@ -44,19 +62,28 @@ export function createStoredSite(site: ToqySite) {
 }
 
 export function deleteStoredSite(id: string) {
-  setStoredSites(getStoredSites().filter((site) => site.id !== id));
+  const site = getStoredSites().find((item) => item.id === id) ?? mockSites.find((item) => item.id === id);
+  if (site && mockSites.some((mock) => mock.id === site.id)) {
+    setDeletedMockSiteIds([...getDeletedMockSiteIds(), site.id]);
+  }
+  setStoredSites(getStoredSites().filter((item) => item.id !== id));
 }
 
 export function mergeMockAndStoredSites(): ToqySite[] {
   const stored = getStoredSites();
   const bySlug = new Map<string, ToqySite>();
-  mockSites.forEach((site) => bySlug.set(site.slug, site));
+  const deletedMockIds = new Set(getDeletedMockSiteIds());
+  mockSites.filter((site) => !deletedMockIds.has(site.id)).forEach((site) => bySlug.set(site.slug, site));
   stored.forEach((site) => bySlug.set(site.slug, site));
   return Array.from(bySlug.values());
 }
 
 export function getSiteBySlug(slug: string) {
-  return getStoredSite(slug) ?? getMockSiteBySlug(slug);
+  const stored = getStoredSite(slug);
+  if (stored) return stored;
+  const mock = getMockSiteBySlug(slug);
+  if (!mock) return undefined;
+  return getDeletedMockSiteIds().includes(mock.id) ? undefined : mock;
 }
 
 export function validateClientKey(slug: string, key: string) {

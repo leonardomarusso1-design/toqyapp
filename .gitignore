@@ -1,4 +1,4 @@
-﻿# dependencies
+# dependencies
 node_modules/
 
 # next
@@ -35,3 +35,6 @@ Thumbs.db
 # editor
 .vscode/
 .idea/
+
+# local archives
+*.zip
