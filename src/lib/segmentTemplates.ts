@@ -42,6 +42,76 @@ function p(name: string, description: string, price = "", actionLabel = "Ver det
 }
 function modules(buttons: ToqyButton[], extra: Partial<ToqySite["modules"]> = {}) { return syncModulesFromButtons({ ...({} as ToqySite), buttons, modules: { ...emptyModules, ...extra } }).modules; }
 
+function templateVisual(segment: Segment): { backgroundImageUrl: string; theme: Partial<ToqySite["theme"]> } {
+  if (segment === "barbearia") {
+    return {
+      backgroundImageUrl: "/templates/template-bg-barbearia.png",
+      theme: {
+        mode: "dark",
+        backgroundType: "image",
+        background: "#050a12",
+        gradientFrom: "#050a12",
+        gradientTo: "#111827",
+        primary: "#D4AF37",
+        secondary: "#111827",
+        accent: "#FACC15",
+        text: "#FFFFFF",
+        muted: "#E5E7EB",
+        buttonFill: "glass",
+        buttonRadius: "pill",
+        useBackgroundOverlay: true,
+      },
+    };
+  }
+
+  if (segment === "restaurante" || segment === "pastelaria" || segment === "lanchonete" || segment === "delivery") {
+    return {
+      backgroundImageUrl: "/templates/template-bg-restaurante.png",
+      theme: {
+        mode: "dark",
+        backgroundType: "image",
+        background: "#431407",
+        gradientFrom: "#7C2D12",
+        gradientTo: "#F97316",
+        primary: "#F97316",
+        secondary: "#FB923C",
+        accent: "#FACC15",
+        text: "#FFFFFF",
+        muted: "#FFEDD5",
+        buttonFill: "gradient",
+        buttonRadius: "pill",
+        useBackgroundOverlay: true,
+      },
+    };
+  }
+
+  if (segment === "assistencia_tecnica") {
+    return {
+      backgroundImageUrl: "/templates/template-bg-assistencia-tecnica.png",
+      theme: {
+        mode: "dark",
+        backgroundType: "image",
+        background: "#06111F",
+        gradientFrom: "#082F49",
+        gradientTo: "#0F766E",
+        primary: "#06B6D4",
+        secondary: "#14B8A6",
+        accent: "#3B82F6",
+        text: "#FFFFFF",
+        muted: "#CFFAFE",
+        buttonFill: "glass",
+        buttonRadius: "pill",
+        useBackgroundOverlay: true,
+      },
+    };
+  }
+
+  return {
+    backgroundImageUrl: "/templates/template-bg-assistencia-tecnica.png",
+    theme: {},
+  };
+}
+
 const barbeariaButtons = [b("whatsapp", "WhatsApp"), b("instagram", "Instagram"), b("maps", "Como chegar"), b("wifi", "Wi-Fi"), b("pix", "Pix"), b("booking", "Agendar horário"), b("review", "Avaliar no Google"), b("catalog", "Serviços")];
 const restauranteButtons = [b("whatsapp", "WhatsApp"), b("menu", "Cardápio"), b("maps", "Como chegar"), b("pix", "Pix"), b("review", "Avaliar no Google"), b("catalog", "Produtos")];
 const salaoButtons = [b("whatsapp", "WhatsApp"), b("instagram", "Instagram"), b("booking", "Agendamento"), b("maps", "Como chegar"), b("pix", "Pix"), b("review", "Avaliar no Google"), b("catalog", "Serviços")];
@@ -197,6 +267,7 @@ export function getSegmentTemplate(segment: Segment): SegmentTemplate { return s
 export function createSiteFromSegmentTemplate(segment: Segment, overrides: Partial<ToqySite> = {}): ToqySite {
   const template = getSegmentTemplate(segment);
   const preset = template.defaultTheme;
+  const visual = templateVisual(segment);
   const now = new Date().toISOString();
   const profileOverrides: Partial<ToqySite["profile"]> = overrides.profile ?? {};
   const name = profileOverrides.name ?? "Novo negócio";
@@ -215,10 +286,10 @@ export function createSiteFromSegmentTemplate(segment: Segment, overrides: Parti
       logoShape: profileOverrides.logoShape ?? "circle",
       profileImageUrl: profileOverrides.profileImageUrl ?? "",
       logoUrl: profileOverrides.logoUrl ?? "",
-      backgroundImageUrl: profileOverrides.backgroundImageUrl ?? "",
+      backgroundImageUrl: profileOverrides.backgroundImageUrl || visual.backgroundImageUrl,
     },
     themePresetId: overrides.themePresetId ?? preset.id,
-    theme: { mode: preset.mode, backgroundType: "gradient", background: preset.background, gradientFrom: preset.gradientFrom, gradientTo: preset.gradientTo, card: preset.card, text: preset.text, muted: preset.muted, primary: preset.primary, secondary: preset.secondary, accent: preset.accent, buttonFill: "glass", buttonStyle: "full", buttonRadius: "pill", useBackgroundOverlay: true, ...overrides.theme },
+    theme: { mode: preset.mode, backgroundType: "gradient", background: preset.background, gradientFrom: preset.gradientFrom, gradientTo: preset.gradientTo, card: preset.card, text: preset.text, muted: preset.muted, primary: preset.primary, secondary: preset.secondary, accent: preset.accent, buttonFill: "glass", buttonStyle: "full", buttonRadius: "pill", useBackgroundOverlay: true, ...visual.theme, ...overrides.theme },
     plaqueTheme: { useSameBackground: false, backgroundStyle: "image", backgroundImageUrl: "", ...overrides.plaqueTheme },
     contact: { phone: "", whatsapp: "", whatsappMessage: "Olá! Vim pelo QR Code e gostaria de mais informações.", instagram: "", facebook: "", email: "", website: "", ...overrides.contact },
     links: { googleMapsUrl: "", googleReviewUrl: "", bookingUrl: "", menuUrl: "", ...overrides.links },
@@ -238,12 +309,13 @@ export function createSiteFromSegmentTemplate(segment: Segment, overrides: Parti
 export function applySegmentTemplate(site: ToqySite, segment: Segment): ToqySite {
   const template = getSegmentTemplate(segment);
   const preset = template.defaultTheme;
+  const visual = templateVisual(segment);
   return syncModulesFromButtons({
     ...site,
     segment,
-    profile: { ...site.profile, title: template.templateName, description: site.profile.description || template.description },
+    profile: { ...site.profile, title: template.templateName, description: site.profile.description || template.description, backgroundImageUrl: site.profile.backgroundImageUrl || visual.backgroundImageUrl },
     themePresetId: preset.id,
-    theme: { ...site.theme, mode: preset.mode, background: preset.background, gradientFrom: preset.gradientFrom, gradientTo: preset.gradientTo, card: preset.card, text: preset.text, muted: preset.muted, primary: preset.primary, secondary: preset.secondary, accent: preset.accent },
+    theme: { ...site.theme, mode: preset.mode, background: preset.background, gradientFrom: preset.gradientFrom, gradientTo: preset.gradientTo, card: preset.card, text: preset.text, muted: preset.muted, primary: preset.primary, secondary: preset.secondary, accent: preset.accent, ...visual.theme },
     buttons: template.buttons.map((item) => ({ ...item, id: generateId("btn") })),
     catalog: template.catalog.map((item) => ({ ...item, id: generateId("prd") })),
     catalogLayout: template.catalogLayout ?? site.catalogLayout ?? "carousel",

@@ -1,7 +1,7 @@
 export type ButtonStyle = "full" | "icon";
 export type ButtonFill = "solid" | "gradient" | "glass";
 export type BackgroundType = "solid" | "gradient" | "image";
-export type CatalogLayout = "carousel" | "grid" | "stack" | "grouped";
+export type CatalogLayout = "carousel" | "grid" | "stack" | "grouped" | "category-carousel";
 
 export type Segment =
   | "barbearia"

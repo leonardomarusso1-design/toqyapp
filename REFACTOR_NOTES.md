@@ -1,57 +1,63 @@
-# Refatoração TOQY — base funcional
+# REFACTOR_NOTES
 
-## O que foi feito
+## Problemas encontrados
 
-- Mantida base Next.js atual para facilitar deploy na Vercel.
-- Reorganizada a lógica principal em torno de `ToqySite`.
-- Corrigidos botões: adicionar, remover, duplicar, mudar tipo, editar campos certos e atualizar preview.
-- Separada lógica de URL dos botões em `src/lib/buttonUtils.ts`.
-- Sincronização de botões e módulos em `src/lib/buttonSync.ts`.
-- Recriados templates por segmento em `src/lib/segmentTemplates.ts`.
-- Criados mocks reais: barbearia, pastelaria, assistência técnica, salão, clínica e loja.
-- Mantido localStorage como banco temporário em `src/lib/siteStorage.ts`.
-- Criado/ajustado editor principal `SiteBuilder` com etapas:
-  1. Modelo
-  2. Perfil
-  3. Visual
-  4. Links e Botões
-  5. Pix e Wi-Fi
-  6. Catálogo
-  7. Salvar
-- Criado preview ao vivo usando o mesmo `PublicBioSite`.
-- Corrigidas rotas:
-  - `/`
-  - `/app`
-  - `/app/novo`
-  - `/app/qr`
-  - `/me`
-  - `/b/:slug`
-  - `/editar/:slug`
-- Lint e build passam.
+- Textos visiveis com acentos quebrados em builder, painel, QR, rota do cliente e bio site publico.
+- Dashboard `/app` ainda estava com cara de lista simples, sem metricas, acoes de gestao e niveis futuros.
+- Tela `/app/qr` tinha botao de download sem acao real e textos desalinhados com a proposta da pagina.
+- Rota dinamica `/:slug` apontava para Pix Hub, o que podia quebrar links publicos fora de `/b/:slug`.
+- Catalogo tinha suporte visual ao modo agrupado, mas o tipo ainda nao aceitava `category-carousel`.
+- Dados e operacoes de bio site estavam espalhados entre mocks/localStorage, dificultando a futura troca para Supabase.
+- Alguns operadores `??` foram restaurados apos limpeza de encoding, evitando regressao de preview e formulario.
 
-## O que ficou preparado para depois
+## Arquivos alterados
 
-- Supabase
-- Upload real de imagens
-- Autenticação real
-- Planos/assinatura
-- Métricas reais
-- Painel admin completo
+- `src/app/layout.tsx`
+- `src/app/globals.css`
+- `src/app/page.tsx`
+- `src/app/app/page.tsx`
+- `src/app/app/novo/page.tsx`
+- `src/app/app/qr/page.tsx`
+- `src/app/[slug]/page.tsx`
+- `src/app/[slug]/pix/page.tsx`
+- `src/app/me/page.tsx`
+- `src/app/editar/[slug]/page.tsx`
+- `src/components/DashboardShell.tsx`
+- `src/components/PublicBioSite.tsx`
+- `src/components/SiteBuilder.tsx`
+- `src/components/StoredPublicBioSite.tsx`
+- `src/components/PhoneMockup.tsx`
+- `src/lib/types.ts`
+- `src/lib/dataProvider.ts`
+- `src/lib/slug.ts`
+- `src/lib/pix.ts`
+- `src/lib/wifi.ts`
+- `src/lib/qr.ts`
 
-## Testes executados
+## Melhorias feitas
 
-- `npm run lint` — OK
-- `npm run build` — OK
+- Fontes globais padronizadas com `Inter` para corpo e `Space Grotesk` para titulos, usando `.font-body`, `.font-display` e `.font-mono`.
+- Dashboard reformulado como painel de gestao: metricas, busca, lista de bio sites, copiar link, copiar chave, QR, editar, abrir, pausar/publicar, duplicar e excluir.
+- QR Code separado em tela propria com titulo, subtitulo, selecao de bio site, previa de plaquinha, copiar link, abrir bio site e download SVG do QR.
+- `/me` refeito como area do cliente por chave, com validacao via provider local e layout alinhado.
+- `/:slug` agora renderiza o bio site publico; `/:slug/pix` continua dedicado ao Pix Hub.
+- Catalogo aceita `category-carousel`, mantendo compatibilidade com `grouped`.
+- Bio site publico preservado visualmente, com refinamentos em textos, Wi-Fi, Pix, catalogo e fallback de rota publica.
+- Criada camada `dataProvider` para isolar `localStorage` e facilitar troca futura para Supabase.
 
-## Ajustes premium 2026-06-14
+## Duplicacoes removidas ou reduzidas
 
-- Dashboard `/app` separado visualmente da tela de QR Code, agora com cara de painel SaaS: cards de métricas, lista de biosites e ações rápidas.
-- `/app/qr` mantido como tela específica de QR Codes, com visual de gestão e cards claros.
-- Bio site público refinado com inspiração no modelo premium enviado: ações rápidas no topo, botões translúcidos/glass, social icons, botões longos e destaque/callout.
-- PIX redesenhado em modal premium com QR, valores rápidos, copiar chave, recebedor, banco e botão de envio de comprovante via WhatsApp.
-- Wi‑Fi redesenhado com QR Code, copiar senha, CTA de check-in/avaliação, Instagram e Facebook.
-- Catálogo agora suporta 4 modos: carrossel único, grade 2 colunas, lista vertical e carrosséis por categoria.
-- Editor do catálogo ganhou seletor de layout e campo de categoria por item, para casos como “Cortes social”, “Cortes degradê” e outros grupos.
-- Templates por segmento foram diferenciados com catálogos, categorias, layouts, imagens placeholders e configurações mais coerentes por nicho.
-- Adicionados placeholders SVG em `public/templates/catalog` para deixar os templates menos iguais quando ainda não houver imagens reais.
-- Build validado com `npm run build`.
+- Operacoes de listar, salvar, criar, duplicar, publicar, pausar e validar chave foram centralizadas em `src/lib/dataProvider.ts`.
+- Helpers separados para slug, Pix, Wi-Fi e QR foram criados como ponto de entrada futuro.
+
+## Rotas testadas
+
+- `npm run build` passou.
+- Rotas geradas pelo build: `/`, `/app`, `/app/novo`, `/app/qr`, `/me`, `/b/[slug]`, `/editar/[slug]`, `/[slug]` e `/[slug]/pix`.
+
+## Pendencias reais
+
+- Revisar visualmente no navegador todos os fluxos longos de edicao, pois localStorage depende de interacao manual.
+- Evoluir `dataProvider` para Supabase quando as credenciais e regras de RLS estiverem prontas.
+- Finalizar upload real de imagens com Storage.
+- Melhorar exclusao de mocks fixos com tombstone local, caso seja necessario esconder templates mockados no painel.

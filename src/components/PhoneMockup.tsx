@@ -5,7 +5,7 @@ const buttons = [
   { label: "Instagram", icon: Camera },
   { label: "Pix", icon: CreditCard },
   { label: "Avaliar no Google", icon: Star },
-  { label: "Wi‑Fi", icon: Wifi },
+  { label: "Wi-Fi", icon: Wifi },
 ];
 
 export function PhoneMockup() {
@@ -19,7 +19,7 @@ export function PhoneMockup() {
           </div>
           <h3 className="mt-4 text-xl font-black">Barbearia Andrian</h3>
           <p className="mt-2 text-sm leading-relaxed text-zinc-400">
-            Agendamentos, redes sociais, avaliação e Wi‑Fi em um só lugar.
+            Agendamentos, redes sociais, avaliação e Wi-Fi em um só lugar.
           </p>
         </div>
         <div className="mt-6 space-y-3">

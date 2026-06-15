@@ -143,7 +143,9 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
   }
 
   function downloadVCard() {
-    const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
+    const pageUrl = typeof window !== "undefined" ? window.location.href : site.contact.website;
+    const contactCard = site.contact.website || !pageUrl ? vcard : vcard.replace("END:VCARD", `URL:${pageUrl}\nEND:VCARD`);
+    const blob = new Blob([contactCard], { type: "text/vcard;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -226,7 +228,15 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
 
           {activeCatalog.length ? <CatalogSection site={site} items={activeCatalog} layout={catalogLayout} /> : null}
 
-          <footer className="mt-8 pb-4 text-center text-xs font-bold" style={{ color: site.theme.muted }}>Criado com <span style={{ color: site.theme.primary }}>TOQY</span> por Leonardo Marusso</footer>
+          <footer className="mt-8 pb-4 text-center text-xs font-bold leading-relaxed" style={{ color: site.theme.muted }}>
+            <p>© 2026 {site.profile.name}. Todos os direitos reservados.</p>
+            <p>
+              Criado por{" "}
+              <a href="https://instagram.com/leomvideomaker" target="_blank" rel="noreferrer" className="font-black underline-offset-4 hover:underline" style={{ color: site.theme.primary }}>
+                Leonardo Marusso
+              </a>
+            </p>
+          </footer>
         </main>
       </div>
 
@@ -241,7 +251,7 @@ function CatalogSection({ site, items, layout }: { site: ToqySite; items: Catalo
     <section id="catalogo-toqy" className="mt-8 scroll-mt-8">
       <p className="text-xs font-black uppercase tracking-[0.22em]" style={{ color: site.theme.accent }}>Catálogo</p>
       <h2 className="mt-1 text-2xl font-black">Produtos e serviços</h2>
-      {layout === "grouped" ? (
+      {layout === "grouped" || layout === "category-carousel" ? (
         <div className="mt-5 space-y-7">
           {uniqueGroups(items).map(([group, groupItems]) => (
             <div key={group}>
@@ -312,12 +322,12 @@ function PixModal({ site, onClose, copied, copyText, selectedAmount, setSelected
 function WifiModal({ site, onClose, copied, copyText }: { site: ToqySite; onClose: () => void; copied: string; copyText: (value: string, key: string) => Promise<void> }) {
   const checkinUrl = site.wifi.checkinUrl || site.links.googleReviewUrl || site.contact.facebook || site.contact.instagram || "";
   return (
-    <ModalShell title="Rede Wi‑Fi" onClose={onClose} site={site} icon={<Wifi className="h-6 w-6" />}>
+    <ModalShell title="Rede Wi-Fi" onClose={onClose} site={site} icon={<Wifi className="h-6 w-6" />}>
       <div className="rounded-[1.75rem] bg-white p-4 text-center text-slate-950 shadow-xl">
         <p className="mx-auto max-w-[260px] text-sm font-bold text-slate-500">Escaneie o QR Code para conectar. Depois aproveite para seguir ou avaliar o estabelecimento.</p>
         <div className="mx-auto mt-4 w-fit rounded-3xl bg-slate-50 p-4"><QRCodeSVG value={wifiPayload(site)} size={190} /></div>
         <div className="mt-4 grid gap-2 text-left">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-black text-slate-400">Rede</p><p className="font-black">{site.wifi.ssid || "Rede Wi‑Fi"}</p></div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-black text-slate-400">Rede</p><p className="font-black">{site.wifi.ssid || "Rede Wi-Fi"}</p></div>
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3"><div><p className="text-xs font-black text-slate-400">Senha</p><p className="font-mono font-black">{site.wifi.password || "sem senha"}</p></div><button onClick={() => copyText(site.wifi.password, "wifi")} className="rounded-xl bg-slate-950 px-3 py-2 text-xs font-black text-white"><Copy className="mr-1 inline h-3 w-3" />{copied === "wifi" ? "Copiado" : "Copiar"}</button></div>
         </div>
         <div className="mt-4 border-t border-slate-200 pt-4">

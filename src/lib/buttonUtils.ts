@@ -4,7 +4,7 @@ import { ensureUrl, normalizeInstagram, normalizePhone } from "./security";
 export function whatsappUrl(site: ToqySite) {
   const phone = normalizePhone(site.contact.whatsapp || site.contact.phone);
   if (!phone) return "";
-  return `https://wa.me/${phone}?text=${encodeURIComponent(site.contact.whatsappMessage || "Olá! Vim pelo Toqy.")}`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(site.contact.whatsappMessage || "Ola! Vim pelo Toqy.")}`;
 }
 
 export function buttonHref(site: ToqySite, button: ToqyButton): string {

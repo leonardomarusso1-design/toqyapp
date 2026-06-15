@@ -21,15 +21,15 @@ export default function EditPage({ params }: { params: Promise<{ slug: string }>
     if (!site) return;
     const valid = key.trim() === site.editKey.trim();
     setUnlocked(valid);
-    setError(valid ? "" : "Chave invalida.");
+    setError(valid ? "" : "Chave inválida.");
   }
 
   if (!site) {
     return (
       <DashboardShell>
         <div className="mx-auto max-w-md rounded-[2rem] border border-slate-100 bg-white p-8 text-center shadow-sm">
-          <h1 className="text-3xl font-black">Bio site nao encontrado</h1>
-          <p className="mt-2 text-sm text-slate-500">Confira o link de edicao e tente novamente.</p>
+          <h1 className="text-3xl font-black">Bio site não encontrado</h1>
+          <p className="mt-2 text-sm text-slate-500">Confira o link de edição e tente novamente.</p>
         </div>
       </DashboardShell>
     );
@@ -42,9 +42,9 @@ export default function EditPage({ params }: { params: Promise<{ slug: string }>
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-emerald-50 text-[#31c4a8]">
             <LockKeyhole className="h-8 w-8" />
           </div>
-          <p className="mt-5 text-sm font-black uppercase tracking-[0.18em] text-[#31c4a8]">Edicao do cliente</p>
+          <p className="mt-5 text-sm font-black uppercase tracking-[0.18em] text-[#31c4a8]">Edição do cliente</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight">Editar {site.profile.name}</h1>
-          <p className="mt-2 text-sm leading-relaxed text-slate-500">Digite a chave de acesso para liberar o editor visual deste biosite.</p>
+          <p className="mt-2 text-sm leading-relaxed text-slate-500">Digite a chave de acesso para liberar o editor visual deste bio site.</p>
           <input
             className="mt-6 w-full rounded-2xl border border-slate-200 px-4 py-4 text-center font-mono text-xl font-black outline-none transition focus:border-[#31c4a8] focus:ring-4 focus:ring-emerald-100"
             value={key}
