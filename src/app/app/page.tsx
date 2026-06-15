@@ -1,8 +1,42 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Copy, QrCode } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import type { ToqySite } from "@/lib/types";
 import { createPublicUrl, mergeMockAndStoredSites } from "@/lib/siteStorage";
-export default function QRPage() { const [sites, setSites] = useState<ToqySite[]>([]); const [copied, setCopied] = useState(""); useEffect(() => setSites(mergeMockAndStoredSites()), []); async function copy(value: string, key: string) { await navigator.clipboard.writeText(value); setCopied(key); setTimeout(() => setCopied(""), 1500); } return <DashboardShell><div><p className="text-sm font-black uppercase tracking-[0.22em] text-cyan-300">Admin/aluno</p><h1 className="mt-2 text-4xl font-black md:text-6xl">QR Codes dos seus bio sites</h1><p className="mt-3 max-w-3xl text-slate-400">Área de gestão para gerar QR Code, link público e prévia de plaquinha para qualquer cliente criado.</p></div><div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">{sites.map((site) => { const url = typeof window !== "undefined" ? `${window.location.origin}${createPublicUrl(site.slug)}` : createPublicUrl(site.slug); return <article key={site.id} className="rounded-3xl border border-white/10 bg-white/[0.05] p-5"><div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950"><QrCode className="h-6 w-6" /></div><div><p className="font-black">{site.profile.name}</p><p className="text-sm text-slate-400">/{site.slug}</p></div></div><div className="mt-5 w-fit rounded-3xl bg-white p-4"><QRCodeSVG value={url} size={190} /></div><p className="mt-4 break-all text-xs text-slate-400">{url}</p><button onClick={() => copy(url, site.id)} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-cyan-400 px-4 py-3 text-sm font-black text-slate-950"><Copy className="h-4 w-4" />{copied === site.id ? "Copiado" : "Copiar link"}</button></article>; })}</div></DashboardShell>; }
+
+export default function QRPage() {
+  const [sites, setSites] = useState<ToqySite[]>([]);
+  const [copied, setCopied] = useState("");
+  useEffect(() => setSites(mergeMockAndStoredSites()), []);
+  async function copy(value: string, key: string) { await navigator.clipboard.writeText(value); setCopied(key); setTimeout(() => setCopied(""), 1500); }
+  return (
+    <DashboardShell>
+      <div className="mx-auto max-w-7xl">
+        <section className="rounded-[2rem] border border-slate-200 bg-white p-6 text-slate-950 shadow-sm md:p-8">
+          <p className="text-sm font-black uppercase tracking-[0.22em] text-cyan-600">Admin/aluno</p>
+          <h1 className="mt-2 text-4xl font-black md:text-6xl">QR Codes dos seus bio sites</h1>
+          <p className="mt-3 max-w-3xl text-slate-500">Área de gestão para gerar QR Code, link público e prévia de plaquinha para qualquer cliente criado.</p>
+        </section>
+        <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {sites.map((site) => {
+            const url = typeof window !== "undefined" ? `${window.location.origin}${createPublicUrl(site.slug)}` : createPublicUrl(site.slug);
+            return (
+              <article key={site.id} className="rounded-3xl border border-slate-200 bg-white p-5 text-slate-950 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700"><QrCode className="h-6 w-6" /></div>
+                  <div><p className="font-black">{site.profile.name}</p><p className="text-sm text-slate-500">/b/{site.slug}</p></div>
+                </div>
+                <div className="mt-5 w-fit rounded-3xl border border-slate-200 bg-white p-4 shadow-sm"><QRCodeSVG value={url} size={190} /></div>
+                <p className="mt-4 break-all text-xs text-slate-500">{url}</p>
+                <button onClick={() => copy(url, site.id)} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-cyan-500 px-4 py-3 text-sm font-black text-slate-950"><Copy className="h-4 w-4" />{copied === site.id ? "Copiado" : "Copiar link"}</button>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </DashboardShell>
+  );
+}

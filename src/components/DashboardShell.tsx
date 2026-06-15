@@ -4,8 +4,8 @@ import { Home, QrCode, Settings, Sparkles, UserRound } from "lucide-react";
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   return (
-    <main className="min-h-screen bg-slate-950 text-white lg:grid lg:grid-cols-[280px_1fr]">
-      <aside className="border-b border-white/10 bg-slate-900/80 p-5 lg:min-h-screen lg:border-b-0 lg:border-r">
+    <main className="min-h-screen bg-slate-100 text-slate-950 lg:grid lg:grid-cols-[280px_1fr]">
+      <aside className="border-b border-white/10 bg-slate-950 p-5 text-white lg:min-h-screen lg:border-b-0 lg:border-r lg:border-white/10">
         <Link href="/" className="flex items-center gap-3"><img src="/brand/toqy-logo.svg" alt="TOQY" className="h-9 w-auto" /></Link>
         <nav className="mt-8 grid gap-2">
           <Nav href="/app" icon={<Home className="h-4 w-4" />} label="Painel" />

@@ -28,6 +28,7 @@ export function ButtonEditor({ site, onChange }: Props) {
     switch (button.type) {
       case "whatsapp": return <div className="grid gap-4 md:grid-cols-2"><Field title="Número do WhatsApp" value={site.contact.whatsapp} onChange={(v) => updateContact({ whatsapp: v })} placeholder="5511999999999" /><label className="md:col-span-2"><span className={label}>Mensagem padrão</span><textarea className={input} rows={3} value={site.contact.whatsappMessage} onChange={(e) => updateContact({ whatsappMessage: e.target.value })} /></label></div>;
       case "instagram": return <Field title="Usuário ou link do Instagram" value={site.contact.instagram ?? ""} onChange={(v) => updateContact({ instagram: v })} onBlur={(v) => updateContact({ instagram: normalizeInstagram(v) })} placeholder="@usuario" />;
+      case "facebook": return <Field title="Link do Facebook / check-in" value={site.contact.facebook ?? ""} onChange={(v) => updateContact({ facebook: v })} placeholder="https://facebook.com/..." />;
       case "phone": return <Field title="Telefone" value={site.contact.phone} onChange={(v) => updateContact({ phone: v })} placeholder="5511999999999" />;
       case "maps": return <Field title="Link do Google Maps" value={site.links.googleMapsUrl ?? ""} onChange={(v) => updateLinks({ googleMapsUrl: v })} placeholder="https://maps.google.com/..." />;
       case "review": return <Field title="Link de avaliação Google" value={site.links.googleReviewUrl ?? ""} onChange={(v) => updateLinks({ googleReviewUrl: v })} placeholder="https://g.page/r/..." />;

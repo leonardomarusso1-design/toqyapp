@@ -1,6 +1,7 @@
 export type ButtonStyle = "full" | "icon";
 export type ButtonFill = "solid" | "gradient" | "glass";
 export type BackgroundType = "solid" | "gradient" | "image";
+export type CatalogLayout = "carousel" | "grid" | "stack" | "grouped";
 
 export type Segment =
   | "barbearia"
@@ -60,6 +61,7 @@ export type CatalogItem = {
   price?: string;
   imageUrl?: string;
   imageLayout: "square" | "horizontal";
+  category?: string;
   enabled: boolean;
   actionLabel?: string;
   actionUrl?: string;
@@ -133,7 +135,10 @@ export type ToqySite = {
     ssid: string;
     password: string;
     encryption: "WPA" | "WEP" | "nopass";
+    checkinUrl?: string;
+    checkinLabel?: string;
   };
+  catalogLayout: CatalogLayout;
   modules: {
     saveContact: boolean;
     whatsapp: boolean;
@@ -178,4 +183,5 @@ export type SegmentTemplate = {
   modules: ToqySite["modules"];
   buttons: ToqyButton[];
   catalog: CatalogItem[];
+  catalogLayout?: CatalogLayout;
 };

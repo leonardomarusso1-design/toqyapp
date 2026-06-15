@@ -11,6 +11,7 @@ export function buttonHref(site: ToqySite, button: ToqyButton): string {
   switch (button.type) {
     case "whatsapp": return whatsappUrl(site);
     case "instagram": return normalizeInstagram(site.contact.instagram);
+    case "facebook": return ensureUrl(site.contact.facebook);
     case "phone": return site.contact.phone ? `tel:${normalizePhone(site.contact.phone)}` : "";
     case "maps": return ensureUrl(site.links.googleMapsUrl);
     case "review": return ensureUrl(site.links.googleReviewUrl);
@@ -26,6 +27,8 @@ export function buttonHref(site: ToqySite, button: ToqyButton): string {
     case "image":
     case "event":
     case "custom":
+    case "linkedin":
+    case "spotify":
       return ensureUrl(button.url);
     default: return "";
   }
