@@ -34,20 +34,40 @@ export default function AppPage() {
         .eq("email", user.email)
         .single();
 
-      if (profileError || !profileData) {
+      let finalProfile = profileData;
+
+      // Se não encontrou na primeira tentativa, aguarda e tenta novamente
+      if (!profileData && profileError?.code === "PGRST116") {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const { data: retryProfileData, error: retryError } = await supabase
+          .from("profiles")
+          .select("email, full_name, subscription_status, plan_tier")
+          .eq("email", user.email)
+          .single();
+
+        if (retryError || !retryProfileData) {
+          console.error("Erro ao buscar perfil (retry):", retryError);
+          alert("Não foi possível carregar seu perfil. Tente novamente mais tarde.");
+          router.push("/login");
+          return;
+        }
+
+        finalProfile = retryProfileData;
+      } else if (profileError || !profileData) {
         console.error("Erro ao buscar perfil:", profileError);
         alert("Não foi possível carregar seu perfil. Tente novamente mais tarde.");
         router.push("/login");
         return;
       }
 
-      if (profileData.subscription_status !== "active") {
+      if (finalProfile.subscription_status !== "active") {
         alert("Sua assinatura não está ativa. Por favor, adquira um plano.");
         router.push("/");
         return;
       }
 
-      setProfile(profileData as UserProfile);
+      setProfile(finalProfile as UserProfile);
       setLoading(false);
     };
 

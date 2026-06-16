@@ -23,7 +23,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <img src="/brand/logo-toqy-horizontal-white.png" alt="TOQY" className="h-9 w-auto object-contain" />
           </Link>
 
-          <Link href="/app/novo" className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white shadow-lg shadow-emerald-950/20 transition hover:-translate-y-0.5 hover:bg-[#25b69a]">
+          <Link href="/app" className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white shadow-lg shadow-emerald-950/20 transition hover:-translate-y-0.5 hover:bg-[#25b69a]">
             <Plus className="h-4 w-4" /> Novo bio site
           </Link>
 

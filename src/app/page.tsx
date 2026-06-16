@@ -71,7 +71,6 @@ export default function LandingPage() {
       <header className="sticky top-0 z-40 border-b border-emerald-950/5 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
           <Link href="/" className="flex items-center gap-3">
-            {/* Ajustado para o nome do arquivo exato que você salvou em public */}
             <img src="/brand/logo-toqy-horizontal.png" alt="TOQY" className="h-12 w-auto object-contain md:h-14" />
           </Link>
           <nav className="hidden items-center gap-9 text-sm font-bold text-slate-600 md:flex">
@@ -101,7 +100,7 @@ export default function LandingPage() {
               Crie páginas editáveis com WhatsApp, Pix, Wi-Fi, catálogo, localização, avaliações e links importantes para qualquer negócio local.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/app/novo" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#31c4a8] px-8 py-3.5 text-base font-black text-white shadow-lg shadow-emerald-200 transition hover:-translate-y-0.5 hover:bg-[#25b69a]">
+              <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#31c4a8] px-8 py-3.5 text-base font-black text-white shadow-lg shadow-emerald-200 transition hover:-translate-y-0.5 hover:bg-[#25b69a]">
                 Criar meu bio site grátis <span aria-hidden="true">-&gt;</span>
               </Link>
               <a href="#como-funciona" className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-8 py-3.5 text-base font-black text-slate-900 shadow-sm transition hover:-translate-y-0.5">
@@ -232,7 +231,7 @@ export default function LandingPage() {
               <p className="text-sm font-black uppercase tracking-[0.18em] text-[#31c4a8]">Exemplos</p>
               <h2 className="mt-3 text-4xl font-black tracking-tight md:text-5xl">Modelos por segmento</h2>
             </div>
-            <Link href="/app/novo" className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white"><Plus className="h-4 w-4" />Novo bio site</Link>
+            <Link href="/login" className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white"><Plus className="h-4 w-4" />Novo bio site</Link>
           </div>
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {examples.map(([name, slug, imgPath]) => (

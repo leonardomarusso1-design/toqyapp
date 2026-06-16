@@ -50,7 +50,7 @@ export default function ClientesPage() {
           <h1 className="mt-2 text-3xl font-black tracking-tight md:text-5xl">Acessos dos clientes</h1>
           <p className="mt-2 max-w-2xl text-slate-500">Entregue para cada cliente o usuário e a chave de acesso da página dele.</p>
         </div>
-        <Link href="/app/novo" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#25b69a]">
+        <Link href="/app" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#25b69a]">
           <Plus className="h-4 w-4" /> Novo cliente
         </Link>
       </div>
