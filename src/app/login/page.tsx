@@ -1,12 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const router = useRouter();
+
+  // Verifica se o usuário já está logado para não pedir e-mail de novo
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) router.push('/app');
+    };
+    checkSession();
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,9 +26,7 @@ export default function LoginPage() {
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/app`,
-      },
+      options: { emailRedirectTo: `${window.location.origin}/app` },
     });
 
     if (error) {
@@ -25,42 +34,37 @@ export default function LoginPage() {
     } else {
       setMessage('Sucesso! Verifique sua caixa de entrada para acessar o app.');
     }
-
     setLoading(false);
   };
 
   return (
-    <main className="min-h-screen bg-[#f5fbf9] px-5 py-16 text-slate-950">
-      <div className="mx-auto max-w-xl rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-3xl font-black">Entrar no Toqy</h1>
-        <p className="mt-3 text-slate-600">Digite o e-mail usado na compra e receba um link mágico para entrar direto no app.</p>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: 'sans-serif' }}>
+      <form onSubmit={handleLogin} style={{ padding: '2rem', border: '1px solid #ccc', borderRadius: '8px', width: '300px' }}>
+        <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Entrar no Toqy</h2>
+        
+        <div style={{ marginBottom: '1rem' }}>
+          <label htmlFor="email" style={{ display: 'block', marginBottom: '0.5rem' }}>E-mail de acesso</label>
+          <input
+            id="email"
+            type="email"
+            placeholder="seuemail@exemplo.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}
+          />
+        </div>
 
-        <form onSubmit={handleLogin} className="mt-8 space-y-5">
-          <label className="block">
-            <span className="text-sm font-black text-slate-800">E-mail da compra Kiwify</span>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none focus:border-[#31c4a8] focus:ring-4 focus:ring-emerald-100"
-              placeholder="seu-email@dominio.com"
-            />
-          </label>
+        <button
+          type="submit"
+          disabled={loading}
+          style={{ width: '100%', padding: '0.75rem', backgroundColor: '#00cbb2', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+        >
+          {loading ? 'Enviando...' : 'Receber Link de Acesso'}
+        </button>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="inline-flex w-full items-center justify-center rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-[#25b69a] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading ? 'Enviando...' : 'Receber Link de Acesso'}
-          </button>
-
-          {message ? (
-            <p className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-medium text-slate-700">{message}</p>
-          ) : null}
-        </form>
-      </div>
-    </main>
+        {message && <p style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.9rem' }}>{message}</p>}
+      </form>
+    </div>
   );
 }
