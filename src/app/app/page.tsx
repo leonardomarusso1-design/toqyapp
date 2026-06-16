@@ -31,7 +31,7 @@ const SUBSCRIPTION_LABELS: Record<string, string> = {
   active: "Ativa",
   canceled: "Cancelada",
   past_due: "Pagamento pendente",
-  inactive: "Inativa",
+  inactive: "Ativa", // plano free sempre ativo
 };
 
 export default function ConfiguracoesPage() {
