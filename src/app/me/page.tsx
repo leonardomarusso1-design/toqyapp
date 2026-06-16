@@ -79,7 +79,6 @@ export default function MePage() {
           </div>
 
           {error ? <p className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-3 text-sm font-bold text-red-600">{error}</p> : null}
-          <p className="mt-5 text-xs font-semibold text-slate-400">Demonstração: usuário <span className="font-black">barbearia-andrian</span> · chave <span className="font-black">8392-1147</span></p>
         </div>
       ) : (
         <div className="mx-auto max-w-3xl">
