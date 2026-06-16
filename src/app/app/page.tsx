@@ -20,32 +20,33 @@ export default function AppPage() {
   useEffect(() => {
     let mounted = true;
 
-    // Função que tenta buscar o perfil até 3 vezes (resolve o atraso do banco)
-    const fetchProfileWithRetry = async (userEmail: string, retries = 3) => {
-      for (let i = 0; i < retries; i++) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('email, full_name, subscription_status, plan_tier')
-          .eq('email', userEmail)
-          .single();
-
-        if (data) return data;
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Espera 1.5s antes de tentar de novo
-      }
-      return null;
-    };
-
-    const initAuth = async () => {
+    const loadData = async () => {
       setLoading(true);
+      setErrorMsg('');
       
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.user?.email) {
+        setLoading(false);
         router.push('/login');
         return;
       }
 
-      const profileData = await fetchProfileWithRetry(session.user.email);
+      // Tenta buscar o perfil com 3 tentativas silenciosas
+      let profileData = null;
+      for (let i = 0; i < 3; i++) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('email, full_name, subscription_status, plan_tier')
+          .eq('email', session.user.email)
+          .single();
+
+        if (data) {
+          profileData = data;
+          break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
 
       if (!mounted) return;
 
@@ -57,6 +58,7 @@ export default function AppPage() {
 
       if (profileData.subscription_status !== 'active') {
         alert("Sua assinatura não está ativa. Por favor, adquira um plano.");
+        setLoading(false);
         router.push('/');
         return;
       }
@@ -65,12 +67,14 @@ export default function AppPage() {
       setLoading(false);
     };
 
-    // Escuta o processamento do link mágico pela URL antes de ler o banco
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) initAuth();
-    });
+    loadData();
 
-    initAuth();
+    // Escuta mudanças de sessão apenas se for um login novo
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        loadData();
+      }
+    });
 
     return () => {
       mounted = false;
