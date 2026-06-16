@@ -211,7 +211,7 @@ export default function LandingPage() {
                     ? "https://pay.kiwify.com.br/Oc2YP5A"
                     : plan.name === "Agência"
                     ? "https://pay.kiwify.com.br/X71Qhtu"
-                    : "/app/novo"
+                    : "/login"
                 }
                 target={plan.name === "Gratuito" ? undefined : "_blank"}
                 rel={plan.name === "Gratuito" ? undefined : "noreferrer noopener"}

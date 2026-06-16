@@ -80,7 +80,7 @@ export function SubscriptionPlansDisplay() {
                   ? "https://pay.kiwify.com.br/Oc2YP5A"
                   : plan.id === "agency"
                   ? "https://pay.kiwify.com.br/X71Qhtu"
-                  : "/app/novo"
+                  : "/login"
               }
               target={plan.id === "free" ? undefined : "_blank"}
               rel={plan.id === "free" ? undefined : "noreferrer noopener"}
