@@ -72,7 +72,7 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
           <Link href="/" className="flex items-center gap-3">
             {/* Ajustado para o nome do arquivo exato que você salvou em public */}
-            <img src="/brand/logo-toqy-horizontal.png" alt="TOQY" className="h-8 w-auto object-contain md:h-9" />
+            <img src="/brand/logo-toqy-horizontal.png" alt="TOQY" className="h-12 w-auto object-contain md:h-14" />
           </Link>
           <nav className="hidden items-center gap-9 text-sm font-bold text-slate-600 md:flex">
             <a className="transition hover:text-[#20b99d]" href="#recursos">Recursos</a>
@@ -82,7 +82,7 @@ export default function LandingPage() {
           </nav>
           <div className="flex items-center gap-3">
             <Link href="/login" className="hidden text-sm font-black text-slate-700 hover:text-[#20b99d] sm:inline-flex">Entrar</Link>
-            <Link href="/app/novo" className="rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white shadow-sm shadow-emerald-200 transition hover:-translate-y-0.5 hover:bg-[#25b69a]">Começar grátis</Link>
+            <Link href="/login" className="rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white shadow-sm shadow-emerald-200 transition hover:-translate-y-0.5 hover:bg-[#25b69a]">Começar grátis</Link>
           </div>
         </div>
       </header>
@@ -250,7 +250,7 @@ export default function LandingPage() {
 
       <section className="px-5 py-16 text-center">
         <h2 className="mx-auto max-w-3xl text-4xl font-black tracking-tight md:text-5xl">Crie uma página profissional para seu cliente em poucos minutos.</h2>
-        <Link href="/app/novo" className="mt-8 inline-flex rounded-2xl bg-[#31c4a8] px-8 py-4 font-black text-white shadow-lg shadow-emerald-200 transition hover:-translate-y-0.5">Começar agora</Link>
+        <Link href="/login" className="mt-8 inline-flex rounded-2xl bg-[#31c4a8] px-8 py-4 font-black text-white shadow-lg shadow-emerald-200 transition hover:-translate-y-0.5">Começar agora</Link>
       </section>
     </main>
   );
