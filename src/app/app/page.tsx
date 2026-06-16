@@ -15,70 +15,70 @@ export default function AppPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    const checkUserAndPlan = async () => {
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
+    let mounted = true;
 
-      if (authError || !user) {
-        router.push("/login");
-        return;
-      }
-
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("email, full_name, subscription_status, plan_tier")
-        .eq("email", user.email)
-        .single();
-
-      let finalProfile: UserProfile | null = profileData;
-
-      // Se não encontrou na primeira tentativa, aguarda e tenta novamente
-      if (!profileData && profileError?.code === "PGRST116") {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        const { data: retryProfileData, error: retryError } = await supabase
-          .from("profiles")
-          .select("email, full_name, subscription_status, plan_tier")
-          .eq("email", user.email)
+    // Função que tenta buscar o perfil até 3 vezes (resolve o atraso do banco)
+    const fetchProfileWithRetry = async (userEmail: string, retries = 3) => {
+      for (let i = 0; i < retries; i++) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('email, full_name, subscription_status, plan_tier')
+          .eq('email', userEmail)
           .single();
 
-        if (retryError || !retryProfileData) {
-          console.error("Erro ao buscar perfil (retry):", retryError);
-          alert("Não foi possível carregar seu perfil. Tente novamente mais tarde.");
-          router.push("/login");
-          return;
-        }
+        if (data) return data;
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Espera 1.5s antes de tentar de novo
+      }
+      return null;
+    };
 
-        finalProfile = retryProfileData;
-      } else if (profileError || !profileData) {
-        console.error("Erro ao buscar perfil:", profileError);
-        alert("Não foi possível carregar seu perfil. Tente novamente mais tarde.");
-        router.push("/login");
+    const initAuth = async () => {
+      setLoading(true);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user?.email) {
+        router.push('/login');
         return;
       }
 
-      if (!finalProfile || finalProfile.subscription_status !== "active") {
-        if (!finalProfile) {
-          alert("Não foi possível carregar seu perfil. Tente novamente mais tarde.");
-          router.push("/login");
-          return;
-        }
+      const profileData = await fetchProfileWithRetry(session.user.email);
+
+      if (!mounted) return;
+
+      if (!profileData) {
+        setErrorMsg('Não foi possível carregar seu perfil. O banco de dados ainda está processando seu cadastro.');
+        setLoading(false);
+        return;
+      }
+
+      if (profileData.subscription_status !== 'active') {
         alert("Sua assinatura não está ativa. Por favor, adquira um plano.");
-        router.push("/");
+        router.push('/');
         return;
       }
 
-      setProfile(finalProfile);
+      setProfile(profileData);
       setLoading(false);
     };
 
-    checkUserAndPlan();
+    // Escuta o processamento do link mágico pela URL antes de ler o banco
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) initAuth();
+    });
+
+    initAuth();
+
+    return () => {
+      mounted = false;
+      authListener.subscription.unsubscribe();
+    };
   }, [router]);
 
+  // TELA DE CARREGAMENTO (Seu design mantido)
   if (loading) {
     return (
       <main className="min-h-screen bg-[#f5fbf9] flex items-center justify-center px-5">
@@ -89,6 +89,24 @@ export default function AppPage() {
     );
   }
 
+  // TELA DE ERRO (Criada com o seu padrão de design)
+  if (errorMsg) {
+    return (
+      <main className="min-h-screen bg-[#f5fbf9] flex items-center justify-center px-5">
+        <div className="rounded-[2rem] border border-red-200 bg-white p-8 shadow-sm text-center max-w-md">
+          <p className="text-xl font-black text-red-600 mb-4">{errorMsg}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-6 py-3 bg-[#31c4a8] text-white rounded-full font-bold hover:bg-[#28a890] transition-colors"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  // TELA PRINCIPAL (Seu design mantido)
   return (
     <main className="min-h-screen bg-[#f5fbf9] px-5 py-16 text-slate-950">
       <div className="mx-auto max-w-4xl rounded-[2rem] border border-slate-200 bg-white p-10 shadow-sm">
@@ -102,7 +120,7 @@ export default function AppPage() {
           </div>
           <div className="rounded-[1.5rem] border border-slate-100 bg-[#f8fbfa] p-6">
             <p className="text-sm font-black uppercase tracking-[0.18em] text-[#31c4a8]">Seu Plano Atual</p>
-            <p className="mt-3 text-2xl font-black text-slate-900">{profile?.plan_tier}</p>
+            <p className="mt-3 text-2xl font-black text-slate-900">{profile?.plan_tier === "free" ? "Gratuito" : profile?.plan_tier}</p>
           </div>
         </div>
 
@@ -122,9 +140,15 @@ export default function AppPage() {
           )}
 
           {(profile?.plan_tier === "free" || profile?.plan_tier === "Toqy - Comunidade" || profile?.plan_tier === "Toqy - Freelancer" || profile?.plan_tier === "Toqy - Agência") && (
-            <div className="rounded-[1.5rem] border border-[#31c4a8] bg-[#ecfdf6] p-6 text-slate-900">
+            <div className="rounded-[1.5rem] border border-[#31c4a8] bg-[#ecfdf6] p-6 text-slate-900 flex flex-col items-start">
               <p className="font-black">🚀 Painel de Criação Liberado:</p>
-              <p className="mt-2">Você está no plano {profile?.plan_tier === "free" ? "Gratuito" : profile?.plan_tier}.</p>
+              <p className="mt-2 mb-4">Você está no plano {profile?.plan_tier === "free" ? "Gratuito" : profile?.plan_tier}.</p>
+              <button 
+                onClick={() => router.push('/app/novo')} 
+                className="px-6 py-3 bg-[#31c4a8] text-white font-bold rounded-xl hover:bg-[#28a890] transition-colors"
+              >
+                Ir para o Criador de Bio sites
+              </button>
             </div>
           )}
 
