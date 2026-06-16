@@ -323,6 +323,7 @@ export function createSiteFromSegmentTemplate(segment: Segment, overrides: Parti
   const slug = overrides.slug ?? generateSlug(name);
   const site: ToqySite = {
     id: overrides.id ?? generateId("site"),
+    userId: overrides.userId,
     slug,
     segment,
     status: overrides.status ?? "draft",

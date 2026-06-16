@@ -26,6 +26,7 @@ create index if not exists organizations_status_idx on public.organizations (sta
 -- ============================================
 create table if not exists public.bio_sites (
   id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete set null,
   organization_id uuid references public.organizations(id) on delete cascade,
   slug text unique not null,
   business_name text not null,
@@ -46,6 +47,7 @@ create table if not exists public.bio_sites (
 );
 
 create index if not exists bio_sites_slug_idx on public.bio_sites (slug);
+create index if not exists bio_sites_user_id_idx on public.bio_sites (user_id);
 create index if not exists bio_sites_org_id_idx on public.bio_sites (organization_id);
 create index if not exists bio_sites_status_idx on public.bio_sites (status);
 
@@ -151,7 +153,6 @@ comment on table public.catalog_items is 'Products/services in catalog';
 comment on table public.access_keys is 'Client access keys for editing biosites';
 comment on table public.analytics_events is 'Analytics events tracked on biosites';
 comment on table public.subscriptions is 'Subscription plans for organizations';
-create index if not exists bio_site_services_bio_site_id_idx on public.bio_site_services (bio_site_id);
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -168,40 +169,117 @@ create trigger bio_sites_set_updated_at
 before update on public.bio_sites
 for each row execute function public.set_updated_at();
 
-drop trigger if exists bio_site_services_set_updated_at on public.bio_site_services;
-create trigger bio_site_services_set_updated_at
-before update on public.bio_site_services
-for each row execute function public.set_updated_at();
-
 alter table public.bio_sites enable row level security;
-alter table public.bio_site_services enable row level security;
 
 drop policy if exists "Public can read active bio sites" on public.bio_sites;
 create policy "Public can read active bio sites"
 on public.bio_sites
 for select
 to anon
-using (is_active = true);
+using (status = 'active' and is_public = true);
 
-drop policy if exists "Public can read active services from active bio sites" on public.bio_site_services;
-create policy "Public can read active services from active bio sites"
-on public.bio_site_services
+drop policy if exists "Users can view own bio sites" on public.bio_sites;
+create policy "Users can view own bio sites"
+on public.bio_sites
 for select
-to anon
-using (
-  is_active = true
-  and exists (
-    select 1
-    from public.bio_sites
-    where bio_sites.id = bio_site_services.bio_site_id
-      and bio_sites.is_active = true
-  )
-);
+to authenticated
+using (auth.uid() = user_id);
+
+drop policy if exists "Users can create own bio sites" on public.bio_sites;
+create policy "Users can create own bio sites"
+on public.bio_sites
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update own bio sites" on public.bio_sites;
+create policy "Users can update own bio sites"
+on public.bio_sites
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+drop policy if exists "Users can delete own bio sites" on public.bio_sites;
+create policy "Users can delete own bio sites"
+on public.bio_sites
+for delete
+to authenticated
+using (auth.uid() = user_id);
 
 -- Do not create anon insert/update/delete policies.
 -- Server Route Handlers use SUPABASE_SERVICE_ROLE_KEY, which bypasses RLS.
 grant usage on schema public to anon, authenticated, service_role;
 grant select on public.bio_sites to anon;
-grant select on public.bio_site_services to anon;
 grant all privileges on public.bio_sites to service_role;
-grant all privileges on public.bio_site_services to service_role;
+
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text not null,
+  full_name text,
+  phone text,
+  cpf text unique,
+  plan_tier text default 'free' check (plan_tier in ('free', 'community', 'freelancer', 'agency')),
+  subscription_status text default 'active' check (subscription_status in ('active', 'canceled', 'past_due', 'inactive')),
+  kiwify_customer_id text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create index if not exists profiles_email_idx on public.profiles (email);
+create index if not exists profiles_plan_tier_idx on public.profiles (plan_tier);
+create index if not exists profiles_subscription_status_idx on public.profiles (subscription_status);
+
+drop trigger if exists profiles_set_updated_at on public.profiles;
+create trigger profiles_set_updated_at
+before update on public.profiles
+for each row execute function public.set_updated_at();
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, full_name, phone, cpf)
+  values (
+    new.id,
+    new.email,
+    new.raw_user_meta_data->>'full_name',
+    new.raw_user_meta_data->>'phone',
+    new.raw_user_meta_data->>'cpf'
+  )
+  on conflict (id) do update
+  set
+    email = excluded.email,
+    full_name = excluded.full_name,
+    phone = excluded.phone,
+    cpf = excluded.cpf,
+    updated_at = now();
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_user();
+
+alter table public.profiles enable row level security;
+
+drop policy if exists "Users can view own profile" on public.profiles;
+create policy "Users can view own profile"
+on public.profiles
+for select
+to authenticated
+using (auth.uid() = id);
+
+drop policy if exists "Users can update own profile" on public.profiles;
+create policy "Users can update own profile"
+on public.profiles
+for update
+to authenticated
+using (auth.uid() = id)
+with check (auth.uid() = id);

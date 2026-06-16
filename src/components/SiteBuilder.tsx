@@ -7,6 +7,8 @@ import { QRCodeSVG } from "qrcode.react";
 import type { CatalogItem, CatalogLayout, Segment, ThemePreset, ToqySite } from "@/lib/types";
 import { applySegmentTemplate, getSegmentTemplate, segmentOptions } from "@/lib/segmentTemplates";
 import { createEditUrl, createPublicUrl, generateSlug } from "@/lib/dataProvider";
+import { checkBiositeLimit } from "@/lib/planLimits";
+import { supabase } from "@/lib/supabaseClient";
 import { validateSite } from "@/lib/validation";
 import { ImageGuidelineHint } from "./ImageGuidelineHint";
 import { ImageUploadField } from "./ImageUploadField";
@@ -16,7 +18,7 @@ import { ButtonEditor } from "./ButtonEditor";
 import { generateId } from "@/lib/security";
 import { syncModulesFromButtons } from "@/lib/buttonSync";
 
-type Props = { mode: "create" | "edit"; initialSite: ToqySite; onSave: (site: ToqySite) => void };
+type Props = { mode: "create" | "edit"; initialSite: ToqySite; onSave: (site: ToqySite) => unknown | Promise<unknown> };
 
 const steps = ["Modelo", "Perfil", "Visual", "Links e Botões", "Pix e Wi-Fi", "Catálogo", "Salvar"];
 const field = "mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-[#31c4a8] focus:ring-4 focus:ring-emerald-100";
@@ -41,6 +43,8 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   const [saved, setSaved] = useState<ToqySite | null>(null);
   const [copied, setCopied] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
+  const [limitState, setLimitState] = useState<{ current: number; limit: number; planTier: string } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const publicLink = createPublicUrl(site.slug);
   const editLink = createEditUrl(site.slug);
   const selectedTemplate = getSegmentTemplate(site.segment);
@@ -77,14 +81,52 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
     }));
   }
 
-  function save() {
+  async function save() {
+    if (isSaving) return;
+
     const siteToValidate = syncModulesFromButtons({ ...site, slug: generateSlug(site.slug || site.profile.name), status: "active" });
     const result = validateSite(siteToValidate);
-    if (!result.ok) { setErrors(result.errors); setStep(steps.length - 1); return; }
+    if (!result.ok) {
+      setErrors(result.errors);
+      setStep(steps.length - 1);
+      return;
+    }
+
+    if (mode === "create") {
+      setIsSaving(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const limitCheck = await checkBiositeLimit(user?.id ?? "");
+
+        if (!limitCheck.allowed) {
+          setLimitState({
+            current: limitCheck.current,
+            limit: limitCheck.limit,
+            planTier: limitCheck.planTier,
+          });
+          setErrors([]);
+          setStep(steps.length - 1);
+          return;
+        }
+      } catch (error) {
+        setErrors([error instanceof Error ? error.message : "Não foi possível validar o limite do seu plano."]);
+        setStep(steps.length - 1);
+        return;
+      } finally {
+        setIsSaving(false);
+      }
+    }
+
     setErrors([]);
-    onSave(siteToValidate);
-    setSite(siteToValidate);
-    setSaved(siteToValidate);
+    setLimitState(null);
+    setIsSaving(true);
+    try {
+      await onSave(siteToValidate);
+      setSite(siteToValidate);
+      setSaved(siteToValidate);
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   async function copy(value: string, key: string) {
@@ -237,7 +279,8 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
         <h2 className="text-2xl font-black text-slate-950">{mode === "create" ? "Publicar" : "Salvar alterações"}</h2>
         <p className="mt-1 text-sm text-slate-500">Confira, salve e entregue o link junto com a chave de acesso.</p>
         {errors.length ? <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">{errors.map((err) => <p key={err}>{err}</p>)}</div> : null}
-        <button type="button" onClick={save} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#31c4a8] px-5 py-4 font-black text-white"><Save className="h-5 w-5" />Salvar e publicar</button>
+        {limitState ? <div className="mt-4 rounded-[1.75rem] border border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-slate-50 p-5 shadow-sm"><p className="text-lg font-black text-slate-950">Você atingiu o limite do plano gratuito. Faça upgrade!</p><p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">Seu plano <span className="font-black text-indigo-700">{limitState.planTier}</span> permite até <span className="font-black text-slate-900">{limitState.limit}</span> biosites e você já possui <span className="font-black text-slate-900">{limitState.current}</span>.</p><div className="mt-4 flex flex-wrap gap-3"><Link href="/#planos" className="inline-flex items-center justify-center rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-black text-white transition hover:bg-indigo-700">Ver planos e fazer upgrade</Link><Link href="/app" className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:border-indigo-200 hover:text-indigo-700">Voltar para meus biosites</Link></div></div> : null}
+        <button type="button" onClick={save} disabled={isSaving} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#31c4a8] px-5 py-4 font-black text-white disabled:cursor-not-allowed disabled:opacity-60"><Save className="h-5 w-5" />{isSaving ? "Salvando..." : "Salvar e publicar"}</button>
         {saved ? <div className="mt-5 grid gap-4 rounded-3xl border border-emerald-200 bg-emerald-50 p-4"><p className="font-black text-emerald-900">Bio site salvo com sucesso.</p><div className="w-fit rounded-2xl bg-white p-4"><QRCodeSVG value={typeof window !== "undefined" ? `${window.location.origin}${publicLink}` : publicLink} size={180} /></div><p className="break-all text-sm text-slate-700">Link público: {publicLink}</p><p className="break-all text-sm text-slate-700">Link de edição: {editLink}</p><p className="font-mono text-lg font-black text-slate-950">Chave: {site.editKey}</p><div className="flex flex-wrap gap-3"><button type="button" onClick={() => copy(publicLink, "link")} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black"><Copy className="h-4 w-4" />{copied === "link" ? "Copiado" : "Copiar link"}</button><button type="button" onClick={() => copy(site.editKey, "key")} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black">{copied === "key" ? "Copiado" : "Copiar chave"}</button><Link href={publicLink} className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white">Abrir bio site <ExternalLink className="h-4 w-4" /></Link></div></div> : null}
       </Section>
     );
@@ -249,7 +292,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
         <div className="mb-5 rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div><p className="text-sm font-black uppercase tracking-[0.18em] text-[#31c4a8]">TOQY Builder</p><h1 className="mt-2 text-3xl font-black text-slate-950 md:text-5xl">{mode === "create" ? "Criar bio site" : "Editar bio site"}</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">Tudo editável com preview ao vivo. Depois entregue link, QR Code e chave para o cliente.</p></div>
-            <button type="button" onClick={save} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white"><Save className="h-4 w-4" />Salvar agora</button>
+            <button type="button" onClick={save} disabled={isSaving} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60"><Save className="h-4 w-4" />{isSaving ? "Salvando..." : "Salvar agora"}</button>
           </div>
           {saved ? <div className="mt-4 flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-800"><CheckCircle2 className="h-5 w-5" />Salvo no navegador.</div> : null}
         </div>
@@ -257,7 +300,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
         {body}
         <div className="mt-5 flex flex-col gap-3 rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <button type="button" disabled={step === 0} onClick={() => setStep((v) => Math.max(0, v - 1))} className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 disabled:opacity-40">Voltar</button>
-          <div className="flex gap-3"><button type="button" onClick={save} className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-black text-emerald-700">Salvar agora</button><button type="button" onClick={() => step < steps.length - 1 ? setStep((v) => v + 1) : save()} className="rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white">{step < steps.length - 1 ? "Continuar" : "Salvar e publicar"}</button></div>
+          <div className="flex gap-3"><button type="button" onClick={save} disabled={isSaving} className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-black text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">{isSaving ? "Salvando..." : "Salvar agora"}</button><button type="button" onClick={() => step < steps.length - 1 ? setStep((v) => v + 1) : save()} disabled={isSaving} className="rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60">{step < steps.length - 1 ? "Continuar" : isSaving ? "Salvando..." : "Salvar e publicar"}</button></div>
         </div>
       </div>
       <LiveBioSitePreview site={site} />

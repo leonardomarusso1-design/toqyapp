@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import {
   CalendarCheck,
   Check,
@@ -17,51 +17,51 @@ const features = [
   ["WhatsApp", "Atendimento direto com mensagem pronta.", MessageCircle],
   ["Pix", "Chave, QR Code e comprovante pelo WhatsApp.", CreditCard],
   ["Wi-Fi", "QR Code para conectar e copiar senha.", Wifi],
-  ["Catálogo", "Produtos e serviços com foto, preço e CTA.", ShoppingBag],
-  ["Localização", "Google Maps e rota em um toque.", MapPin],
+  ["CatÃ¡logo", "Produtos e serviÃ§os com foto, preÃ§o e CTA.", ShoppingBag],
+  ["LocalizaÃ§Ã£o", "Google Maps e rota em um toque.", MapPin],
   ["Agendamento", "Link de agenda ou sistema externo.", CalendarCheck],
   ["QR/NFC", "URL permanente para plaquinhas e chips.", QrCode],
   ["Chave do cliente", "Cliente edita sem acessar o painel admin.", ShieldCheck],
 ] as const;
 
-// Atualizado com os assets e slugs reais que você mapeou na sua pasta public
+// Atualizado com os assets e slugs reais que vocÃª mapeou na sua pasta public
 const examples = [
   ["Barbearia", "barbearia-andrian", "/templates/template-bg-barbearia.png"],
   ["Restaurante", "pastel-da-praca", "/templates/template-bg-restaurante.png"],
-  ["Assistência Técnica", "my-cell", "/templates/template-bg-assistencia-tecnica.png"],
+  ["AssistÃªncia TÃ©cnica", "my-cell", "/templates/template-bg-assistencia-tecnica.png"],
 ] as const;
 
 const plans = [
-  { name: "Gratuito", price: "R$0", period: "", description: "Para conhecer a plataforma e gerar seus primeiros leads.", highlight: false, items: ["1 bio site", "Domínio toqy.app/seunome", "QR Code básico", "Preview em tempo real", "Marca TOQY na página"] },
-  { name: "Comunidade", price: "R$29,90", period: "/mês", description: "Acesso exclusivo para alunos. Crie páginas profissionais para seus clientes.", highlight: true, items: ["Até 20 bio sites inclusos", "Apenas R$5,00 por site extra", "Catálogo, Pix e Wi-Fi", "QR personalizado e NFC", "Suporte direto no Discord"] },
-  { name: "Freelancer", price: "R$59,90", period: "/mês", description: "Para profissionais que criam para clientes, sem estar na comunidade.", highlight: false, items: ["Até 20 bio sites", "QR personalizado", "Pix e Wi-Fi", "Catálogo completo", "Suporte prioritário"] },
-  { name: "Agência", price: "R$149,90", period: "/mês", description: "Para equipes e agências em escala.", highlight: false, items: ["Até 100 bio sites", "White label parcial", "Domínio próprio", "Gestão de equipe", "Tudo do Freelancer"] },
+  { name: "Gratuito", price: "R$0", period: "", description: "Para conhecer a plataforma e gerar seus primeiros leads.", highlight: false, cta: "ComeÃ§ar grÃ¡tis", items: ["1 bio site", "DomÃ­nio toqy.app/seunome", "QR Code bÃ¡sico", "Preview em tempo real", "Marca TOQY na pÃ¡gina"] },
+  { name: "Comunidade", price: "R$29,90", period: "/mÃªs", description: "Acesso exclusivo para alunos. Crie pÃ¡ginas profissionais para seus clientes.", highlight: true, cta: "Assinar", items: ["AtÃ© 20 bio sites inclusos", "Apenas R$5,00 por site extra", "CatÃ¡logo, Pix e Wi-Fi", "QR personalizado e NFC", "Suporte direto no Discord"] },
+  { name: "Freelancer", price: "R$59,90", period: "", description: "Para profissionais que criam para clientes, sem estar na comunidade. Pagamento unico.", highlight: false, cta: "Comprar acesso", items: ["AtÃ© 20 bio sites", "QR personalizado", "Pix e Wi-Fi", "CatÃ¡logo completo", "Suporte prioritÃ¡rio"] },
+  { name: "AgÃªncia", price: "R$149,90", period: "", description: "Para equipes e agencias em escala. Pagamento unico.", highlight: false, cta: "Comprar acesso", items: ["AtÃ© 100 bio sites", "White label parcial", "DomÃ­nio prÃ³prio", "GestÃ£o de equipe", "Tudo do Freelancer"] },
 ] as const;
 
 const featureShowcase = [
   {
     title: "Editor visual com preview ao vivo",
-    text: "Personalize paletas, botões, fundos, logo e módulos sem mexer em código.",
+    text: "Personalize paletas, botÃµes, fundos, logo e mÃ³dulos sem mexer em cÃ³digo.",
     image: "/images/landing-feature-editor-preview.png",
     alt: "Editor visual do TOQY com preview ao vivo",
   },
   {
     title: "Pix inteligente",
-    text: "Receba pagamentos com Pix, chave copiável, QR Code e envio de comprovante pelo WhatsApp.",
+    text: "Receba pagamentos com Pix, chave copiÃ¡vel, QR Code e envio de comprovante pelo WhatsApp.",
     image: "/images/landing-feature-pix.png",
-    alt: "Módulo Pix inteligente com QR Code",
+    alt: "MÃ³dulo Pix inteligente com QR Code",
   },
   {
     title: "Wi-Fi com check-in",
-    text: "Gere QR Code de Wi-Fi, facilite a conexão e direcione o cliente para avaliação no Google, Instagram ou Facebook.",
+    text: "Gere QR Code de Wi-Fi, facilite a conexÃ£o e direcione o cliente para avaliaÃ§Ã£o no Google, Instagram ou Facebook.",
     image: "/images/landing-feature-wifi-checkin.png",
-    alt: "Wi-Fi com check-in e avaliação",
+    alt: "Wi-Fi com check-in e avaliaÃ§Ã£o",
   },
   {
-    title: "Catálogo flexível",
-    text: "Mostre produtos e serviços em carrossel, grid, categorias ou lista vertical.",
+    title: "CatÃ¡logo flexÃ­vel",
+    text: "Mostre produtos e serviÃ§os em carrossel, grid, categorias ou lista vertical.",
     image: "/images/landing-feature-catalogo.png",
-    alt: "Catálogo de produtos e serviços no TOQY",
+    alt: "CatÃ¡logo de produtos e serviÃ§os no TOQY",
   },
 ] as const;
 
@@ -81,7 +81,7 @@ export default function LandingPage() {
           </nav>
           <div className="flex items-center gap-3">
             <Link href="/login" className="hidden text-sm font-semibold text-slate-700 hover:text-indigo-600 sm:inline-flex">Entrar</Link>
-            <Link href="/login" className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-indigo-100 transition hover:-translate-y-0.5 hover:bg-indigo-700">Começar grátis</Link>
+            <Link href="/login" className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-indigo-100 transition hover:-translate-y-0.5 hover:bg-indigo-700">ComeÃ§ar grÃ¡tis</Link>
           </div>
         </div>
       </header>
@@ -97,18 +97,18 @@ export default function LandingPage() {
               Bio sites profissionais para QR Code, NFC e plaquinhas.
             </h1>
             <p className="mt-7 max-w-2xl text-xl leading-relaxed text-slate-600">
-              Crie páginas editáveis com WhatsApp, Pix, Wi-Fi, catálogo, localização, avaliações e links importantes para qualquer negócio local.
+              Crie pÃ¡ginas editÃ¡veis com WhatsApp, Pix, Wi-Fi, catÃ¡logo, localizaÃ§Ã£o, avaliaÃ§Ãµes e links importantes para qualquer negÃ³cio local.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 text-base font-bold text-white shadow-lg shadow-indigo-150 transition hover:-translate-y-0.5 hover:bg-indigo-700">
-                Criar meu bio site grátis <span aria-hidden="true">-&gt;</span>
+                Criar meu bio site grÃ¡tis <span aria-hidden="true">-&gt;</span>
               </Link>
               <a href="#como-funciona" className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-8 py-3.5 text-base font-bold text-slate-900 shadow-sm transition hover:-translate-y-0.5">
                 Como funciona
               </a>
             </div>
             <div className="mt-8 flex flex-wrap gap-6 text-sm font-semibold text-slate-600">
-              {["Grátis para começar", "Sem código", "Publica em minutos"].map((item) => (
+              {["GrÃ¡tis para comeÃ§ar", "Sem cÃ³digo", "Publica em minutos"].map((item) => (
                 <span key={item} className="inline-flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-indigo-600" />
                   {item}
@@ -121,13 +121,13 @@ export default function LandingPage() {
             <div className="absolute -left-14 top-16 z-20 hidden animate-[float_4s_ease-in-out_infinite] rounded-2xl bg-white px-5 py-4 shadow-xl lg:block">
               <div className="flex items-center gap-3">
                 <QrCode className="h-6 w-6 text-indigo-600" />
-                <div><p className="text-sm font-bold">QR Code</p><p className="text-xs text-slate-500">Escaneou ✓</p></div>
+                <div><p className="text-sm font-bold">QR Code</p><p className="text-xs text-slate-500">Escaneou âœ“</p></div>
               </div>
             </div>
             <div className="absolute -right-10 bottom-28 z-20 hidden animate-[float_4.6s_ease-in-out_infinite] rounded-2xl bg-white px-5 py-4 shadow-xl lg:block">
               <div className="flex items-center gap-3">
                 <Wifi className="h-6 w-6 text-indigo-500" />
-                <div><p className="text-sm font-bold">NFC</p><p className="text-xs text-slate-500">Aproximou ✓</p></div>
+                <div><p className="text-sm font-bold">NFC</p><p className="text-xs text-slate-500">Aproximou âœ“</p></div>
               </div>
             </div>
             <img
@@ -143,7 +143,7 @@ export default function LandingPage() {
         <div className="text-center">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">Recursos</p>
           <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">Tudo que uma plaquinha precisa abrir</h2>
-          <p className="mx-auto mt-4 max-w-2xl text-slate-600">O Toqy concentra atendimento, pagamento, localização, catálogo e avaliação em uma página pronta para QR Code e NFC.</p>
+          <p className="mx-auto mt-4 max-w-2xl text-slate-600">O Toqy concentra atendimento, pagamento, localizaÃ§Ã£o, catÃ¡logo e avaliaÃ§Ã£o em uma pÃ¡gina pronta para QR Code e NFC.</p>
         </div>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {features.map(([title, text, Icon]) => (
@@ -194,7 +194,7 @@ export default function LandingPage() {
       <section id="planos" className="mx-auto max-w-7xl px-5 py-20">
         <div className="text-center">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">Planos</p>
-          <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">Escolha o plano ideal para o seu negócio</h2>
+          <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">Escolha o plano ideal para o seu negÃ³cio</h2>
         </div>
         <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {plans.map((plan) => (
@@ -217,7 +217,7 @@ export default function LandingPage() {
                     ? "https://pay.kiwify.com.br/12uYE0c"
                     : plan.name === "Freelancer"
                     ? "https://pay.kiwify.com.br/Oc2YP5A"
-                    : plan.name === "Agência"
+                    : plan.name === "AgÃªncia"
                     ? "https://pay.kiwify.com.br/X71Qhtu"
                     : "/login"
                 }
@@ -225,7 +225,7 @@ export default function LandingPage() {
                 rel={plan.name === "Gratuito" ? undefined : "noreferrer noopener"}
                 className={`mt-7 inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "bg-indigo-600 text-white hover:bg-indigo-700" : "border border-slate-200 text-slate-900 hover:border-indigo-600"}`}
               >
-                {plan.price === "R$0" ? "Começar grátis" : "Assinar"}
+                {plan.cta}
               </a>
             </article>
           ))}
@@ -256,9 +256,11 @@ export default function LandingPage() {
       </section>
 
       <section className="bg-slate-50 px-5 py-20 text-center border-t border-slate-200">
-        <h2 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">Crie uma página profissional para seu cliente em poucos minutos.</h2>
-        <Link href="/login" className="mt-8 inline-flex rounded-xl bg-indigo-600 px-8 py-4 font-bold text-white shadow-lg shadow-indigo-100 transition hover:-translate-y-0.5 hover:bg-indigo-700">Começar agora</Link>
+        <h2 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">Crie uma pÃ¡gina profissional para seu cliente em poucos minutos.</h2>
+        <Link href="/login" className="mt-8 inline-flex rounded-xl bg-indigo-600 px-8 py-4 font-bold text-white shadow-lg shadow-indigo-100 transition hover:-translate-y-0.5 hover:bg-indigo-700">ComeÃ§ar agora</Link>
       </section>
     </main>
   );
 }
+
+

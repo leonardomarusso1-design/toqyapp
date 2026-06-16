@@ -69,6 +69,7 @@ export type CatalogItem = {
 
 export type ToqySite = {
   id: string;
+  userId?: string;
   slug: string;
   segment: Segment;
   status: "active" | "draft" | "disabled";
