@@ -72,8 +72,18 @@ export function SubscriptionPlansDisplay() {
             </div>
 
             {/* CTA Button */}
-            <Link
-              href="/app/novo"
+            <a
+              href={
+                plan.id === "community"
+                  ? "https://pay.kiwify.com.br/12uYE0c"
+                  : plan.id === "freelancer"
+                  ? "https://pay.kiwify.com.br/Oc2YP5A"
+                  : plan.id === "agency"
+                  ? "https://pay.kiwify.com.br/X71Qhtu"
+                  : "/app/novo"
+              }
+              target={plan.id === "free" ? undefined : "_blank"}
+              rel={plan.id === "free" ? undefined : "noreferrer noopener"}
               className={`mt-7 inline-flex w-full items-center justify-center rounded-2xl px-5 py-3 text-sm font-black transition hover:-translate-y-0.5 ${
                 plan.highlight
                   ? "bg-[#31c4a8] text-white hover:bg-[#25b69a]"
@@ -81,7 +91,7 @@ export function SubscriptionPlansDisplay() {
               }`}
             >
               {plan.priceMonthly === 0 ? "Começar grátis" : "Assinar agora"}
-            </Link>
+            </a>
 
             {/* Additional Info */}
             {plan.id !== "free" && (

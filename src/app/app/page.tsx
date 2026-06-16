@@ -96,6 +96,13 @@ export default function AppPage() {
             </div>
           )}
 
+          {(profile?.plan_tier === "free" || profile?.plan_tier === "Toqy - Comunidade" || profile?.plan_tier === "Toqy - Freelancer" || profile?.plan_tier === "Toqy - Agência") && (
+            <div className="rounded-[1.5rem] border border-[#31c4a8] bg-[#ecfdf6] p-6 text-slate-900">
+              <p className="font-black">🚀 Painel de Criação Liberado:</p>
+              <p className="mt-2">Você está no plano {profile?.plan_tier === "free" ? "Gratuito" : profile?.plan_tier}.</p>
+            </div>
+          )}
+
           {(profile?.plan_tier === "Toqy - Comunidade" || profile?.plan_tier === "Toqy - Freelancer" || profile?.plan_tier === "Toqy - Agência") && (
             <div className="rounded-[1.5rem] border border-[#31c4a8] bg-[#ecfdf6] p-6 text-slate-900">
               <p className="font-black">👥 Recurso Comunidade Liberado:</p>

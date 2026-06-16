@@ -207,11 +207,11 @@ export default function LandingPage() {
               <a
                 href={
                   plan.name === "Comunidade"
-                    ? "https://checkout.kiwify.com.br/2uAUmW0"
+                    ? "https://pay.kiwify.com.br/12uYE0c"
                     : plan.name === "Freelancer"
-                    ? "https://checkout.kiwify.com.br/GQX265E"
+                    ? "https://pay.kiwify.com.br/Oc2YP5A"
                     : plan.name === "Agência"
-                    ? "https://checkout.kiwify.com.br/mB5BB8V"
+                    ? "https://pay.kiwify.com.br/X71Qhtu"
                     : "/app/novo"
                 }
                 target={plan.name === "Gratuito" ? undefined : "_blank"}
