@@ -34,7 +34,7 @@ export default function AppPage() {
         .eq("email", user.email)
         .single();
 
-      let finalProfile = profileData;
+      let finalProfile: UserProfile | null = profileData;
 
       // Se não encontrou na primeira tentativa, aguarda e tenta novamente
       if (!profileData && profileError?.code === "PGRST116") {
@@ -61,13 +61,18 @@ export default function AppPage() {
         return;
       }
 
-      if (finalProfile.subscription_status !== "active") {
+      if (!finalProfile || finalProfile.subscription_status !== "active") {
+        if (!finalProfile) {
+          alert("Não foi possível carregar seu perfil. Tente novamente mais tarde.");
+          router.push("/login");
+          return;
+        }
         alert("Sua assinatura não está ativa. Por favor, adquira um plano.");
         router.push("/");
         return;
       }
 
-      setProfile(finalProfile as UserProfile);
+      setProfile(finalProfile);
       setLoading(false);
     };
 
