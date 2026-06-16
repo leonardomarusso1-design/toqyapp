@@ -24,14 +24,17 @@ const features = [
   ["Chave do cliente", "Cliente edita sem acessar o painel admin.", ShieldCheck],
 ] as const;
 
+// Atualizado com os assets e slugs reais que você mapeou na sua pasta public
 const examples = [
-  ["Barbearia", "barbearia-andrian"],
+  ["Barbearia", "barbearia-andrian", "/templates/template-bg-barbearia.png"],
+  ["Restaurante", "pastel-da-praca", "/templates/template-bg-restaurante.png"],
+  ["Assistência Técnica", "my-cell", "/templates/template-bg-assistencia-tecnica.png"],
 ] as const;
 
 const plans = [
   { name: "Gratuito", price: "R$0", period: "", description: "Para conhecer a plataforma e gerar seus primeiros leads.", highlight: false, items: ["1 bio site", "Domínio toqy.app/seunome", "QR Code básico", "Preview em tempo real", "Marca TOQY na página"] },
-  { name: "Comunidade", price: "R$29,90", period: "/mês", description: "Para quem está na comunidade e cria páginas para clientes.", highlight: true, items: ["Até 20 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "QR personalizado", "Acesso à comunidade"] },
-  { name: "Freelancer", price: "R$59,90", period: "/mês", description: "Para profissionais que criam para clientes, sem comunidade.", highlight: false, items: ["Até 20 bio sites", "QR personalizado", "Pix e Wi-Fi", "Catálogo completo", "Suporte prioritário"] },
+  { name: "Comunidade", price: "R$29,90", period: "/mês", description: "Acesso exclusivo para alunos. Crie páginas profissionais para seus clientes.", highlight: true, items: ["Até 20 bio sites inclusos", "Apenas R$5,00 por site extra", "Catálogo, Pix e Wi-Fi", "QR personalizado e NFC", "Suporte direto no Discord"] },
+  { name: "Freelancer", price: "R$59,90", period: "/mês", description: "Para profissionais que criam para clientes, sem estar na comunidade.", highlight: false, items: ["Até 20 bio sites", "QR personalizado", "Pix e Wi-Fi", "Catálogo completo", "Suporte prioritário"] },
   { name: "Agência", price: "R$149,90", period: "/mês", description: "Para equipes e agências em escala.", highlight: false, items: ["Até 100 bio sites", "White label parcial", "Domínio próprio", "Gestão de equipe", "Tudo do Freelancer"] },
 ] as const;
 
@@ -65,10 +68,11 @@ const featureShowcase = [
 export default function LandingPage() {
   return (
     <main className="min-h-screen bg-[#f5fbf9] text-slate-950">
-      <header className="sticky top-0 z-40 border-b border-emerald-950/5 bg-white/88 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-emerald-950/5 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
           <Link href="/" className="flex items-center gap-3">
-            <img src="/brand/logo-toqy-horizontal-dark.png" alt="TOQY" className="h-8 w-auto object-contain md:h-9" />
+            {/* Ajustado para o nome do arquivo exato que você salvou em public */}
+            <img src="/brand/logo-toqy-horizontal.png" alt="TOQY" className="h-8 w-auto object-contain md:h-9" />
           </Link>
           <nav className="hidden items-center gap-9 text-sm font-bold text-slate-600 md:flex">
             <a className="transition hover:text-[#20b99d]" href="#recursos">Recursos</a>
@@ -77,7 +81,7 @@ export default function LandingPage() {
             <a className="transition hover:text-[#20b99d]" href="#exemplos">Exemplos</a>
           </nav>
           <div className="flex items-center gap-3">
-            <Link href="/me" className="hidden text-sm font-black text-slate-700 hover:text-[#20b99d] sm:inline-flex">Entrar</Link>
+            <Link href="/login" className="hidden text-sm font-black text-slate-700 hover:text-[#20b99d] sm:inline-flex">Entrar</Link>
             <Link href="/app/novo" className="rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white shadow-sm shadow-emerald-200 transition hover:-translate-y-0.5 hover:bg-[#25b69a]">Começar grátis</Link>
           </div>
         </div>
@@ -200,9 +204,22 @@ export default function LandingPage() {
               <div className="mt-6 grid gap-3">
                 {plan.items.map((item) => <p key={item} className="flex items-center gap-3 text-sm font-bold text-slate-700"><Check className="h-4 w-4 shrink-0 text-[#31c4a8]" />{item}</p>)}
               </div>
-              <Link href="/app/novo" className={`mt-7 inline-flex w-full items-center justify-center rounded-2xl px-5 py-3 text-sm font-black transition hover:-translate-y-0.5 ${plan.highlight ? "bg-[#31c4a8] text-white hover:bg-[#25b69a]" : "border border-slate-200 text-slate-900 hover:border-[#31c4a8]"}`}>
+              <a
+                href={
+                  plan.name === "Comunidade"
+                    ? "https://checkout.kiwify.com.br/2uAUmW0"
+                    : plan.name === "Freelancer"
+                    ? "https://checkout.kiwify.com.br/GQX265E"
+                    : plan.name === "Agência"
+                    ? "https://checkout.kiwify.com.br/mB5BB8V"
+                    : "/app/novo"
+                }
+                target={plan.name === "Gratuito" ? undefined : "_blank"}
+                rel={plan.name === "Gratuito" ? undefined : "noreferrer noopener"}
+                className={`mt-7 inline-flex w-full items-center justify-center rounded-2xl px-5 py-3 text-sm font-black transition hover:-translate-y-0.5 ${plan.highlight ? "bg-[#31c4a8] text-white hover:bg-[#25b69a]" : "border border-slate-200 text-slate-900 hover:border-[#31c4a8]"}`}
+              >
                 {plan.price === "R$0" ? "Começar grátis" : "Assinar"}
-              </Link>
+              </a>
             </article>
           ))}
         </div>
@@ -217,11 +234,11 @@ export default function LandingPage() {
             </div>
             <Link href="/app/novo" className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white"><Plus className="h-4 w-4" />Novo bio site</Link>
           </div>
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-            {examples.map(([name, slug]) => (
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {examples.map(([name, slug, imgPath]) => (
               <Link key={slug} href={`/b/${slug}`} className="group rounded-[2rem] border border-slate-100 bg-[#f8fbfa] p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                 <div className="overflow-hidden rounded-[1.5rem] bg-slate-100">
-                  <img src="/templates/template-bg-barbearia.png" alt={name} className="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105" />
+                  <img src={imgPath} alt={name} className="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105" />
                 </div>
                 <p className="mt-4 font-black">{name}</p>
                 <p className="mt-1 text-sm font-bold text-[#31c4a8]">Ver exemplo</p>
