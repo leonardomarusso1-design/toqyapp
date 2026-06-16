@@ -8,6 +8,7 @@ import { ClientShell } from "@/components/ClientShell";
 import { SiteBuilder } from "@/components/SiteBuilder";
 import type { ToqySite } from "@/lib/types";
 import { getBiositeBySlug, isDemoSlug, saveBiosite } from "@/lib/dataProvider";
+import { supabase } from "@/lib/supabaseClient";
 
 function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
   const searchParams = useSearchParams();
@@ -18,10 +19,31 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    params.then(({ slug }) => {
-      const found = getBiositeBySlug(slug) ?? null;
+    params.then(async ({ slug }) => {
+      // 1. Tentar buscar usando Supabase + Auth (RBAC)
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      let found: ToqySite | null = null;
+      
+      if (session) {
+        // Busca com verificação de dono
+        const { data: dbSite } = await supabase
+          .from('biosites')
+          .select('*')
+          .eq('slug', slug)
+          .eq('user_id', session.user.id)
+          .single();
+        if (dbSite) found = dbSite as ToqySite;
+      }
+      
+      // 2. Se não achou (ou não logado), fallback para localProvider (ou chave)
+      if (!found) {
+        found = getBiositeBySlug(slug) ?? null;
+      }
+
       setSite(found);
       setLoading(false);
+      
       const keyFromUrl = (searchParams.get("key") ?? "").trim();
       if (found && keyFromUrl && keyFromUrl === found.editKey.trim()) {
         setKey(keyFromUrl);

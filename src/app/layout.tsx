@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AuthSync } from "@/components/AuthSync";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_APP_URL ??
@@ -23,7 +24,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR">
-      <body className="min-h-screen font-body antialiased">{children}</body>
+      <body className="min-h-screen font-body antialiased">
+        <AuthSync />
+        {children}
+      </body>
     </html>
   );
 }

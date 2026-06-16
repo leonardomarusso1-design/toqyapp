@@ -186,12 +186,12 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
           <header className="text-center">
             <div className={`${logoSize(site)} ${logoShape(site)} mx-auto flex items-center justify-center overflow-hidden border shadow-2xl`} style={{ borderColor: `${site.theme.primary}88`, background: `linear-gradient(135deg, ${site.theme.primary}, ${site.theme.secondary})` }}>
               {site.profile.logoUrl || site.profile.profileImageUrl ? (
-                <img src={site.profile.logoUrl || site.profile.profileImageUrl} alt={site.profile.name} className="h-full w-full object-cover" />
+                <img src={site.profile.logoUrl || site.profile.profileImageUrl} alt={site.profile.name} className="h-full w-full object-cover mix-blend-multiply" />
               ) : (
                 <span className="text-4xl font-black text-white">{getInitials(site.profile.name)}</span>
               )}
             </div>
-            <h1 className="mt-5 text-2xl font-black leading-tight drop-shadow-sm">{site.profile.name}</h1>
+          <h1 className="mt-5 text-2xl font-black leading-tight drop-shadow-sm" style={{ textShadow: site.theme.mode === "light" ? "none" : "0 0 10px rgba(0,0,0,0.5)" }}>{site.profile.name}</h1>
             {site.profile.title ? <p className="mt-1 text-base font-medium" style={{ color: site.theme.muted }}>{site.profile.title}</p> : null}
             {site.profile.logoUrl && site.profile.profileImageUrl && site.profile.logoUrl !== site.profile.profileImageUrl ? <img src={site.profile.logoUrl} alt={`${site.profile.name} logo`} className="mx-auto mt-4 max-h-16 max-w-[220px] object-contain" /> : null}
             {site.profile.description ? <p className="mx-auto mt-4 max-w-[350px] text-sm leading-relaxed" style={{ color: site.theme.muted }}>{site.profile.description}</p> : null}
