@@ -59,12 +59,16 @@ export type CatalogItem = {
   name: string;
   description: string;
   price?: string;
+  priceValue?: number;
   imageUrl?: string;
   imageLayout: "square" | "horizontal";
   category?: string;
   enabled: boolean;
   actionLabel?: string;
   actionUrl?: string;
+  featured?: boolean;
+  highlight?: string;
+  order?: number;
 };
 
 export type ToqySite = {

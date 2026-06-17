@@ -342,6 +342,7 @@ function CatalogCard({ site, item, compact = false, stacked = false }: { site: T
         {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><FileText className="h-10 w-10 opacity-60" /></div>}
       </div>
       <div className={compact ? "p-3" : "p-4"}>
+        {item.highlight ? <span className="mb-2 inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-black text-amber-700">{item.highlight}</span> : null}
         <h3 className={compact ? "text-sm font-black leading-tight" : "text-lg font-black"}>{item.name}</h3>
         <p className={compact ? "mt-1 line-clamp-3 text-xs leading-relaxed" : "mt-2 text-sm leading-relaxed"} style={{ color: site.theme.muted }}>{item.description}</p>
         <div className="mt-4 flex items-center justify-between gap-3">

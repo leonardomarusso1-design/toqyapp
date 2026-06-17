@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CheckCircle2, Copy, ExternalLink, Eye, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, CheckCircle2, Copy, ExternalLink, Eye, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import type { CatalogItem, CatalogLayout, Segment, ThemePreset, ToqySite } from "@/lib/types";
 import { applySegmentTemplate, getSegmentTemplate, segmentOptions } from "@/lib/segmentTemplates";
 import { createEditUrl, createPublicUrl, generateSlug } from "@/lib/dataProvider";
+import { syncBiositeToSupabase } from "@/lib/biositeSync";
 import { checkBiositeLimit } from "@/lib/planLimits";
 import { supabase } from "@/lib/supabaseClient";
 import { validateSite } from "@/lib/validation";
@@ -121,9 +122,15 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
     setLimitState(null);
     setIsSaving(true);
     try {
+      // Salva no Supabase (com fallback para localStorage)
+      const result = await syncBiositeToSupabase(siteToValidate);
+      if (!result.ok) throw new Error("Erro ao salvar o bio site.");
+      // Também chama o onSave original (localStorage)
       await onSave(siteToValidate);
       setSite(siteToValidate);
       setSaved(siteToValidate);
+    } catch (err) {
+      setErrors([err instanceof Error ? err.message : "Erro ao salvar. Tente novamente."]);
     } finally {
       setIsSaving(false);
     }
@@ -368,20 +375,40 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
 
           <div className="mt-5 grid gap-4">
             {site.catalog.map((item, index) => (
-              <article key={item.id} className="rounded-3xl border border-slate-200 p-4">
+              <article key={item.id} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                {/* Header do item com reordenação */}
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <button type="button" disabled={index === 0} onClick={() => update((s) => { const c = [...s.catalog]; [c[index-1],c[index]] = [c[index],c[index-1]]; return {...s,catalog:c}; })} className="rounded-lg border border-slate-200 p-1.5 text-slate-400 hover:text-slate-700 disabled:opacity-30"><ArrowUp className="h-3.5 w-3.5" /></button>
+                    <button type="button" disabled={index === site.catalog.length-1} onClick={() => update((s) => { const c = [...s.catalog]; [c[index],c[index+1]] = [c[index+1],c[index]]; return {...s,catalog:c}; })} className="rounded-lg border border-slate-200 p-1.5 text-slate-400 hover:text-slate-700 disabled:opacity-30"><ArrowDown className="h-3.5 w-3.5" /></button>
+                    <span className="text-xs font-bold text-slate-400">#{index + 1}</span>
+                    {item.featured ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-black text-amber-700">Destaque</span> : null}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-1.5 text-xs font-black text-slate-600"><input type="checkbox" checked={item.featured ?? false} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { featured: e.target.checked }) }))} />Destaque</label>
+                    <label className="flex items-center gap-1.5 text-xs font-black text-slate-600"><input type="checkbox" checked={item.enabled} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { enabled: e.target.checked }) }))} />Ativo</label>
+                    <button type="button" onClick={() => update((s) => ({ ...s, catalog: s.catalog.filter((_, i) => i !== index) }))} className="rounded-xl border border-red-100 bg-red-50 px-2.5 py-1.5 text-red-500 hover:bg-red-100"><Trash2 className="h-3.5 w-3.5" /></button>
+                  </div>
+                </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   <label><span className={label}>Nome</span><input className={field} value={item.name} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { name: e.target.value }) }))} /></label>
                   <label><span className={label}>Categoria</span><input className={field} placeholder="Ex: Cortes social" value={item.category ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { category: e.target.value }) }))} /></label>
-                  <label><span className={label}>Preco</span><input className={field} value={item.price ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { price: e.target.value }) }))} /></label>
+                  {/* Preço com R$ automático */}
+                  <label>
+                    <span className={label}>Preço</span>
+                    <div className="flex items-center gap-0">
+                      <span className="flex h-[42px] items-center rounded-l-xl border border-r-0 border-slate-200 bg-slate-100 px-3 text-sm font-black text-slate-500">R$</span>
+                      <input className="h-[42px] flex-1 rounded-r-xl border border-slate-200 bg-white px-3 text-sm font-black outline-none focus:border-[#31c4a8]" placeholder="80,00" value={item.price?.replace(/^R\$\s?/, "") ?? ""} onChange={(e) => { const v = e.target.value.replace(/[^0-9,.]/g, ""); update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { price: v ? `R$ ${v}` : "" }) })); }} />
+                    </div>
+                  </label>
                   <label><span className={label}>Formato da foto</span><select className={field} value={item.imageLayout} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageLayout: e.target.value as typeof item.imageLayout }) }))}><option value="square">Quadrada</option><option value="horizontal">Horizontal</option></select></label>
-                  <label className="md:col-span-2"><span className={label}>Descricao</span><textarea className={field} rows={2} value={item.description} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { description: e.target.value }) }))} /></label>
+                  <label><span className={label}>Badge / Destaque</span><input className={field} placeholder='Ex: "Mais vendido", "Novidade"' value={item.highlight ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { highlight: e.target.value }) }))} /></label>
+                  <label className="md:col-span-2"><span className={label}>Descrição</span><textarea className={field} rows={2} value={item.description} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { description: e.target.value }) }))} /></label>
                 </div>
                 <div className="mt-3"><ImageUploadField label="Imagem do item" value={item.imageUrl} onChange={(url) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageUrl: url }) }))} /><ImageGuidelineHint type={item.imageLayout === "square" ? "productSquare" : "productHorizontal"} /></div>
-                <div className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
-                  <input className={field} placeholder="Texto do botao" value={item.actionLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionLabel: e.target.value }) }))} />
-                  <input className={field} placeholder="Link do botao" value={item.actionUrl ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionUrl: e.target.value }) }))} />
-                  <label className="flex items-center gap-2 text-sm font-black"><input type="checkbox" checked={item.enabled} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { enabled: e.target.checked }) }))} />Ativo</label>
-                  <button type="button" onClick={() => update((s) => ({ ...s, catalog: s.catalog.filter((_, itemIndex) => itemIndex !== index) }))} className="rounded-xl border border-red-200 px-3 py-2 text-red-600"><Trash2 className="h-4 w-4" /></button>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <input className={field} placeholder="Texto do botão (ex: Agendar)" value={item.actionLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionLabel: e.target.value }) }))} />
+                  <input className={field} placeholder="Link do botão (opcional)" value={item.actionUrl ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionUrl: e.target.value }) }))} />
                 </div>
               </article>
             ))}
