@@ -258,6 +258,35 @@ function CatalogSection({ site, items, layout }: { site: ToqySite; items: Catalo
     ? { background: site.theme.primary, color: site.theme.mode === "light" ? "#fff" : "#06111F", borderColor: "transparent" }
     : { background: site.theme.mode === "light" ? "rgba(255,255,255,0.66)" : "rgba(255,255,255,0.10)", color: site.theme.text, borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.10)" : "rgba(255,255,255,0.16)" };
 
+  // Suporte a múltiplos layouts
+  const layouts: CatalogLayout[] = site.catalogLayouts?.length ? site.catalogLayouts : [layout];
+
+  function renderLayout(l: CatalogLayout, items2: CatalogItem[]) {
+    if (l === "grouped" || l === "category-carousel") {
+      return (
+        <div className="space-y-7">
+          {uniqueGroups(items2).map(([group, groupItems]) => (
+            <div key={group}>
+              <h3 className="mb-3 text-base font-black" style={{ color: site.theme.muted }}>{group}</h3>
+              <CatalogScroller site={site} items={groupItems} />
+            </div>
+          ))}
+        </div>
+      );
+    }
+    if (l === "grid") return <div className="grid grid-cols-2 gap-3">{items2.map((item) => <CatalogCard key={item.id} site={site} item={item} compact />)}</div>;
+    if (l === "stack") return <div className="space-y-4">{items2.map((item) => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>;
+    return <CatalogScroller site={site} items={items2} />;
+  }
+
+  const LAYOUT_LABELS: Record<CatalogLayout, string> = {
+    carousel: "Destaques",
+    grid: "Grade",
+    stack: "Lista completa",
+    grouped: "Por categoria",
+    "category-carousel": "Por categoria",
+  };
+
   return (
     <section id="catalogo-toqy" className="mt-8 scroll-mt-8">
       <p className="text-xs font-black uppercase tracking-[0.22em]" style={{ color: site.theme.accent }}>Catálogo</p>
@@ -274,29 +303,18 @@ function CatalogSection({ site, items, layout }: { site: ToqySite; items: Catalo
       ) : null}
 
       <div className="mt-5">
-        {activeCategory !== "Todas" ? (
-          layout === "grid" ? (
-            <div className="grid grid-cols-2 gap-3">{filteredItems.map((item) => <CatalogCard key={item.id} site={site} item={item} compact />)}</div>
-          ) : layout === "stack" ? (
-            <div className="space-y-4">{filteredItems.map((item) => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
-          ) : (
-            <CatalogScroller site={site} items={filteredItems} />
-          )
-        ) : layout === "grouped" || layout === "category-carousel" ? (
-          <div className="space-y-7">
-            {uniqueGroups(filteredItems).map(([group, groupItems]) => (
-              <div key={group}>
-                <h3 className="mb-3 text-base font-black" style={{ color: site.theme.muted }}>{group}</h3>
-                <CatalogScroller site={site} items={groupItems} />
+        {layouts.length > 1 ? (
+          // Múltiplos layouts: cada um em sequência com sub-título
+          <div className="space-y-8">
+            {layouts.map((l) => (
+              <div key={l}>
+                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{LAYOUT_LABELS[l]}</p>
+                {renderLayout(l, filteredItems)}
               </div>
             ))}
           </div>
-        ) : layout === "grid" ? (
-          <div className="grid grid-cols-2 gap-3">{filteredItems.map((item) => <CatalogCard key={item.id} site={site} item={item} compact />)}</div>
-        ) : layout === "stack" ? (
-          <div className="space-y-4">{filteredItems.map((item) => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
         ) : (
-          <CatalogScroller site={site} items={filteredItems} />
+          renderLayout(layouts[0], filteredItems)
         )}
       </div>
 

@@ -94,8 +94,8 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
     if (mode === "create") {
       setIsSaving(true);
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        const limitCheck = await checkBiositeLimit(user?.id ?? "");
+        const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+        const limitCheck = await checkBiositeLimit(user?.id ?? "").catch(() => ({ allowed: true, current: 0, limit: 999, planTier: "local" }));
 
         if (!limitCheck.allowed) {
           setLimitState({
@@ -105,12 +105,11 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
           });
           setErrors([]);
           setStep(steps.length - 1);
+          setIsSaving(false);
           return;
         }
-      } catch (error) {
-        setErrors([error instanceof Error ? error.message : "Não foi possível validar o limite do seu plano."]);
-        setStep(steps.length - 1);
-        return;
+      } catch {
+        // Sem autenticação ou erro de rede: permite salvar no localStorage normalmente
       } finally {
         setIsSaving(false);
       }
@@ -233,7 +232,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
 
           <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
             <label className="flex items-center gap-3 text-sm font-black text-slate-800"><input type="checkbox" checked={Boolean(site.plaqueTheme?.useSameBackground)} onChange={(e) => update((s) => ({ ...s, plaqueTheme: { ...s.plaqueTheme, useSameBackground: e.target.checked, backgroundImageUrl: s.plaqueTheme?.backgroundImageUrl ?? "", backgroundStyle: "image" } }))} />Usar o mesmo fundo/arte da plaquinha</label>
-            {site.plaqueTheme?.useSameBackground ? <div className="mt-4"><input className={field} value={site.plaqueTheme.backgroundImageUrl ?? ""} onChange={(e) => update((s) => ({ ...s, plaqueTheme: { useSameBackground: true, backgroundImageUrl: e.target.value, backgroundStyle: "image" } }))} placeholder="URL da arte/fundo da plaquinha" /><ImageGuidelineHint type="plaque" /></div> : null}
+            {site.plaqueTheme?.useSameBackground ? <div className="mt-4"><ImageUploadField label="Arte/fundo da plaquinha" value={site.plaqueTheme.backgroundImageUrl} onChange={(url) => update((s) => ({ ...s, plaqueTheme: { useSameBackground: true, backgroundImageUrl: url, backgroundStyle: "image" } }))} placeholder="URL ou envie do dispositivo" /><ImageGuidelineHint type="plaque" /></div> : null}
           </div>
         </Section>
       );
@@ -326,22 +325,43 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             <label className="md:col-span-2"><span className={label}>Texto &quot;Nao encontrou?&quot; (rodape do catalogo)</span><input className={field} placeholder="Nao encontrou o que procura?" value={site.catalogWaLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalogWaLabel: e.target.value }))} /></label>
           </div>
 
-          {/* Layout do catalogo */}
+          {/* Layout do catalogo - multipla selecao */}
           <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
             <span className={label}>Como exibir no bio site</span>
-            <p className="mb-3 mt-1 text-xs text-slate-500">Escolha o layout principal do catalogo.</p>
+            <p className="mb-3 mt-1 text-xs text-slate-500">Marque até 3 layouts. O bio site vai mostrar os itens em todos os layouts marcados, nessa ordem.</p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {([["carousel", "Carrossel horizontal", "Arrasta para o lado, ideal para destaques"], ["grid", "Grade 2 colunas", "Visual de loja, dois itens por linha"], ["stack", "Lista vertical", "Uma foto grande embaixo da outra"], ["category-carousel", "Carrossel por categoria", "Agrupa: Cortes, Barba, Tratamentos..."]] as const).map(([value, lbl2, desc]) => {
-                const active = value === (site.catalogLayout ?? "carousel");
+              {([
+                ["carousel",          "Carrossel horizontal", "Arrasta para o lado, ideal para destaques"],
+                ["grid",              "Grade 2 colunas",      "Visual de loja, dois itens por linha"],
+                ["stack",             "Lista vertical",       "Uma foto grande embaixo da outra"],
+                ["category-carousel", "Carrossel por categoria", "Agrupa: Cortes, Barba, Tratamentos..."],
+              ] as const).map(([value, lbl2, desc]) => {
+                const activeLayouts: CatalogLayout[] = site.catalogLayouts?.length ? site.catalogLayouts : [site.catalogLayout ?? "carousel"];
+                const active = activeLayouts.includes(value);
+                const toggle = () => {
+                  const next = active
+                    ? activeLayouts.filter((l) => l !== value)
+                    : activeLayouts.length >= 3 ? activeLayouts : [...activeLayouts, value];
+                  if (next.length === 0) return; // sempre manter pelo menos 1
+                  update((s) => ({ ...s, catalogLayouts: next as CatalogLayout[], catalogLayout: next[0] }));
+                };
                 return (
-                  <button key={value} type="button" onClick={() => update((s) => ({ ...s, catalogLayout: value }))}
-                    className={"rounded-2xl border p-3 text-left transition " + (active ? "border-[#31c4a8] bg-emerald-50" : "border-slate-200 bg-white hover:border-slate-300")}>
-                    <p className={"text-sm font-black " + (active ? "text-[#1f9f87]" : "text-slate-800")}>{active ? "Selecionado: " : ""}{lbl2}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">{desc}</p>
+                  <button key={value} type="button" onClick={toggle}
+                    className={"flex items-start gap-3 rounded-2xl border p-3 text-left transition " + (active ? "border-[#31c4a8] bg-emerald-50" : "border-slate-200 bg-white hover:border-slate-300")}>
+                    <span className={"mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 text-xs font-black " + (active ? "border-[#31c4a8] bg-[#31c4a8] text-white" : "border-slate-300 bg-white text-slate-300")}>
+                      {active ? "✓" : ""}
+                    </span>
+                    <div>
+                      <p className={"text-sm font-black " + (active ? "text-[#1f9f87]" : "text-slate-800")}>{lbl2}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">{desc}</p>
+                    </div>
                   </button>
                 );
               })}
             </div>
+            {(site.catalogLayouts?.length ?? 0) > 1 ? (
+              <p className="mt-2 text-xs font-bold text-[#1f9f87]">{site.catalogLayouts!.length} layouts selecionados — o site vai exibir todos em sequência.</p>
+            ) : null}
           </div>
 
           <div className="mt-5 grid gap-4">
