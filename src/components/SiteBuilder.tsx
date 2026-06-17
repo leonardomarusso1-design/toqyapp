@@ -39,7 +39,6 @@ function updateCatalogItem(items: CatalogItem[], index: number, patch: Partial<C
 export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   const [site, setSite] = useState<ToqySite>({ ...initialSite, catalogLayout: initialSite.catalogLayout ?? "carousel" });
   const [step, setStep] = useState(0);
-  const [advancedColors, setAdvancedColors] = useState(false);
   const [saved, setSaved] = useState<ToqySite | null>(null);
   const [copied, setCopied] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
@@ -192,12 +191,50 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             <label><span className={label}>Formato</span><select className={field} value={site.theme.buttonRadius} onChange={(e) => setTheme({ buttonRadius: e.target.value as ToqySite["theme"]["buttonRadius"] })}><option value="soft">Soft</option><option value="rounded">Arredondado</option><option value="pill">Pill/cápsula</option></select></label>
             <label className="md:col-span-2"><span className={label}>Imagem de fundo</span><ImageUploadField label="" value={site.profile.backgroundImageUrl} onChange={(url) => setProfile({ backgroundImageUrl: url })} placeholder="URL da imagem de fundo" /><ImageGuidelineHint type="background" /></label>
           </div>
+
+          {/* Roda de cores — sempre visível */}
+          <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <p className="text-sm font-black text-slate-800">Cores do tema</p>
+            <p className="mt-0.5 text-xs text-slate-500">Clique na bolinha colorida para abrir a roda de cores e escolher qualquer cor.</p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+              {([
+                ["primary",    "Cor principal",    "Botões e destaques"],
+                ["secondary",  "Cor secundária",   "Gradiente do fundo"],
+                ["accent",     "Cor de destaque",  "Preços e rótulos"],
+                ["background", "Fundo",            "Cor de fundo da página"],
+                ["card",       "Cards",            "Fundo dos cartões"],
+                ["text",       "Texto",            "Cor do texto principal"],
+              ] as const).map(([key, name, hint]) => (
+                <div key={key} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3">
+                  <label className="relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center">
+                    <span className="h-10 w-10 rounded-full border-2 border-white shadow-md ring-1 ring-slate-200 transition hover:scale-110" style={{ background: site.theme[key] }} />
+                    <input
+                      type="color"
+                      value={site.theme[key]}
+                      onChange={(e) => setTheme({ [key]: e.target.value } as Partial<ToqySite["theme"]>)}
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    />
+                  </label>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-black text-slate-800">{name}</p>
+                    <p className="truncate text-xs text-slate-400">{hint}</p>
+                    <input
+                      type="text"
+                      value={site.theme[key]}
+                      onChange={(e) => { if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) setTheme({ [key]: e.target.value } as Partial<ToqySite["theme"]>); }}
+                      className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-mono text-xs text-slate-700 outline-none focus:border-[#31c4a8]"
+                      maxLength={7}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
             <label className="flex items-center gap-3 text-sm font-black text-slate-800"><input type="checkbox" checked={Boolean(site.plaqueTheme?.useSameBackground)} onChange={(e) => update((s) => ({ ...s, plaqueTheme: { ...s.plaqueTheme, useSameBackground: e.target.checked, backgroundImageUrl: s.plaqueTheme?.backgroundImageUrl ?? "", backgroundStyle: "image" } }))} />Usar o mesmo fundo/arte da plaquinha</label>
             {site.plaqueTheme?.useSameBackground ? <div className="mt-4"><input className={field} value={site.plaqueTheme.backgroundImageUrl ?? ""} onChange={(e) => update((s) => ({ ...s, plaqueTheme: { useSameBackground: true, backgroundImageUrl: e.target.value, backgroundStyle: "image" } }))} placeholder="URL da arte/fundo da plaquinha" /><ImageGuidelineHint type="plaque" /></div> : null}
           </div>
-          <button type="button" onClick={() => setAdvancedColors((v) => !v)} className="mt-5 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-black text-slate-700">{advancedColors ? "Ocultar cores avançadas" : "Personalizar cores avançadas"}</button>
-          {advancedColors ? <div className="mt-4 grid gap-4 md:grid-cols-3">{(["primary", "secondary", "accent", "background", "card", "text"] as const).map((key) => <label key={key}><span className={label}>{key}</span><input className={field} value={site.theme[key]} onChange={(e) => setTheme({ [key]: e.target.value } as Partial<ToqySite["theme"]>)} /></label>)}</div> : null}
         </Section>
       );
     }
