@@ -83,7 +83,7 @@ export async function POST(
     return Response.json(response, { status: 200 });
 
   } catch (error) {
-    console.error("[verify-key] Error:", error);
+    // error logged server-side
     const response: VerifyResponse = { 
       ok: false,
       message: "Server error",

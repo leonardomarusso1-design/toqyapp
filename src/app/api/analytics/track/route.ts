@@ -48,20 +48,7 @@ export async function POST(request: NextRequest) {
     const userAgent = body.userAgent || request.headers.get("user-agent");
     const referer = request.headers.get("referer");
 
-    // Log event (TODO: Phase 8 - persist to Supabase)
-    console.log("[Analytics Event]", {
-      timestamp: new Date().toISOString(),
-      eventType: body.eventType,
-      bioSiteId: body.bioSiteId,
-      buttonId: body.buttonId,
-      buttonLabel: body.buttonLabel,
-      ipAddress,
-      userAgent,
-      referer,
-      metadata: body.metadata,
-    });
-
-    // TODO: Phase 8 - Save to Supabase analytics_events table
+    // TODO: Phase 8 - persist to Supabase analytics_events table
     // await supabase
     //   .from('analytics_events')
     //   .insert({

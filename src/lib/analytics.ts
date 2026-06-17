@@ -100,7 +100,7 @@ export async function trackEvent(
       // Silently fail - don't disrupt user experience
     });
   } catch (error) {
-    console.error("[Analytics] Failed to track event:", error);
+    // silenced in production
   }
 }
 

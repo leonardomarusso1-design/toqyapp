@@ -17,6 +17,8 @@ type Profile = {
   email: string;
   full_name: string | null;
   plan_tier: PlanTier | null;
+  plan_toqy?: PlanTier | null;
+  biosites_limit?: number;
   subscription_status: string | null;
 };
 
@@ -64,7 +66,7 @@ export default function ConfiguracoesPage() {
 
       const [{ data: profileData, error: profileError }, { count: biositesCount, error: biositesError }] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", session.user.id).single(),
-        supabase.from("biosites").select("id", { count: "exact", head: true }).eq("user_id", session.user.id),
+        supabase.from("toqy_biosites").select("id", { count: "exact", head: true }).eq("owner_profile_id", session.user.id),
       ]);
 
       if (profileError || biositesError) {
@@ -112,7 +114,7 @@ export default function ConfiguracoesPage() {
     window.location.reload();
   }
 
-  const planTier = profile?.plan_tier ?? "free";
+  const planTier = (profile?.plan_toqy || profile?.plan_tier || "free") as PlanTier;
   const planLabel = PLAN_LABELS[planTier] ?? PLAN_LABELS.free;
   const subscriptionLabel = SUBSCRIPTION_LABELS[profile?.subscription_status ?? "active"] ?? "Ativa";
   const planLimit = PLAN_BIOSITE_LIMITS[planTier] ?? PLAN_BIOSITE_LIMITS.free;

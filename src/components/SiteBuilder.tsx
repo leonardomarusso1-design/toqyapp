@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CheckCircle2, Copy, ExternalLink, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
+import { CheckCircle2, Copy, ExternalLink, Eye, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import type { CatalogItem, CatalogLayout, Segment, ThemePreset, ToqySite } from "@/lib/types";
 import { applySegmentTemplate, getSegmentTemplate, segmentOptions } from "@/lib/segmentTemplates";
@@ -13,6 +13,7 @@ import { validateSite } from "@/lib/validation";
 import { ImageGuidelineHint } from "./ImageGuidelineHint";
 import { ImageUploadField } from "./ImageUploadField";
 import { LiveBioSitePreview } from "./LiveBioSitePreview";
+import { PublicBioSite } from "./PublicBioSite";
 import { ThemePresetPicker } from "./ThemePresetPicker";
 import { ButtonEditor } from "./ButtonEditor";
 import { generateId } from "@/lib/security";
@@ -42,6 +43,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   const [saved, setSaved] = useState<ToqySite | null>(null);
   const [copied, setCopied] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [limitState, setLimitState] = useState<{ current: number; limit: number; planTier: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const publicLink = createPublicUrl(site.slug);
@@ -464,6 +466,29 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
         </div>
       </div>
       <LiveBioSitePreview site={site} />
+
+      {/* Botão flutuante de preview no mobile */}
+      <div className="fixed bottom-6 right-6 z-50 xl:hidden">
+        <button
+          type="button"
+          onClick={() => setShowMobilePreview(true)}
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-[#31c4a8] text-white shadow-lg shadow-emerald-200 transition hover:scale-105 active:scale-95"
+          aria-label="Ver preview"
+        >
+          <Eye className="h-6 w-6" />
+        </button>
+      </div>
+
+      {/* Modal de preview mobile */}
+      {showMobilePreview ? (
+        <div className="fixed inset-0 z-[60] flex flex-col bg-slate-950 xl:hidden">
+          <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+            <p className="text-sm font-black text-white">Preview — /b/{site.slug}</p>
+            <button type="button" onClick={() => setShowMobilePreview(false)} className="rounded-xl bg-slate-800 px-4 py-2 text-sm font-black text-white">Fechar</button>
+          </div>
+          <div className="flex-1 overflow-y-auto"><PublicBioSite site={site} /></div>
+        </div>
+      ) : null}
     </div>
   );
 }
