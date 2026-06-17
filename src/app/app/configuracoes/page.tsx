@@ -167,9 +167,9 @@ export default function ConfiguracoesPage() {
           </div>
           {planTier === "free" ? (
             <div className="mt-4 rounded-2xl border border-indigo-200 bg-indigo-50 p-4">
-              <p className="text-base font-black text-indigo-950">Faça upgrade para criar mais biosites!</p>
+              <p className="text-base font-black text-indigo-900">Faça upgrade para criar mais biosites!</p>
               <p className="mt-1 text-sm font-medium text-indigo-800">Desbloqueie mais páginas e recursos avançados para sua conta.</p>
-              <Link href="/#planos" className="mt-4 inline-flex rounded-2xl bg-indigo-650 px-5 py-3 text-sm font-black text-white transition hover:bg-indigo-700">Ver planos</Link>
+              <Link href="/#planos" className="mt-4 inline-flex rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-black text-white transition hover:bg-indigo-700">Ver planos</Link>
             </div>
           ) : null}
           {isNearLimit ? (

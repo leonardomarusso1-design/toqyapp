@@ -141,7 +141,7 @@ export default function LoginPage() {
                   setIsSuccess(false);
                 }}
                 className={`rounded-2xl px-4 py-2 text-sm font-black transition ${
-                  mode === 'login' ? 'bg-indigo-650 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  mode === 'login' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Entrar
@@ -154,7 +154,7 @@ export default function LoginPage() {
                   setIsSuccess(false);
                 }}
                 className={`rounded-2xl px-4 py-2 text-sm font-black transition ${
-                  mode === 'signup' ? 'bg-indigo-650 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  mode === 'signup' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Criar conta
@@ -303,7 +303,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="relative flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-2xl bg-indigo-650 px-5 py-4 text-sm font-black text-white shadow-lg shadow-indigo-150/50 transition duration-200 hover:-translate-y-0.5 hover:bg-indigo-700 disabled:pointer-events-none disabled:opacity-60"
+              className="relative flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-2xl bg-indigo-600 px-5 py-4 text-sm font-black text-white shadow-lg shadow-indigo-100/50 transition duration-200 hover:-translate-y-0.5 hover:bg-indigo-700 disabled:pointer-events-none disabled:opacity-60"
             >
               {loading ? (
                 <>
