@@ -25,7 +25,7 @@ export type ClientKey = {
 };
 
 export type DataProvider = {
-  listBiosites: () => BioSite[];
+  listBiosites: (ownerEmail?: string | null) => BioSite[];
   getBiositeById: (id: string) => BioSite | null;
   getBiositeBySlug: (slug: string) => BioSite | null;
   saveBiosite: (site: BioSite) => BioSite;

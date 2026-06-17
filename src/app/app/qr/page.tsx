@@ -7,6 +7,7 @@ import { Copy, Download, ExternalLink, QrCode, Smartphone } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { createPublicUrl, listBiosites } from "@/lib/dataProvider";
 import type { ToqySite } from "@/lib/types";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function QRPage() {
   const [sites, setSites] = useState<ToqySite[]>([]);
@@ -15,9 +16,12 @@ export default function QRPage() {
   const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const allSites = listBiosites();
-    setSites(allSites);
-    setSelectedSlug(new URLSearchParams(window.location.search).get("site") || allSites[0]?.slug || "");
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const email = session?.user?.email ?? null;
+      const allSites = listBiosites(email);
+      setSites(allSites);
+      setSelectedSlug(new URLSearchParams(window.location.search).get("site") || allSites[0]?.slug || "");
+    });
   }, []);
 
   const selectedSite = useMemo(() => sites.find((site) => site.slug === selectedSlug) ?? sites[0], [selectedSlug, sites]);

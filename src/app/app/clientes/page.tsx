@@ -6,6 +6,7 @@ import { Copy, Edit3, ExternalLink, KeyRound, Plus, Search, Send, Users } from "
 import { DashboardShell } from "@/components/DashboardShell";
 import { createEditUrl, createPublicUrl, listBiosites } from "@/lib/dataProvider";
 import type { ToqySite } from "@/lib/types";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function ClientesPage() {
   const [sites, setSites] = useState<ToqySite[]>([]);
@@ -14,8 +15,12 @@ export default function ClientesPage() {
   const [origin, setOrigin] = useState("");
 
   useEffect(() => {
-    setSites(listBiosites());
     setOrigin(window.location.origin);
+    // Carrega só os bio sites do usuário logado
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const email = session?.user?.email ?? null;
+      setSites(listBiosites(email));
+    });
   }, []);
 
   const filtered = useMemo(() => {

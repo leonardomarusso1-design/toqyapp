@@ -1,4 +1,4 @@
-import { mockSites } from "../mockSites";
+import { mockSites, isMockOwner } from "../mockSites";
 import { generateEditKey, generateId, generateSlug } from "../security";
 import type { BioSite, DataProvider } from "./types";
 
@@ -46,24 +46,27 @@ export function setStoredSites(sites: BioSite[]) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sites));
 }
 
-export function listBiosites(): BioSite[] {
+export function listBiosites(ownerEmail?: string | null): BioSite[] {
   const stored = getStoredSites();
   const deletedMockIds = new Set(getDeletedMockSiteIds());
   const bySlug = new Map<string, BioSite>();
 
-  mockSites.filter((site) => !deletedMockIds.has(site.id)).forEach((site) => bySlug.set(site.slug, cloneSite(site)));
+  // Só exibe os mocks para o dono real (leonardomarusso1@gmail.com)
+  if (isMockOwner(ownerEmail)) {
+    mockSites.filter((site) => !deletedMockIds.has(site.id)).forEach((site) => bySlug.set(site.slug, cloneSite(site)));
+  }
   stored.forEach((site) => bySlug.set(site.slug, cloneSite(site)));
 
   return Array.from(bySlug.values());
 }
 
-export function getBiositeById(id: string) {
-  return listBiosites().find((site) => site.id === id) ?? null;
+export function getBiositeById(id: string, ownerEmail?: string | null) {
+  return listBiosites(ownerEmail).find((site) => site.id === id) ?? null;
 }
 
-export function getBiositeBySlug(slug: string) {
+export function getBiositeBySlug(slug: string, ownerEmail?: string | null) {
   const normalizedSlug = generateSlug(slug);
-  return listBiosites().find((site) => site.slug === normalizedSlug) ?? null;
+  return listBiosites(ownerEmail).find((site) => site.slug === normalizedSlug) ?? null;
 }
 
 export function saveBiosite(site: BioSite) {

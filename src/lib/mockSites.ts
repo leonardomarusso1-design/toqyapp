@@ -82,6 +82,13 @@ export function getMockSiteBySlug(slug: string) {
 
 export const demoSlugs = mockSites.map((site) => site.slug);
 
+// E-mail do dono real dos bio sites de demonstração — só ele vê os mocks no painel
+export const MOCK_OWNER_EMAIL = "leonardomarusso1@gmail.com";
+
 export function isDemoSlug(slug: string) {
   return demoSlugs.includes(slug);
+}
+
+export function isMockOwner(email?: string | null) {
+  return email?.toLowerCase() === MOCK_OWNER_EMAIL.toLowerCase();
 }

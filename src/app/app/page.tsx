@@ -50,7 +50,7 @@ export default function ConfiguracoesPage() {
       setAppUrl(window.location.origin);
 
       if (!hasSupabaseBrowserEnv()) {
-        setCount(listBiosites().length);
+        setCount(listBiosites(null).length);
         setLoading(false);
         return;
       }
@@ -91,7 +91,7 @@ export default function ConfiguracoesPage() {
         return;
       }
 
-      setCount(listBiosites().length);
+      setCount(listBiosites(null).length);
       setLoading(false);
     });
 

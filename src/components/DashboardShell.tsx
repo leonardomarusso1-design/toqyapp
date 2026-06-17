@@ -42,12 +42,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="mt-auto border-t border-slate-100 pt-4">
-            <div className="bg-slate-900 rounded-xl p-4 text-white">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1.5">Uso dos Sites</p>
-              <p className="text-sm">78% Limite Consumido</p>
-              <div className="mt-2.5 w-full bg-slate-700 h-2 rounded-full overflow-hidden">
-                <div className="bg-indigo-400 h-full w-[78%]"></div>
-              </div>
+            <div className="rounded-xl bg-slate-50 p-4 text-center">
+              <p className="text-xs font-bold text-slate-400">TOQY</p>
+              <p className="mt-1 text-xs text-slate-400">Bio sites profissionais</p>
             </div>
           </div>
         </div>
