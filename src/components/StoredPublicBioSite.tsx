@@ -3,23 +3,39 @@
 import { useEffect, useState } from "react";
 import type { ToqySite } from "@/lib/types";
 import { getSiteBySlug } from "@/lib/siteStorage";
-import { getMockSiteBySlug } from "@/lib/mockSites";
 import { loadBiositeFromSupabase } from "@/lib/biositeSync";
 import { PublicBioSite } from "./PublicBioSite";
 
-export default function StoredPublicBioSite({ slug, initialSite }: { slug: string; initialSite?: ToqySite }) {
-  const [site, setSite] = useState<ToqySite | undefined>(initialSite);
+export default function StoredPublicBioSite({ slug }: { slug: string }) {
+  const [site, setSite] = useState<ToqySite | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Mostra rápido do cache local (localStorage ou mock)
-    const local = getSiteBySlug(slug) ?? getMockSiteBySlug(slug) ?? initialSite;
-    if (local) setSite(local);
+    let active = true;
+    async function load() {
+      // Busca exclusivamente do Supabase
+      const supabaseSite = await loadBiositeFromSupabase(slug);
+      if (!active) return;
+      if (supabaseSite) {
+        setSite(supabaseSite);
+      } else {
+        // fallback: cache local apenas se o próprio criador estiver vendo
+        const local = getSiteBySlug(slug);
+        if (local) setSite(local);
+      }
+      setLoading(false);
+    }
+    load();
+    return () => { active = false; };
+  }, [slug]);
 
-    // 2. Busca versão mais recente do Supabase em background
-    loadBiositeFromSupabase(slug).then((supabaseSite) => {
-      if (supabaseSite) setSite(supabaseSite);
-    });
-  }, [slug, initialSite]);
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-cyan-400 border-t-transparent" />
+      </main>
+    );
+  }
 
   if (!site) return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 p-6 text-center text-white">

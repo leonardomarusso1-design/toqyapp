@@ -28,8 +28,11 @@ export async function POST(request: Request) {
   const supabase = getSupabaseAdmin();
   if (!supabase) return Response.json({ error: "Supabase not configured" }, { status: 500 });
 
-  // Auditoria
-  await supabase.from("toqy_kiwify_events").insert({ event_type: eventType, product_name: productName, customer_email: email, order_id: orderId, raw_payload: body });
+  // Auditoria de todos os eventos recebidos
+  await supabase.from("toqy_kiwify_events").insert({
+    event_type: eventType, product_name: productName,
+    customer_email: email, order_id: orderId, raw_payload: body,
+  });
 
   const planInfo = resolvePlan(productName);
   if (!planInfo) return Response.json({ ok: true, skipped: "not_toqy_plan" });
@@ -39,23 +42,42 @@ export async function POST(request: Request) {
   const isCanceled = eventType === "order_refunded" || eventType === "subscription_canceled";
 
   if (isApproved) {
-    await supabase.from("profiles").upsert({
-      email,
-      full_name: body.Customer?.full_name ?? "",
-      plan_toqy: planInfo.plan,
-      biosites_limit: planInfo.limit,
-      plan_toqy_since: new Date().toISOString(),
-      plan_toqy_expires_at: null,
-      kiwify_order_id_toqy: orderId,
-      subscription_status: "active",
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "email", ignoreDuplicates: false });
-    return Response.json({ ok: true, plan: planInfo.plan, email });
+    // Verifica se o usuário já tem conta
+    const { data: existingProfile } = await supabase
+      .from("profiles").select("id").eq("email", email).maybeSingle();
+
+    if (existingProfile) {
+      // Usuário já existe → atualiza o plano direto
+      await supabase.from("profiles").update({
+        plan_toqy: planInfo.plan,
+        biosites_limit: planInfo.limit,
+        plan_toqy_since: new Date().toISOString(),
+        plan_toqy_expires_at: null,
+        kiwify_order_id_toqy: orderId,
+        subscription_status: "active",
+        updated_at: new Date().toISOString(),
+      }).eq("email", email);
+      return Response.json({ ok: true, plan: planInfo.plan, applied: "immediate" });
+    } else {
+      // Usuário ainda não criou conta → grava plano pendente
+      await supabase.from("toqy_pending_plans").upsert({
+        email,
+        plan_toqy: planInfo.plan,
+        biosites_limit: planInfo.limit,
+        kiwify_order_id: orderId,
+      }, { onConflict: "email" });
+      return Response.json({ ok: true, plan: planInfo.plan, applied: "pending" });
+    }
   }
 
   if (isCanceled) {
-    await supabase.from("profiles").update({ plan_toqy: "free", biosites_limit: 1, plan_toqy_expires_at: new Date().toISOString(), subscription_status: "canceled", updated_at: new Date().toISOString() }).eq("email", email);
-    return Response.json({ ok: true, downgraded: true, email });
+    await supabase.from("profiles").update({
+      plan_toqy: "free", biosites_limit: 1,
+      plan_toqy_expires_at: new Date().toISOString(),
+      subscription_status: "canceled", updated_at: new Date().toISOString(),
+    }).eq("email", email);
+    await supabase.from("toqy_pending_plans").delete().eq("email", email);
+    return Response.json({ ok: true, downgraded: true });
   }
 
   return Response.json({ ok: true, skipped: eventType });

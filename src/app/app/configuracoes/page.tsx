@@ -3,10 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Database, Download, LogOut, Trash2, TriangleAlert, UserRound } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
-import { hasSupabaseBrowserEnv } from "@/lib/supabaseBrowser";
-import { listBiosites } from "@/lib/dataProvider";
 import { PLAN_BIOSITE_LIMITS } from "@/lib/planLimits";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -38,9 +36,7 @@ const SUBSCRIPTION_LABELS: Record<string, string> = {
 
 export default function ConfiguracoesPage() {
   const router = useRouter();
-  const [supabaseReady, setSupabaseReady] = useState(false);
   const [count, setCount] = useState(0);
-  const [appUrl, setAppUrl] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [userMeta, setUserMeta] = useState<{ avatar_url?: string; picture?: string; full_name?: string } | null>(null);
@@ -49,14 +45,6 @@ export default function ConfiguracoesPage() {
     let active = true;
 
     const loadDashboard = async () => {
-      setSupabaseReady(hasSupabaseBrowserEnv());
-      setAppUrl(window.location.origin);
-
-      if (!hasSupabaseBrowserEnv()) {
-        setCount(listBiosites().length);
-        setLoading(false);
-        return;
-      }
 
       const { data: { session } } = await supabase.auth.getSession();
 
@@ -72,7 +60,8 @@ export default function ConfiguracoesPage() {
       ]);
 
       if (profileError || biositesError) {
-        setCount(listBiosites().length);
+        setCount(biositesCount ?? 0);
+        if (profileData) setProfile(profileData as Profile);
         setLoading(false);
         return;
       }
@@ -86,7 +75,7 @@ export default function ConfiguracoesPage() {
 
     loadDashboard().catch(() => {
       if (!active) return;
-      setCount(listBiosites().length);
+      setCount(0);
       setLoading(false);
     });
 
@@ -96,24 +85,6 @@ export default function ConfiguracoesPage() {
   async function handleLogout() {
     await supabase.auth.signOut();
     router.push("/");
-  }
-
-  function exportData() {
-    const data = window.localStorage.getItem("toqy_sites_v4") ?? "[]";
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = "toqy-backup.json";
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function clearLocalData() {
-    if (!window.confirm("Isso vai apagar os bio sites criados neste navegador (modo demonstração). Continuar?")) return;
-    window.localStorage.removeItem("toqy_sites_v4");
-    window.localStorage.removeItem("toqy_deleted_mock_sites_v1");
-    window.location.reload();
   }
 
   const planTier = (profile?.plan_toqy || profile?.plan_tier || "free") as PlanTier;
@@ -192,31 +163,6 @@ export default function ConfiguracoesPage() {
             </div>
           ) : null}
           <Link href="/#planos" className="mt-4 inline-flex rounded-2xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700 transition hover:border-[#31c4a8] hover:text-[#1f9f87]">Ver todos os planos</Link>
-        </section>
-
-        <section className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-[#31c4a8]"><Database className="h-5 w-5" /></span>
-            <h2 className="text-xl font-black">Banco de dados (Supabase)</h2>
-          </div>
-          {supabaseReady ? (
-            <p className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700"><CheckCircle2 className="h-5 w-5" /> Conectado — as páginas ficam salvas na nuvem.</p>
-          ) : (
-            <div className="mt-4">
-              <p className="inline-flex items-center gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-black text-amber-700"><TriangleAlert className="h-5 w-5" /> Modo demonstração</p>
-              <p className="mt-3 text-sm leading-relaxed text-slate-500">As páginas estão salvas apenas neste navegador. Para que os clientes vejam as páginas em qualquer dispositivo, conecte o Supabase (variáveis <span className="font-mono">NEXT_PUBLIC_SUPABASE_URL</span> e chaves).</p>
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-black">Dados</h2>
-          <p className="mt-2 text-sm text-slate-500">Faça backup ou limpe os dados de demonstração deste navegador.</p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <button onClick={exportData} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700 transition hover:border-[#31c4a8] hover:text-[#1f9f87]"><Download className="h-4 w-4" /> Exportar backup</button>
-            <button onClick={clearLocalData} className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-black text-red-600 transition hover:bg-red-100"><Trash2 className="h-4 w-4" /> Limpar dados locais</button>
-          </div>
-          <p className="mt-3 text-xs font-semibold text-slate-400">URL do app: {appUrl}</p>
         </section>
       </div>
     </DashboardShell>
