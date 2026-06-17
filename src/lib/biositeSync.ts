@@ -10,14 +10,14 @@ import { saveStoredSite } from "./siteStorage";
 import type { ToqySite } from "./types";
 
 export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boolean; source: "supabase" | "local"; error?: string }> {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
-      saveStoredSite(site);
-      return { ok: true, source: "local", error: "Sem sessão ativa" };
-    }
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) {
+    saveStoredSite(site);
+    return { ok: true, source: "local", error: "Sem sessão ativa" };
+  }
 
-    // Verifica se já existe no Supabase
+  try {
+    // Verifica se já existe
     const { data: existing } = await supabase
       .from("toqy_biosites")
       .select("id")
@@ -35,7 +35,11 @@ export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boole
         .eq("slug", site.slug)
         .eq("owner_profile_id", session.user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("[biositeSync] UPDATE error:", JSON.stringify(error));
+        saveStoredSite(site);
+        return { ok: false, source: "local", error: error.message || error.code };
+      }
     } else {
       const { error } = await supabase
         .from("toqy_biosites")
@@ -47,15 +51,19 @@ export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boole
           site_data: site,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error("[biositeSync] INSERT error:", JSON.stringify(error));
+        saveStoredSite(site);
+        return { ok: false, source: "local", error: error.message || error.code };
+      }
     }
 
     saveStoredSite(site);
     return { ok: true, source: "supabase" };
 
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("[biositeSync] Erro Supabase:", msg, err);
+    const msg = err instanceof Error ? err.message : JSON.stringify(err);
+    console.error("[biositeSync] Catch error:", msg);
     saveStoredSite(site);
     return { ok: false, source: "local", error: msg };
   }
