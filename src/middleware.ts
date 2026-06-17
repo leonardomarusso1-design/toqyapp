@@ -6,12 +6,15 @@ export async function middleware(request: NextRequest) {
 
   if (!pathname.startsWith('/app')) return NextResponse.next();
 
-  // Aceita tanto o cookie do Supabase Auth quanto o cookie legado toqy-session
-  const supabaseCookie = request.cookies.get('sb-ljsdkegxfcwrwqosbjsm-auth-token')?.value
-    ?? request.cookies.get('sb-access-token')?.value
-    ?? request.cookies.get('toqy-session')?.value;
+  // Supabase salva sessão em cookies com nomes que variam — aceita qualquer um deles
+  const cookies = request.cookies.getAll();
+  const hasSession = cookies.some(
+    (c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token') && c.value
+  ) || cookies.some(
+    (c) => (c.name === 'toqy-session' || c.name === 'sb-access-token') && c.value
+  );
 
-  if (!supabaseCookie) {
+  if (!hasSession) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
