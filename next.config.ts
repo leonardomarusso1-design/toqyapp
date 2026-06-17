@@ -22,7 +22,6 @@ export default withSentryConfig(nextConfig, {
   org: "marusso-producoe",
   project: "javascript-nextjs-2t",
   silent: true,
-  widenClientFileUpload: true,
   disableLogger: true,
-  automaticVercelMonitors: true,
+  sourcemaps: { disable: true },
 });
