@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LandingHeader } from "@/components/LandingHeader";
 import {
   CalendarCheck,
   Check,
@@ -79,10 +80,7 @@ export default function LandingPage() {
             <a className="transition hover:text-indigo-600" href="#planos">Planos</a>
             <a className="transition hover:text-indigo-600" href="#exemplos">Exemplos</a>
           </nav>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="hidden text-sm font-semibold text-slate-700 hover:text-indigo-600 sm:inline-flex">Entrar</Link>
-            <Link href="/login" className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-indigo-100 transition hover:-translate-y-0.5 hover:bg-indigo-700">Começar grátis</Link>
-          </div>
+          <LandingHeader />
         </div>
       </header>
 
