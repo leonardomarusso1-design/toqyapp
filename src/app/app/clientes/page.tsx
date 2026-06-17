@@ -8,8 +8,6 @@ import { createEditUrl, createPublicUrl } from "@/lib/dataProvider";
 import type { ToqySite } from "@/lib/types";
 import { supabase } from "@/lib/supabaseClient";
 import { listBiositesFromSupabase } from "@/lib/biositeSync";
-import { isMockOwner } from "@/lib/mockSites";
-import { getMockSites } from "@/lib/mockSites";
 
 export default function ClientesPage() {
   const [sites, setSites] = useState<ToqySite[]>([]);
@@ -24,21 +22,12 @@ export default function ClientesPage() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
-    // Busca do Supabase (bio sites reais do usuário)
+    // Busca APENAS bio sites reais do Supabase (sem mocks)
     const supabaseSites = await listBiositesFromSupabase();
-
-    // Se for o dono do sistema, adiciona os mocks que ainda não foram salvos no Supabase
-    let allSites = supabaseSites;
-    if (isMockOwner(session.user.email)) {
-      const mockSlugs = new Set(supabaseSites.map(s => s.slug));
-      const mocksToShow = getMockSites().filter(m => !mockSlugs.has(m.slug));
-      allSites = [...supabaseSites, ...mocksToShow];
-    }
-
-    setSites(allSites);
+    setSites(supabaseSites);
 
     // Checar limite
-    const { data: profile } = await supabase.from("profiles").select("plan_toqy, biosites_limit").eq("id", session.user.id).maybeSingle();
+    const { data: profile } = await supabase.from("profiles").select("biosites_limit").eq("id", session.user.id).maybeSingle();
     const limit = profile?.biosites_limit ?? 1;
     setAtLimit(supabaseSites.length >= limit);
   }
@@ -69,7 +58,7 @@ export default function ClientesPage() {
   }
 
   return (
-    <DashboardShell atLimit={atLimit}>
+    <DashboardShell>
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#31c4a8]">Clientes</p>

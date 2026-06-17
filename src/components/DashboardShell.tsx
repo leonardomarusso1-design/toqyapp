@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 import { Home, Plus, QrCode, Settings, Users } from "lucide-react";
 import { LogoutButton } from "@/components/LogoutButton";
+import { supabase } from "@/lib/supabaseClient";
 
 const navItems = [
   { href: "/app", icon: Home, label: "Painel" },
@@ -13,8 +15,25 @@ const navItems = [
   { href: "/app/configuracoes", icon: Settings, label: "Configurações" },
 ];
 
-export function DashboardShell({ children, atLimit = false }: { children: ReactNode; atLimit?: boolean }) {
+export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const [atLimit, setAtLimit] = useState(false);
+
+  useEffect(() => {
+    async function checkLimit() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const [{ data: profile }, { count }] = await Promise.all([
+        supabase.from("profiles").select("biosites_limit").eq("id", session.user.id).maybeSingle(),
+        supabase.from("toqy_biosites").select("id", { count: "exact", head: true }).eq("owner_profile_id", session.user.id),
+      ]);
+
+      const limit = profile?.biosites_limit ?? 1;
+      setAtLimit((count ?? 0) >= limit);
+    }
+    checkLimit();
+  }, [pathname]);
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950 lg:grid lg:grid-cols-[260px_1fr]">
@@ -28,6 +47,7 @@ export function DashboardShell({ children, atLimit = false }: { children: ReactN
           {atLimit ? (
             <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center">
               <p className="text-xs font-black text-red-600">Limite atingido</p>
+              <p className="mt-0.5 text-xs text-slate-500">Faça upgrade para criar mais bio sites.</p>
               <Link href="/#planos" className="mt-2 inline-flex items-center gap-1 rounded-xl bg-red-600 px-3 py-2 text-xs font-black text-white transition hover:bg-red-700">
                 Fazer upgrade
               </Link>

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, LogOut, UserRound } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { hasSupabaseBrowserEnv } from "@/lib/supabaseBrowser";
-import { listBiosites } from "@/lib/dataProvider";
 import { PLAN_BIOSITE_LIMITS } from "@/lib/planLimits";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -52,7 +51,7 @@ export default function ConfiguracoesPage() {
       setAppUrl(window.location.origin);
 
       if (!hasSupabaseBrowserEnv()) {
-        setCount(listBiosites(null).length);
+        setCount(0);
         setLoading(false);
         return;
       }
@@ -89,11 +88,8 @@ export default function ConfiguracoesPage() {
     };
 
     loadDashboard().catch(() => {
-      if (!active) {
-        return;
-      }
-
-      setCount(listBiosites(null).length);
+      if (!active) return;
+      setCount(0);
       setLoading(false);
     });
 
@@ -135,7 +131,7 @@ export default function ConfiguracoesPage() {
   const displayEmail = profile?.email ?? "—";
 
   return (
-    <DashboardShell atLimit={count >= planLimit}>
+    <DashboardShell>
       <div>
         <p className="text-sm font-black uppercase tracking-[0.18em] text-[#31c4a8]">Configurações</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight md:text-5xl">Configurações</h1>

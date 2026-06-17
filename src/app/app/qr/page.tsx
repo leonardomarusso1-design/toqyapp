@@ -5,7 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Copy, Download, ExternalLink, QrCode, Smartphone } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
-import { createPublicUrl, listBiosites } from "@/lib/dataProvider";
+import { createPublicUrl } from "@/lib/dataProvider";
+import { listBiositesFromSupabase } from "@/lib/biositeSync";
 import type { ToqySite } from "@/lib/types";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -16,9 +17,9 @@ export default function QRPage() {
   const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const email = session?.user?.email ?? null;
-      const allSites = listBiosites(email);
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return;
+      const allSites = await listBiositesFromSupabase();
       setSites(allSites);
       setSelectedSlug(new URLSearchParams(window.location.search).get("site") || allSites[0]?.slug || "");
     });
