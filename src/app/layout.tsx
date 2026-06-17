@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthSync } from "@/components/AuthSync";
+import { SentryInit } from "@/components/SentryInit";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_APP_URL ??
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="pt-BR">
       <body className="min-h-screen font-body antialiased">
+        <SentryInit />
         <AuthSync />
         {children}
       </body>
