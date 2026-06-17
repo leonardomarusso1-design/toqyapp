@@ -1,44 +1,18 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Protege todas as rotas que começam com /app
-  if (pathname.startsWith('/app')) {
-    const sessionCookie = request.cookies.get('toqy-session')?.value;
+  if (!pathname.startsWith('/app')) return NextResponse.next();
 
-    if (!sessionCookie) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
+  // Aceita tanto o cookie do Supabase Auth quanto o cookie legado toqy-session
+  const supabaseCookie = request.cookies.get('sb-ljsdkegxfcwrwqosbjsm-auth-token')?.value
+    ?? request.cookies.get('sb-access-token')?.value
+    ?? request.cookies.get('toqy-session')?.value;
 
-    try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      
-      // Validação segura se o Supabase real estiver configurado
-      if (supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('placeholder')) {
-        const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-          auth: { persistSession: false, autoRefreshToken: false }
-        });
-        
-        const { data: { user }, error } = await supabase.auth.getUser(sessionCookie);
-        
-        if (error || !user) {
-          const response = NextResponse.redirect(new URL('/login', request.url));
-          response.cookies.delete('toqy-session');
-          return response;
-        }
-      } else {
-        // Se estiver em modo offline/placeholder sem credenciais, verifica apenas a existência do cookie
-        if (!sessionCookie) {
-          return NextResponse.redirect(new URL('/login', request.url));
-        }
-      }
-    } catch (e) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
+  if (!supabaseCookie) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   return NextResponse.next();

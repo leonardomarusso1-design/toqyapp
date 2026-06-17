@@ -27,7 +27,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <span className="text-xl font-bold tracking-tight text-slate-800">Toqy</span>
           </Link>
 
-          <Link href="/app" className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700">
+          <Link href="/app/novo" className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700">
             <Plus className="h-4 w-4" /> Novo bio site
           </Link>
 
