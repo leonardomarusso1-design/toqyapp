@@ -216,9 +216,9 @@ export default function LandingPage() {
                   plan.name === "Comunidade"
                     ? "https://pay.kiwify.com.br/12uYE0c"
                     : plan.name === "Freelancer"
-                    ? "https://pay.kiwify.com.br/Oc2YP5A"
+                    ? "https://pay.kiwify.com.br/gTIhv6I"
                     : plan.name === "Agência"
-                    ? "https://pay.kiwify.com.br/X71Qhtu"
+                    ? "https://pay.kiwify.com.br/xFdnxvE"
                     : "/login"
                 }
                 target={plan.name === "Gratuito" ? undefined : "_blank"}
