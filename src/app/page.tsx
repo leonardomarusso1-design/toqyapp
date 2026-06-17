@@ -262,6 +262,80 @@ export default function LandingPage() {
         <h2 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">Crie uma página profissional para seu cliente em poucos minutos.</h2>
         <Link href="/login" className="mt-8 inline-flex rounded-xl bg-indigo-600 px-8 py-4 font-bold text-white shadow-lg shadow-indigo-100 transition hover:-translate-y-0.5 hover:bg-indigo-700">Começar agora</Link>
       </section>
+
+      {/* FAQ */}
+      <section id="faq" className="mx-auto max-w-3xl px-5 py-20">
+        <div className="text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">Dúvidas</p>
+          <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-900">Perguntas frequentes</h2>
+        </div>
+        <div className="mt-10 space-y-4">
+          {[
+            ["O que é um bio site TOQY?", "É uma página digital profissional que concentra todos os links, contatos, catálogo, Pix e Wi-Fi do seu negócio em um único lugar, acessível por QR Code ou NFC."],
+            ["Preciso saber programar?", "Não. O TOQY tem um editor visual completo — você personaliza logo, cores, botões e catálogo sem tocar em código."],
+            ["O que é a plaquinha física?", "É uma placa acrílica com QR Code e/ou chip NFC que o cliente toca ou escaneia com o celular para abrir o bio site. Você cria a plaquinha e entrega para o negócio do seu cliente."],
+            ["O cliente pode editar o bio site dele?", "Sim. Cada bio site tem uma chave de acesso exclusiva. O cliente acessa toqy.com.br/me e usa a chave para editar sua própria página a qualquer momento."],
+            ["Posso usar o TOQY para vender para outros negócios?", "Sim! Os planos Comunidade, Freelancer e Agência são feitos para isso. Você cria os bio sites, personaliza para cada cliente e entrega a chave de acesso."],
+            ["Como funciona o plano Gratuito?", "Você pode criar 1 bio site gratuitamente para conhecer a plataforma. Para criar mais e ter acesso a recursos completos (Pix, Wi-Fi, catálogo), faça upgrade para um plano pago."],
+            ["Os pagamentos são seguros?", "Sim. Os pagamentos são processados pela Kiwify, uma plataforma brasileira de pagamentos digitais com certificação de segurança."],
+            ["Posso cancelar quando quiser?", "Sim. Você pode cancelar a assinatura a qualquer momento pelo painel da Kiwify."],
+          ].map(([q, a]) => (
+            <details key={q} className="group rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm">
+              <summary className="flex cursor-pointer list-none items-center justify-between font-black text-slate-900">
+                {q}
+                <span className="ml-4 shrink-0 text-slate-400 transition group-open:rotate-180">▾</span>
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">{a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      {/* Rodapé */}
+      <footer className="border-t border-slate-200 bg-white">
+        <div className="mx-auto max-w-7xl px-5 py-12">
+          <div className="grid gap-8 md:grid-cols-4">
+            <div>
+              <Link href="/" className="flex items-center gap-2">
+                <img src="/brand/favicon-toqy.png" alt="TOQY" className="h-8 w-8 rounded-lg" />
+                <span className="text-lg font-black text-slate-900">TOQY</span>
+              </Link>
+              <p className="mt-3 text-sm text-slate-500">Bio sites profissionais para QR Code, NFC e plaquinhas.</p>
+            </div>
+            <div>
+              <p className="text-sm font-black text-slate-900">Produto</p>
+              <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                <li><a href="#recursos" className="hover:text-indigo-600">Recursos</a></li>
+                <li><a href="#como-funciona" className="hover:text-indigo-600">Como funciona</a></li>
+                <li><a href="#planos" className="hover:text-indigo-600">Planos</a></li>
+                <li><a href="#exemplos" className="hover:text-indigo-600">Exemplos</a></li>
+                <li><a href="#faq" className="hover:text-indigo-600">FAQ</a></li>
+              </ul>
+            </div>
+            <div>
+              <p className="text-sm font-black text-slate-900">Planos</p>
+              <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                <li><Link href="/login" className="hover:text-indigo-600">Gratuito</Link></li>
+                <li><a href="https://pay.kiwify.com.br/12uYE0c" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600">Comunidade — R$29,90/mês</a></li>
+                <li><a href="https://pay.kiwify.com.br/gTIhv6I" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600">Freelancer — R$59,90</a></li>
+                <li><a href="https://pay.kiwify.com.br/xFdnxvE" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600">Agência — R$149,90</a></li>
+              </ul>
+            </div>
+            <div>
+              <p className="text-sm font-black text-slate-900">Conta</p>
+              <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                <li><Link href="/login" className="hover:text-indigo-600">Entrar / Criar conta</Link></li>
+                <li><Link href="/me" className="hover:text-indigo-600">Acessar meu bio site</Link></li>
+                <li><a href="https://discord.gg/EsjFsRVyCC" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600">Comunidade Discord</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-slate-100 pt-8 text-xs text-slate-400 sm:flex-row">
+            <p>© {new Date().getFullYear()} TOQY. Todos os direitos reservados.</p>
+            <p>Pagamentos processados com segurança pela <span className="font-bold text-slate-600">Kiwify</span></p>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }

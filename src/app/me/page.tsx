@@ -6,7 +6,9 @@ import { QRCodeSVG } from "qrcode.react";
 import { Copy, Edit3, ExternalLink, LockKeyhole } from "lucide-react";
 import { ClientShell } from "@/components/ClientShell";
 import type { ToqySite } from "@/lib/types";
-import { createEditUrl, createPublicUrl, validateClientKey } from "@/lib/dataProvider";
+import { createEditUrl, createPublicUrl } from "@/lib/dataProvider";
+import { supabase } from "@/lib/supabaseClient";
+import { generateSlug } from "@/lib/security";
 
 export default function MePage() {
   const [username, setUsername] = useState("");
@@ -15,22 +17,38 @@ export default function MePage() {
   const [unlockedKey, setUnlockedKey] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  function enter() {
+  async function enter() {
     const cleanUser = username.trim().replace(/^https?:\/\/[^/]+/i, "").replace(/^\/b\//, "").replace(/^\//, "");
-    if (!key.trim()) {
-      setError("Digite a sua chave de acesso.");
-      return;
-    }
-    const found = validateClientKey(key, cleanUser || undefined);
-    if (!found) {
-      setError("Usuário ou chave incorretos. Confira os dados que o criador enviou para você.");
-      setSite(null);
-      return;
-    }
+    if (!key.trim()) { setError("Digite a sua chave de acesso."); return; }
+
+    setLoading(true);
     setError("");
-    setUnlockedKey(key.trim());
-    setSite(found);
+    try {
+      // Busca o bio site no Supabase pela chave + slug
+      const slug = cleanUser ? generateSlug(cleanUser) : null;
+      let query = supabase.from("toqy_biosites").select("site_data, slug, status, edit_key_hash");
+      if (slug) query = query.eq("slug", slug);
+
+      const { data, error: dbError } = await query;
+      if (dbError) throw dbError;
+
+      const match = (data ?? []).find(row => row.edit_key_hash === key.trim());
+      if (!match) {
+        setError("Usuário ou chave incorretos. Confira os dados que o criador enviou para você.");
+        setSite(null);
+        return;
+      }
+
+      const found = { ...match.site_data, slug: match.slug, status: match.status } as ToqySite;
+      setSite(found);
+      setUnlockedKey(key.trim());
+    } catch {
+      setError("Erro ao verificar acesso. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function copyLink() {
@@ -75,7 +93,7 @@ export default function MePage() {
                 inputMode="numeric"
               />
             </label>
-            <button onClick={enter} className="rounded-2xl bg-[#31c4a8] px-5 py-3.5 font-black text-white transition hover:-translate-y-0.5 hover:bg-[#25b69a]">Entrar</button>
+            <button onClick={enter} disabled={loading} className="rounded-2xl bg-[#31c4a8] px-5 py-3.5 font-black text-white transition hover:-translate-y-0.5 hover:bg-[#25b69a] disabled:opacity-60">{loading ? "Verificando..." : "Entrar"}</button>
           </div>
 
           {error ? <p className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-3 text-sm font-bold text-red-600">{error}</p> : null}

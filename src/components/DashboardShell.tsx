@@ -18,11 +18,18 @@ const navItems = [
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [atLimit, setAtLimit] = useState(false);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [userInitial, setUserInitial] = useState("U");
 
   useEffect(() => {
     async function checkLimit() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
+
+      // Foto e inicial do usuário
+      const meta = session.user.user_metadata;
+      setUserAvatar(meta?.avatar_url || meta?.picture || null);
+      setUserInitial((meta?.full_name || meta?.name || session.user.email || "U").charAt(0).toUpperCase());
 
       const [{ data: profile }, { count }] = await Promise.all([
         supabase.from("profiles").select("biosites_limit").eq("id", session.user.id).maybeSingle(),
@@ -82,7 +89,15 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2 text-sm font-medium">
             <span className="text-slate-900 font-semibold">Meu painel</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Avatar do usuário */}
+            <Link href="/app/configuracoes" className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-slate-200 bg-slate-100 transition hover:border-[#31c4a8]">
+              {userAvatar ? (
+                <img src={userAvatar} alt="Perfil" className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-sm font-black text-slate-600">{userInitial}</span>
+              )}
+            </Link>
             <div className="lg:hidden scale-90">
               <LogoutButton />
             </div>

@@ -43,6 +43,7 @@ export default function ConfiguracoesPage() {
   const [appUrl, setAppUrl] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userMeta, setUserMeta] = useState<{ avatar_url?: string; picture?: string; full_name?: string } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -63,6 +64,7 @@ export default function ConfiguracoesPage() {
         router.replace("/login");
         return;
       }
+      setUserMeta(session.user.user_metadata || null);
 
       const [{ data: profileData, error: profileError }, { count: biositesCount, error: biositesError }] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", session.user.id).single(),
@@ -134,9 +136,19 @@ export default function ConfiguracoesPage() {
       <div className="mt-7 grid gap-5 lg:grid-cols-2">
         <section className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-[#31c4a8]"><UserRound className="h-5 w-5" /></span>
-              <h2 className="text-xl font-black">Conta</h2>
+            <div className="flex items-center gap-4">
+              {/* Avatar */}
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-slate-200 bg-slate-100">
+              {userMeta?.avatar_url || userMeta?.picture ? (
+                  <img src={userMeta.avatar_url || userMeta.picture} alt="Perfil" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-2xl font-black text-slate-600">{displayName.charAt(0).toUpperCase()}</span>
+                )}
+              </div>
+              <div>
+                <h2 className="text-xl font-black">Conta</h2>
+                <p className="text-sm text-slate-500">{displayName}</p>
+              </div>
             </div>
             <button onClick={handleLogout} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-black text-slate-700 transition hover:border-indigo-200 hover:text-indigo-700">
               <LogOut className="h-4 w-4" />
