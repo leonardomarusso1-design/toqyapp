@@ -9,12 +9,12 @@ import { supabase } from "./supabaseClient";
 import { saveStoredSite } from "./siteStorage";
 import type { ToqySite } from "./types";
 
-export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boolean; source: "supabase" | "local" }> {
+export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boolean; source: "supabase" | "local"; error?: string }> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
       saveStoredSite(site);
-      return { ok: true, source: "local" };
+      return { ok: true, source: "local", error: "Sem sessão ativa" };
     }
 
     // Verifica se já existe no Supabase
@@ -25,7 +25,6 @@ export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boole
       .maybeSingle();
 
     if (existing) {
-      // Update
       const { error } = await supabase
         .from("toqy_biosites")
         .update({
@@ -33,11 +32,11 @@ export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boole
           status: site.status ?? "active",
           updated_at: new Date().toISOString(),
         })
-        .eq("slug", site.slug);
+        .eq("slug", site.slug)
+        .eq("owner_profile_id", session.user.id);
 
       if (error) throw error;
     } else {
-      // Insert
       const { error } = await supabase
         .from("toqy_biosites")
         .insert({
@@ -51,14 +50,14 @@ export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boole
       if (error) throw error;
     }
 
-    // Também salva no localStorage como cache local
     saveStoredSite(site);
     return { ok: true, source: "supabase" };
 
   } catch (err) {
-    console.error("[biositeSync] Erro ao salvar no Supabase, salvando local:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[biositeSync] Erro Supabase:", msg, err);
     saveStoredSite(site);
-    return { ok: true, source: "local" };
+    return { ok: false, source: "local", error: msg };
   }
 }
 

@@ -138,10 +138,12 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
     setLimitState(null);
     setIsSaving(true);
     try {
-      // Salva no Supabase (com fallback para localStorage)
       const result = await syncBiositeToSupabase(siteToValidate);
-      if (!result.ok) throw new Error("Erro ao salvar o bio site.");
-      // Também chama o onSave original (localStorage)
+      if (!result.ok) {
+        setErrors([`Erro ao salvar na nuvem: ${result.error ?? "tente novamente"}`]);
+        setIsSaving(false);
+        return;
+      }
       await onSave(siteToValidate);
       setSite(siteToValidate);
       setSaved(siteToValidate);
