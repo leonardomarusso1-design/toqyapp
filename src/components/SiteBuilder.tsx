@@ -34,6 +34,22 @@ function Help({ children }: { children: React.ReactNode }) {
   return <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-500">{children}</p>;
 }
 
+function ColorPicker({ label, hint, value, onChange }: { label: string; hint: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3">
+      <label className="relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center">
+        <span className="h-10 w-10 rounded-full border-2 border-white shadow-md ring-1 ring-slate-200 transition hover:scale-110" style={{ background: value }} />
+        <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+      </label>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-black text-slate-800">{label}</p>
+        <p className="truncate text-xs text-slate-400">{hint}</p>
+        <input type="text" value={value} onChange={(e) => { if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) onChange(e.target.value); }} className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-mono text-xs text-slate-700 outline-none focus:border-[#31c4a8]" maxLength={7} />
+      </div>
+    </div>
+  );
+}
+
 function updateCatalogItem(items: CatalogItem[], index: number, patch: Partial<CatalogItem>) {
   return items.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item);
 }
@@ -200,42 +216,45 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             <label className="md:col-span-2"><span className={label}>Imagem de fundo</span><ImageUploadField label="" value={site.profile.backgroundImageUrl} onChange={(url) => setProfile({ backgroundImageUrl: url })} placeholder="URL da imagem de fundo" /><ImageGuidelineHint type="background" /></label>
           </div>
 
-          {/* Roda de cores — sempre visível */}
-          <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-5">
-            <p className="text-sm font-black text-slate-800">Cores do tema</p>
-            <p className="mt-0.5 text-xs text-slate-500">Clique na bolinha colorida para abrir a roda de cores e escolher qualquer cor.</p>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-              {([
-                ["primary",    "Cor principal",    "Botões e destaques"],
-                ["secondary",  "Cor secundária",   "Gradiente do fundo"],
-                ["accent",     "Cor de destaque",  "Preços e rótulos"],
-                ["background", "Fundo",            "Cor de fundo da página"],
-                ["card",       "Cards",            "Fundo dos cartões"],
-                ["text",       "Texto",            "Cor do texto principal"],
-              ] as const).map(([key, name, hint]) => (
-                <div key={key} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3">
-                  <label className="relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center">
-                    <span className="h-10 w-10 rounded-full border-2 border-white shadow-md ring-1 ring-slate-200 transition hover:scale-110" style={{ background: site.theme[key] }} />
-                    <input
-                      type="color"
-                      value={site.theme[key]}
-                      onChange={(e) => setTheme({ [key]: e.target.value } as Partial<ToqySite["theme"]>)}
-                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                    />
-                  </label>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-black text-slate-800">{name}</p>
-                    <p className="truncate text-xs text-slate-400">{hint}</p>
-                    <input
-                      type="text"
-                      value={site.theme[key]}
-                      onChange={(e) => { if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) setTheme({ [key]: e.target.value } as Partial<ToqySite["theme"]>); }}
-                      className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-mono text-xs text-slate-700 outline-none focus:border-[#31c4a8]"
-                      maxLength={7}
-                    />
-                  </div>
-                </div>
-              ))}
+          {/* Cores separadas por funcao */}
+          <div className="mt-5 space-y-4">
+            {/* Fundo */}
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm font-black text-slate-800">Fundo do bio site</p>
+              <p className="mt-0.5 text-xs text-slate-500">Define a cor de fundo da pagina inteira.</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <ColorPicker label="Cor do fundo" hint={site.theme.backgroundType === "gradient" ? "Inicio do gradiente" : "Cor solida de fundo"} value={site.theme.background} onChange={(v) => setTheme({ background: v })} />
+                {site.theme.backgroundType === "gradient" ? (
+                  <ColorPicker label="Cor 2 do gradiente" hint="Fim do gradiente (mistura com a cor 1)" value={site.theme.gradientTo} onChange={(v) => setTheme({ gradientTo: v })} />
+                ) : null}
+              </div>
+            </div>
+            {/* Botoes */}
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm font-black text-slate-800">Botoes</p>
+              <p className="mt-0.5 text-xs text-slate-500">Cor de fundo e texto dos botoes principais.</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <ColorPicker label="Cor dos botoes" hint="Fundo dos botoes e links" value={site.theme.primary} onChange={(v) => setTheme({ primary: v })} />
+                <ColorPicker label="Gradiente dos botoes" hint="Segunda cor (botoes gradiente)" value={site.theme.secondary} onChange={(v) => setTheme({ secondary: v })} />
+              </div>
+            </div>
+            {/* Texto e destaques */}
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm font-black text-slate-800">Textos e destaques</p>
+              <p className="mt-0.5 text-xs text-slate-500">Cor dos textos, precos e rotulos no bio site.</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <ColorPicker label="Texto principal" hint="Nome, descricao, labels" value={site.theme.text} onChange={(v) => setTheme({ text: v })} />
+                <ColorPicker label="Texto secundario" hint="Subtitulos e hints" value={site.theme.muted} onChange={(v) => setTheme({ muted: v })} />
+                <ColorPicker label="Destaque / Preco" hint="Precos, rotulos, badges" value={site.theme.accent} onChange={(v) => setTheme({ accent: v })} />
+              </div>
+            </div>
+            {/* Cards */}
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm font-black text-slate-800">Cards e paineis</p>
+              <p className="mt-0.5 text-xs text-slate-500">Cor de fundo dos cartoes e modais internos.</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <ColorPicker label="Fundo dos cards" hint="Cards, modais, secoes" value={site.theme.card} onChange={(v) => setTheme({ card: v })} />
+              </div>
             </div>
           </div>
 
@@ -393,6 +412,17 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 <div className="grid gap-3 md:grid-cols-2">
                   <label><span className={label}>Nome</span><input className={field} value={item.name} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { name: e.target.value }) }))} /></label>
                   <label><span className={label}>Categoria</span><input className={field} placeholder="Ex: Cortes social" value={item.category ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { category: e.target.value }) }))} /></label>
+                  <label>
+                    <span className={label}>Seção / Grupo visual</span>
+                    <select className={field} value={item.displaySection ?? "padrao"} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { displaySection: e.target.value }) }))}>
+                      <option value="padrao">Padrão (layout geral)</option>
+                      <option value="carrossel">Carrossel horizontal</option>
+                      <option value="grade">Grade 2 colunas</option>
+                      <option value="lista">Lista vertical (um embaixo do outro)</option>
+                      <option value="destaque">Destaque (primeiro, maior)</option>
+                    </select>
+                    <p className="mt-1 text-xs text-slate-400">Define onde este item aparece no bio site, independente dos outros.</p>
+                  </label>
                   {/* Preço com R$ automático */}
                   <label>
                     <span className={label}>Preço</span>

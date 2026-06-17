@@ -13,7 +13,7 @@ const navItems = [
   { href: "/app/configuracoes", icon: Settings, label: "Configurações" },
 ];
 
-export function DashboardShell({ children }: { children: ReactNode }) {
+export function DashboardShell({ children, atLimit = false }: { children: ReactNode; atLimit?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -25,9 +25,18 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <span className="text-xl font-bold tracking-tight text-slate-800">Toqy</span>
           </Link>
 
-          <Link href="/app/novo" className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-[#31c4a8] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#25b69a]">
-            <Plus className="h-4 w-4" /> Novo bio site
-          </Link>
+          {atLimit ? (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center">
+              <p className="text-xs font-black text-red-600">Limite atingido</p>
+              <Link href="/#planos" className="mt-2 inline-flex items-center gap-1 rounded-xl bg-red-600 px-3 py-2 text-xs font-black text-white transition hover:bg-red-700">
+                Fazer upgrade
+              </Link>
+            </div>
+          ) : (
+            <Link href="/app/novo" className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-[#31c4a8] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#25b69a]">
+              <Plus className="h-4 w-4" /> Novo bio site
+            </Link>
+          )}
 
           <nav className="mt-6 flex-1 space-y-1">
             {navItems.map((item) => {

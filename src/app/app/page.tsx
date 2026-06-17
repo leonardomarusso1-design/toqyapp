@@ -135,7 +135,7 @@ export default function ConfiguracoesPage() {
   const displayEmail = profile?.email ?? "—";
 
   return (
-    <DashboardShell>
+    <DashboardShell atLimit={count >= planLimit}>
       <div>
         <p className="text-sm font-black uppercase tracking-[0.18em] text-[#31c4a8]">Configurações</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight md:text-5xl">Configurações</h1>

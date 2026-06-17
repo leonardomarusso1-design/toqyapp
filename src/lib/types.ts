@@ -69,6 +69,7 @@ export type CatalogItem = {
   featured?: boolean;
   highlight?: string;
   order?: number;
+  displaySection?: string;
 };
 
 export type ToqySite = {

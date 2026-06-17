@@ -258,8 +258,17 @@ function CatalogSection({ site, items, layout }: { site: ToqySite; items: Catalo
     ? { background: site.theme.primary, color: site.theme.mode === "light" ? "#fff" : "#06111F", borderColor: "transparent" }
     : { background: site.theme.mode === "light" ? "rgba(255,255,255,0.66)" : "rgba(255,255,255,0.10)", color: site.theme.text, borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.10)" : "rgba(255,255,255,0.16)" };
 
-  // Suporte a múltiplos layouts
-  const layouts: CatalogLayout[] = site.catalogLayouts?.length ? site.catalogLayouts : [layout];
+  // Agrupa itens por displaySection — itens com seção específica aparecem separados
+  const itemsBySection = useMemo(() => {
+    const destaques = filteredItems.filter(i => i.displaySection === "destaque");
+    const carrossel = filteredItems.filter(i => i.displaySection === "carrossel");
+    const grade = filteredItems.filter(i => i.displaySection === "grade");
+    const lista = filteredItems.filter(i => i.displaySection === "lista");
+    const padrao = filteredItems.filter(i => !i.displaySection || i.displaySection === "padrao");
+    return { destaques, carrossel, grade, lista, padrao };
+  }, [filteredItems]);
+
+  const hasCustomSections = filteredItems.some(i => i.displaySection && i.displaySection !== "padrao");
 
   function renderLayout(l: CatalogLayout, items2: CatalogItem[]) {
     if (l === "grouped" || l === "category-carousel") {
@@ -303,18 +312,57 @@ function CatalogSection({ site, items, layout }: { site: ToqySite; items: Catalo
       ) : null}
 
       <div className="mt-5">
-        {layouts.length > 1 ? (
-          // Múltiplos layouts: cada um em sequência com sub-título
+        {hasCustomSections ? (
+          // Modo por seção: cada grupo aparece separado com seu layout
           <div className="space-y-8">
-            {layouts.map((l) => (
-              <div key={l}>
-                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{LAYOUT_LABELS[l]}</p>
-                {renderLayout(l, filteredItems)}
+            {itemsBySection.destaques.length > 0 && (
+              <div>
+                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.accent }}>Destaques</p>
+                <div className="space-y-4">{itemsBySection.destaques.map(item => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
               </div>
-            ))}
+            )}
+            {itemsBySection.carrossel.length > 0 && (
+              <div>
+                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{itemsBySection.carrossel[0].category || "Carrossel"}</p>
+                <CatalogScroller site={site} items={itemsBySection.carrossel} />
+              </div>
+            )}
+            {itemsBySection.grade.length > 0 && (
+              <div>
+                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{itemsBySection.grade[0].category || "Grade"}</p>
+                <div className="grid grid-cols-2 gap-3">{itemsBySection.grade.map(item => <CatalogCard key={item.id} site={site} item={item} compact />)}</div>
+              </div>
+            )}
+            {itemsBySection.lista.length > 0 && (
+              <div>
+                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{itemsBySection.lista[0].category || "Lista"}</p>
+                <div className="space-y-4">{itemsBySection.lista.map(item => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
+              </div>
+            )}
+            {itemsBySection.padrao.length > 0 && (
+              <div>
+                <CatalogScroller site={site} items={itemsBySection.padrao} />
+              </div>
+            )}
           </div>
         ) : (
-          renderLayout(layouts[0], filteredItems)
+          // Modo layouts gerais
+          (() => {
+            const layouts: CatalogLayout[] = site.catalogLayouts?.length ? site.catalogLayouts : [layout];
+            if (layouts.length > 1) {
+              return (
+                <div className="space-y-8">
+                  {layouts.map((l) => (
+                    <div key={l}>
+                      <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{LAYOUT_LABELS[l]}</p>
+                      {renderLayout(l, filteredItems)}
+                    </div>
+                  ))}
+                </div>
+              );
+            }
+            return renderLayout(layouts[0], filteredItems);
+          })()
         )}
       </div>
 
