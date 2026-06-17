@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CheckCircle2, Copy, ExternalLink, Plus, Save, Trash2 } from "lucide-react";
+import { CheckCircle2, Copy, ExternalLink, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import type { CatalogItem, CatalogLayout, Segment, ThemePreset, ToqySite } from "@/lib/types";
 import { applySegmentTemplate, getSegmentTemplate, segmentOptions } from "@/lib/segmentTemplates";
@@ -190,7 +190,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             <label><span className={label}>Layout dos botões</span><select className={field} value={site.theme.buttonStyle} onChange={(e) => setTheme({ buttonStyle: e.target.value as ToqySite["theme"]["buttonStyle"] })}><option value="full">Botões grandes</option><option value="icon">Grade de ícones</option></select></label>
             <label><span className={label}>Preenchimento</span><select className={field} value={site.theme.buttonFill} onChange={(e) => setTheme({ buttonFill: e.target.value as ToqySite["theme"]["buttonFill"] })}><option value="glass">Translúcido premium</option><option value="solid">Sólido</option><option value="gradient">Gradiente</option></select></label>
             <label><span className={label}>Formato</span><select className={field} value={site.theme.buttonRadius} onChange={(e) => setTheme({ buttonRadius: e.target.value as ToqySite["theme"]["buttonRadius"] })}><option value="soft">Soft</option><option value="rounded">Arredondado</option><option value="pill">Pill/cápsula</option></select></label>
-            <label className="md:col-span-2"><span className={label}>Imagem de fundo</span><input className={field} value={site.profile.backgroundImageUrl ?? ""} onChange={(e) => setProfile({ backgroundImageUrl: e.target.value })} placeholder="URL da imagem de fundo" /><ImageGuidelineHint type="background" /></label>
+            <label className="md:col-span-2"><span className={label}>Imagem de fundo</span><ImageUploadField label="" value={site.profile.backgroundImageUrl} onChange={(url) => setProfile({ backgroundImageUrl: url })} placeholder="URL da imagem de fundo" /><ImageGuidelineHint type="background" /></label>
           </div>
           <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
             <label className="flex items-center gap-3 text-sm font-black text-slate-800"><input type="checkbox" checked={Boolean(site.plaqueTheme?.useSameBackground)} onChange={(e) => update((s) => ({ ...s, plaqueTheme: { ...s.plaqueTheme, useSameBackground: e.target.checked, backgroundImageUrl: s.plaqueTheme?.backgroundImageUrl ?? "", backgroundStyle: "image" } }))} />Usar o mesmo fundo/arte da plaquinha</label>
@@ -217,7 +217,24 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 <label><span className={label}>Recebedor</span><input className={field} value={site.pix.receiver} onChange={(e) => update((s) => ({ ...s, pix: { ...s.pix, receiver: e.target.value } }))} /></label>
                 <label><span className={label}>Banco/observação</span><input className={field} value={site.pix.bank ?? ""} onChange={(e) => update((s) => ({ ...s, pix: { ...s.pix, bank: e.target.value } }))} /></label>
                 <label><span className={label}>WhatsApp para comprovante</span><input className={field} value={site.pix.whatsappProofNumber} onChange={(e) => update((s) => ({ ...s, pix: { ...s.pix, whatsappProofNumber: e.target.value } }))} /></label>
-                <label><span className={label}>Valores rápidos</span><input className={field} value={site.pix.quickAmounts.join(", ")} onChange={(e) => update((s) => ({ ...s, pix: { ...s.pix, quickAmounts: e.target.value.split(",").map((v) => Number(v.trim())).filter(Boolean) } }))} /><Help>Exemplo: 10, 20, 50. Eles aparecem como botões rápidos no modal Pix.</Help></label>
+                <div>
+                  <span className={label}>Valores rápidos do Pix</span>
+                  <p className="mb-2 text-xs text-slate-500">Clique para ativar/desativar. Esses valores aparecem como botões rápidos no modal Pix.</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[5, 10, 15, 20, 30, 50, 100, 150, 200].map((v) => {
+                      const active = site.pix.quickAmounts.includes(v);
+                      return (
+                        <button key={v} type="button"
+                          onClick={() => update((s) => ({ ...s, pix: { ...s.pix, quickAmounts: active ? s.pix.quickAmounts.filter((a) => a !== v) : [...s.pix.quickAmounts, v].sort((a, b) => a - b) } }))}
+                          className={"rounded-full border px-4 py-2 text-sm font-black transition " + (active ? "border-[#31c4a8] bg-emerald-50 text-[#1f9f87]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300")}>
+                          R$ {v}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <input className={"mt-2 " + field} placeholder="Valor personalizado, ex: 250" type="number" min="1" onKeyDown={(e) => { if (e.key === "Enter") { const v = parseInt((e.target as HTMLInputElement).value); if (v > 0 && !site.pix.quickAmounts.includes(v)) { update((s) => ({ ...s, pix: { ...s.pix, quickAmounts: [...s.pix.quickAmounts, v].sort((a, b) => a - b) } })); (e.target as HTMLInputElement).value = ""; } } }} />
+                  <p className="mt-1 text-xs text-slate-400">Digite um valor e pressione Enter para adicionar personalizado.</p>
+                </div>
               </div>
             </div>
             <div className="rounded-3xl border border-emerald-100 bg-emerald-50 p-4">
@@ -241,29 +258,69 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
         <Section>
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
-              <h2 className="text-2xl font-black text-slate-950">Catálogo</h2>
-              <p className="mt-1 text-sm text-slate-500">Escolha entre carrossel, grade, lista vertical ou carrosséis por categoria.</p>
+              <h2 className="text-2xl font-black text-slate-950">Catalogo</h2>
+              <p className="mt-1 text-sm text-slate-500">Configure itens, layout e textos do catalogo.</p>
             </div>
-            <button type="button" onClick={() => update((s) => ({ ...s, catalog: [...s.catalog, { id: generateId("prd"), name: "Novo item", description: "Descricao do item", price: "", imageUrl: "", imageLayout: "square", category: "Destaques", enabled: true, actionLabel: "Ver detalhes", actionUrl: "" }] }))} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#31c4a8] px-4 py-3 text-sm font-black text-white"><Plus className="h-4 w-4" />Adicionar</button>
+            <button type="button" onClick={() => update((s) => ({ ...s, catalog: [...s.catalog, { id: generateId("prd"), name: "Novo item", description: "Descricao do item", price: "", imageUrl: "", imageLayout: "square", category: "Destaques", enabled: true, actionLabel: "Ver detalhes", actionUrl: "" }] }))} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#31c4a8] px-4 py-3 text-sm font-black text-white"><Plus className="h-4 w-4" />Adicionar item</button>
           </div>
+
+          {/* Card promo editavel */}
           <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-            <label><span className={label}>Como exibir no bio site</span><select className={field} value={site.catalogLayout ?? "carousel"} onChange={(e) => update((s) => ({ ...s, catalogLayout: e.target.value as CatalogLayout }))}><option value="carousel">Carrossel único</option><option value="grid">Grade 2 colunas</option><option value="stack">Imagem uma embaixo da outra</option><option value="category-carousel">Carrossel por categoria</option></select></label>
-            <Help>Use “carrossel por categoria” para exemplos como: Cortes social, Cortes degradê, Barba e tratamentos.</Help>
+            <div className="flex items-center justify-between">
+              <span className={label}>Card antes do catalogo (&quot;Mais praticidade...&quot;)</span>
+              <label className="flex items-center gap-2 text-sm font-black text-slate-700">
+                <input type="checkbox" checked={site.promoCard?.enabled ?? true} onChange={(e) => update((s) => ({ ...s, promoCard: { enabled: e.target.checked, title: s.promoCard?.title ?? "Mais praticidade em um so lugar", description: s.promoCard?.description ?? "Acesse contatos, Pix, Wi-Fi, catalogo, rotas e avaliacoes.", buttonLabel: s.promoCard?.buttonLabel ?? "Ver mais" } }))} />
+                Exibir
+              </label>
+            </div>
+            {(site.promoCard?.enabled ?? true) ? (
+              <div className="mt-3 grid gap-3">
+                <label><span className={label}>Titulo</span><input className={field} value={site.promoCard?.title ?? ""} onChange={(e) => update((s) => ({ ...s, promoCard: { ...s.promoCard, enabled: true, title: e.target.value, description: s.promoCard?.description ?? "", buttonLabel: s.promoCard?.buttonLabel ?? "Ver mais" } }))} /></label>
+                <label><span className={label}>Descricao</span><input className={field} value={site.promoCard?.description ?? ""} onChange={(e) => update((s) => ({ ...s, promoCard: { ...s.promoCard, enabled: true, title: s.promoCard?.title ?? "", description: e.target.value, buttonLabel: s.promoCard?.buttonLabel ?? "Ver mais" } }))} /></label>
+                <label><span className={label}>Texto do botao</span><input className={field} value={site.promoCard?.buttonLabel ?? "Ver mais"} onChange={(e) => update((s) => ({ ...s, promoCard: { ...s.promoCard, enabled: true, title: s.promoCard?.title ?? "", description: s.promoCard?.description ?? "", buttonLabel: e.target.value } }))} /></label>
+              </div>
+            ) : null}
           </div>
+
+          {/* Titulo, subtitulo e CTA do catalogo */}
+          <div className="mt-4 grid gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
+            <label><span className={label}>Titulo do catalogo</span><input className={field} placeholder="Produtos e servicos" value={site.catalogTitle ?? ""} onChange={(e) => update((s) => ({ ...s, catalogTitle: e.target.value }))} /></label>
+            <label><span className={label}>Subtitulo</span><input className={field} placeholder="Selecionados para voce..." value={site.catalogSubtitle ?? ""} onChange={(e) => update((s) => ({ ...s, catalogSubtitle: e.target.value }))} /></label>
+            <label className="md:col-span-2"><span className={label}>Texto &quot;Nao encontrou?&quot; (rodape do catalogo)</span><input className={field} placeholder="Nao encontrou o que procura?" value={site.catalogWaLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalogWaLabel: e.target.value }))} /></label>
+          </div>
+
+          {/* Layout do catalogo */}
+          <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+            <span className={label}>Como exibir no bio site</span>
+            <p className="mb-3 mt-1 text-xs text-slate-500">Escolha o layout principal do catalogo.</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {([["carousel", "Carrossel horizontal", "Arrasta para o lado, ideal para destaques"], ["grid", "Grade 2 colunas", "Visual de loja, dois itens por linha"], ["stack", "Lista vertical", "Uma foto grande embaixo da outra"], ["category-carousel", "Carrossel por categoria", "Agrupa: Cortes, Barba, Tratamentos..."]] as const).map(([value, lbl2, desc]) => {
+                const active = value === (site.catalogLayout ?? "carousel");
+                return (
+                  <button key={value} type="button" onClick={() => update((s) => ({ ...s, catalogLayout: value }))}
+                    className={"rounded-2xl border p-3 text-left transition " + (active ? "border-[#31c4a8] bg-emerald-50" : "border-slate-200 bg-white hover:border-slate-300")}>
+                    <p className={"text-sm font-black " + (active ? "text-[#1f9f87]" : "text-slate-800")}>{active ? "Selecionado: " : ""}{lbl2}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">{desc}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="mt-5 grid gap-4">
             {site.catalog.map((item, index) => (
               <article key={item.id} className="rounded-3xl border border-slate-200 p-4">
                 <div className="grid gap-3 md:grid-cols-2">
                   <label><span className={label}>Nome</span><input className={field} value={item.name} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { name: e.target.value }) }))} /></label>
                   <label><span className={label}>Categoria</span><input className={field} placeholder="Ex: Cortes social" value={item.category ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { category: e.target.value }) }))} /></label>
-                  <label><span className={label}>Preço</span><input className={field} value={item.price ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { price: e.target.value }) }))} /></label>
-                  <label><span className={label}>Imagem</span><select className={field} value={item.imageLayout} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageLayout: e.target.value as typeof item.imageLayout }) }))}><option value="square">Quadrada</option><option value="horizontal">Horizontal</option></select></label>
-                  <label className="md:col-span-2"><span className={label}>Descrição</span><textarea className={field} rows={2} value={item.description} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { description: e.target.value }) }))} /></label>
+                  <label><span className={label}>Preco</span><input className={field} value={item.price ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { price: e.target.value }) }))} /></label>
+                  <label><span className={label}>Formato da foto</span><select className={field} value={item.imageLayout} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageLayout: e.target.value as typeof item.imageLayout }) }))}><option value="square">Quadrada</option><option value="horizontal">Horizontal</option></select></label>
+                  <label className="md:col-span-2"><span className={label}>Descricao</span><textarea className={field} rows={2} value={item.description} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { description: e.target.value }) }))} /></label>
                 </div>
                 <div className="mt-3"><ImageUploadField label="Imagem do item" value={item.imageUrl} onChange={(url) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageUrl: url }) }))} /><ImageGuidelineHint type={item.imageLayout === "square" ? "productSquare" : "productHorizontal"} /></div>
                 <div className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
-                  <input className={field} placeholder="Texto do botão" value={item.actionLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionLabel: e.target.value }) }))} />
-                  <input className={field} placeholder="Link do botão" value={item.actionUrl ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionUrl: e.target.value }) }))} />
+                  <input className={field} placeholder="Texto do botao" value={item.actionLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionLabel: e.target.value }) }))} />
+                  <input className={field} placeholder="Link do botao" value={item.actionUrl ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionUrl: e.target.value }) }))} />
                   <label className="flex items-center gap-2 text-sm font-black"><input type="checkbox" checked={item.enabled} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { enabled: e.target.checked }) }))} />Ativo</label>
                   <button type="button" onClick={() => update((s) => ({ ...s, catalog: s.catalog.filter((_, itemIndex) => itemIndex !== index) }))} className="rounded-xl border border-red-200 px-3 py-2 text-red-600"><Trash2 className="h-4 w-4" /></button>
                 </div>
@@ -281,7 +338,53 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
         {errors.length ? <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">{errors.map((err) => <p key={err}>{err}</p>)}</div> : null}
         {limitState ? <div className="mt-4 rounded-[1.75rem] border border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-slate-50 p-5 shadow-sm"><p className="text-lg font-black text-slate-950">Você atingiu o limite do plano gratuito. Faça upgrade!</p><p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">Seu plano <span className="font-black text-indigo-700">{limitState.planTier}</span> permite até <span className="font-black text-slate-900">{limitState.limit}</span> biosites e você já possui <span className="font-black text-slate-900">{limitState.current}</span>.</p><div className="mt-4 flex flex-wrap gap-3"><Link href="/#planos" className="inline-flex items-center justify-center rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-black text-white transition hover:bg-indigo-700">Ver planos e fazer upgrade</Link><Link href="/app" className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:border-indigo-200 hover:text-indigo-700">Voltar para meus biosites</Link></div></div> : null}
         <button type="button" onClick={save} disabled={isSaving} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#31c4a8] px-5 py-4 font-black text-white disabled:cursor-not-allowed disabled:opacity-60"><Save className="h-5 w-5" />{isSaving ? "Salvando..." : "Salvar e publicar"}</button>
-        {saved ? <div className="mt-5 grid gap-4 rounded-3xl border border-emerald-200 bg-emerald-50 p-4"><p className="font-black text-emerald-900">Bio site salvo com sucesso.</p><div className="w-fit rounded-2xl bg-white p-4"><QRCodeSVG value={typeof window !== "undefined" ? `${window.location.origin}${publicLink}` : publicLink} size={180} /></div><p className="break-all text-sm text-slate-700">Link público: {publicLink}</p><p className="break-all text-sm text-slate-700">Link de edição: {editLink}</p><p className="font-mono text-lg font-black text-slate-950">Chave: {site.editKey}</p><div className="flex flex-wrap gap-3"><button type="button" onClick={() => copy(publicLink, "link")} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black"><Copy className="h-4 w-4" />{copied === "link" ? "Copiado" : "Copiar link"}</button><button type="button" onClick={() => copy(site.editKey, "key")} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black">{copied === "key" ? "Copiado" : "Copiar chave"}</button><Link href={publicLink} className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white">Abrir bio site <ExternalLink className="h-4 w-4" /></Link></div></div> : null}
+        {saved ? (
+          <div className="mt-6 overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-lg">
+            <div className="bg-emerald-500 px-6 py-4">
+              <p className="text-lg font-black text-white">Bio site salvo com sucesso!</p>
+              <p className="mt-0.5 text-sm text-emerald-100">Entregue as informacoes abaixo ao seu cliente.</p>
+            </div>
+            <div className="p-6">
+              <div className="flex flex-col gap-6 md:flex-row md:items-start">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
+                    <QRCodeSVG value={typeof window !== "undefined" ? `${window.location.origin}${publicLink}` : publicLink} size={160} />
+                  </div>
+                  <p className="text-xs font-bold text-slate-500">QR Code do bio site</p>
+                </div>
+                <div className="flex-1 space-y-4">
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-400">Link publico (para clientes)</p>
+                    <p className="mt-1 break-all text-sm font-black text-slate-900">{typeof window !== "undefined" ? `${window.location.origin}${publicLink}` : publicLink}</p>
+                  </div>
+                  <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-4">
+                    <p className="text-xs font-black uppercase tracking-wider text-indigo-400">Como o cliente edita o bio site</p>
+                    <p className="mt-2 text-sm font-bold text-indigo-900">1. Acesse: <span className="font-black">https://toqy.com.br/me</span></p>
+                    <p className="text-sm font-bold text-indigo-900">2. Slug (nome): <span className="font-black">{site.slug}</span></p>
+                    <p className="text-sm font-bold text-indigo-900">3. Chave: <span className="font-mono text-lg font-black text-indigo-700">{site.editKey}</span></p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button type="button" onClick={() => copy(typeof window !== "undefined" ? `${window.location.origin}${publicLink}` : publicLink, "link")} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 transition hover:border-[#31c4a8]">
+                  <Copy className="h-4 w-4" />{copied === "link" ? "Copiado!" : "Copiar link"}
+                </button>
+                <button type="button" onClick={() => copy(site.editKey, "key")} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 transition hover:border-[#31c4a8]">
+                  <Copy className="h-4 w-4" />{copied === "key" ? "Copiada!" : "Copiar chave"}
+                </button>
+                <button type="button" onClick={() => {
+                  const msg = "Ola! Seu bio site TOQY esta pronto\n\nAcesse: " + (typeof window !== "undefined" ? window.location.origin : "https://toqy.com.br") + publicLink + "\n\nPara editar:\n1. Acesse: https://toqy.com.br/me\n2. Slug: " + site.slug + "\n3. Chave: " + site.editKey;
+                  window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank", "noopener,noreferrer");
+                }} className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700 transition hover:bg-emerald-100">
+                  <MessageCircle className="h-4 w-4" />Enviar ao cliente (WhatsApp)
+                </button>
+                <Link href={publicLink} target="_blank" className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white transition hover:bg-slate-800">
+                  Abrir bio site <ExternalLink className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </Section>
     );
   })();

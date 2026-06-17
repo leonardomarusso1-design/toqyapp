@@ -106,7 +106,7 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
           />
           <button onClick={verifyKey} className="mt-4 w-full rounded-2xl bg-[#31c4a8] px-5 py-4 font-black text-white shadow-lg shadow-emerald-100 transition hover:-translate-y-0.5 hover:bg-[#25b69a]">Entrar</button>
           {error ? <p className="mt-3 text-sm font-bold text-red-600">{error}</p> : null}
-          {isDemoSlug(site.slug) ? <p className="mt-5 text-xs font-semibold text-slate-400">Demonstração: chave {site.editKey}</p> : null}
+          {/* Chave de acesso removida da UI pública para não expor */}
         </div>
       </ClientShell>
     );

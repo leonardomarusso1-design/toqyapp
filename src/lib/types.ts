@@ -140,6 +140,11 @@ export type ToqySite = {
     checkinLabel?: string;
   };
   catalogLayout: CatalogLayout;
+  catalogLayouts?: CatalogLayout[];
+  catalogTitle?: string;
+  catalogSubtitle?: string;
+  catalogWaLabel?: string;
+  promoCard?: { enabled: boolean; title: string; description: string; buttonLabel: string; };
   modules: {
     saveContact: boolean;
     whatsapp: boolean;
