@@ -21,13 +21,11 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <aside className="bg-white border-r border-slate-200 flex flex-col p-4 lg:min-h-screen">
         <div className="flex h-full flex-col">
           <Link href="/" className="flex items-center gap-3 px-2 py-4">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shrink-0">
-              <div className="w-4 h-4 border-2 border-white rounded-sm"></div>
-            </div>
+            <img src="/brand/favicon-toqy.png" alt="TOQY" className="h-8 w-8 rounded-lg" />
             <span className="text-xl font-bold tracking-tight text-slate-800">Toqy</span>
           </Link>
 
-          <Link href="/app/novo" className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700">
+          <Link href="/app/novo" className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-[#31c4a8] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#25b69a]">
             <Plus className="h-4 w-4" /> Novo bio site
           </Link>
 
@@ -53,13 +51,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <div className="flex flex-col min-w-0">
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 lg:px-8 shadow-sm z-10">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <span className="text-slate-400">Projetos</span>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900 font-semibold">Área Administrativa</span>
+            <span className="text-slate-900 font-semibold">Meu painel</span>
           </div>
           <div className="flex items-center gap-4">
-            <div className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-200 flex items-center justify-center text-xs font-bold text-indigo-700">LM</div>
-            <div className="h-4 w-px bg-slate-200 lg:hidden"></div>
             <div className="lg:hidden scale-90">
               <LogoutButton />
             </div>

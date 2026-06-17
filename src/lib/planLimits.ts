@@ -16,55 +16,33 @@ export type BiositeLimitCheckResult = {
   planTier: string;
 };
 
-function hasConfiguredSupabase() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  return Boolean(
-    supabaseUrl &&
-    supabaseAnonKey &&
-    !supabaseUrl.includes("placeholder") &&
-    !supabaseAnonKey.includes("placeholder"),
-  );
-}
-
 function getPlanLimit(planTier: string) {
-  const normalizedPlanTier = planTier.toLowerCase() as PlanTier;
-  return PLAN_BIOSITE_LIMITS[normalizedPlanTier] ?? PLAN_BIOSITE_LIMITS.free;
+  const normalized = planTier.toLowerCase() as PlanTier;
+  return PLAN_BIOSITE_LIMITS[normalized] ?? PLAN_BIOSITE_LIMITS.free;
 }
 
 export async function checkBiositeLimit(userId: string): Promise<BiositeLimitCheckResult> {
-  if (!userId || !hasConfiguredSupabase()) {
-    return {
-      allowed: true,
-      current: 0,
-      limit: Number.POSITIVE_INFINITY,
-      planTier: "local",
-    };
+  if (!userId) {
+    return { allowed: false, current: 0, limit: 1, planTier: "free" };
   }
 
-  const [{ data: profile, error: profileError }, { count, error: countError }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("plan_tier")
-      .eq("id", userId)
-      .maybeSingle(),
-    supabase
-      .from("biosites")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId),
-  ]);
+  // Buscar plano do usuario
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("plan_toqy, plan_tier, biosites_limit")
+    .eq("id", userId)
+    .maybeSingle();
 
-  if (profileError) {
-    throw new Error(profileError.message);
-  }
+  // plan_toqy é o campo atualizado pelo Kiwify, plan_tier é legado
+  const planTier = profile?.plan_toqy || profile?.plan_tier || "free";
+  const limit = profile?.biosites_limit || getPlanLimit(planTier);
 
-  if (countError) {
-    throw new Error(countError.message);
-  }
+  // Contar bio sites do usuario na tabela correta
+  const { count } = await supabase
+    .from("toqy_biosites")
+    .select("id", { count: "exact", head: true })
+    .eq("owner_profile_id", userId);
 
-  const planTier = profile?.plan_tier ?? "free";
-  const limit = getPlanLimit(planTier);
   const current = count ?? 0;
 
   return {

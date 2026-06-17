@@ -8,6 +8,7 @@ import { ClientShell } from "@/components/ClientShell";
 import { SiteBuilder } from "@/components/SiteBuilder";
 import type { ToqySite } from "@/lib/types";
 import { getBiositeBySlug, isDemoSlug, saveBiosite } from "@/lib/dataProvider";
+import { getMockSiteBySlug } from "@/lib/mockSites";
 import { supabase } from "@/lib/supabaseClient";
 
 function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
@@ -38,7 +39,7 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
       
       // 2. Se não achou (ou não logado), fallback para localProvider (ou chave)
       if (!found) {
-        found = getBiositeBySlug(slug) ?? null;
+        found = getBiositeBySlug(slug) ?? getMockSiteBySlug(slug) ?? null;
       }
 
       setSite(found);

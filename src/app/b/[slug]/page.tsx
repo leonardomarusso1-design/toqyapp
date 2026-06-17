@@ -1,7 +1,8 @@
 import StoredPublicBioSite from "@/components/StoredPublicBioSite";
-import { getBiositeBySlug } from "@/lib/dataProvider";
+import { getMockSiteBySlug } from "@/lib/mockSites";
 
 export default async function PublicBPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  return <StoredPublicBioSite slug={slug} initialSite={getBiositeBySlug(slug) ?? undefined} />;
+  // Mocks são sempre visíveis publicamente (bio sites de demonstração)
+  return <StoredPublicBioSite slug={slug} initialSite={getMockSiteBySlug(slug) ?? undefined} />;
 }

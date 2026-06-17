@@ -95,7 +95,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
       setIsSaving(true);
       try {
         const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
-        const limitCheck = await checkBiositeLimit(user?.id ?? "").catch(() => ({ allowed: true, current: 0, limit: 999, planTier: "local" }));
+        const limitCheck = await checkBiositeLimit(user?.id ?? "");
 
         if (!limitCheck.allowed) {
           setLimitState({
