@@ -238,20 +238,25 @@ export default function LandingPage() {
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">Exemplos</p>
               <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">Modelos por segmento</h2>
+              <p className="mt-2 text-base text-slate-500">Cada bio site é criado e personalizado para o negócio do seu cliente. Esses são alguns exemplos de layout.</p>
             </div>
             <Link href="/login" className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"><Plus className="h-4 w-4" />Novo bio site</Link>
           </div>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {examples.map(([name, slug, imgPath]) => (
-              <Link key={slug} href={`/b/${slug}`} className="group rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-                <div className="overflow-hidden rounded-xl bg-slate-150">
+            {examples.map(([name, , imgPath]) => (
+              <div key={name} className="group rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
+                <div className="overflow-hidden rounded-xl bg-slate-100 relative">
                   <img src={imgPath} alt={name} className="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105" />
+                  <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 to-transparent opacity-0 transition group-hover:opacity-100">
+                    <p className="w-full p-4 text-center text-sm font-black text-white">Modelo {name}</p>
+                  </div>
                 </div>
                 <p className="mt-4 font-bold text-slate-900">{name}</p>
-                <p className="mt-1 text-sm font-semibold text-indigo-600">Ver exemplo</p>
-              </Link>
+                <p className="mt-1 text-sm text-slate-500">Layout personalizado para o segmento</p>
+              </div>
             ))}
           </div>
+          <p className="mt-8 text-center text-sm text-slate-400">Cada bio site é único — você personaliza logo, cores, botões, catálogo e muito mais.</p>
         </div>
       </section>
 
