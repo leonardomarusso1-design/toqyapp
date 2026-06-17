@@ -234,9 +234,9 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
           <footer className="mt-8 pb-4 text-center text-xs font-bold leading-relaxed" style={{ color: site.theme.muted }}>
             <p>© 2026 {site.profile.name}. Todos os direitos reservados.</p>
             <p>
-              Criado por{" "}
-              <a href="https://instagram.com/leomvideomaker" target="_blank" rel="noreferrer" className="font-black underline-offset-4 hover:underline" style={{ color: site.theme.primary }}>
-                Leonardo Marusso
+              Criado com{" "}
+              <a href="https://toqy.com.br" target="_blank" rel="noreferrer" className="font-black underline-offset-4 hover:underline" style={{ color: site.theme.primary }}>
+                TOQY
               </a>
             </p>
           </footer>
