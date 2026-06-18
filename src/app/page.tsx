@@ -326,7 +326,7 @@ export default function LandingPage() {
               <ul className="mt-3 space-y-2 text-sm text-slate-600">
                 <li><Link href="/login" className="hover:text-indigo-600">Entrar / Criar conta</Link></li>
                 <li><Link href="/me" className="hover:text-indigo-600">Acessar meu bio site</Link></li>
-                <li><a href="https://discord.gg/EsjFsRVyCC" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600">Comunidade Discord</a></li>
+                <li><a href="https://pay.kiwify.com.br/12uYE0c" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600">Comunidade Discord</a></li>
               </ul>
             </div>
           </div>
