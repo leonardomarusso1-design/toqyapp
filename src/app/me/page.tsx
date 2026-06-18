@@ -79,17 +79,18 @@ export default function MePage() {
                 onChange={(event) => { setUsername(event.target.value); setError(""); }}
                 onKeyDown={(event) => event.key === "Enter" && enter()}
                 className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-slate-950 outline-none focus:border-[#31c4a8] focus:ring-4 focus:ring-emerald-100"
-                placeholder="ex.: barbearia-andrian"
+                placeholder="nome-do-negocio"
               />
             </label>
             <label className="block">
               <span className="text-sm font-black text-slate-800">Chave de acesso</span>
+              <p className="mt-0.5 text-xs text-slate-400">Formato: 1234-5678 (com o traço no meio)</p>
               <input
                 value={key}
                 onChange={(event) => { setKey(event.target.value); setError(""); }}
                 onKeyDown={(event) => event.key === "Enter" && enter()}
                 className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-mono text-lg font-black text-slate-950 outline-none focus:border-[#31c4a8] focus:ring-4 focus:ring-emerald-100"
-                placeholder="0000-0000"
+                placeholder="1234-5678"
                 inputMode="numeric"
               />
             </label>

@@ -168,8 +168,36 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
           <p className="mt-1 text-sm text-slate-500">Escolha o segmento e aplique um template realmente diferente: cores, botões, catálogo, categorias e layout.</p>
           <div className="mt-5 grid gap-4 md:grid-cols-3">
             <label><span className={label}>Segmento</span><select className={field} value={site.segment} onChange={(e) => update((s) => ({ ...s, segment: e.target.value as Segment }))}>{segmentOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-            <label><span className={label}>Nome do negócio</span><input className={field} value={site.profile.name} onChange={(e) => update((s) => ({ ...s, profile: { ...s.profile, name: e.target.value }, slug: s.slug === "novo-negocio" || !s.slug ? generateSlug(e.target.value) : s.slug }))} /></label>
-            <label><span className={label}>Link da página</span><input className={field} value={site.slug} onChange={(e) => update((s) => ({ ...s, slug: generateSlug(e.target.value) }))} /></label>
+            <label><span className={label}>Nome do negócio</span><input className={field} value={site.profile.name} onChange={(e) => {
+              const name = e.target.value;
+              update((s) => ({
+                ...s,
+                profile: { ...s.profile, name },
+                // Atualiza slug em tempo real enquanto está no padrão gerado pelo nome
+                slug: (s.slug === "novo-negocio" || s.slug === generateSlug(s.profile.name) || !s.slug)
+                  ? generateSlug(name)
+                  : s.slug
+              }));
+            }} /></label>
+            <label>
+              <span className={label}>Link da página</span>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">toqy.com.br/b/</span>
+                <input
+                  className={`${field} pl-[110px]`}
+                  value={site.slug}
+                  onChange={(e) => {
+                    // Converte espaços em hífens em tempo real
+                    const raw = e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+                    update((s) => ({ ...s, slug: raw }));
+                  }}
+                  onBlur={(e) => {
+                    // Normaliza completamente ao sair do campo
+                    update((s) => ({ ...s, slug: generateSlug(e.target.value) }));
+                  }}
+                />
+              </div>
+            </label>
           </div>
           <div className="mt-5 rounded-3xl border border-emerald-100 bg-emerald-50 p-4">
             <p className="font-black text-emerald-950">{selectedTemplate.templateName}</p>
