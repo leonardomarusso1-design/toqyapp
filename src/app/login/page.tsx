@@ -33,17 +33,19 @@ export default function LoginPage() {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    // Verifica sessão existente
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.push('/app');
+    });
 
-      if (session) {
+    // Escuta mudanças — redireciona quando sessão é confirmada
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
         router.push('/app');
       }
-    };
+    });
 
-    checkSession();
+    return () => subscription.unsubscribe();
   }, [router]);
 
   const submitLabel = useMemo(() => {
@@ -85,7 +87,7 @@ export default function LoginPage() {
         email: form.email,
         password: form.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/app`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
           data: {
             full_name: form.fullName,
             phone: form.phone,
@@ -100,8 +102,8 @@ export default function LoginPage() {
       }
 
       setIsSuccess(true);
-      setMessage('Conta criada com sucesso! Redirecionando para o app...');
-      router.push('/app');
+      setMessage('Conta criada! Verifique seu e-mail para confirmar o cadastro.');
+      // NÃO redirecionar — usuário precisa confirmar o email primeiro
     } catch (error) {
       const messageText = error instanceof Error ? error.message : 'tente novamente.';
       setMessage(`Erro inesperado: ${messageText}`);
@@ -320,12 +322,15 @@ export default function LoginPage() {
           </form>
 
           {message && (
-            <div
-              className={`mt-6 rounded-2xl border p-4 text-center text-sm font-bold leading-relaxed ${
-                isSuccess ? 'border-emerald-100 bg-emerald-50 text-emerald-800' : 'border-red-100 bg-red-50 text-red-800'
-              }`}
-            >
+            <div className={`mt-6 rounded-2xl border p-4 text-center text-sm font-bold leading-relaxed ${
+              isSuccess ? 'border-emerald-100 bg-emerald-50 text-emerald-800' : 'border-red-100 bg-red-50 text-red-800'
+            }`}>
               {message}
+              {isSuccess && (
+                <p className="mt-2 text-xs font-normal text-emerald-700">
+                  Após confirmar, volte aqui e clique em <strong>Entrar</strong> com seu e-mail e senha.
+                </p>
+              )}
             </div>
           )}
         </div>
