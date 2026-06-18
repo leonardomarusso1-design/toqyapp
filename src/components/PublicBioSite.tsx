@@ -232,13 +232,15 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
           {activeCatalog.length ? <CatalogSection site={site} items={activeCatalog} layout={catalogLayout} /> : null}
 
           <footer className="mt-8 pb-4 text-center text-xs font-bold leading-relaxed" style={{ color: site.theme.muted }}>
-            <p>© 2026 {site.profile.name}. Todos os direitos reservados.</p>
-            <p>
-              Criado com{" "}
-              <a href="https://toqy.com.br" target="_blank" rel="noreferrer" className="font-black underline-offset-4 hover:underline" style={{ color: site.theme.primary }}>
-                TOQY
-              </a>
-            </p>
+            <p>© {new Date().getFullYear()} {site.profile.name}. Todos os direitos reservados.</p>
+            {(!site.ownerPlan || site.ownerPlan === "free") ? (
+              <p>
+                Criado com{" "}
+                <a href="https://toqy.com.br" target="_blank" rel="noreferrer" className="font-black underline-offset-4 hover:underline" style={{ color: site.theme.primary }}>
+                  TOQY
+                </a>
+              </p>
+            ) : null}
           </footer>
         </main>
       </div>

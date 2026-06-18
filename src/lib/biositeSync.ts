@@ -16,6 +16,15 @@ export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boole
     return { ok: true, source: "local", error: "Sem sessão ativa" };
   }
 
+  // Busca o plano atual do dono para salvar junto ao site
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("plan_toqy")
+    .eq("id", session.user.id)
+    .maybeSingle();
+
+  const siteWithPlan = { ...site, ownerPlan: profile?.plan_toqy ?? "free" };
+
   try {
     // Verifica se já existe
     const { data: existing } = await supabase
@@ -28,7 +37,7 @@ export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boole
       const { error } = await supabase
         .from("toqy_biosites")
         .update({
-          site_data: site,
+          site_data: siteWithPlan,
           status: site.status ?? "active",
           updated_at: new Date().toISOString(),
         })
@@ -48,7 +57,7 @@ export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boole
           status: site.status ?? "active",
           edit_key_hash: site.editKey,
           owner_profile_id: session.user.id,
-          site_data: site,
+          site_data: siteWithPlan,
         });
 
       if (error) {
@@ -58,7 +67,7 @@ export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boole
       }
     }
 
-    saveStoredSite(site);
+    saveStoredSite(siteWithPlan);
     return { ok: true, source: "supabase" };
 
   } catch (err) {

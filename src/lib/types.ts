@@ -76,6 +76,7 @@ export type ToqySite = {
   id: string;
   userId?: string;
   slug: string;
+  ownerPlan?: string;
   segment: Segment;
   status: "active" | "draft" | "disabled";
   profile: {
