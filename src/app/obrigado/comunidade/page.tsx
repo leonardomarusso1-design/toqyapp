@@ -70,7 +70,7 @@ export default function ObrigadoComunidade() {
           <h2 className="text-xl font-black text-indigo-300">Entre na comunidade</h2>
         </div>
         <p className="mt-3 text-sm leading-relaxed text-indigo-200/70">Servidor exclusivo no Discord — tire dúvidas, receba novidades e conecte-se com outros membros.</p>
-        <a href="https://discord.gg/EsjFsRVyCC" target="_blank" rel="noopener noreferrer"
+        <a href="https://discord.gg/Sc6t4eJPvH" target="_blank" rel="noopener noreferrer"
           className="mt-6 block w-full rounded-2xl bg-indigo-600 py-4 text-center font-black text-white transition hover:-translate-y-0.5 hover:bg-indigo-500">
           Entrar no Discord agora
         </a>
