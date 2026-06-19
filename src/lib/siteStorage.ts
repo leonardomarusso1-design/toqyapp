@@ -47,41 +47,14 @@ export function getStoredSite(slugOrId: string) {
   return getStoredSites().find((site) => site.slug === slugOrId || site.id === slugOrId);
 }
 
-export function saveStoredSite(site: ToqySite) {
+export function saveStoredSite(_site: ToqySite) {
+  // localStorage desativado — dados salvos exclusivamente no Supabase
+  // Limpa qualquer dado antigo que possa estar ocupando espaço
   try {
-    const sites = getStoredSites();
-    const normalized = { ...site, slug: generateSlug(site.slug || site.profile.name), updatedAt: new Date().toISOString() };
-
-    // Remove imagens base64 grandes antes de salvar no localStorage (ficam só no Supabase)
-    const lightweight = {
-      ...normalized,
-      profile: {
-        ...normalized.profile,
-        logoUrl: normalized.profile.logoUrl?.startsWith("data:") ? "" : normalized.profile.logoUrl,
-        backgroundImageUrl: normalized.profile.backgroundImageUrl?.startsWith("data:") ? "" : normalized.profile.backgroundImageUrl,
-      },
-      catalog: normalized.catalog?.map(item => ({
-        ...item,
-        imageUrl: item.imageUrl?.startsWith("data:") ? "" : item.imageUrl,
-      })),
-    };
-
-    const index = sites.findIndex((item) => item.id === lightweight.id || item.slug === lightweight.slug);
-    if (index >= 0) sites[index] = lightweight;
-    else sites.push(lightweight);
-
-    try {
-      setStoredSites(sites);
-    } catch {
-      // localStorage cheio — limpa sites antigos e tenta de novo
-      window.localStorage.removeItem(STORAGE_KEY);
-      setStoredSites([lightweight]);
-    }
-
-    return normalized;
-  } catch {
-    return site;
-  }
+    window.localStorage.removeItem("toqy_sites_v4");
+    window.localStorage.removeItem("toqy_deleted_mock_sites_v1");
+  } catch { /* silencioso */ }
+  return _site;
 }
 
 export function createStoredSite(site: ToqySite) {
