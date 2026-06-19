@@ -48,13 +48,40 @@ export function getStoredSite(slugOrId: string) {
 }
 
 export function saveStoredSite(site: ToqySite) {
-  const sites = getStoredSites();
-  const normalized = { ...site, slug: generateSlug(site.slug || site.profile.name), updatedAt: new Date().toISOString() };
-  const index = sites.findIndex((item) => item.id === normalized.id || item.slug === normalized.slug);
-  if (index >= 0) sites[index] = normalized;
-  else sites.push(normalized);
-  setStoredSites(sites);
-  return normalized;
+  try {
+    const sites = getStoredSites();
+    const normalized = { ...site, slug: generateSlug(site.slug || site.profile.name), updatedAt: new Date().toISOString() };
+
+    // Remove imagens base64 grandes antes de salvar no localStorage (ficam só no Supabase)
+    const lightweight = {
+      ...normalized,
+      profile: {
+        ...normalized.profile,
+        logoUrl: normalized.profile.logoUrl?.startsWith("data:") ? "" : normalized.profile.logoUrl,
+        backgroundImageUrl: normalized.profile.backgroundImageUrl?.startsWith("data:") ? "" : normalized.profile.backgroundImageUrl,
+      },
+      catalog: normalized.catalog?.map(item => ({
+        ...item,
+        imageUrl: item.imageUrl?.startsWith("data:") ? "" : item.imageUrl,
+      })),
+    };
+
+    const index = sites.findIndex((item) => item.id === lightweight.id || item.slug === lightweight.slug);
+    if (index >= 0) sites[index] = lightweight;
+    else sites.push(lightweight);
+
+    try {
+      setStoredSites(sites);
+    } catch {
+      // localStorage cheio — limpa sites antigos e tenta de novo
+      window.localStorage.removeItem(STORAGE_KEY);
+      setStoredSites([lightweight]);
+    }
+
+    return normalized;
+  } catch {
+    return site;
+  }
 }
 
 export function createStoredSite(site: ToqySite) {
