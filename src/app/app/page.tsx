@@ -124,7 +124,7 @@ export default function ConfiguracoesPage() {
   const planTier = (profile?.plan_toqy || profile?.plan_tier || "free") as PlanTier;
   const planLabel = PLAN_LABELS[planTier] ?? PLAN_LABELS.free;
   const subscriptionLabel = SUBSCRIPTION_LABELS[profile?.subscription_status ?? "active"] ?? "Ativa";
-  const planLimit = PLAN_BIOSITE_LIMITS[planTier] ?? PLAN_BIOSITE_LIMITS.free;
+  const planLimit = profile?.biosites_limit ?? PLAN_BIOSITE_LIMITS[planTier] ?? PLAN_BIOSITE_LIMITS.free;
   const usagePercentage = planLimit > 0 ? Math.min((count / planLimit) * 100, 100) : 0;
   const isNearLimit = usagePercentage > 80;
   const displayName = profile?.full_name?.trim() || "Usuário";
