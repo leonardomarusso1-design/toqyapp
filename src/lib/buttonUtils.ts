@@ -46,16 +46,21 @@ export function pixPayload(site: ToqySite, amount?: number) {
 }
 
 export function createVCard(site: ToqySite) {
+  const whatsapp = site.contact.whatsapp?.replace(/\D/g, "");
   const lines = [
     "BEGIN:VCARD",
     "VERSION:3.0",
     `FN:${site.profile.name}`,
     `ORG:${site.profile.name}`,
-    site.contact.phone ? `TEL:${site.contact.phone}` : "",
+    site.profile.title ? `TITLE:${site.profile.title}` : "",
+    site.contact.phone ? `TEL;TYPE=WORK,VOICE:${site.contact.phone}` : "",
+    whatsapp ? `TEL;TYPE=CELL:+${whatsapp}` : "",
     site.contact.email ? `EMAIL:${site.contact.email}` : "",
     site.profile.location ? `ADR:;;${site.profile.location}` : "",
     site.contact.website ? `URL:${site.contact.website}` : "",
+    site.contact.instagram ? `X-SOCIALPROFILE;type=instagram:${site.contact.instagram}` : "",
+    site.profile.description ? `NOTE:${site.profile.description}` : "",
     "END:VCARD",
   ].filter(Boolean);
-  return lines.join("\n");
+  return lines.join("\r\n");
 }
