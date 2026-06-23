@@ -250,17 +250,18 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
           </div>
 
           <header className="text-center">
-            <div className={`${logoSize(site)} ${logoShape(site)} mx-auto flex items-center justify-center overflow-hidden shadow-2xl`} style={{ border: (site.profile.logoUrl || site.profile.profileImageUrl) ? "none" : `2px solid ${site.theme.primary}88`, background: (site.profile.logoUrl || site.profile.profileImageUrl) ? "transparent" : `linear-gradient(135deg, ${site.theme.primary}, ${site.theme.secondary})` }}>
+            <div className={`${logoSize(site)} ${logoShape(site)} relative mx-auto overflow-hidden shadow-2xl`} style={{ border: (site.profile.logoUrl || site.profile.profileImageUrl) ? "none" : `2px solid ${site.theme.primary}88`, background: (site.profile.logoUrl || site.profile.profileImageUrl) ? site.theme.background : `linear-gradient(135deg, ${site.theme.primary}, ${site.theme.secondary})` }}>
               {site.profile.logoUrl || site.profile.profileImageUrl ? (
                 <img
                   src={site.profile.logoUrl || site.profile.profileImageUrl}
                   alt={site.profile.name}
                   style={{
+                    position: "absolute",
+                    inset: 0,
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
                     objectPosition: site.profile.profileImagePosition ?? "center",
-                    display: "block",
                   }}
                 />
               ) : (
@@ -276,6 +277,13 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
               </p>
             ) : null}
             {site.profile.logoUrl && site.profile.profileImageUrl && site.profile.logoUrl !== site.profile.profileImageUrl ? <img src={site.profile.logoUrl} alt={`${site.profile.name} logo`} className="mx-auto mt-4 max-h-16 max-w-[220px] object-contain" /> : null}
+            {site.profile.logoSignatureUrl ? (
+              <img
+                src={site.profile.logoSignatureUrl}
+                alt={`${site.profile.name} assinatura`}
+                className="mx-auto mt-3 max-h-20 max-w-[260px] object-contain drop-shadow-lg"
+              />
+            ) : null}
             {site.profile.logoText ? (
               <p className="mt-3 tracking-widest drop-shadow-lg" style={{
                 color: site.theme.text,

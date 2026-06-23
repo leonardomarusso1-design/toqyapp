@@ -90,6 +90,7 @@ export type ToqySite = {
     logoUrl?: string;
     logoText?: string;      // Texto decorativo abaixo da logo (ex: "BRAVE TATTOO studio")
     logoFont?: "serif" | "mono" | "bold" | "italic"; // Estilo do texto
+    logoSignatureUrl?: string; // Imagem de assinatura/segunda logo abaixo da logo principal
     logoSize: "small" | "medium" | "large";
     logoShape: "circle" | "rounded" | "square";
     backgroundImageUrl?: string;

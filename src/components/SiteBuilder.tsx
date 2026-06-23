@@ -239,6 +239,16 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 <option value="mono">Monospace (tech)</option>
               </select>
             </label>
+            <div className="md:col-span-2">
+              <span className={label}>Assinatura / segunda logo</span>
+              <p className="mb-2 text-xs text-slate-400">Imagem que aparece abaixo da logo principal — ex: logo texto, assinatura, nome em arte. Use PNG com fundo transparente.</p>
+              <ImageUploadField
+                label=""
+                value={site.profile.logoSignatureUrl}
+                onChange={(url) => setProfile({ logoSignatureUrl: url })}
+                placeholder="URL da imagem de assinatura"
+              />
+            </div>
             <label><span className={label}>Título/subtítulo</span><input className={field} value={site.profile.title ?? ""} onChange={(e) => setProfile({ title: e.target.value })} /></label>
             <label><span className={label}>Localização</span><input className={field} value={site.profile.location} onChange={(e) => setProfile({ location: e.target.value })} /></label>
             <label className="md:col-span-2"><span className={label}>Descrição</span><textarea className={field} rows={3} value={site.profile.description} onChange={(e) => setProfile({ description: e.target.value })} /></label>
