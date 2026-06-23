@@ -328,11 +328,9 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 <h3 className="font-black text-emerald-950">Pix premium</h3>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <span className="text-xs font-black text-slate-600">Ativar Pix</span>
-                  <div className="relative">
-                    <input type="checkbox" className="sr-only" checked={site.pix.enabled ?? false} onChange={(e) => update((s) => ({ ...s, pix: { ...s.pix, enabled: e.target.checked } }))} />
-                    <div onClick={() => update((s) => ({ ...s, pix: { ...s.pix, enabled: !(s.pix.enabled ?? false) } }))} className={"w-10 h-6 rounded-full cursor-pointer transition-colors " + (site.pix.enabled ? "bg-[#31c4a8]" : "bg-slate-300")} >
-                      <div className={"absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform " + (site.pix.enabled ? "translate-x-5" : "translate-x-1")} />
-                    </div>
+                  <div className="relative w-10 h-6" onClick={() => update((s) => ({ ...s, pix: { ...s.pix, enabled: !(s.pix.enabled ?? false) } }))}>
+                    <div className={"w-10 h-6 rounded-full cursor-pointer transition-colors " + (site.pix.enabled ? "bg-[#31c4a8]" : "bg-slate-300")} />
+                    <div className={"absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform " + (site.pix.enabled ? "translate-x-5" : "translate-x-1")} />
                   </div>
                 </label>
               </div>

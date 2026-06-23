@@ -42,12 +42,20 @@ export async function POST(request: Request) {
   const isCanceled = eventType === "order_refunded" || eventType === "subscription_canceled";
 
   if (isApproved) {
-    // Verifica se o usuário já tem conta
+    // Busca o usuário — tenta profiles primeiro, depois auth.users como fallback
     const { data: existingProfile } = await supabase
-      .from("profiles").select("id").eq("email", email).maybeSingle();
+      .from("profiles").select("id, email").eq("email", email).maybeSingle();
 
-    if (existingProfile) {
-      // Usuário já existe → atualiza o plano direto
+    // Fallback: busca direto no auth.users se não achou em profiles
+    let userId = existingProfile?.id;
+    if (!userId) {
+      const { data: authUsers } = await supabase.auth.admin.listUsers();
+      const authUser = authUsers?.users?.find(u => u.email?.toLowerCase() === email);
+      userId = authUser?.id;
+    }
+
+    if (userId) {
+      // Usuário existe → atualiza o plano direto
       await supabase.from("profiles").update({
         plan_toqy: planInfo.plan,
         biosites_limit: planInfo.limit,
@@ -56,7 +64,18 @@ export async function POST(request: Request) {
         kiwify_order_id_toqy: orderId,
         subscription_status: "active",
         updated_at: new Date().toISOString(),
-      }).eq("email", email);
+      }).eq("id", userId);
+
+      // Garante que o perfil existe (cria se necessário)
+      await supabase.from("profiles").upsert({
+        id: userId,
+        email: email,
+        plan_toqy: planInfo.plan,
+        biosites_limit: planInfo.limit,
+        subscription_status: "active",
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "id", ignoreDuplicates: false });
+
       return Response.json({ ok: true, plan: planInfo.plan, applied: "immediate" });
     } else {
       // Usuário ainda não criou conta → grava plano pendente
