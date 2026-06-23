@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { ToqySite } from "@/lib/types";
 import { supabase } from "@/lib/supabaseClient";
 import { syncBiositeToSupabase } from "@/lib/biositeSync";
 import { generateEditKey, generateId, generateSlug } from "@/lib/security";
 import { DashboardShell } from "@/components/DashboardShell";
-import { ChevronRight, ChevronLeft, Check } from "lucide-react";
+import { ChevronRight, ChevronLeft, Check, Lock } from "lucide-react";
 
 const steps = ["Negócio", "Localização", "Visual", "Contato", "Pix e Wi-Fi", "Serviços", "Confirmar"];
 
@@ -88,6 +89,33 @@ export default function OnboardingPage() {
   const [done, setDone] = useState<{ slug: string; editKey: string } | null>(null);
   const [error, setError] = useState("");
 
+  // Auth e limite
+  const [authLoading, setAuthLoading] = useState(true);
+  const [limitBlocked, setLimitBlocked] = useState(false);
+  const [limitInfo, setLimitInfo] = useState<{ current: number; limit: number; plan: string } | null>(null);
+
+  useEffect(() => {
+    async function checkAuth() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { router.replace("/login?next=/onboarding"); return; }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("plan_toqy, plan_tier, biosites_limit, biosites_count")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      const plan = profile?.plan_toqy || profile?.plan_tier || "free";
+      const limit = profile?.biosites_limit ?? (plan === "free" ? 1 : plan === "agency" ? 100 : 20);
+      const current = profile?.biosites_count ?? 0;
+
+      setLimitInfo({ current, limit, plan });
+      if (current >= limit) setLimitBlocked(true);
+      setAuthLoading(false);
+    }
+    checkAuth();
+  }, [router]);
+
   function set(partial: Partial<Form>) { setForm(f => ({ ...f, ...partial })); }
 
   function addService() { set({ services: [...form.services, { name: "", price: "", description: "" }] }); }
@@ -104,6 +132,24 @@ export default function OnboardingPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { setError("Faça login primeiro."); setSaving(false); return; }
+
+      // Verificar limite novamente antes de criar
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("plan_toqy, plan_tier, biosites_limit, biosites_count")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      const plan = profile?.plan_toqy || profile?.plan_tier || "free";
+      const limit = profile?.biosites_limit ?? (plan === "free" ? 1 : plan === "agency" ? 100 : 20);
+      const current = profile?.biosites_count ?? 0;
+
+      if (current >= limit) {
+        setLimitBlocked(true);
+        setLimitInfo({ current, limit, plan });
+        setSaving(false);
+        return;
+      }
 
       const location = [form.street, form.number, form.neighborhood, form.city, form.state].filter(Boolean).join(", ");
       const slug = generateSlug(form.businessName);
@@ -226,6 +272,42 @@ export default function OnboardingPage() {
       setSaving(false);
     }
   }
+
+  if (authLoading) return (
+    <DashboardShell>
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#31c4a8] border-t-transparent" />
+      </div>
+    </DashboardShell>
+  );
+
+  if (limitBlocked && limitInfo) return (
+    <DashboardShell>
+      <div className="mx-auto max-w-md text-center">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-100 text-red-500">
+          <Lock className="h-10 w-10" />
+        </div>
+        <h1 className="mt-6 text-2xl font-black text-slate-900">Limite atingido</h1>
+        <p className="mt-2 text-slate-500">
+          Você já criou <strong>{limitInfo.current}</strong> de <strong>{limitInfo.limit}</strong> bio sites do seu plano{" "}
+          <strong className="capitalize">{limitInfo.plan}</strong>.
+        </p>
+        <p className="mt-2 text-sm text-slate-400">Faça upgrade para criar mais bio sites para seus clientes.</p>
+        <div className="mt-6 flex flex-col gap-3">
+          <a href="https://pay.kiwify.com.br/12uYE0c" target="_blank" rel="noopener noreferrer"
+            className="block rounded-2xl bg-[#31c4a8] px-5 py-4 font-black text-white hover:bg-[#25b69a]">
+            Fazer upgrade — Comunidade R$29,90/mês
+          </a>
+          <Link href="/#planos" className="block rounded-2xl border border-slate-200 px-5 py-4 font-black text-slate-600 hover:border-[#31c4a8]">
+            Ver todos os planos
+          </Link>
+          <Link href="/app" className="block text-sm text-slate-400 hover:text-slate-600">
+            Voltar para o painel
+          </Link>
+        </div>
+      </div>
+    </DashboardShell>
+  );
 
   if (done) return (
     <DashboardShell>
