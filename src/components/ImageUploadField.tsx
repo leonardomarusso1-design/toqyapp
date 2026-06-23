@@ -3,8 +3,8 @@
 import { useRef, useState } from "react";
 import { ImagePlus, Link2, Loader2, X } from "lucide-react";
 
-const MAX_DIMENSION = 1280;
-const MAX_BYTES = 8 * 1024 * 1024;
+const MAX_DIMENSION = 800; // reduzido de 1280 — suficiente para bio site mobile
+const MAX_BYTES = 5 * 1024 * 1024; // reduzido de 8MB para 5MB
 
 function resizeImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -22,7 +22,7 @@ function resizeImage(file: File): Promise<string> {
         if (!ctx) { resolve(reader.result as string); return; }
         ctx.drawImage(img, 0, 0, width, height);
         const mime = file.type === "image/png" ? "image/png" : "image/jpeg";
-        resolve(canvas.toDataURL(mime, 0.85));
+        resolve(canvas.toDataURL(mime, mime === "image/png" ? 0.9 : 0.75));
       };
       img.onerror = reject;
       img.src = reader.result as string;

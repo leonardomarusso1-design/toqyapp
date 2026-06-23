@@ -135,7 +135,6 @@ function backgroundStyle(site: ToqySite): React.CSSProperties {
       backgroundImage: `${overlay}, url(${image})`,
       backgroundSize: "cover",
       backgroundPosition: "center top",
-      backgroundAttachment: "fixed",
     };
   }
   if (site.theme.backgroundType === "solid") return { background: site.theme.background };
@@ -173,6 +172,7 @@ function uniqueGroups(items: CatalogItem[]) {
 
 export function PublicBioSite({ site }: { site: ToqySite }) {
   const [modal, setModal] = useState<Modal>(null);
+  const [qrModal, setQrModal] = useState(false);
   const [copied, setCopied] = useState("");
   const [selectedAmount, setSelectedAmount] = useState<number | undefined>();
   const activeButtons = site.buttons.filter((button) => button.enabled);
@@ -245,7 +245,7 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
       <div className="min-h-screen w-full">
         <main className="mx-auto w-full max-w-[430px] px-4 py-6">
           <div className="mb-6 flex items-center justify-between gap-3">
-            <button type="button" onClick={() => copyText(window.location.href, "qr")} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black backdrop-blur-xl" style={glassCard(site)}><QrCode className="h-4 w-4" />QR Code</button>
+            <button type="button" onClick={() => setQrModal(true)} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black backdrop-blur-xl" style={glassCard(site)}><QrCode className="h-4 w-4" />QR Code</button>
             <button type="button" onClick={shareSite} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black backdrop-blur-xl" style={glassCard(site)}><Share2 className="h-4 w-4" />{copied === "share" ? "Copiado" : "Compartilhar"}</button>
           </div>
 
@@ -255,6 +255,8 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
                 <img
                   src={site.profile.logoUrl || site.profile.profileImageUrl}
                   alt={site.profile.name}
+                  loading="eager"
+                  fetchPriority="high"
                   style={{
                     position: "absolute",
                     inset: 0,
@@ -394,6 +396,22 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
         </main>
       </div>
 
+      {qrModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm" onClick={() => setQrModal(false)}>
+          <div className="rounded-[2rem] bg-white p-8 text-center shadow-2xl" onClick={e => e.stopPropagation()}>
+            <p className="mb-4 text-sm font-black text-slate-500 uppercase tracking-widest">QR Code</p>
+            <p className="mb-5 font-black text-slate-900 text-lg">{site.profile.name}</p>
+            <div className="rounded-2xl border border-slate-100 bg-white p-4 inline-block">
+              <QRCodeSVG value={typeof window !== "undefined" ? window.location.href : ""} size={200} />
+            </div>
+            <p className="mt-4 text-xs text-slate-400 break-all max-w-[240px] mx-auto">{typeof window !== "undefined" ? window.location.href : ""}</p>
+            <button onClick={() => { copyText(typeof window !== "undefined" ? window.location.href : "", "qr"); }} className="mt-4 block w-full rounded-2xl bg-slate-900 px-5 py-3 text-sm font-black text-white">
+              {copied === "qr" ? "✓ Link copiado!" : "Copiar link"}
+            </button>
+            <button onClick={() => setQrModal(false)} className="mt-2 block w-full rounded-2xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-600">Fechar</button>
+          </div>
+        </div>
+      ) : null}
       {modal === "wifi" ? <WifiModal site={site} onClose={() => setModal(null)} copied={copied} copyText={copyText} /> : null}
       {modal === "pix" ? <PixModal site={site} onClose={() => setModal(null)} copied={copied} copyText={copyText} selectedAmount={selectedAmount} setSelectedAmount={setSelectedAmount} /> : null}
     </div>
