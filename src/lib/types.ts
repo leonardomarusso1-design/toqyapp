@@ -85,6 +85,7 @@ export type ToqySite = {
     description: string;
     location: string;
     profileImageUrl?: string;
+    profileImagePosition?: string;
     logoUrl?: string;
     logoSize: "small" | "medium" | "large";
     logoShape: "circle" | "rounded" | "square";

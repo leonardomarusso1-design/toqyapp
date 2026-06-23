@@ -214,8 +214,22 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
         <Section>
           <h2 className="text-2xl font-black text-slate-950">Perfil</h2>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <ImageUploadField label="Foto de perfil" value={site.profile.profileImageUrl} onChange={(url) => setProfile({ profileImageUrl: url })} />
-            <div><ImageUploadField label="Logo" value={site.profile.logoUrl} onChange={(url) => setProfile({ logoUrl: url })} /><ImageGuidelineHint type="logo" /></div>
+            <ImageUploadField
+              label="Foto de perfil"
+              value={site.profile.profileImageUrl}
+              onChange={(url) => setProfile({ profileImageUrl: url })}
+              showPositionControl
+              position={site.profile.profileImagePosition ?? "center"}
+              onPositionChange={(pos) => setProfile({ profileImagePosition: pos })}
+            />
+            <div>
+              <ImageUploadField
+                label="Logo"
+                value={site.profile.logoUrl}
+                onChange={(url) => setProfile({ logoUrl: url })}
+              />
+              <ImageGuidelineHint type="logo" />
+            </div>
             <label><span className={label}>Tamanho da logo</span><select className={field} value={site.profile.logoSize} onChange={(e) => setProfile({ logoSize: e.target.value as ToqySite["profile"]["logoSize"] })}><option value="small">Pequena</option><option value="medium">Média</option><option value="large">Grande</option></select></label>
             <label><span className={label}>Formato da logo</span><select className={field} value={site.profile.logoShape} onChange={(e) => setProfile({ logoShape: e.target.value as ToqySite["profile"]["logoShape"] })}><option value="circle">Redonda</option><option value="rounded">Arredondada</option><option value="square">Quadrada</option></select></label>
             <label><span className={label}>Título/subtítulo</span><input className={field} value={site.profile.title ?? ""} onChange={(e) => setProfile({ title: e.target.value })} /></label>
@@ -305,8 +319,20 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
           <p className="mt-1 text-sm text-slate-500">Configure Pix com comprovante e Wi-Fi com check-in/avaliação.</p>
           <div className="mt-5 grid gap-5 lg:grid-cols-2">
             <div className="rounded-3xl border border-emerald-100 bg-emerald-50 p-4">
-              <h3 className="font-black text-emerald-950">Pix premium</h3>
-              <div className="mt-4 grid gap-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-black text-emerald-950">Pix premium</h3>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <span className="text-xs font-black text-slate-600">Ativar Pix</span>
+                  <div className="relative">
+                    <input type="checkbox" className="sr-only" checked={site.pix.enabled ?? false} onChange={(e) => update((s) => ({ ...s, pix: { ...s.pix, enabled: e.target.checked } }))} />
+                    <div onClick={() => update((s) => ({ ...s, pix: { ...s.pix, enabled: !(s.pix.enabled ?? false) } }))} className={"w-10 h-6 rounded-full cursor-pointer transition-colors " + (site.pix.enabled ? "bg-[#31c4a8]" : "bg-slate-300")} >
+                      <div className={"absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform " + (site.pix.enabled ? "translate-x-5" : "translate-x-1")} />
+                    </div>
+                  </div>
+                </label>
+              </div>
+              {(site.pix.enabled ?? false) ? (
+              <div className="grid gap-4">
                 <label><span className={label}>Chave Pix</span><input className={field} value={site.pix.key} onChange={(e) => update((s) => ({ ...s, pix: { ...s.pix, key: e.target.value, enabled: true } }))} /></label>
                 <label><span className={label}>Recebedor</span><input className={field} value={site.pix.receiver} onChange={(e) => update((s) => ({ ...s, pix: { ...s.pix, receiver: e.target.value } }))} /></label>
                 <label><span className={label}>Banco/observação</span><input className={field} value={site.pix.bank ?? ""} onChange={(e) => update((s) => ({ ...s, pix: { ...s.pix, bank: e.target.value } }))} /></label>
@@ -330,6 +356,9 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                   <p className="mt-1 text-xs text-slate-400">Digite um valor e pressione Enter para adicionar personalizado.</p>
                 </div>
               </div>
+              ) : (
+                <p className="text-sm text-slate-500 text-center py-2">Pix desativado — o botão não aparecerá no bio site.</p>
+              )}
             </div>
             <div className="rounded-3xl border border-emerald-100 bg-emerald-50 p-4">
               <h3 className="font-black text-emerald-950">Wi-Fi + check-in</h3>
@@ -361,10 +390,13 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
           {/* Card promo editavel */}
           <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex items-center justify-between">
-              <span className={label}>Card antes do catalogo (&quot;Mais praticidade...&quot;)</span>
-              <label className="flex items-center gap-2 text-sm font-black text-slate-700">
-                <input type="checkbox" checked={site.promoCard?.enabled ?? true} onChange={(e) => update((s) => ({ ...s, promoCard: { enabled: e.target.checked, title: s.promoCard?.title ?? "Mais praticidade em um so lugar", description: s.promoCard?.description ?? "Acesse contatos, Pix, Wi-Fi, catalogo, rotas e avaliacoes.", buttonLabel: s.promoCard?.buttonLabel ?? "Ver mais" } }))} />
-                Exibir
+              <span className={label}>Card "Mais praticidade..."</span>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <span className="text-xs font-bold text-slate-500">{(site.promoCard?.enabled ?? true) ? "Visível" : "Oculto"}</span>
+                <div className="relative w-10 h-6" onClick={() => update((s) => ({ ...s, promoCard: { enabled: !(s.promoCard?.enabled ?? true), title: s.promoCard?.title ?? "Mais praticidade em um só lugar", description: s.promoCard?.description ?? "Acesse contatos, Pix, Wi-Fi, catálogo, rotas e avaliações.", buttonLabel: s.promoCard?.buttonLabel ?? "Ver mais" } }))}>
+                  <div className={"w-10 h-6 rounded-full cursor-pointer transition-colors " + ((site.promoCard?.enabled ?? true) ? "bg-[#31c4a8]" : "bg-slate-300")} />
+                  <div className={"absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform " + ((site.promoCard?.enabled ?? true) ? "translate-x-5" : "translate-x-1")} />
+                </div>
               </label>
             </div>
             {(site.promoCard?.enabled ?? true) ? (

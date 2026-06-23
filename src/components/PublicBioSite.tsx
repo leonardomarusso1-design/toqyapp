@@ -186,7 +186,7 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
           <header className="text-center">
             <div className={`${logoSize(site)} ${logoShape(site)} mx-auto flex items-center justify-center overflow-hidden shadow-2xl`} style={{ border: (site.profile.logoUrl || site.profile.profileImageUrl) ? "none" : `2px solid ${site.theme.primary}88`, background: (site.profile.logoUrl || site.profile.profileImageUrl) ? "transparent" : `linear-gradient(135deg, ${site.theme.primary}, ${site.theme.secondary})` }}>
               {site.profile.logoUrl || site.profile.profileImageUrl ? (
-                <img src={site.profile.logoUrl || site.profile.profileImageUrl} alt={site.profile.name} className="h-full w-full object-cover" />
+                <img src={site.profile.logoUrl || site.profile.profileImageUrl} alt={site.profile.name} className="h-full w-full object-cover" style={{ objectPosition: site.profile.profileImagePosition ?? "center" }} />
               ) : (
                 <span className="text-4xl font-black text-white">{getInitials(site.profile.name)}</span>
               )}

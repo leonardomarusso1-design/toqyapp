@@ -19,10 +19,7 @@ function resizeImage(file: File): Promise<string> {
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          resolve(reader.result as string);
-          return;
-        }
+        if (!ctx) { resolve(reader.result as string); return; }
         ctx.drawImage(img, 0, 0, width, height);
         const mime = file.type === "image/png" ? "image/png" : "image/jpeg";
         resolve(canvas.toDataURL(mime, 0.85));
@@ -40,12 +37,18 @@ export function ImageUploadField({
   value,
   onChange,
   placeholder,
+  showPositionControl,
+  position,
+  onPositionChange,
 }: {
   label: string;
   value?: string;
   onChange: (url: string) => void;
   placeholder?: string;
   pathPrefix?: string;
+  showPositionControl?: boolean;
+  position?: string;
+  onPositionChange?: (pos: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
@@ -54,14 +57,8 @@ export function ImageUploadField({
 
   async function handleFile(file?: File) {
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setError("Selecione um arquivo de imagem.");
-      return;
-    }
-    if (file.size > MAX_BYTES) {
-      setError("Imagem muito grande (máx. 8MB).");
-      return;
-    }
+    if (!file.type.startsWith("image/")) { setError("Selecione um arquivo de imagem."); return; }
+    if (file.size > MAX_BYTES) { setError("Imagem muito grande (máx. 8MB)."); return; }
     setError("");
     setLoading(true);
     try {
@@ -71,8 +68,18 @@ export function ImageUploadField({
       setError("Não foi possível carregar a imagem.");
     } finally {
       setLoading(false);
+      // Reseta o input para permitir selecionar o mesmo arquivo novamente
+      if (inputRef.current) inputRef.current.value = "";
     }
   }
+
+  const positions = [
+    { label: "Topo", value: "top" },
+    { label: "Centro", value: "center" },
+    { label: "Baixo", value: "bottom" },
+    { label: "Esquerda", value: "left" },
+    { label: "Direita", value: "right" },
+  ];
 
   return (
     <div className="block">
@@ -89,7 +96,14 @@ export function ImageUploadField({
 
       <div className="mt-2 grid gap-3 md:grid-cols-[96px_1fr] md:items-center">
         <div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-400">
-          {value ? <img src={value} alt={label} className="h-full w-full object-cover" /> : "Preview"}
+          {value ? (
+            <img
+              src={value}
+              alt={label}
+              className="h-full w-full object-cover"
+              style={{ objectPosition: position ?? "center" }}
+            />
+          ) : "Preview"}
           {value ? (
             <button
               type="button"
@@ -131,6 +145,30 @@ export function ImageUploadField({
           </div>
         )}
       </div>
+
+      {/* Controle de posição (pincelada/zoom como Instagram) */}
+      {showPositionControl && value && onPositionChange ? (
+        <div className="mt-3">
+          <span className="text-xs font-black text-slate-600">Posição da imagem</span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {positions.map((p) => (
+              <button
+                key={p.value}
+                type="button"
+                onClick={() => onPositionChange(p.value)}
+                className={"rounded-xl border px-3 py-1.5 text-xs font-black transition " + (
+                  (position ?? "center") === p.value
+                    ? "border-[#31c4a8] bg-emerald-50 text-[#1f9f87]"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                )}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {error ? <p className="mt-1 text-xs font-bold text-red-600">{error}</p> : null}
     </div>
   );
