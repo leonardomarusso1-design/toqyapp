@@ -22,6 +22,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { SpeedInsights } from "@vercel/speed-insights/next";
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR">
@@ -29,6 +31,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <SentryInit />
         <AuthSync />
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );
