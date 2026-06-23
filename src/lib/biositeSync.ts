@@ -80,15 +80,22 @@ export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boole
 
 export async function loadBiositeFromSupabase(slug: string): Promise<ToqySite | null> {
   try {
-    const { data } = await supabase
+    // Busca pelo slug — a política RLS permite leitura pública de biosites com status=active
+    const { data, error } = await supabase
       .from("toqy_biosites")
       .select("site_data")
       .eq("slug", slug)
+      .eq("status", "active")
       .maybeSingle();
 
+    if (error) {
+      console.error("[biositeSync] loadBiosite error:", error.message, error.code);
+      return null;
+    }
     if (data?.site_data) return data.site_data as ToqySite;
     return null;
-  } catch {
+  } catch (err) {
+    console.error("[biositeSync] loadBiosite catch:", err);
     return null;
   }
 }
