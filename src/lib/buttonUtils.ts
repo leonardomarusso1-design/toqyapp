@@ -53,12 +53,19 @@ export function createVCard(site: ToqySite) {
     `FN:${site.profile.name}`,
     `ORG:${site.profile.name}`,
     site.profile.title ? `TITLE:${site.profile.title}` : "",
+    // Telefones
     site.contact.phone ? `TEL;TYPE=WORK,VOICE:${site.contact.phone}` : "",
     whatsapp ? `TEL;TYPE=CELL:+${whatsapp}` : "",
+    // Email
     site.contact.email ? `EMAIL:${site.contact.email}` : "",
+    // Endereço
     site.profile.location ? `ADR:;;${site.profile.location}` : "",
-    site.contact.website ? `URL:${site.contact.website}` : "",
-    site.contact.instagram ? `X-SOCIALPROFILE;type=instagram:${site.contact.instagram}` : "",
+    // URLs — site, bio site TOQY, redes sociais
+    site.contact.website ? `URL;TYPE=Site:${site.contact.website}` : "",
+    site.contact.instagram ? `URL;TYPE=Instagram:${site.contact.instagram}` : "",
+    site.contact.facebook ? `URL;TYPE=Facebook:${site.contact.facebook}` : "",
+    whatsapp ? `URL;TYPE=WhatsApp:https://wa.me/${whatsapp}` : "",
+    // Nota com descrição do negócio
     site.profile.description ? `NOTE:${site.profile.description}` : "",
     "END:VCARD",
   ].filter(Boolean);

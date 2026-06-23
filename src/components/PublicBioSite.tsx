@@ -225,8 +225,11 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
     return <Icon className="h-5 w-5 shrink-0" />;
   };
 
-  const socialButtons = activeButtons.filter((button) => ["whatsapp", "instagram", "email", "linkedin", "facebook", "phone"].includes(button.type));
-  const mainButtons = activeButtons.filter((button) => !["whatsapp", "instagram", "email", "linkedin", "facebook", "phone"].includes(button.type));
+  const SOCIAL_TYPES = ["whatsapp", "instagram", "facebook", "tiktok", "linkedin", "youtube", "email"];
+  const socialButtons = activeButtons.filter((b) => SOCIAL_TYPES.includes(b.type));
+  // Remove Wi-Fi dos botões principais quando está mostrando inline
+  const wifiInline = site.wifi?.enabled && site.wifi.ssid;
+  const mainButtons = activeButtons.filter((b) => !SOCIAL_TYPES.includes(b.type) && b.type !== "phone" && !(wifiInline && b.type === "wifi"));
 
   return (
     <div className="min-h-screen w-full" style={{ ...backgroundStyle(site), color: site.theme.text }}>
@@ -272,13 +275,55 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
             {site.contact.phone ? <button type="button" onClick={() => window.open(`tel:${site.contact.phone.replace(/\D/g, "")}`)} className={`${radiusClass(site)} flex items-center justify-center gap-2 border px-4 py-3 text-xs font-black backdrop-blur-xl`} style={glassCard(site)}><Phone className="h-4 w-4" />Ligar</button> : null}
           </section>
 
-          {socialButtons.length ? (
-            <section className="mt-4 flex items-center justify-between gap-2">
-              <ChevronLeft className="h-5 w-5 opacity-80" />
-              <div className="flex flex-1 justify-center gap-3">
-                {socialButtons.map((button) => <button key={button.id} type="button" onClick={() => handleButton(button)} className="flex h-14 w-14 items-center justify-center rounded-2xl border text-white shadow-lg backdrop-blur-xl transition active:scale-95" style={{ ...glassCard(site), color: site.theme.text }}><ButtonIcon type={button.type} /></button>)}
+          {/* Wi-Fi inline — mostra rede e senha sem precisar abrir modal */}
+          {site.wifi?.enabled && site.wifi.ssid ? (
+            <section className="mt-4 rounded-2xl border px-4 py-3 backdrop-blur-xl" style={glassCard(site)}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <WifiIcon2 className="h-4 w-4 shrink-0 opacity-80" />
+                  <span className="text-xs font-black truncate" style={{ color: site.theme.text }}>
+                    Wi-Fi: <span className="font-mono">{site.wifi.ssid}</span>
+                    {site.wifi.password ? <> &nbsp;·&nbsp; Senha: <span className="font-mono">{site.wifi.password}</span></> : null}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copyText(site.wifi.password || site.wifi.ssid, "wifi")}
+                  className="shrink-0 rounded-full px-3 py-1 text-xs font-black transition"
+                  style={{ background: site.theme.primary + "22", color: site.theme.primary }}
+                >
+                  {copied === "wifi" ? "Copiado!" : "Copiar senha"}
+                </button>
               </div>
-              <ChevronRight className="h-5 w-5 opacity-80" />
+            </section>
+          ) : null}
+
+          {socialButtons.length ? (
+            <section className="mt-4 flex items-center justify-center gap-4">
+              {socialButtons.map((button) => {
+                const brandColor: Record<string, string> = {
+                  whatsapp: "#25D366",
+                  instagram: "#E1306C",
+                  facebook: "#1877F2",
+                  tiktok: "#010101",
+                  linkedin: "#0A66C2",
+                  youtube: "#FF0000",
+                  email: "#EA4335",
+                };
+                const bg = brandColor[button.type] ?? site.theme.primary;
+                return (
+                  <button
+                    key={button.id}
+                    type="button"
+                    onClick={() => handleButton(button)}
+                    aria-label={button.label}
+                    className="flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition active:scale-90 hover:scale-105"
+                    style={{ background: bg }}
+                  >
+                    <ButtonIcon type={button.type} />
+                  </button>
+                );
+              })}
             </section>
           ) : null}
 
