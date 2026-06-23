@@ -226,6 +226,14 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             <label><span className={label}>Tamanho da logo</span><select className={field} value={site.profile.logoSize} onChange={(e) => setProfile({ logoSize: e.target.value as ToqySite["profile"]["logoSize"] })}><option value="small">Pequena</option><option value="medium">Média</option><option value="large">Grande</option></select></label>
             <label><span className={label}>Formato da logo</span><select className={field} value={site.profile.logoShape} onChange={(e) => setProfile({ logoShape: e.target.value as ToqySite["profile"]["logoShape"] })}><option value="circle">Redonda</option><option value="rounded">Arredondada</option><option value="square">Quadrada</option></select></label>
             <label>
+              <span className={label}>Encaixe da logo</span>
+              <select className={field} value={site.profile.logoFit ?? "cover"} onChange={(e) => setProfile({ logoFit: e.target.value as "cover" | "contain" })}>
+                <option value="cover">Preencher (corta bordas se necessário)</option>
+                <option value="contain">Mostrar completa (sem cortes)</option>
+              </select>
+              <p className="mt-1 text-xs text-slate-400">PNG com fundo transparente → use "Mostrar completa". Foto → use "Preencher".</p>
+            </label>
+            <label>
               <span className={label}>Texto decorativo abaixo da logo</span>
               <input className={field} value={site.profile.logoText ?? ""} onChange={(e) => setProfile({ logoText: e.target.value })} placeholder='Ex: "BRAVE TATTOO studio" ou "Barber Shop"' />
               <p className="mt-1 text-xs text-slate-400">Aparece em destaque abaixo da logo. Deixe em branco para não mostrar.</p>

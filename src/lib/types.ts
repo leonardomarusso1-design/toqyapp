@@ -88,6 +88,7 @@ export type ToqySite = {
     profileImageUrl?: string;
     profileImagePosition?: string;
     logoUrl?: string;
+    logoFit?: "cover" | "contain"; // cover = preenche tudo, contain = mostra logo inteira
     logoText?: string;      // Texto decorativo abaixo da logo (ex: "BRAVE TATTOO studio")
     logoFont?: "serif" | "mono" | "bold" | "italic"; // Estilo do texto
     logoSignatureUrl?: string; // Imagem de assinatura/segunda logo abaixo da logo principal

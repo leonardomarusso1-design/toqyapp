@@ -250,7 +250,7 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
           </div>
 
           <header className="text-center">
-            <div className={`${logoSize(site)} ${logoShape(site)} relative mx-auto overflow-hidden shadow-2xl`} style={{ border: (site.profile.logoUrl || site.profile.profileImageUrl) ? "none" : `2px solid ${site.theme.primary}88`, background: (site.profile.logoUrl || site.profile.profileImageUrl) ? site.theme.background : `linear-gradient(135deg, ${site.theme.primary}, ${site.theme.secondary})` }}>
+            <div className={`${logoSize(site)} ${logoShape(site)} relative mx-auto overflow-hidden shadow-2xl`} style={{ border: (site.profile.logoUrl || site.profile.profileImageUrl) ? "none" : `2px solid ${site.theme.primary}88`, background: "transparent" }}>
               {site.profile.logoUrl || site.profile.profileImageUrl ? (
                 <img
                   src={site.profile.logoUrl || site.profile.profileImageUrl}
@@ -260,7 +260,7 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
                     inset: 0,
                     width: "100%",
                     height: "100%",
-                    objectFit: "cover",
+                    objectFit: site.profile.logoFit ?? "cover",
                     objectPosition: site.profile.profileImagePosition ?? "center",
                   }}
                 />
