@@ -225,6 +225,20 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             </div>
             <label><span className={label}>Tamanho da logo</span><select className={field} value={site.profile.logoSize} onChange={(e) => setProfile({ logoSize: e.target.value as ToqySite["profile"]["logoSize"] })}><option value="small">Pequena</option><option value="medium">Média</option><option value="large">Grande</option></select></label>
             <label><span className={label}>Formato da logo</span><select className={field} value={site.profile.logoShape} onChange={(e) => setProfile({ logoShape: e.target.value as ToqySite["profile"]["logoShape"] })}><option value="circle">Redonda</option><option value="rounded">Arredondada</option><option value="square">Quadrada</option></select></label>
+            <label>
+              <span className={label}>Texto decorativo abaixo da logo</span>
+              <input className={field} value={site.profile.logoText ?? ""} onChange={(e) => setProfile({ logoText: e.target.value })} placeholder='Ex: "BRAVE TATTOO studio" ou "Barber Shop"' />
+              <p className="mt-1 text-xs text-slate-400">Aparece em destaque abaixo da logo. Deixe em branco para não mostrar.</p>
+            </label>
+            <label>
+              <span className={label}>Estilo do texto decorativo</span>
+              <select className={field} value={site.profile.logoFont ?? "bold"} onChange={(e) => setProfile({ logoFont: e.target.value as ToqySite["profile"]["logoFont"] })}>
+                <option value="bold">Bold (forte e moderno)</option>
+                <option value="serif">Serif (elegante e clássico)</option>
+                <option value="italic">Itálico (dinâmico)</option>
+                <option value="mono">Monospace (tech)</option>
+              </select>
+            </label>
             <label><span className={label}>Título/subtítulo</span><input className={field} value={site.profile.title ?? ""} onChange={(e) => setProfile({ title: e.target.value })} /></label>
             <label><span className={label}>Localização</span><input className={field} value={site.profile.location} onChange={(e) => setProfile({ location: e.target.value })} /></label>
             <label className="md:col-span-2"><span className={label}>Descrição</span><textarea className={field} rows={3} value={site.profile.description} onChange={(e) => setProfile({ description: e.target.value })} /></label>

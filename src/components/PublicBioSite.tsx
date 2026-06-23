@@ -125,11 +125,16 @@ function backgroundStyle(site: ToqySite): React.CSSProperties {
   const plaque = site.plaqueTheme?.useSameBackground && site.plaqueTheme.backgroundImageUrl;
   const image = plaque ? site.plaqueTheme?.backgroundImageUrl : site.profile.backgroundImageUrl;
   if ((site.theme.backgroundType === "image" || plaque) && image) {
+    const isDark = site.theme.mode === "dark";
+    // Gradiente suave: transparente no topo, escuro na base para legibilidade do texto
+    const overlay = isDark
+      ? "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.55) 100%)"
+      : "linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 40%, rgba(0,0,0,0.30) 100%)";
     return {
       backgroundColor: site.theme.background,
-      backgroundImage: `linear-gradient(180deg, rgba(0,0,0,.10), rgba(0,0,0,.28)), url(${image})`,
+      backgroundImage: `${overlay}, url(${image})`,
       backgroundSize: "cover",
-      backgroundPosition: "center",
+      backgroundPosition: "center top",
       backgroundAttachment: "fixed",
     };
   }
@@ -226,14 +231,18 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
   };
 
   const SOCIAL_TYPES = ["whatsapp", "instagram", "facebook", "tiktok", "linkedin", "youtube", "email"];
-  const socialButtons = activeButtons.filter((b) => SOCIAL_TYPES.includes(b.type));
-  // Remove Wi-Fi dos botões principais quando está mostrando inline
+  // displayAs="icon" força ícone, displayAs="button" força botão grande, undefined = automático por tipo
+  const socialButtons = activeButtons.filter((b) =>
+    b.displayAs === "icon" || (!b.displayAs && SOCIAL_TYPES.includes(b.type))
+  ).filter(b => b.displayAs !== "button");
   const wifiInline = site.wifi?.enabled && site.wifi.ssid;
-  const mainButtons = activeButtons.filter((b) => !SOCIAL_TYPES.includes(b.type) && b.type !== "phone" && !(wifiInline && b.type === "wifi"));
+  const mainButtons = activeButtons.filter((b) =>
+    b.displayAs === "button" || (!b.displayAs && !SOCIAL_TYPES.includes(b.type) && b.type !== "phone" && !(wifiInline && b.type === "wifi"))
+  );
 
   return (
     <div className="min-h-screen w-full" style={{ ...backgroundStyle(site), color: site.theme.text }}>
-      <div className="min-h-screen w-full" style={site.theme.useBackgroundOverlay ? { background: site.theme.mode === "dark" ? "rgba(0,0,0,0.38)" : "rgba(255,255,255,0.12)" } : undefined}>
+      <div className="min-h-screen w-full">
         <main className="mx-auto w-full max-w-[430px] px-4 py-6">
           <div className="mb-6 flex items-center justify-between gap-3">
             <button type="button" onClick={() => copyText(window.location.href, "qr")} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black backdrop-blur-xl" style={glassCard(site)}><QrCode className="h-4 w-4" />QR Code</button>
@@ -267,6 +276,23 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
               </p>
             ) : null}
             {site.profile.logoUrl && site.profile.profileImageUrl && site.profile.logoUrl !== site.profile.profileImageUrl ? <img src={site.profile.logoUrl} alt={`${site.profile.name} logo`} className="mx-auto mt-4 max-h-16 max-w-[220px] object-contain" /> : null}
+            {site.profile.logoText ? (
+              <p className="mt-3 tracking-widest drop-shadow-lg" style={{
+                color: site.theme.text,
+                fontSize: "clamp(14px, 4vw, 22px)",
+                fontFamily: site.profile.logoFont === "serif" ? "Georgia, serif"
+                  : site.profile.logoFont === "mono" ? "monospace"
+                  : site.profile.logoFont === "italic" ? "Georgia, serif"
+                  : "inherit",
+                fontWeight: site.profile.logoFont === "bold" || !site.profile.logoFont ? 900 : 700,
+                fontStyle: site.profile.logoFont === "italic" ? "italic" : "normal",
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                textShadow: site.theme.mode === "dark" ? "0 2px 12px rgba(0,0,0,0.6)" : "none",
+              }}>
+                {site.profile.logoText}
+              </p>
+            ) : null}
             {site.profile.description ? <p className="mx-auto mt-4 max-w-[350px] text-sm leading-relaxed" style={{ color: site.theme.muted }}>{site.profile.description}</p> : null}
           </header>
 

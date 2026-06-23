@@ -69,6 +69,26 @@ export function ButtonEditor({ site, onChange }: Props) {
                 <label><span className={label}>Tipo do botão</span><select className={input} value={button.type} onChange={(e) => updateButton(button.id, { type: e.target.value as ToqyLinkType, label: button.label || defaultLabelForType(e.target.value as ToqyLinkType) })}>{buttonTypeOptions.map((item) => <option key={item.type} value={item.type}>{item.label}</option>)}</select></label>
                 <label className="flex items-end gap-2 pb-3 text-sm font-black text-slate-700"><input type="checkbox" checked={button.enabled} onChange={(e) => updateButton(button.id, { enabled: e.target.checked })} />Ativo</label>
               </div>
+              <div className="mt-3">
+                <span className="text-xs font-black text-slate-600">Exibir como</span>
+                <div className="mt-1.5 flex gap-2">
+                  {[
+                    { val: undefined, label: "Automático", hint: "O sistema decide" },
+                    { val: "icon",   label: "⭕ Ícone circular", hint: "Grade de ícones sociais" },
+                    { val: "button", label: "▬ Botão grande", hint: "Lista de botões" },
+                  ].map(opt => (
+                    <button key={String(opt.val)} type="button"
+                      onClick={() => updateButton(button.id, { displayAs: opt.val as typeof button.displayAs })}
+                      className={"rounded-xl border px-3 py-1.5 text-xs font-black transition " + (
+                        button.displayAs === opt.val
+                          ? "border-[#31c4a8] bg-emerald-50 text-[#1f9f87]"
+                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                      )}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="mt-4">{destinationFields(button)}</div>
             </article>
           );

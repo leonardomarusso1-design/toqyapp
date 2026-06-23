@@ -52,6 +52,7 @@ export type ToqyButton = {
   type: ToqyLinkType;
   url?: string;
   enabled: boolean;
+  displayAs?: "icon" | "button"; // "icon" = círculo social, "button" = botão grande
 };
 
 export type CatalogItem = {
@@ -87,6 +88,8 @@ export type ToqySite = {
     profileImageUrl?: string;
     profileImagePosition?: string;
     logoUrl?: string;
+    logoText?: string;      // Texto decorativo abaixo da logo (ex: "BRAVE TATTOO studio")
+    logoFont?: "serif" | "mono" | "bold" | "italic"; // Estilo do texto
     logoSize: "small" | "medium" | "large";
     logoShape: "circle" | "rounded" | "square";
     backgroundImageUrl?: string;
