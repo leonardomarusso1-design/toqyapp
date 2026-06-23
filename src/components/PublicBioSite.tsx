@@ -186,13 +186,19 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
           <header className="text-center">
             <div className={`${logoSize(site)} ${logoShape(site)} mx-auto flex items-center justify-center overflow-hidden shadow-2xl`} style={{ border: (site.profile.logoUrl || site.profile.profileImageUrl) ? "none" : `2px solid ${site.theme.primary}88`, background: (site.profile.logoUrl || site.profile.profileImageUrl) ? "transparent" : `linear-gradient(135deg, ${site.theme.primary}, ${site.theme.secondary})` }}>
               {site.profile.logoUrl || site.profile.profileImageUrl ? (
-                <img src={site.profile.logoUrl || site.profile.profileImageUrl} alt={site.profile.name} className="h-full w-full object-cover" style={{ objectPosition: site.profile.profileImagePosition ?? "center" }} />
+                <img src={site.profile.logoUrl || site.profile.profileImageUrl} alt={site.profile.name} className="h-full w-full object-cover" style={{ objectPosition: site.profile.profileImagePosition ?? "center", objectFit: "cover" }} />
               ) : (
                 <span className="text-4xl font-black text-white">{getInitials(site.profile.name)}</span>
               )}
             </div>
           <h1 className="mt-5 text-2xl font-black leading-tight drop-shadow-sm" style={{ textShadow: site.theme.mode === "light" ? "none" : "0 0 10px rgba(0,0,0,0.5)" }}>{site.profile.name}</h1>
             {site.profile.title ? <p className="mt-1 text-base font-medium" style={{ color: site.theme.muted }}>{site.profile.title}</p> : null}
+            {site.profile.location ? (
+              <p className="mt-2 flex items-center justify-center gap-1 text-sm font-semibold" style={{ color: site.theme.muted }}>
+                <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                {site.profile.location}
+              </p>
+            ) : null}
             {site.profile.logoUrl && site.profile.profileImageUrl && site.profile.logoUrl !== site.profile.profileImageUrl ? <img src={site.profile.logoUrl} alt={`${site.profile.name} logo`} className="mx-auto mt-4 max-h-16 max-w-[220px] object-contain" /> : null}
             {site.profile.description ? <p className="mx-auto mt-4 max-w-[350px] text-sm leading-relaxed" style={{ color: site.theme.muted }}>{site.profile.description}</p> : null}
           </header>

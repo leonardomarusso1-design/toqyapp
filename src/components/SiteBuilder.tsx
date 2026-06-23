@@ -214,31 +214,40 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
         <Section>
           <h2 className="text-2xl font-black text-slate-950">Perfil</h2>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <ImageUploadField
-              label="Foto de perfil"
-              value={site.profile.profileImageUrl}
-              onChange={(url) => setProfile({ profileImageUrl: url })}
-              showPositionControl
-              position={site.profile.profileImagePosition ?? "center"}
-              onPositionChange={(pos) => setProfile({ profileImagePosition: pos })}
-            />
-            <div>
+            <div className="md:col-span-2">
               <ImageUploadField
-                label="Logo"
+                label="Logo do negócio"
                 value={site.profile.logoUrl}
                 onChange={(url) => setProfile({ logoUrl: url })}
               />
               <ImageGuidelineHint type="logo" />
+              <p className="mt-1 text-xs text-slate-400">Use PNG com fundo transparente para melhor resultado.</p>
             </div>
             <label><span className={label}>Tamanho da logo</span><select className={field} value={site.profile.logoSize} onChange={(e) => setProfile({ logoSize: e.target.value as ToqySite["profile"]["logoSize"] })}><option value="small">Pequena</option><option value="medium">Média</option><option value="large">Grande</option></select></label>
             <label><span className={label}>Formato da logo</span><select className={field} value={site.profile.logoShape} onChange={(e) => setProfile({ logoShape: e.target.value as ToqySite["profile"]["logoShape"] })}><option value="circle">Redonda</option><option value="rounded">Arredondada</option><option value="square">Quadrada</option></select></label>
             <label><span className={label}>Título/subtítulo</span><input className={field} value={site.profile.title ?? ""} onChange={(e) => setProfile({ title: e.target.value })} /></label>
             <label><span className={label}>Localização</span><input className={field} value={site.profile.location} onChange={(e) => setProfile({ location: e.target.value })} /></label>
             <label className="md:col-span-2"><span className={label}>Descrição</span><textarea className={field} rows={3} value={site.profile.description} onChange={(e) => setProfile({ description: e.target.value })} /></label>
-            <label><span className={label}>WhatsApp</span><input className={field} value={site.contact.whatsapp} onChange={(e) => setContact({ whatsapp: e.target.value })} /></label>
-            <label><span className={label}>Telefone</span><input className={field} value={site.contact.phone} onChange={(e) => setContact({ phone: e.target.value })} /></label>
-            <label><span className={label}>Instagram</span><input className={field} value={site.contact.instagram ?? ""} onChange={(e) => setContact({ instagram: e.target.value })} /></label>
-            <label><span className={label}>Facebook</span><input className={field} value={site.contact.facebook ?? ""} onChange={(e) => setContact({ facebook: e.target.value })} /></label>
+            <label>
+              <span className={label}>WhatsApp</span>
+              <input className={field} value={site.contact.whatsapp} onChange={(e) => setContact({ whatsapp: e.target.value })} placeholder="5519999999999" />
+              <p className="mt-1 text-xs text-slate-400">Formato: <strong>wa.me/55 + DDD + número</strong> — ex: 5519999999999</p>
+            </label>
+            <label>
+              <span className={label}>Telefone (salvar contato)</span>
+              <input className={field} value={site.contact.phone} onChange={(e) => setContact({ phone: e.target.value })} placeholder="+5519999999999" />
+              <p className="mt-1 text-xs text-slate-400">Com DDI+DDD — ex: +5519999999999. Ao clicar, salva na agenda do celular.</p>
+            </label>
+            <label>
+              <span className={label}>Instagram</span>
+              <input className={field} value={site.contact.instagram ?? ""} onChange={(e) => setContact({ instagram: e.target.value })} placeholder="https://instagram.com/seuperfil" />
+              <p className="mt-1 text-xs text-slate-400">Cole o link completo do perfil, não apenas o @.</p>
+            </label>
+            <label>
+              <span className={label}>Facebook</span>
+              <input className={field} value={site.contact.facebook ?? ""} onChange={(e) => setContact({ facebook: e.target.value })} placeholder="https://facebook.com/suapagina" />
+              <p className="mt-1 text-xs text-slate-400">Cole o link completo da página ou perfil.</p>
+            </label>
             <label><span className={label}>E-mail</span><input className={field} value={site.contact.email ?? ""} onChange={(e) => setContact({ email: e.target.value })} /></label>
             <label><span className={label}>Site</span><input className={field} value={site.contact.website ?? ""} onChange={(e) => setContact({ website: e.target.value })} /></label>
           </div>
@@ -250,7 +259,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
       return (
         <Section>
           <h2 className="text-2xl font-black text-slate-950">Visual</h2>
-          <p className="mt-1 text-sm text-slate-500">Paletas, fundo da plaquinha e botões premium inspirados no modelo enviado.</p>
+          <p className="mt-1 text-sm text-slate-500">Escolha a paleta de cores, tipo de fundo e estilo dos botões.</p>
           <div className="mt-5"><ThemePresetPicker selectedPresetId={site.themePresetId} onSelect={selectTheme} /></div>
           <div className="mt-5 grid gap-4 md:grid-cols-3">
             <label><span className={label}>Tipo de fundo</span><select className={field} value={site.theme.backgroundType} onChange={(e) => setTheme({ backgroundType: e.target.value as ToqySite["theme"]["backgroundType"] })}><option value="gradient">Gradiente</option><option value="solid">Cor sólida</option><option value="image">Imagem</option></select></label>
@@ -302,10 +311,6 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             </div>
           </div>
 
-          <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-            <label className="flex items-center gap-3 text-sm font-black text-slate-800"><input type="checkbox" checked={Boolean(site.plaqueTheme?.useSameBackground)} onChange={(e) => update((s) => ({ ...s, plaqueTheme: { ...s.plaqueTheme, useSameBackground: e.target.checked, backgroundImageUrl: s.plaqueTheme?.backgroundImageUrl ?? "", backgroundStyle: "image" } }))} />Usar o mesmo fundo/arte da plaquinha</label>
-            {site.plaqueTheme?.useSameBackground ? <div className="mt-4"><ImageUploadField label="Arte/fundo da plaquinha" value={site.plaqueTheme.backgroundImageUrl} onChange={(url) => update((s) => ({ ...s, plaqueTheme: { useSameBackground: true, backgroundImageUrl: url, backgroundStyle: "image" } }))} placeholder="URL ou envie do dispositivo" /><ImageGuidelineHint type="plaque" /></div> : null}
-          </div>
         </Section>
       );
     }
@@ -361,15 +366,29 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
               )}
             </div>
             <div className="rounded-3xl border border-emerald-100 bg-emerald-50 p-4">
-              <h3 className="font-black text-emerald-950">Wi-Fi + check-in</h3>
-              <div className="mt-4 grid gap-4">
-                <label><span className={label}>Nome da rede Wi-Fi</span><input className={field} value={site.wifi.ssid} onChange={(e) => update((s) => ({ ...s, wifi: { ...s.wifi, ssid: e.target.value, enabled: true } }))} /></label>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-black text-emerald-950">Wi-Fi + check-in</h3>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <span className="text-xs font-black text-slate-600">Ativar Wi-Fi</span>
+                  <div className="relative">
+                    <div onClick={() => update((s) => ({ ...s, wifi: { ...s.wifi, enabled: !(s.wifi.enabled ?? false) } }))} className={"w-10 h-6 rounded-full cursor-pointer transition-colors " + (site.wifi.enabled ? "bg-[#31c4a8]" : "bg-slate-300")}>
+                      <div className={"absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform " + (site.wifi.enabled ? "translate-x-5" : "translate-x-1")} />
+                    </div>
+                  </div>
+                </label>
+              </div>
+              {(site.wifi.enabled ?? false) ? (
+              <div className="grid gap-4">
+                <label><span className={label}>Nome da rede Wi-Fi</span><input className={field} value={site.wifi.ssid} onChange={(e) => update((s) => ({ ...s, wifi: { ...s.wifi, ssid: e.target.value } }))} /></label>
                 <label><span className={label}>Senha Wi-Fi</span><input className={field} value={site.wifi.password} onChange={(e) => update((s) => ({ ...s, wifi: { ...s.wifi, password: e.target.value } }))} /></label>
                 <label><span className={label}>Segurança</span><select className={field} value={site.wifi.encryption} onChange={(e) => update((s) => ({ ...s, wifi: { ...s.wifi, encryption: e.target.value as ToqySite["wifi"]["encryption"] } }))}><option value="WPA">WPA/WPA2</option><option value="WEP">WEP</option><option value="nopass">Sem senha</option></select></label>
                 <label><span className={label}>Link de check-in/avaliação</span><input className={field} value={site.wifi.checkinUrl ?? ""} onChange={(e) => update((s) => ({ ...s, wifi: { ...s.wifi, checkinUrl: e.target.value } }))} placeholder="Facebook, Google avaliação, Instagram..." /></label>
                 <label><span className={label}>Texto do botão de check-in</span><input className={field} value={site.wifi.checkinLabel ?? ""} onChange={(e) => update((s) => ({ ...s, wifi: { ...s.wifi, checkinLabel: e.target.value } }))} placeholder="Fazer check-in no Facebook" /></label>
                 <label><span className={label}>Link Google avaliação</span><input className={field} value={site.links.googleReviewUrl ?? ""} onChange={(e) => setLinks({ googleReviewUrl: e.target.value })} /></label>
               </div>
+              ) : (
+                <p className="text-sm text-slate-500 text-center py-2">Wi-Fi desativado — o bloco não aparecerá no bio site.</p>
+              )}
             </div>
           </div>
         </Section>
@@ -408,11 +427,10 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             ) : null}
           </div>
 
-          {/* Titulo, subtitulo e CTA do catalogo */}
+          {/* Titulo e subtitulo do catalogo */}
           <div className="mt-4 grid gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
-            <label><span className={label}>Titulo do catalogo</span><input className={field} placeholder="Produtos e servicos" value={site.catalogTitle ?? ""} onChange={(e) => update((s) => ({ ...s, catalogTitle: e.target.value }))} /></label>
-            <label><span className={label}>Subtitulo</span><input className={field} placeholder="Selecionados para voce..." value={site.catalogSubtitle ?? ""} onChange={(e) => update((s) => ({ ...s, catalogSubtitle: e.target.value }))} /></label>
-            <label className="md:col-span-2"><span className={label}>Texto &quot;Nao encontrou?&quot; (rodape do catalogo)</span><input className={field} placeholder="Nao encontrou o que procura?" value={site.catalogWaLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalogWaLabel: e.target.value }))} /></label>
+            <label><span className={label}>Título do catálogo</span><input className={field} placeholder="Nossos serviços" value={site.catalogTitle ?? ""} onChange={(e) => update((s) => ({ ...s, catalogTitle: e.target.value }))} /></label>
+            <label><span className={label}>Subtítulo</span><input className={field} placeholder="Selecionados para você..." value={site.catalogSubtitle ?? ""} onChange={(e) => update((s) => ({ ...s, catalogSubtitle: e.target.value }))} /></label>
           </div>
 
           {/* Layout do catalogo - multipla selecao */}
@@ -475,15 +493,15 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                   <label><span className={label}>Nome</span><input className={field} value={item.name} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { name: e.target.value }) }))} /></label>
                   <label><span className={label}>Categoria</span><input className={field} placeholder="Ex: Cortes social" value={item.category ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { category: e.target.value }) }))} /></label>
                   <label>
-                    <span className={label}>Seção / Grupo visual</span>
+                    <span className={label}>Onde aparece no bio site</span>
                     <select className={field} value={item.displaySection ?? "padrao"} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { displaySection: e.target.value }) }))}>
-                      <option value="padrao">Padrão (layout geral)</option>
-                      <option value="carrossel">Carrossel horizontal</option>
-                      <option value="grade">Grade 2 colunas</option>
-                      <option value="lista">Lista vertical (um embaixo do outro)</option>
-                      <option value="destaque">Destaque (primeiro, maior)</option>
+                      <option value="padrao">Seguir layout geral (padrão)</option>
+                      <option value="carrossel">Carrossel — arrasta para o lado</option>
+                      <option value="grade">Grade — dois por linha</option>
+                      <option value="lista">Lista — um embaixo do outro</option>
+                      <option value="destaque">Destaque — aparece primeiro, maior</option>
                     </select>
-                    <p className="mt-1 text-xs text-slate-400">Define onde este item aparece no bio site, independente dos outros.</p>
+                    <p className="mt-1 text-xs text-slate-400">Este item vai aparecer neste formato específico, independente dos outros.</p>
                   </label>
                   {/* Preço com R$ automático */}
                   <label>
@@ -504,6 +522,13 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 </div>
               </article>
             ))}
+          </div>
+
+          {/* Rodapé do catálogo - "Não encontrou?" */}
+          <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+            <span className={label}>Rodapé do catálogo — "Não encontrou?"</span>
+            <p className="mt-0.5 text-xs text-slate-400 mb-2">Aparece no final do catálogo com um botão de WhatsApp. Deixe em branco para usar o texto padrão.</p>
+            <input className={field} placeholder="Não encontrou o que procura? Fale com a gente!" value={site.catalogWaLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalogWaLabel: e.target.value }))} />
           </div>
         </Section>
       );

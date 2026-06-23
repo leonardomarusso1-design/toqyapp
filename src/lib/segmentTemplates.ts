@@ -45,7 +45,7 @@ function modules(buttons: ToqyButton[], extra: Partial<ToqySite["modules"]> = {}
 function templateVisual(segment: Segment): { backgroundImageUrl: string; theme: Partial<ToqySite["theme"]> } {
   if (segment === "barbearia") {
     return {
-      backgroundImageUrl: "/templates/template-bg-barbearia.png",
+      backgroundImageUrl: "",
       theme: {
         mode: "dark",
         backgroundType: "image",
@@ -66,7 +66,7 @@ function templateVisual(segment: Segment): { backgroundImageUrl: string; theme: 
 
   if (segment === "restaurante" || segment === "pastelaria" || segment === "lanchonete" || segment === "delivery") {
     return {
-      backgroundImageUrl: "/templates/template-bg-restaurante.png",
+      backgroundImageUrl: "",
       theme: {
         mode: "dark",
         backgroundType: "image",
@@ -87,7 +87,7 @@ function templateVisual(segment: Segment): { backgroundImageUrl: string; theme: 
 
   if (segment === "assistencia_tecnica") {
     return {
-      backgroundImageUrl: "/templates/template-bg-assistencia-tecnica.png",
+      backgroundImageUrl: "",
       theme: {
         mode: "dark",
         backgroundType: "image",
@@ -108,55 +108,55 @@ function templateVisual(segment: Segment): { backgroundImageUrl: string; theme: 
 
   if (segment === "salao") {
     return {
-      backgroundImageUrl: "/templates/template-bg-salao.png",
+      backgroundImageUrl: "",
       theme: { backgroundType: "image", buttonFill: "glass", buttonRadius: "pill", useBackgroundOverlay: true },
     };
   }
 
   if (segment === "clinica") {
     return {
-      backgroundImageUrl: "/templates/template-bg-clinica.png",
+      backgroundImageUrl: "",
       theme: { backgroundType: "image", buttonFill: "glass", buttonRadius: "pill", useBackgroundOverlay: true },
     };
   }
 
   if (segment === "loja") {
     return {
-      backgroundImageUrl: "/templates/template-bg-loja.png",
+      backgroundImageUrl: "",
       theme: { backgroundType: "image", buttonFill: "glass", buttonRadius: "pill", useBackgroundOverlay: true },
     };
   }
 
   if (segment === "petshop") {
     return {
-      backgroundImageUrl: "/templates/template-bg-petshop.png",
+      backgroundImageUrl: "",
       theme: { backgroundType: "image", buttonFill: "glass", buttonRadius: "pill", useBackgroundOverlay: true },
     };
   }
 
   if (segment === "oficina") {
     return {
-      backgroundImageUrl: "/templates/template-bg-oficina.png",
+      backgroundImageUrl: "",
       theme: { mode: "dark", backgroundType: "image", background: "#09090B", gradientFrom: "#09090B", gradientTo: "#431407", card: "rgba(24,24,27,0.84)", text: "#FAFAFA", muted: "#FDBA74", primary: "#F97316", secondary: "#06B6D4", accent: "#FACC15", buttonFill: "glass", buttonRadius: "pill", useBackgroundOverlay: true },
     };
   }
 
   if (segment === "fotografo") {
     return {
-      backgroundImageUrl: "/templates/template-bg-fotografo.png",
+      backgroundImageUrl: "",
       theme: { backgroundType: "image", buttonFill: "glass", buttonRadius: "pill", useBackgroundOverlay: true },
     };
   }
 
   if (segment === "dentista") {
     return {
-      backgroundImageUrl: "/templates/template-bg-dentista.png",
+      backgroundImageUrl: "",
       theme: { backgroundType: "image", buttonFill: "glass", buttonRadius: "pill", useBackgroundOverlay: true },
     };
   }
 
   return {
-    backgroundImageUrl: "/templates/template-bg-servicos.png",
+    backgroundImageUrl: "",
     theme: { backgroundType: "image", buttonFill: "glass", buttonRadius: "pill", useBackgroundOverlay: true },
   };
 }
