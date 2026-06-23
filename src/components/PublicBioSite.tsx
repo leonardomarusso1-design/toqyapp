@@ -438,10 +438,10 @@ function CatalogSection({ site, items, layout }: { site: ToqySite; items: Catalo
         )}
       </div>
 
-      {whatsapp ? (
+      {(whatsapp || site.catalogWaLabel) ? (
         <div className="mt-5 rounded-[1.5rem] border p-4 text-center backdrop-blur-xl" style={{ background: site.theme.mode === "light" ? "rgba(255,255,255,0.66)" : "rgba(255,255,255,0.08)", borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.16)" }}>
-          <p className="text-sm font-black">{site.catalogWaLabel || "Não encontrou o que procura?"}</p>
-          <button type="button" onClick={() => window.open(whatsapp, "_blank", "noopener,noreferrer")} className="mt-3 inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-xs font-black" style={{ background: site.theme.primary, color: site.theme.mode === "light" ? "#fff" : "#06111F" }}><WhatsAppIcon className="h-4 w-4" />Fale com a gente no WhatsApp</button>
+          <p className="text-sm font-black" style={{ color: site.theme.text }}>{site.catalogWaLabel || "Não encontrou o que procura?"}</p>
+          {whatsapp ? <button type="button" onClick={() => window.open(whatsapp, "_blank", "noopener,noreferrer")} className="mt-3 inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-xs font-black" style={{ background: site.theme.primary, color: "#fff" }}><WhatsAppIcon className="h-4 w-4" />Fale com a gente no WhatsApp</button> : null}
         </div>
       ) : null}
     </section>

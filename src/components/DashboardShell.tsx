@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabaseClient";
 
 const navItems = [
   { href: "/app", icon: Home, label: "Painel" },
-  { href: "/onboarding", icon: QrCode, label: "Novo cliente" },
+  { href: "/onboarding", icon: Users, label: "Novo cliente" },
   { href: "/app/configuracoes", icon: Settings, label: "Configurações" },
 ];
 

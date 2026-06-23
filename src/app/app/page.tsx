@@ -11,6 +11,13 @@ import { supabase } from "@/lib/supabaseClient";
 
 type PlanTier = keyof typeof PLAN_BIOSITE_LIMITS;
 
+type BioSiteRow = {
+  id: string;
+  slug: string;
+  status: string;
+  site_data: { editKey?: string; profile?: { name?: string }; };
+};
+
 type Profile = {
   id: string;
   email: string;
@@ -42,6 +49,7 @@ export default function ConfiguracoesPage() {
   const [appUrl, setAppUrl] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [biosites, setBiosites] = useState<BioSiteRow[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -65,9 +73,10 @@ export default function ConfiguracoesPage() {
         return;
       }
 
-      const [{ data: profileData, error: profileError }, { count: biositesCount, error: biositesError }] = await Promise.all([
+      const [{ data: profileData, error: profileError }, { data: biositesData, error: biositesError }] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", session.user.id).single(),
-        supabase.from("toqy_biosites").select("id", { count: "exact", head: true }).eq("owner_profile_id", session.user.id),
+        supabase.from("toqy_biosites").select("id, slug, status, site_data").eq("owner_profile_id", session.user.id).order("created_at", { ascending: false }),
+      
       ]);
 
       if (profileError) {
@@ -83,7 +92,8 @@ export default function ConfiguracoesPage() {
       }
 
       setProfile(profileData as Profile);
-      setCount(biositesCount ?? 0);
+      setBiosites((biositesData ?? []) as BioSiteRow[]);
+      setCount((biositesData ?? []).length);
       setLoading(false);
     };
 
@@ -187,6 +197,48 @@ export default function ConfiguracoesPage() {
             </div>
           ) : null}
           <Link href="/#planos" className="mt-4 inline-flex rounded-2xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700 transition hover:border-[#31c4a8] hover:text-[#1f9f87]">Ver todos os planos</Link>
+        </section>
+
+        {/* Lista de bio sites */}
+        <section className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-black">Meus bio sites</h2>
+            <Link href="/app/novo" className="inline-flex items-center gap-2 rounded-2xl bg-[#31c4a8] px-4 py-2.5 text-sm font-black text-white hover:bg-[#25b69a]">+ Novo</Link>
+          </div>
+          {biosites.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 py-10 text-center">
+              <p className="text-sm font-bold text-slate-400">Nenhum bio site criado ainda.</p>
+              <Link href="/app/novo" className="mt-3 inline-flex rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white">Criar primeiro bio site</Link>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {biosites.map(site => {
+                const name = site.site_data?.profile?.name || site.slug;
+                const editKey = site.site_data?.editKey || "—";
+                return (
+                  <div key={site.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-black text-slate-900 truncate">{name}</p>
+                        <p className="mt-0.5 text-xs font-mono text-slate-500">toqy.com.br/b/<strong>{site.slug}</strong></p>
+                        <p className="mt-0.5 text-xs text-slate-400">Chave: <span className="font-mono font-black text-slate-600">{editKey}</span></p>
+                      </div>
+                      <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                        <Link href={`/b/${site.slug}`} target="_blank" className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-600 hover:border-[#31c4a8]">Ver</Link>
+                        <Link href={`/editar/${site.slug}?key=${editKey}`} className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-600 hover:border-[#31c4a8]">Editar</Link>
+                        <button onClick={async () => {
+                          if (!confirm(`Excluir "${name}"?`)) return;
+                          await supabase.from("toqy_biosites").delete().eq("id", site.id);
+                          setBiosites(b => b.filter(s => s.id !== site.id));
+                          setCount(c => c - 1);
+                        }} className="rounded-xl border border-red-200 bg-white px-3 py-1.5 text-xs font-black text-red-500 hover:bg-red-50">Excluir</button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
       </div>
     </DashboardShell>
