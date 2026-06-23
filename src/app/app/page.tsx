@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, LogOut, UserRound } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
-import { hasSupabaseBrowserEnv } from "@/lib/supabaseBrowser";
 import { PLAN_BIOSITE_LIMITS } from "@/lib/planLimits";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -44,25 +43,17 @@ const SUBSCRIPTION_LABELS: Record<string, string> = {
 
 export default function ConfiguracoesPage() {
   const router = useRouter();
-  const [supabaseReady, setSupabaseReady] = useState(false);
   const [count, setCount] = useState(0);
-  const [appUrl, setAppUrl] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [biosites, setBiosites] = useState<BioSiteRow[]>([]);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
     const loadDashboard = async () => {
-      setSupabaseReady(hasSupabaseBrowserEnv());
-      setAppUrl(window.location.origin);
-
-      if (!hasSupabaseBrowserEnv()) {
-        setCount(0);
-        setLoading(false);
-        return;
-      }
 
       const {
         data: { session },
@@ -226,12 +217,23 @@ export default function ConfiguracoesPage() {
                       <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
                         <Link href={`/b/${site.slug}`} target="_blank" className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-600 hover:border-[#31c4a8]">Ver</Link>
                         <Link href={`/editar/${site.slug}?key=${editKey}`} className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-600 hover:border-[#31c4a8]">Editar</Link>
-                        <button onClick={async () => {
-                          if (!confirm(`Excluir "${name}"?`)) return;
-                          await supabase.from("toqy_biosites").delete().eq("id", site.id);
-                          setBiosites(b => b.filter(s => s.id !== site.id));
-                          setCount(c => c - 1);
-                        }} className="rounded-xl border border-red-200 bg-white px-3 py-1.5 text-xs font-black text-red-500 hover:bg-red-50">Excluir</button>
+                        {confirmDelete === site.id ? (
+                          <div className="flex gap-1">
+                            <button onClick={async () => {
+                              setDeletingId(site.id);
+                              setConfirmDelete(null);
+                              await supabase.from("toqy_biosites").delete().eq("id", site.id);
+                              setBiosites(b => b.filter(s => s.id !== site.id));
+                              setCount(c => c - 1);
+                              setDeletingId(null);
+                            }} className="rounded-xl bg-red-500 px-3 py-1.5 text-xs font-black text-white">Confirmar</button>
+                            <button onClick={() => setConfirmDelete(null)} className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-500">Cancelar</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setConfirmDelete(site.id)} disabled={deletingId === site.id} className="rounded-xl border border-red-200 bg-white px-3 py-1.5 text-xs font-black text-red-500 hover:bg-red-50 disabled:opacity-40">
+                            {deletingId === site.id ? "..." : "Excluir"}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
