@@ -298,6 +298,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             <label><span className={label}>Layout dos botões</span><select className={field} value={site.theme.buttonStyle} onChange={(e) => setTheme({ buttonStyle: e.target.value as ToqySite["theme"]["buttonStyle"] })}><option value="full">Botões grandes</option><option value="icon">Grade de ícones</option></select></label>
             <label><span className={label}>Preenchimento</span><select className={field} value={site.theme.buttonFill} onChange={(e) => setTheme({ buttonFill: e.target.value as ToqySite["theme"]["buttonFill"] })}><option value="glass">Translúcido premium</option><option value="solid">Sólido</option><option value="gradient">Gradiente</option></select></label>
             <label><span className={label}>Formato</span><select className={field} value={site.theme.buttonRadius} onChange={(e) => setTheme({ buttonRadius: e.target.value as ToqySite["theme"]["buttonRadius"] })}><option value="soft">Soft</option><option value="rounded">Arredondado</option><option value="pill">Pill/cápsula</option></select></label>
+            <label><span className={label}>Ícones sociais (WhatsApp, Instagram...)</span><select className={field} value={site.theme.socialIconStyle ?? "brand"} onChange={(e) => setTheme({ socialIconStyle: e.target.value as "brand" | "glass" })}><option value="brand">Cores reais das marcas</option><option value="glass">Translúcido (igual botões)</option></select></label>
             <label className="md:col-span-2"><span className={label}>Imagem de fundo</span><ImageUploadField label="" value={site.profile.backgroundImageUrl} onChange={(url) => setProfile({ backgroundImageUrl: url })} placeholder="URL da imagem de fundo" /><ImageGuidelineHint type="background" /></label>
           </div>
 
@@ -421,6 +422,16 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
               </div>
               {(site.wifi.enabled ?? false) ? (
               <div className="grid gap-4">
+                <label className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-3">
+                  <div>
+                    <span className="text-sm font-black text-slate-700">Mostrar Wi-Fi no topo do bio site</span>
+                    <p className="text-xs text-slate-400">Exibe rede e senha direto na tela</p>
+                  </div>
+                  <div className="relative w-10 h-6 shrink-0 ml-3" onClick={() => update((s) => ({ ...s, wifi: { ...s.wifi, showInline: !(s.wifi.showInline ?? true) } }))}>
+                    <div className={"w-10 h-6 rounded-full cursor-pointer transition-colors " + ((site.wifi.showInline ?? true) ? "bg-[#31c4a8]" : "bg-slate-300")} />
+                    <div className={"absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform " + ((site.wifi.showInline ?? true) ? "translate-x-5" : "translate-x-1")} />
+                  </div>
+                </label>
                 <label><span className={label}>Nome da rede Wi-Fi</span><input className={field} value={site.wifi.ssid} onChange={(e) => update((s) => ({ ...s, wifi: { ...s.wifi, ssid: e.target.value } }))} /></label>
                 <label><span className={label}>Senha Wi-Fi</span><input className={field} value={site.wifi.password} onChange={(e) => update((s) => ({ ...s, wifi: { ...s.wifi, password: e.target.value } }))} /></label>
                 <label><span className={label}>Segurança</span><select className={field} value={site.wifi.encryption} onChange={(e) => update((s) => ({ ...s, wifi: { ...s.wifi, encryption: e.target.value as ToqySite["wifi"]["encryption"] } }))}><option value="WPA">WPA/WPA2</option><option value="WEP">WEP</option><option value="nopass">Sem senha</option></select></label>
@@ -567,10 +578,22 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
           </div>
 
           {/* Rodapé do catálogo - "Não encontrou?" */}
-          <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-            <span className={label}>Rodapé do catálogo — "Não encontrou?"</span>
-            <p className="mt-0.5 text-xs text-slate-400 mb-2">Aparece no final do catálogo com um botão de WhatsApp. Deixe em branco para usar o texto padrão.</p>
-            <input className={field} placeholder="Não encontrou o que procura? Fale com a gente!" value={site.catalogWaLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalogWaLabel: e.target.value }))} />
+          <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4 space-y-4">
+            <label className="flex items-center justify-between">
+              <div>
+                <span className="text-sm font-black text-slate-700">Botão WhatsApp nos itens</span>
+                <p className="text-xs text-slate-400">Ícone do WhatsApp em cada card do catálogo</p>
+              </div>
+              <div className="relative w-10 h-6 shrink-0 ml-3" onClick={() => update((s) => ({ ...s, showCatalogWhatsapp: !(s.showCatalogWhatsapp ?? true) }))}>
+                <div className={"w-10 h-6 rounded-full cursor-pointer transition-colors " + ((site.showCatalogWhatsapp ?? true) ? "bg-[#31c4a8]" : "bg-slate-300")} />
+                <div className={"absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform " + ((site.showCatalogWhatsapp ?? true) ? "translate-x-5" : "translate-x-1")} />
+              </div>
+            </label>
+            <div>
+              <span className="text-sm font-black text-slate-700 mb-1 block">Rodapé — "Não encontrou?"</span>
+              <p className="text-xs text-slate-400 mb-2">Aparece no final do catálogo com botão WhatsApp.</p>
+              <input className={field} placeholder="Não encontrou o que procura? Fale com a gente!" value={site.catalogWaLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalogWaLabel: e.target.value }))} />
+            </div>
           </div>
         </Section>
       );

@@ -225,9 +225,9 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
     if (href) window.open(href, "_blank", "noopener,noreferrer");
   }
 
-  const ButtonIcon = ({ type }: { type: ToqyLinkType }) => {
+  const ButtonIcon = ({ type, color }: { type: ToqyLinkType; color?: string }) => {
     const Icon = iconByType[type] ?? LinkIcon;
-    return <Icon className="h-5 w-5 shrink-0" />;
+    return <Icon className="h-5 w-5 shrink-0" style={color ? { color } : undefined} />;
   };
 
   const SOCIAL_TYPES = ["whatsapp", "instagram", "facebook", "tiktok", "linkedin", "youtube", "email"];
@@ -235,7 +235,7 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
   const socialButtons = activeButtons.filter((b) =>
     b.displayAs === "icon" || (!b.displayAs && SOCIAL_TYPES.includes(b.type))
   ).filter(b => b.displayAs !== "button");
-  const wifiInline = site.wifi?.enabled && site.wifi.ssid;
+  const wifiInline = site.wifi?.enabled && site.wifi.ssid && site.wifi.showInline !== false;
   const mainButtons = activeButtons.filter((b) =>
     b.displayAs === "button" || (!b.displayAs && !SOCIAL_TYPES.includes(b.type) && b.type !== "phone" && !(wifiInline && b.type === "wifi"))
   );
@@ -273,37 +273,18 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
           <h1 className="mt-5 text-2xl font-black leading-tight drop-shadow-sm" style={{ textShadow: site.theme.mode === "light" ? "none" : "0 0 10px rgba(0,0,0,0.5)" }}>{site.profile.name}</h1>
             {site.profile.title ? <p className="mt-1 text-base font-medium" style={{ color: site.theme.muted }}>{site.profile.title}</p> : null}
             {site.profile.location ? (
-              <p className="mt-2 flex items-center justify-center gap-1 text-sm font-semibold" style={{ color: site.theme.muted }}>
+              <p className="mt-2 flex items-center justify-center gap-1 text-center text-sm font-semibold" style={{ color: site.theme.muted }}>
                 <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                 {site.profile.location}
               </p>
             ) : null}
-            {site.profile.logoUrl && site.profile.profileImageUrl && site.profile.logoUrl !== site.profile.profileImageUrl ? <img src={site.profile.logoUrl} alt={`${site.profile.name} logo`} className="mx-auto mt-4 max-h-16 max-w-[220px] object-contain" /> : null}
+            {site.profile.description ? <p className="mx-auto mt-4 max-w-[350px] text-center text-sm leading-relaxed" style={{ color: site.theme.muted }}>{site.profile.description}</p> : null}
             {site.profile.logoSignatureUrl ? (
-              <img
-                src={site.profile.logoSignatureUrl}
-                alt={`${site.profile.name} assinatura`}
-                className="mx-auto mt-3 max-h-20 max-w-[260px] object-contain drop-shadow-lg"
-              />
+              <img src={site.profile.logoSignatureUrl} alt={`${site.profile.name} assinatura`} className="mx-auto mt-4 max-h-20 max-w-[260px] object-contain drop-shadow-lg" />
             ) : null}
             {site.profile.logoText ? (
-              <p className="mt-3 tracking-widest drop-shadow-lg" style={{
-                color: site.theme.text,
-                fontSize: "clamp(14px, 4vw, 22px)",
-                fontFamily: site.profile.logoFont === "serif" ? "Georgia, serif"
-                  : site.profile.logoFont === "mono" ? "monospace"
-                  : site.profile.logoFont === "italic" ? "Georgia, serif"
-                  : "inherit",
-                fontWeight: site.profile.logoFont === "bold" || !site.profile.logoFont ? 900 : 700,
-                fontStyle: site.profile.logoFont === "italic" ? "italic" : "normal",
-                letterSpacing: "0.15em",
-                textTransform: "uppercase",
-                textShadow: site.theme.mode === "dark" ? "0 2px 12px rgba(0,0,0,0.6)" : "none",
-              }}>
-                {site.profile.logoText}
-              </p>
+              <p className="mt-3 tracking-widest drop-shadow-lg" style={{ color: site.theme.text, fontSize: "clamp(13px, 4vw, 20px)", fontFamily: site.profile.logoFont === "serif" || site.profile.logoFont === "italic" ? "Georgia, serif" : site.profile.logoFont === "mono" ? "monospace" : "inherit", fontWeight: !site.profile.logoFont || site.profile.logoFont === "bold" ? 900 : 700, fontStyle: site.profile.logoFont === "italic" ? "italic" : "normal", letterSpacing: "0.15em", textTransform: "uppercase", textShadow: site.theme.mode === "dark" ? "0 2px 12px rgba(0,0,0,0.6)" : "none" }}>{site.profile.logoText}</p>
             ) : null}
-            {site.profile.description ? <p className="mx-auto mt-4 max-w-[350px] text-sm leading-relaxed" style={{ color: site.theme.muted }}>{site.profile.description}</p> : null}
           </header>
 
           <section className="mt-6 grid grid-cols-2 gap-3">
@@ -338,25 +319,19 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
             <section className="mt-4 flex items-center justify-center gap-4">
               {socialButtons.map((button) => {
                 const brandColor: Record<string, string> = {
-                  whatsapp: "#25D366",
-                  instagram: "#E1306C",
-                  facebook: "#1877F2",
-                  tiktok: "#010101",
-                  linkedin: "#0A66C2",
-                  youtube: "#FF0000",
-                  email: "#EA4335",
+                  whatsapp: "#25D366", instagram: "#E1306C", facebook: "#1877F2",
+                  tiktok: "#010101", linkedin: "#0A66C2", youtube: "#FF0000", email: "#EA4335",
                 };
-                const bg = brandColor[button.type] ?? site.theme.primary;
+                const useGlass = site.theme.socialIconStyle === "glass";
+                const bg = useGlass
+                  ? (site.theme.mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)")
+                  : (brandColor[button.type] ?? site.theme.primary);
+                const iconColor = useGlass ? site.theme.text : "#fff";
                 return (
-                  <button
-                    key={button.id}
-                    type="button"
-                    onClick={() => handleButton(button)}
-                    aria-label={button.label}
-                    className="flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition active:scale-90 hover:scale-105"
-                    style={{ background: bg }}
-                  >
-                    <ButtonIcon type={button.type} />
+                  <button key={button.id} type="button" onClick={() => handleButton(button)} aria-label={button.label}
+                    className="flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition active:scale-90 hover:scale-105 backdrop-blur-sm"
+                    style={{ background: bg }}>
+                    <ButtonIcon type={button.type} color={iconColor} />
                   </button>
                 );
               })}
@@ -382,16 +357,14 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
 
           {activeCatalog.length ? <CatalogSection site={site} items={activeCatalog} layout={catalogLayout} /> : null}
 
-          <footer className="mt-8 pb-4 text-center text-xs font-bold leading-relaxed" style={{ color: site.theme.muted }}>
-            <p>© {new Date().getFullYear()} {site.profile.name}. Todos os direitos reservados.</p>
-            {(!site.ownerPlan || site.ownerPlan === "free") ? (
-              <p>
-                Criado com{" "}
-                <a href="https://toqy.com.br" target="_blank" rel="noreferrer" className="font-black underline-offset-4 hover:underline" style={{ color: site.theme.primary }}>
-                  TOQY
-                </a>
-              </p>
-            ) : null}
+          <footer className="mt-8 pb-6 text-center text-xs font-bold leading-relaxed" style={{ color: site.theme.muted }}>
+            <p style={{ color: site.theme.muted }}>© {new Date().getFullYear()} {site.profile.name}. Todos os direitos reservados.</p>
+            <p className="mt-1" style={{ color: site.theme.muted }}>
+              Criado com{" "}
+              <a href="https://toqy.com.br" target="_blank" rel="noreferrer" className="font-black underline-offset-4 hover:underline" style={{ color: site.theme.primary }}>
+                TOQY
+              </a>
+            </p>
           </footer>
         </main>
       </div>
@@ -565,7 +538,7 @@ function CatalogCard({ site, item, compact = false, stacked = false }: { site: T
         <div className="mt-4 flex items-center justify-between gap-3">
           {item.price ? <span className={compact ? "text-xs font-black" : "font-black"} style={{ color: site.theme.accent }}>{item.price}</span> : <span />}
           <div className="flex items-center gap-2">
-            {whatsapp ? <button type="button" aria-label="Falar no WhatsApp" onClick={() => window.open(whatsapp, "_blank", "noopener,noreferrer")} className="flex h-9 w-9 items-center justify-center rounded-full border" style={{ borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.12)" : "rgba(255,255,255,0.18)", color: site.theme.text }}><WhatsAppIcon className="h-4 w-4" /></button> : null}
+            {whatsapp && site.showCatalogWhatsapp !== false ? <button type="button" aria-label="Falar no WhatsApp" onClick={() => window.open(whatsapp, "_blank", "noopener,noreferrer")} className="flex h-9 w-9 items-center justify-center rounded-full border" style={{ borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.12)" : "rgba(255,255,255,0.18)", color: site.theme.text }}><WhatsAppIcon className="h-4 w-4" /></button> : null}
             <button type="button" onClick={() => { const href = item.actionUrl ? ensureUrl(item.actionUrl) : whatsapp; if (href) window.open(href, "_blank", "noopener,noreferrer"); }} className="rounded-full px-4 py-2 text-xs font-black" style={{ background: site.theme.primary, color: site.theme.mode === "light" ? "#fff" : "#06111F" }}>{item.actionLabel || "Ver"}</button>
           </div>
         </div>

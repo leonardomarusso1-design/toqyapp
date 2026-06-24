@@ -112,6 +112,7 @@ export type ToqySite = {
     buttonFill: ButtonFill;
     buttonStyle: ButtonStyle;
     buttonRadius: "soft" | "rounded" | "pill";
+    socialIconStyle?: "brand" | "glass"; // "brand" = cores reais, "glass" = translúcido
     useBackgroundOverlay: boolean;
   };
   plaqueTheme?: {
@@ -150,12 +151,14 @@ export type ToqySite = {
     encryption: "WPA" | "WEP" | "nopass";
     checkinUrl?: string;
     checkinLabel?: string;
+    showInline?: boolean; // true = mostra no topo inline, false = só como botão na lista
   };
   catalogLayout: CatalogLayout;
   catalogLayouts?: CatalogLayout[];
   catalogTitle?: string;
   catalogSubtitle?: string;
   catalogWaLabel?: string;
+  showCatalogWhatsapp?: boolean; // false = esconde botão WhatsApp nos items do catálogo
   promoCard?: { enabled: boolean; title: string; description: string; buttonLabel: string; };
   modules: {
     saveContact: boolean;
