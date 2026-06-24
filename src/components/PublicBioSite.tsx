@@ -126,17 +126,24 @@ function backgroundStyle(site: ToqySite): React.CSSProperties {
   const image = plaque ? site.plaqueTheme?.backgroundImageUrl : site.profile.backgroundImageUrl;
   if ((site.theme.backgroundType === "image" || plaque) && image) {
     const isDark = site.theme.mode === "dark";
-    // Gradiente suave: transparente no topo, escuro na base para legibilidade do texto
     const overlay = isDark
       ? "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.55) 100%)"
       : "linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 40%, rgba(0,0,0,0.30) 100%)";
     return {
-      backgroundColor: site.theme.background,
       backgroundImage: `${overlay}, url(${image})`,
       backgroundSize: "cover",
       backgroundPosition: "center top",
+      backgroundRepeat: "no-repeat",
+      backgroundAttachment: "scroll",
     };
   }
+  return {};
+}
+
+function solidBg(site: ToqySite): React.CSSProperties {
+  const plaque = site.plaqueTheme?.useSameBackground && site.plaqueTheme.backgroundImageUrl;
+  const image = plaque ? site.plaqueTheme?.backgroundImageUrl : site.profile.backgroundImageUrl;
+  if ((site.theme.backgroundType === "image" || plaque) && image) return {};
   if (site.theme.backgroundType === "solid") return { background: site.theme.background };
   return { background: `radial-gradient(circle at 50% 0%, ${site.theme.primary}33, transparent 34%), linear-gradient(160deg, ${site.theme.gradientFrom}, ${site.theme.gradientTo})` };
 }
@@ -260,7 +267,11 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
   );
 
   return (
-    <div className="min-h-screen w-full" style={{ ...backgroundStyle(site), color: site.theme.text }}>
+    <div className="relative min-h-screen w-full" style={{ ...solidBg(site), color: site.theme.text, backgroundColor: site.theme.background }}>
+      {/* Fundo fixo — não estica com o conteúdo */}
+      {(site.theme.backgroundType === "image" || (site.plaqueTheme?.useSameBackground && site.plaqueTheme.backgroundImageUrl)) && (site.profile.backgroundImageUrl || site.plaqueTheme?.backgroundImageUrl) ? (
+        <div className="fixed inset-0 -z-10" style={backgroundStyle(site)} />
+      ) : null}
       <div className="min-h-screen w-full">
         <main className="mx-auto w-full max-w-[430px] px-4 py-6">
           <div className="mb-6 flex items-center justify-between gap-3">
@@ -408,6 +419,7 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
       ) : null}
       {modal === "wifi" ? <WifiModal site={site} onClose={() => setModal(null)} copied={copied} copyText={copyText} /> : null}
       {modal === "pix" ? <PixModal site={site} onClose={() => setModal(null)} copied={copied} copyText={copyText} selectedAmount={selectedAmount} setSelectedAmount={setSelectedAmount} /> : null}
+    </div>
     </div>
   );
 }
