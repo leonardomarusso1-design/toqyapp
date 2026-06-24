@@ -78,6 +78,8 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   function setContact(patch: Partial<ToqySite["contact"]>) { update((s) => ({ ...s, contact: { ...s.contact, ...patch } })); }
   function setLinks(patch: Partial<ToqySite["links"]>) { update((s) => ({ ...s, links: { ...s.links, ...patch } })); }
   function setTheme(patch: Partial<ToqySite["theme"]>) { update((s) => ({ ...s, theme: { ...s.theme, ...patch } })); }
+  function setColor(key: string, value: string) { update((s) => ({ ...s, theme: { ...s.theme, colors: { ...s.theme.colors, [key]: value || undefined } } })); }
+  function getColor(key: string, fallback: string) { return (site.theme.colors as Record<string, string> | undefined)?.[key] ?? fallback; }
 
   function selectTheme(preset: ThemePreset) {
     update((s) => ({
@@ -341,6 +343,55 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <ColorPicker label="Fundo dos cards" hint="Cards, modais, secoes" value={site.theme.card} onChange={(v) => setTheme({ card: v })} />
               </div>
+            </div>
+
+            {/* CORES GRANULARES */}
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm font-black text-slate-800">🎨 Cores por elemento</p>
+              <p className="mt-0.5 text-xs text-slate-500 mb-4">Personalize cada parte separadamente. Deixe em branco para usar a cor geral do tema.</p>
+
+              <details className="mb-3">
+                <summary className="cursor-pointer text-xs font-black text-slate-700 py-1">Textos do perfil (nome, subtítulo, endereço...)</summary>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <ColorPicker label="Nome do negócio" hint="Título principal" value={getColor("name", site.theme.text)} onChange={(v) => setColor("name", v)} />
+                  <ColorPicker label="Subtítulo/segmento" hint="Ex: Dentista, Barbearia" value={getColor("title", site.theme.muted)} onChange={(v) => setColor("title", v)} />
+                  <ColorPicker label="Endereço/localização" hint="Linha do endereço" value={getColor("location", site.theme.muted)} onChange={(v) => setColor("location", v)} />
+                  <ColorPicker label="Descrição" hint="Texto de apresentação" value={getColor("description", site.theme.muted)} onChange={(v) => setColor("description", v)} />
+                  <ColorPicker label="Texto decorativo/assinatura" hint="Texto abaixo da logo" value={getColor("logoText", site.theme.text)} onChange={(v) => setColor("logoText", v)} />
+                </div>
+              </details>
+
+              <details className="mb-3">
+                <summary className="cursor-pointer text-xs font-black text-slate-700 py-1">Botões Salvar Contato, Ligar e Wi-Fi</summary>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <ColorPicker label="Texto — Salvar Contato" hint="Cor do texto do botão" value={getColor("saveContactText", site.theme.text)} onChange={(v) => setColor("saveContactText", v)} />
+                  <ColorPicker label="Texto — Ligar" hint="Cor do texto do botão" value={getColor("callText", site.theme.text)} onChange={(v) => setColor("callText", v)} />
+                  <ColorPicker label="Texto — Wi-Fi inline" hint="Cor do texto de rede/senha" value={getColor("wifiText", site.theme.text)} onChange={(v) => setColor("wifiText", v)} />
+                </div>
+              </details>
+
+              <details className="mb-3">
+                <summary className="cursor-pointer text-xs font-black text-slate-700 py-1">Botões grandes (Agendar, Pix, etc.)</summary>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <ColorPicker label="Fundo dos botões" hint="Cor de fundo" value={getColor("buttonBg", site.theme.primary)} onChange={(v) => setColor("buttonBg", v)} />
+                  <ColorPicker label="Texto dos botões" hint="Cor do texto/ícone" value={getColor("buttonText", site.theme.text)} onChange={(v) => setColor("buttonText", v)} />
+                  <ColorPicker label="Borda dos botões" hint="Cor da borda" value={getColor("buttonBorder", site.theme.primary)} onChange={(v) => setColor("buttonBorder", v)} />
+                </div>
+              </details>
+
+              <details>
+                <summary className="cursor-pointer text-xs font-black text-slate-700 py-1">Catálogo (cards, preços, botões)</summary>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <ColorPicker label="Título do catálogo" hint="Ex: Nossos Serviços" value={getColor("catalogTitle", site.theme.text)} onChange={(v) => setColor("catalogTitle", v)} />
+                  <ColorPicker label="Fundo dos cards" hint="Cor de fundo de cada card" value={getColor("catalogItemBg", site.theme.card)} onChange={(v) => setColor("catalogItemBg", v)} />
+                  <ColorPicker label="Nome do item" hint="Titulo do serviço/produto" value={getColor("catalogItemName", site.theme.text)} onChange={(v) => setColor("catalogItemName", v)} />
+                  <ColorPicker label="Descrição do item" hint="Texto descritivo" value={getColor("catalogItemDesc", site.theme.muted)} onChange={(v) => setColor("catalogItemDesc", v)} />
+                  <ColorPicker label="Preço" hint="Valor em R$" value={getColor("catalogItemPrice", site.theme.accent)} onChange={(v) => setColor("catalogItemPrice", v)} />
+                  <ColorPicker label="Badge/Destaque" hint="Cor do rótulo especial" value={getColor("catalogItemHighlight", "#b45309")} onChange={(v) => setColor("catalogItemHighlight", v)} />
+                  <ColorPicker label="Fundo botão de ação" hint="Ex: Ver, Agendar" value={getColor("catalogActionBg", site.theme.primary)} onChange={(v) => setColor("catalogActionBg", v)} />
+                  <ColorPicker label="Texto botão de ação" hint="Cor do texto" value={getColor("catalogActionText", "#ffffff")} onChange={(v) => setColor("catalogActionText", v)} />
+                </div>
+              </details>
             </div>
           </div>
 

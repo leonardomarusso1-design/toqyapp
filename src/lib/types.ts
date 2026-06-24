@@ -112,8 +112,30 @@ export type ToqySite = {
     buttonFill: ButtonFill;
     buttonStyle: ButtonStyle;
     buttonRadius: "soft" | "rounded" | "pill";
-    socialIconStyle?: "brand" | "glass"; // "brand" = cores reais, "glass" = translúcido
+    socialIconStyle?: "brand" | "glass";
     useBackgroundOverlay: boolean;
+    // Cores granulares — opcionais, usam os valores acima como fallback
+    colors?: {
+      name?: string;           // Cor do nome do negócio
+      title?: string;          // Cor do subtítulo/segmento
+      location?: string;       // Cor do endereço
+      description?: string;    // Cor da descrição
+      logoText?: string;       // Cor do texto decorativo/assinatura
+      wifiText?: string;       // Cor do texto do Wi-Fi inline
+      saveContactText?: string;// Cor do texto do botão Salvar Contato
+      callText?: string;       // Cor do texto do botão Ligar
+      buttonText?: string;     // Cor do texto dos botões grandes
+      buttonBg?: string;       // Cor do fundo dos botões grandes
+      buttonBorder?: string;   // Cor da borda dos botões grandes
+      catalogTitle?: string;   // Cor do título do catálogo
+      catalogItemName?: string;// Cor do nome do item
+      catalogItemDesc?: string;// Cor da descrição do item
+      catalogItemPrice?: string;// Cor do preço
+      catalogItemHighlight?: string; // Cor do badge destaque
+      catalogItemBg?: string;  // Cor do card do catálogo
+      catalogActionBg?: string;// Cor do botão de ação do catálogo
+      catalogActionText?: string; // Cor do texto do botão de ação
+    };
   };
   plaqueTheme?: {
     useSameBackground: boolean;
