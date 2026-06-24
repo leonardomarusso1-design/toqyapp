@@ -665,8 +665,8 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
               </div>
             </label>
             <div>
-              <span className="text-sm font-black text-slate-700 mb-1 block">Rodapé — "Não encontrou?"</span>
-              <p className="text-xs text-slate-400 mb-2">Aparece no final do catálogo com botão WhatsApp.</p>
+              <span className="text-sm font-black text-slate-700 mb-1 block">Texto do rodapé — "Não encontrou?"</span>
+              <p className="text-xs text-slate-400 mb-2">⚠️ Este campo muda só o texto do rodapé do catálogo. Não afeta outros textos.</p>
               <input className={field} placeholder="Não encontrou o que procura? Fale com a gente!" value={site.catalogWaLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalogWaLabel: e.target.value }))} />
             </div>
           </div>

@@ -292,10 +292,12 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
           <h1 className="mt-5 text-2xl font-black leading-tight drop-shadow-sm" style={{ color: col("name", site.theme.text), textShadow: site.theme.mode === "light" ? "none" : "0 0 10px rgba(0,0,0,0.5)" }}>{site.profile.name}</h1>
             {site.profile.title ? <p className="mt-1 text-base font-medium" style={{ color: col("title", site.theme.muted) }}>{site.profile.title}</p> : null}
             {site.profile.location ? (
-              <p className="mt-2 flex items-center justify-center gap-1 text-center text-sm font-semibold" style={{ color: col("location", site.theme.muted) }}>
-                <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                {site.profile.location}
-              </p>
+              <div className="mt-2 flex flex-col items-center gap-0.5">
+              <div className="flex items-start justify-center gap-1">
+                <svg className="mt-0.5 h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" style={{ color: col("location", site.theme.muted) }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                <p className="text-center text-sm font-semibold leading-snug" style={{ color: col("location", site.theme.muted) }}>{site.profile.location}</p>
+              </div>
+            </div>
             ) : null}
             {site.profile.description ? <p className="mx-auto mt-4 max-w-[350px] text-center text-sm leading-relaxed" style={{ color: col("description", site.theme.muted) }}>{site.profile.description}</p> : null}
             {site.profile.logoSignatureUrl ? (
@@ -306,14 +308,14 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
             ) : null}
           </header>
 
-          <section className="mt-6 grid grid-cols-2 gap-3">
+          <section className="mt-4 grid grid-cols-2 gap-2">
             <button type="button" onClick={downloadVCard} className={`${radiusClass(site)} flex items-center justify-center gap-2 border px-4 py-3 text-xs font-black backdrop-blur-xl`} style={{ ...glassCard(site), color: col("saveContactText", site.theme.text) }}><Save className="h-4 w-4" />Salvar Contato</button>
             {site.contact.phone ? <button type="button" onClick={() => window.open(`tel:${site.contact.phone.replace(/\D/g, "")}`)} className={`${radiusClass(site)} flex items-center justify-center gap-2 border px-4 py-3 text-xs font-black backdrop-blur-xl`} style={{ ...glassCard(site), color: col("callText", site.theme.text) }}><Phone className="h-4 w-4" />Ligar</button> : null}
           </section>
 
           {/* Wi-Fi inline — mostra rede e senha sem precisar abrir modal */}
           {wifiInline ? (
-            <section className="mt-4 rounded-2xl border px-4 py-3 backdrop-blur-xl" style={glassCard(site)}>
+            <section className="mt-3 rounded-2xl border px-4 py-2.5 backdrop-blur-xl" style={glassCard(site)}>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
                   <WifiIcon2 className="h-4 w-4 shrink-0 opacity-80" />
@@ -335,7 +337,7 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
           ) : null}
 
           {socialButtons.length ? (
-            <section className="mt-4 flex items-center justify-center gap-4">
+            <section className="mt-3 flex items-center justify-center gap-3">
               {socialButtons.map((button) => {
                 const brandColor: Record<string, string> = {
                   whatsapp: "#25D366", instagram: "#E1306C", facebook: "#1877F2",
@@ -348,7 +350,7 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
                 const iconColor = useGlass ? site.theme.text : "#fff";
                 return (
                   <button key={button.id} type="button" onClick={() => handleButton(button)} aria-label={button.label}
-                    className="flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition active:scale-90 hover:scale-105 backdrop-blur-sm"
+                    className="flex h-12 w-12 items-center justify-center rounded-full shadow-md transition active:scale-90 hover:scale-105 backdrop-blur-sm"
                     style={{ background: bg }}>
                     <ButtonIcon type={button.type} color={iconColor} />
                   </button>
@@ -362,7 +364,7 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
               if (site.theme.buttonStyle === "icon") {
                 return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex min-h-24 flex-col items-center justify-center gap-2 border p-3 text-center text-xs font-black shadow-lg transition active:scale-[0.98]`} style={buttonStyle(site)}><ButtonIcon type={button.type} /><span>{button.label}</span></button>;
               }
-              return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex w-full items-center justify-center gap-3 border px-5 py-4 text-center font-black shadow-lg backdrop-blur-xl transition active:scale-[0.98]`} style={buttonStyle(site)}><ButtonIcon type={button.type} /><span>{button.label}</span></button>;
+              return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex w-full items-center justify-center gap-2 border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98]`} style={buttonStyle(site)}><ButtonIcon type={button.type} /><span>{button.label}</span></button>;
             })}
           </section>
 
