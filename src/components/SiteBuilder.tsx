@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, CheckCircle2, Copy, ExternalLink, Eye, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import type { CatalogItem, CatalogLayout, Segment, ThemePreset, ToqySite } from "@/lib/types";
@@ -35,16 +35,34 @@ function Help({ children }: { children: React.ReactNode }) {
 }
 
 function ColorPicker({ label, hint, value, onChange }: { label: string; hint: string; value: string; onChange: (v: string) => void }) {
+  const [local, setLocal] = useState(value);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sincroniza se prop mudar externamente
+  useEffect(() => { setLocal(value); }, [value]);
+
+  function handleColorChange(v: string) {
+    setLocal(v);
+    // Debounce de 80ms para não re-renderizar o bio site a cada pixel do picker
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => onChange(v), 80);
+  }
+
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3">
       <label className="relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center">
-        <span className="h-10 w-10 rounded-full border-2 border-white shadow-md ring-1 ring-slate-200 transition hover:scale-110" style={{ background: value }} />
-        <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+        <span className="h-10 w-10 rounded-full border-2 border-white shadow-md ring-1 ring-slate-200 transition hover:scale-110" style={{ background: local }} />
+        <input type="color" value={local}
+          onChange={(e) => handleColorChange(e.target.value)}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
       </label>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-black text-slate-800">{label}</p>
         <p className="truncate text-xs text-slate-400">{hint}</p>
-        <input type="text" value={value} onChange={(e) => { if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) onChange(e.target.value); }} className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-mono text-xs text-slate-700 outline-none focus:border-[#31c4a8]" maxLength={7} />
+        <input type="text" value={local}
+          onChange={(e) => { if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) handleColorChange(e.target.value); }}
+          className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-mono text-xs text-slate-700 outline-none focus:border-[#31c4a8]"
+          maxLength={7} />
       </div>
     </div>
   );
@@ -372,10 +390,16 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
 
               <details className="mb-3">
                 <summary className="cursor-pointer text-xs font-black text-slate-700 py-1">Botões grandes (Agendar, Pix, etc.)</summary>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <ColorPicker label="Fundo dos botões" hint="Cor de fundo" value={getColor("buttonBg", site.theme.primary)} onChange={(v) => setColor("buttonBg", v)} />
-                  <ColorPicker label="Texto dos botões" hint="Cor do texto/ícone" value={getColor("buttonText", site.theme.text)} onChange={(v) => setColor("buttonText", v)} />
-                  <ColorPicker label="Borda dos botões" hint="Cor da borda" value={getColor("buttonBorder", site.theme.primary)} onChange={(v) => setColor("buttonBorder", v)} />
+                <div className="mt-3">
+                  {site.theme.buttonFill === "glass" ? (
+                    <p className="text-xs text-slate-400 rounded-xl bg-slate-100 p-3">No modo <strong>Translúcido</strong> as cores dos botões são automáticas. Mude o preenchimento para <strong>Sólido</strong> para personalizar as cores.</p>
+                  ) : (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <ColorPicker label="Fundo dos botões" hint="Cor de fundo" value={getColor("buttonBg", site.theme.primary)} onChange={(v) => setColor("buttonBg", v)} />
+                      <ColorPicker label="Texto dos botões" hint="Cor do texto/ícone" value={getColor("buttonText", site.theme.text)} onChange={(v) => setColor("buttonText", v)} />
+                      <ColorPicker label="Borda dos botões" hint="Cor da borda" value={getColor("buttonBorder", site.theme.primary)} onChange={(v) => setColor("buttonBorder", v)} />
+                    </div>
+                  )}
                 </div>
               </details>
 

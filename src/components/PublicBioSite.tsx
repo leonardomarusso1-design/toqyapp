@@ -152,13 +152,24 @@ function glassCard(site: ToqySite): React.CSSProperties {
 
 function buttonStyle(site: ToqySite): React.CSSProperties {
   const colors = site.theme.colors;
-  const text = colors?.buttonText ?? (site.theme.mode === "light" ? "#ffffff" : "#F8FAFC");
-  const bg = colors?.buttonBg;
-  const border = colors?.buttonBorder;
-  if (bg) return { background: bg, color: text, borderColor: border ?? "rgba(255,255,255,0.18)" };
-  if (site.theme.buttonFill === "gradient") return { background: `linear-gradient(135deg, ${site.theme.primary}, ${site.theme.secondary})`, color: text, borderColor: "rgba(255,255,255,0.18)" };
-  if (site.theme.buttonFill === "glass") return { background: site.theme.mode === "light" ? "rgba(255,255,255,0.66)" : "rgba(255,255,255,0.13)", color: colors?.buttonText ?? site.theme.text, borderColor: border ?? (site.theme.mode === "light" ? "rgba(15,23,42,0.10)" : "rgba(255,255,255,0.18)") };
-  return { background: site.theme.primary, color: text, borderColor: "rgba(255,255,255,0.18)" };
+  const fill = site.theme.buttonFill;
+  // Glass e Gradiente ignoram cores granulares de botão — são automáticos
+  if (fill === "glass") return {
+    background: site.theme.mode === "light" ? "rgba(255,255,255,0.66)" : "rgba(255,255,255,0.13)",
+    color: colors?.buttonText ?? site.theme.text,
+    borderColor: colors?.buttonBorder ?? (site.theme.mode === "light" ? "rgba(15,23,42,0.10)" : "rgba(255,255,255,0.18)")
+  };
+  if (fill === "gradient") return {
+    background: `linear-gradient(135deg, ${colors?.buttonBg ?? site.theme.primary}, ${site.theme.secondary})`,
+    color: colors?.buttonText ?? (site.theme.mode === "light" ? "#ffffff" : "#F8FAFC"),
+    borderColor: "rgba(255,255,255,0.18)"
+  };
+  // Sólido — usa cores granulares se definidas
+  return {
+    background: colors?.buttonBg ?? site.theme.primary,
+    color: colors?.buttonText ?? (site.theme.mode === "light" ? "#ffffff" : "#F8FAFC"),
+    borderColor: colors?.buttonBorder ?? "rgba(255,255,255,0.18)"
+  };
 }
 
 function getInitials(name: string) {
@@ -301,7 +312,7 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
           </section>
 
           {/* Wi-Fi inline — mostra rede e senha sem precisar abrir modal */}
-          {site.wifi?.enabled && site.wifi.ssid ? (
+          {wifiInline ? (
             <section className="mt-4 rounded-2xl border px-4 py-3 backdrop-blur-xl" style={glassCard(site)}>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
