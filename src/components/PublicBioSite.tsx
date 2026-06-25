@@ -130,6 +130,7 @@ function backgroundStyle(site: ToqySite): React.CSSProperties {
       ? "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.55) 100%)"
       : "linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 40%, rgba(0,0,0,0.30) 100%)";
     return {
+      backgroundColor: site.theme.background,
       backgroundImage: `${overlay}, url(${image})`,
       backgroundSize: "cover",
       backgroundPosition: "center top",
@@ -137,16 +138,11 @@ function backgroundStyle(site: ToqySite): React.CSSProperties {
       backgroundAttachment: "scroll",
     };
   }
-  return {};
-}
-
-function solidBg(site: ToqySite): React.CSSProperties {
-  const plaque = site.plaqueTheme?.useSameBackground && site.plaqueTheme.backgroundImageUrl;
-  const image = plaque ? site.plaqueTheme?.backgroundImageUrl : site.profile.backgroundImageUrl;
-  if ((site.theme.backgroundType === "image" || plaque) && image) return {};
   if (site.theme.backgroundType === "solid") return { background: site.theme.background };
   return { background: `radial-gradient(circle at 50% 0%, ${site.theme.primary}33, transparent 34%), linear-gradient(160deg, ${site.theme.gradientFrom}, ${site.theme.gradientTo})` };
 }
+
+function solidBg(_site: ToqySite): React.CSSProperties { return {}; }
 
 function glassCard(site: ToqySite): React.CSSProperties {
   const isLight = site.theme.mode === "light";
@@ -267,11 +263,8 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
   );
 
   return (
-    <div className="relative min-h-screen w-full" style={{ ...solidBg(site), color: site.theme.text, backgroundColor: site.theme.background }}>
-      {/* Fundo fixo — não estica com o conteúdo */}
-      {(site.theme.backgroundType === "image" || (site.plaqueTheme?.useSameBackground && site.plaqueTheme.backgroundImageUrl)) && (site.profile.backgroundImageUrl || site.plaqueTheme?.backgroundImageUrl) ? (
-        <div className="fixed inset-0 -z-10" style={backgroundStyle(site)} />
-      ) : null}
+    <div className="relative min-h-screen w-full" style={{ ...backgroundStyle(site), color: site.theme.text }}>
+      {/* Sem div separado para o fundo — evita cobrir o editor */}
       <div className="min-h-screen w-full">
         <main className="mx-auto w-full max-w-[430px] px-4 py-6">
           <div className="mb-6 flex items-center justify-between gap-3">
