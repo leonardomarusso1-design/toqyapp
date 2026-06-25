@@ -14,7 +14,8 @@ type BioSiteRow = {
   id: string;
   slug: string;
   status: string;
-  site_data: { editKey?: string; profile?: { name?: string }; };
+  edit_key_hash?: string;
+  name?: string;
 };
 
 type Profile = {
@@ -66,7 +67,7 @@ export default function ConfiguracoesPage() {
 
       const [{ data: profileData, error: profileError }, { data: biositesData, error: biositesError }] = await Promise.all([
         supabase.from("profiles").select("id, email, full_name, plan_tier, plan_toqy, biosites_limit, biosites_count, subscription_status").eq("id", session.user.id).single(),
-        supabase.from("toqy_biosites").select("id, slug, status, site_data").eq("owner_profile_id", session.user.id).order("created_at", { ascending: false }),
+        supabase.from("toqy_biosites").select("id, slug, status, edit_key_hash, name").eq("owner_profile_id", session.user.id).order("created_at", { ascending: false }),
       
       ]);
 
@@ -204,8 +205,8 @@ export default function ConfiguracoesPage() {
           ) : (
             <div className="space-y-3">
               {biosites.map(site => {
-                const name = site.site_data?.profile?.name || site.slug;
-                const editKey = site.site_data?.editKey || "—";
+                const name = site.name || site.slug;
+                const editKey = site.edit_key_hash || "—";
                 return (
                   <div key={site.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
                     <div className="flex items-start justify-between gap-3">

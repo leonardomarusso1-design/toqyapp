@@ -38,6 +38,7 @@ export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boole
         .from("toqy_biosites")
         .update({
           site_data: siteWithPlan,
+          name: siteWithPlan.profile.name,
           status: site.status ?? "active",
           updated_at: new Date().toISOString(),
         })
@@ -54,6 +55,7 @@ export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boole
         .from("toqy_biosites")
         .insert({
           slug: site.slug,
+          name: siteWithPlan.profile.name,
           status: site.status ?? "active",
           edit_key_hash: site.editKey,
           owner_profile_id: session.user.id,
