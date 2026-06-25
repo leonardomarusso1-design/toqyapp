@@ -98,7 +98,7 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
   );
 
   return (
-    <ClientShell>
+    <ClientShell fullWidth>
       <SiteBuilder mode="edit" initialSite={site} onSave={handleSave} />
       {saving && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20"><div className="rounded-2xl bg-white px-6 py-4 font-black text-slate-800 shadow-xl">Salvando...</div></div>}
     </ClientShell>

@@ -4,9 +4,11 @@ import { ReactNode } from "react";
 export function ClientShell({
   children,
   action,
+  fullWidth,
 }: {
   children: ReactNode;
   action?: ReactNode;
+  fullWidth?: boolean;
 }) {
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -24,7 +26,7 @@ export function ClientShell({
         </div>
       </header>
 
-      <section className="mx-auto w-full max-w-5xl px-5 py-8 md:py-10">{children}</section>
+      <section className={fullWidth ? "w-full px-3 py-6" : "mx-auto w-full max-w-5xl px-5 py-8 md:py-10"}>{children}</section>
     </main>
   );
 }
