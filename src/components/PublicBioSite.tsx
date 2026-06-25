@@ -263,9 +263,28 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
   );
 
   return (
-    <div className="relative min-h-screen w-full" style={{ ...backgroundStyle(site), color: site.theme.text }}>
-      {/* Sem div separado para o fundo — evita cobrir o editor */}
-      <div className="min-h-screen w-full">
+    <div className="relative min-h-screen w-full" style={{ color: site.theme.text, backgroundColor: site.theme.background }}>
+      {/* Fundo da imagem — cobre toda a altura sem esticar */}
+      {(site.theme.backgroundType === "image") && site.profile.backgroundImageUrl ? (
+        <>
+          <style>{`
+            .toqy-bg-fixed::before {
+              content: '';
+              position: fixed;
+              inset: 0;
+              z-index: 0;
+              background-image: ${backgroundStyle(site).backgroundImage};
+              background-size: cover;
+              background-position: center top;
+              pointer-events: none;
+            }
+          `}</style>
+          <div className="toqy-bg-fixed" />
+        </>
+      ) : (
+        <div style={{ position: "absolute", inset: 0, zIndex: 0, ...backgroundStyle(site), pointerEvents: "none" }} />
+      )}
+      <div className="relative z-10 min-h-screen w-full">
         <main className="mx-auto w-full max-w-[430px] px-4 py-6">
           <div className="mb-6 flex items-center justify-between gap-3">
             <button type="button" onClick={() => setQrModal(true)} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black backdrop-blur-xl" style={glassCard(site)}><QrCode className="h-4 w-4" />QR Code</button>
