@@ -740,14 +740,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   })();
 
   return (
-    <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-      {/* Preview — fixo à esquerda em desktop */}
-      <div className="hidden lg:block">
-        <div className="sticky top-20">
-          <LiveBioSitePreview site={site} />
-        </div>
-      </div>
-      {/* Editor — à direita */}
+    <div className="mx-auto grid w-full max-w-6xl gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
       <div className="min-w-0">
         <div className="mb-5 rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -763,9 +756,10 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
           <div className="flex gap-3"><button type="button" onClick={save} disabled={isSaving} className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-black text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">{isSaving ? "Salvando..." : "Salvar agora"}</button><button type="button" onClick={() => step < steps.length - 1 ? setStep((v) => v + 1) : save()} disabled={isSaving} className="rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60">{step < steps.length - 1 ? "Continuar" : isSaving ? "Salvando..." : "Salvar e publicar"}</button></div>
         </div>
       </div>
+      <LiveBioSitePreview site={site} />
 
       {/* Botão flutuante de preview no mobile */}
-      <div className="fixed bottom-6 right-6 z-50 lg:hidden">
+      <div className="fixed bottom-6 right-6 z-50 xl:hidden">
         <button
           type="button"
           onClick={() => setShowMobilePreview(true)}
@@ -778,7 +772,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
 
       {/* Modal de preview mobile */}
       {showMobilePreview ? (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-slate-950 lg:hidden">
+        <div className="fixed inset-0 z-[60] flex flex-col bg-slate-950 xl:hidden">
           <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
             <p className="text-sm font-black text-white">Preview — /b/{site.slug}</p>
             <button type="button" onClick={() => setShowMobilePreview(false)} className="rounded-xl bg-slate-800 px-4 py-2 text-sm font-black text-white">Fechar</button>
