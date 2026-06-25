@@ -65,7 +65,7 @@ export default function ConfiguracoesPage() {
       }
 
       const [{ data: profileData, error: profileError }, { data: biositesData, error: biositesError }] = await Promise.all([
-        supabase.from("profiles").select("*").eq("id", session.user.id).single(),
+        supabase.from("profiles").select("id, email, full_name, plan_tier, plan_toqy, biosites_limit, biosites_count, subscription_status").eq("id", session.user.id).single(),
         supabase.from("toqy_biosites").select("id, slug, status, site_data").eq("owner_profile_id", session.user.id).order("created_at", { ascending: false }),
       
       ]);
