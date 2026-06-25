@@ -420,7 +420,6 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
       {modal === "wifi" ? <WifiModal site={site} onClose={() => setModal(null)} copied={copied} copyText={copyText} /> : null}
       {modal === "pix" ? <PixModal site={site} onClose={() => setModal(null)} copied={copied} copyText={copyText} selectedAmount={selectedAmount} setSelectedAmount={setSelectedAmount} /> : null}
     </div>
-    </div>
   );
 }
 
