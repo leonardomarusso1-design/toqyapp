@@ -7,7 +7,6 @@ import { LockKeyhole } from "lucide-react";
 import { ClientShell } from "@/components/ClientShell";
 import { SiteBuilder } from "@/components/SiteBuilder";
 import type { ToqySite } from "@/lib/types";
-import { syncBiositeToSupabase } from "@/lib/biositeSync";
 import { supabase } from "@/lib/supabaseClient";
 
 function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
@@ -59,8 +58,32 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
 
   async function handleSave(updated: ToqySite) {
     setSaving(true);
-    try { await syncBiositeToSupabase(updated); setSite(updated); }
-    finally { setSaving(false); }
+    try {
+      // Tenta salvar via sessão primeiro
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        // Logado — salva normalmente via Supabase client
+        const { syncBiositeToSupabase } = await import("@/lib/biositeSync");
+        const result = await syncBiositeToSupabase(updated);
+        if (!result.ok) throw new Error(result.error ?? "Erro ao salvar");
+      } else {
+        // Não logado — salva via API com chave de acesso (cliente externo)
+        const res = await fetch("/api/biosite/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ site: updated, editKey: key }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "Erro ao salvar");
+      }
+
+      setSite(updated);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Erro ao salvar. Tente novamente.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (loading) return (
