@@ -160,7 +160,11 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
     try {
       const result = await syncBiositeToSupabase(siteToValidate);
       if (!result.ok) {
-        setErrors([`Erro ao salvar na nuvem: ${result.error ?? "tente novamente"}`]);
+        const isNetwork = result.error?.toLowerCase().includes("fetch") || result.error?.toLowerCase().includes("network") || result.error?.toLowerCase().includes("failed");
+        const msg = isNetwork
+          ? "Erro de conexão com o servidor. Verifique sua internet e tente novamente. Se persistir, recarregue a página (F5)."
+          : `Erro ao salvar: ${result.error ?? "tente novamente"}`;
+        setErrors([msg]);
         setIsSaving(false);
         return;
       }

@@ -10,10 +10,16 @@ import { saveStoredSite } from "./siteStorage";
 import type { ToqySite } from "./types";
 
 export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boolean; source: "supabase" | "local"; error?: string }> {
-  const { data: { session } } = await supabase.auth.getSession();
+  // Tenta refresh da sessão primeiro — evita erro de token expirado
+  let { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) {
+    // Tenta renovar a sessão
+    const { data: refreshed } = await supabase.auth.refreshSession();
+    session = refreshed.session;
+  }
   if (!session?.user) {
     saveStoredSite(site);
-    return { ok: true, source: "local", error: "Sem sessão ativa" };
+    return { ok: true, source: "local", error: "Sem sessão ativa — faça login novamente" };
   }
 
   // Busca o plano atual do dono para salvar junto ao site
