@@ -42,24 +42,24 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-950 lg:grid lg:grid-cols-[260px_1fr]">
-      <aside className="bg-white border-r border-slate-200 flex flex-col p-4 lg:min-h-screen">
+    <main className="min-h-screen bg-bg text-ink lg:grid lg:grid-cols-[260px_1fr]">
+      <aside className="bg-card border-r border-border flex flex-col p-4 lg:min-h-screen">
         <div className="flex h-full flex-col">
           <Link href="/" className="flex items-center gap-3 px-2 py-4">
             <img src="/brand/favicon-toqy.png" alt="TOQY" className="h-8 w-8 rounded-lg" />
-            <span className="text-xl font-bold tracking-tight text-slate-800">Toqy</span>
+            <span className="text-xl font-bold tracking-tight text-ink">Toqy</span>
           </Link>
 
           {atLimit ? (
             <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center">
               <p className="text-xs font-black text-red-600">Limite atingido</p>
-              <p className="mt-0.5 text-xs text-slate-500">Faça upgrade para criar mais bio sites.</p>
+              <p className="mt-0.5 text-xs text-muted">Faça upgrade para criar mais bio sites.</p>
               <Link href="/#planos" className="mt-2 inline-flex items-center gap-1 rounded-xl bg-red-600 px-3 py-2 text-xs font-black text-white transition hover:bg-red-700">
                 Fazer upgrade
               </Link>
             </div>
           ) : (
-            <Link href="/app/novo" className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-[#31c4a8] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#25b69a]">
+            <Link href="/app/novo" className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-accent-dim">
               <Plus className="h-4 w-4" /> Novo bio site
             </Link>
           )}
@@ -69,32 +69,32 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               const active = item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
               return <Nav key={item.href} href={item.href} icon={<item.icon className="h-5 w-5" />} label={item.label} active={active} />;
             })}
-            <div className="pt-4 border-t border-slate-100">
+            <div className="pt-4 border-t border-border">
               <LogoutButton />
             </div>
           </nav>
 
-          <div className="mt-auto border-t border-slate-100 pt-4">
-            <div className="rounded-xl bg-slate-50 p-4 text-center">
-              <p className="text-xs font-bold text-slate-400">TOQY</p>
-              <p className="mt-1 text-xs text-slate-400">Bio sites profissionais</p>
+          <div className="mt-auto border-t border-border pt-4">
+            <div className="rounded-xl bg-surface p-4 text-center">
+              <p className="text-xs font-bold text-muted">TOQY</p>
+              <p className="mt-1 text-xs text-muted">Bio sites profissionais</p>
             </div>
           </div>
         </div>
       </aside>
 
       <div className="flex flex-col min-w-0">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 lg:px-8 shadow-sm z-10">
+        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 lg:px-8 shadow-sm z-10">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <span className="text-slate-900 font-semibold">Meu painel</span>
+            <span className="text-ink font-semibold">Meu painel</span>
           </div>
           <div className="flex items-center gap-3">
             {/* Avatar do usuário */}
-            <Link href="/app/configuracoes" className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-slate-200 bg-slate-100 transition hover:border-[#31c4a8]">
+            <Link href="/app/configuracoes" className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-border bg-surface transition hover:border-accent">
               {userAvatar ? (
                 <img src={userAvatar} alt="Perfil" className="h-full w-full object-cover" />
               ) : (
-                <span className="text-sm font-black text-slate-600">{userInitial}</span>
+                <span className="text-sm font-black text-muted">{userInitial}</span>
               )}
             </Link>
             <div className="lg:hidden scale-90">
@@ -113,7 +113,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
 function Nav({ href, icon, label, active = false }: { href: string; icon: ReactNode; label: string; active?: boolean }) {
   return (
-    <Link href={href} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition ${active ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`}>
+    <Link href={href} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition ${active ? "bg-accent/10 text-accent-dim" : "text-muted hover:bg-surface hover:text-ink"}`}>
       {icon}
       {label}
     </Link>
