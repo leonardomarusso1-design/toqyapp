@@ -6,4 +6,4 @@ const hints: Record<string, string> = {
   productSquare: "Produto/serviço quadrado: 1080x1080 px.",
   productHorizontal: "Produto/serviço horizontal: 1200x800 px.",
 };
-export function ImageGuidelineHint({ type }: { type: keyof typeof hints }) { return <p className="mt-2 text-xs font-bold text-slate-500">{hints[type]}</p>; }
+export function ImageGuidelineHint({ type }: { type: keyof typeof hints }) { return <p className="mt-2 text-xs font-bold text-muted">{hints[type]}</p>; }

@@ -84,18 +84,18 @@ export function ImageUploadField({
   return (
     <div className="block">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-black text-slate-800">{label}</span>
+        <span className="text-sm font-black text-ink">{label}</span>
         <button
           type="button"
           onClick={() => setShowUrl((v) => !v)}
-          className="inline-flex items-center gap-1 text-xs font-black text-slate-500 transition hover:text-[#1f9f87]"
+          className="inline-flex items-center gap-1 text-xs font-black text-muted transition hover:text-accent-dim"
         >
           <Link2 className="h-3.5 w-3.5" /> {showUrl ? "Enviar arquivo" : "Usar URL"}
         </button>
       </div>
 
       <div className="mt-2 grid gap-3 md:grid-cols-[96px_1fr] md:items-center">
-        <div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-400">
+        <div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border border-border bg-surface text-xs font-bold text-muted">
           {value ? (
             <img
               src={value}
@@ -118,7 +118,7 @@ export function ImageUploadField({
 
         {showUrl ? (
           <input
-            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none focus:border-[#31c4a8] focus:ring-4 focus:ring-emerald-100"
+            className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-ink outline-none focus:border-accent focus:ring-4 focus:ring-accent/10"
             value={value ?? ""}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder ?? "Cole o link (URL) da imagem"}
@@ -136,12 +136,12 @@ export function ImageUploadField({
               type="button"
               onClick={() => inputRef.current?.click()}
               disabled={loading}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm font-black text-slate-600 transition hover:border-[#31c4a8] hover:text-[#1f9f87] disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-card px-4 py-3 text-sm font-black text-muted transition hover:border-accent hover:text-accent-dim disabled:opacity-60"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
               {loading ? "Enviando..." : value ? "Trocar imagem" : "Enviar imagem do dispositivo"}
             </button>
-            <p className="mt-1 text-xs font-semibold text-slate-400">JPG ou PNG, até 8MB. A imagem é otimizada automaticamente.</p>
+            <p className="mt-1 text-xs font-semibold text-muted">JPG ou PNG, até 8MB. A imagem é otimizada automaticamente.</p>
           </div>
         )}
       </div>
@@ -149,7 +149,7 @@ export function ImageUploadField({
       {/* Controle de posição (pincelada/zoom como Instagram) */}
       {showPositionControl && value && onPositionChange ? (
         <div className="mt-3">
-          <span className="text-xs font-black text-slate-600">Posição da imagem</span>
+          <span className="text-xs font-black text-muted">Posição da imagem</span>
           <div className="mt-2 flex flex-wrap gap-2">
             {positions.map((p) => (
               <button
@@ -158,8 +158,8 @@ export function ImageUploadField({
                 onClick={() => onPositionChange(p.value)}
                 className={"rounded-xl border px-3 py-1.5 text-xs font-black transition " + (
                   (position ?? "center") === p.value
-                    ? "border-[#31c4a8] bg-emerald-50 text-[#1f9f87]"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                    ? "border-accent bg-accent/10 text-accent-dim"
+                    : "border-border bg-card text-muted hover:border-accent"
                 )}
               >
                 {p.label}

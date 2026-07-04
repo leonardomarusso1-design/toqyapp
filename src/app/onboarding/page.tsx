@@ -77,9 +77,9 @@ const empty: Form = {
   googleReviewUrl: "", bookingUrl: "",
 };
 
-const field = "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none focus:border-[#31c4a8] focus:ring-4 focus:ring-emerald-100";
-const label = "block text-sm font-black text-slate-800 mb-1";
-const hint = "mt-1 text-xs text-slate-400";
+const field = "w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-ink outline-none focus:border-accent focus:ring-4 focus:ring-accent/10";
+const label = "block text-sm font-black text-ink mb-1";
+const hint = "mt-1 text-xs text-muted";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -276,7 +276,7 @@ export default function OnboardingPage() {
   if (authLoading) return (
     <DashboardShell>
       <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#31c4a8] border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
       </div>
     </DashboardShell>
   );
@@ -287,21 +287,21 @@ export default function OnboardingPage() {
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-100 text-red-500">
           <Lock className="h-10 w-10" />
         </div>
-        <h1 className="mt-6 text-2xl font-black text-slate-900">Limite atingido</h1>
-        <p className="mt-2 text-slate-500">
+        <h1 className="mt-6 text-2xl font-black text-ink">Limite atingido</h1>
+        <p className="mt-2 text-muted">
           Você já criou <strong>{limitInfo.current}</strong> de <strong>{limitInfo.limit}</strong> bio sites do seu plano{" "}
           <strong className="capitalize">{limitInfo.plan}</strong>.
         </p>
-        <p className="mt-2 text-sm text-slate-400">Faça upgrade para criar mais bio sites para seus clientes.</p>
+        <p className="mt-2 text-sm text-muted">Faça upgrade para criar mais bio sites para seus clientes.</p>
         <div className="mt-6 flex flex-col gap-3">
           <a href="https://pay.kiwify.com.br/12uYE0c" target="_blank" rel="noopener noreferrer"
-            className="block rounded-2xl bg-[#31c4a8] px-5 py-4 font-black text-white hover:bg-[#25b69a]">
+            className="block rounded-2xl bg-accent px-5 py-4 font-black text-white hover:bg-accent-dim">
             Fazer upgrade — Comunidade R$29,90/mês
           </a>
-          <Link href="/#planos" className="block rounded-2xl border border-slate-200 px-5 py-4 font-black text-slate-600 hover:border-[#31c4a8]">
+          <Link href="/#planos" className="block rounded-2xl border border-border px-5 py-4 font-black text-ink hover:border-accent">
             Ver todos os planos
           </Link>
-          <Link href="/app" className="block text-sm text-slate-400 hover:text-slate-600">
+          <Link href="/app" className="block text-sm text-muted hover:text-ink">
             Voltar para o painel
           </Link>
         </div>
@@ -312,27 +312,27 @@ export default function OnboardingPage() {
   if (done) return (
     <DashboardShell>
       <div className="mx-auto max-w-lg text-center">
-        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-[#31c4a8]">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-accent/10 text-accent">
           <Check className="h-10 w-10" />
         </div>
-        <h1 className="mt-6 text-3xl font-black">Bio site criado!</h1>
-        <p className="mt-2 text-slate-500">Entregue as informações abaixo para o cliente.</p>
+        <h1 className="mt-6 text-3xl font-black text-ink">Bio site criado!</h1>
+        <p className="mt-2 text-muted">Entregue as informações abaixo para o cliente.</p>
         <div className="mt-8 space-y-4 text-left">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <p className="text-xs font-black uppercase tracking-wider text-slate-400">Link do bio site</p>
-            <p className="mt-1 break-all font-mono font-black text-slate-900">toqy.com.br/b/{done.slug}</p>
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="text-xs font-black uppercase tracking-wider text-muted">Link do bio site</p>
+            <p className="mt-1 break-all font-mono font-black text-ink">toqy.com.br/b/{done.slug}</p>
           </div>
-          <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-5">
-            <p className="text-xs font-black uppercase tracking-wider text-indigo-400">Acesso para editar</p>
-            <p className="mt-2 text-sm font-bold text-indigo-900">1. Acesse: <strong>toqy.com.br/me</strong></p>
-            <p className="text-sm font-bold text-indigo-900">2. Slug: <strong>{done.slug}</strong></p>
-            <p className="text-sm font-bold text-indigo-900">3. Chave: <strong className="font-mono text-lg text-indigo-700">{done.editKey}</strong></p>
+          <div className="rounded-2xl border border-violet/20 bg-violet/10 p-5">
+            <p className="text-xs font-black uppercase tracking-wider text-violet">Acesso para editar</p>
+            <p className="mt-2 text-sm font-bold text-ink">1. Acesse: <strong>toqy.com.br/me</strong></p>
+            <p className="text-sm font-bold text-ink">2. Slug: <strong>{done.slug}</strong></p>
+            <p className="text-sm font-bold text-ink">3. Chave: <strong className="font-mono text-lg text-violet">{done.editKey}</strong></p>
           </div>
         </div>
         <div className="mt-6 flex flex-col gap-3">
-          <a href={`/b/${done.slug}`} target="_blank" className="block rounded-2xl bg-[#31c4a8] px-5 py-4 font-black text-white">Ver bio site</a>
-          <a href={`/editar/${done.slug}?key=${done.editKey}`} target="_blank" className="block rounded-2xl border border-slate-200 px-5 py-4 font-black text-slate-700">Abrir editor</a>
-          <button onClick={() => { setForm(empty); setStep(0); setDone(null); }} className="block rounded-2xl border border-slate-200 px-5 py-4 font-black text-slate-500">Criar outro bio site</button>
+          <a href={`/b/${done.slug}`} target="_blank" className="block rounded-2xl bg-accent px-5 py-4 font-black text-white">Ver bio site</a>
+          <a href={`/editar/${done.slug}?key=${done.editKey}`} target="_blank" className="block rounded-2xl border border-border px-5 py-4 font-black text-ink">Abrir editor</a>
+          <button onClick={() => { setForm(empty); setStep(0); setDone(null); }} className="block rounded-2xl border border-border px-5 py-4 font-black text-muted">Criar outro bio site</button>
         </div>
       </div>
     </DashboardShell>
@@ -354,7 +354,7 @@ export default function OnboardingPage() {
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {segments.map(s => (
               <button key={s} type="button" onClick={() => set({ segment: s })}
-                className={"rounded-2xl border px-3 py-2.5 text-sm font-black transition " + (form.segment === s ? "border-[#31c4a8] bg-emerald-50 text-[#1f9f87]" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300")}>
+                className={"rounded-2xl border px-3 py-2.5 text-sm font-black transition " + (form.segment === s ? "border-accent bg-accent/10 text-accent-dim" : "border-border bg-card text-ink hover:border-accent")}>
                 {s}
               </button>
             ))}
@@ -417,10 +417,10 @@ export default function OnboardingPage() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {themeOptions.map(t => (
               <button key={t.id} type="button" onClick={() => set({ themeId: t.id })}
-                className={"relative rounded-2xl border-2 p-3 transition " + (form.themeId === t.id ? "border-[#31c4a8]" : "border-transparent")}>
+                className={"relative rounded-2xl border-2 p-3 transition " + (form.themeId === t.id ? "border-accent" : "border-transparent")}>
                 <div className="h-10 rounded-xl" style={{ background: t.bg, border: `2px solid ${t.primary}` }} />
-                <p className="mt-2 text-xs font-black text-slate-700">{t.label}</p>
-                {form.themeId === t.id && <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#31c4a8]"><Check className="h-3 w-3 text-white" /></div>}
+                <p className="mt-2 text-xs font-black text-ink">{t.label}</p>
+                {form.themeId === t.id && <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent"><Check className="h-3 w-3 text-white" /></div>}
               </button>
             ))}
           </div>
@@ -470,10 +470,10 @@ export default function OnboardingPage() {
 
     if (step === 4) return (
       <div className="space-y-5">
-        <div className="rounded-3xl border border-emerald-100 bg-emerald-50 p-5">
+        <div className="rounded-3xl border border-accent/20 bg-accent/5 p-5">
           <div className="flex items-center justify-between">
-            <h3 className="font-black text-emerald-950">Pix</h3>
-            <div onClick={() => set({ pixEnabled: !form.pixEnabled })} className={"relative w-10 h-6 rounded-full cursor-pointer transition-colors " + (form.pixEnabled ? "bg-[#31c4a8]" : "bg-slate-300")}>
+            <h3 className="font-black text-ink">Pix</h3>
+            <div onClick={() => set({ pixEnabled: !form.pixEnabled })} className={"relative w-10 h-6 rounded-full cursor-pointer transition-colors " + (form.pixEnabled ? "bg-accent" : "bg-border")}>
               <div className={"absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform " + (form.pixEnabled ? "translate-x-5" : "translate-x-1")} />
             </div>
           </div>
@@ -490,10 +490,10 @@ export default function OnboardingPage() {
             </div>
           )}
         </div>
-        <div className="rounded-3xl border border-emerald-100 bg-emerald-50 p-5">
+        <div className="rounded-3xl border border-accent/20 bg-accent/5 p-5">
           <div className="flex items-center justify-between">
-            <h3 className="font-black text-emerald-950">Wi-Fi</h3>
-            <div onClick={() => set({ wifiEnabled: !form.wifiEnabled })} className={"relative w-10 h-6 rounded-full cursor-pointer transition-colors " + (form.wifiEnabled ? "bg-[#31c4a8]" : "bg-slate-300")}>
+            <h3 className="font-black text-ink">Wi-Fi</h3>
+            <div onClick={() => set({ wifiEnabled: !form.wifiEnabled })} className={"relative w-10 h-6 rounded-full cursor-pointer transition-colors " + (form.wifiEnabled ? "bg-accent" : "bg-border")}>
               <div className={"absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform " + (form.wifiEnabled ? "translate-x-5" : "translate-x-1")} />
             </div>
           </div>
@@ -515,24 +515,24 @@ export default function OnboardingPage() {
 
     if (step === 5) return (
       <div className="space-y-4">
-        <p className="text-sm text-slate-500">Adicione os principais serviços ou produtos. Pode deixar em branco e adicionar depois no editor.</p>
+        <p className="text-sm text-muted">Adicione os principais serviços ou produtos. Pode deixar em branco e adicionar depois no editor.</p>
         {form.services.map((s, i) => (
-          <div key={i} className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3">
+          <div key={i} className="rounded-2xl border border-border bg-card p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-black text-slate-700">Serviço {i + 1}</span>
+              <span className="text-sm font-black text-ink">Serviço {i + 1}</span>
               {form.services.length > 1 && <button type="button" onClick={() => removeService(i)} className="text-xs font-black text-red-500">Remover</button>}
             </div>
             <input className={field} value={s.name} onChange={e => updateService(i, { name: e.target.value })} placeholder="Nome do serviço (ex: Corte social)" />
             <div className="grid grid-cols-2 gap-3">
               <div className="flex items-center gap-0">
-                <span className="flex h-[42px] items-center rounded-l-xl border border-r-0 border-slate-200 bg-slate-100 px-3 text-sm font-black text-slate-500">R$</span>
-                <input className="h-[42px] flex-1 rounded-r-xl border border-slate-200 bg-white px-3 text-sm font-black outline-none focus:border-[#31c4a8]" value={s.price} onChange={e => updateService(i, { price: e.target.value })} placeholder="80,00" />
+                <span className="flex h-[42px] items-center rounded-l-xl border border-r-0 border-border bg-surface px-3 text-sm font-black text-muted">R$</span>
+                <input className="h-[42px] flex-1 rounded-r-xl border border-border bg-card px-3 text-sm font-black outline-none focus:border-accent" value={s.price} onChange={e => updateService(i, { price: e.target.value })} placeholder="80,00" />
               </div>
               <input className={field} value={s.description} onChange={e => updateService(i, { description: e.target.value })} placeholder="Descrição (opcional)" />
             </div>
           </div>
         ))}
-        <button type="button" onClick={addService} className="w-full rounded-2xl border-2 border-dashed border-slate-300 py-3 text-sm font-black text-slate-500 hover:border-[#31c4a8] hover:text-[#1f9f87]">
+        <button type="button" onClick={addService} className="w-full rounded-2xl border-2 border-dashed border-border py-3 text-sm font-black text-muted hover:border-accent hover:text-accent-dim">
           + Adicionar serviço
         </button>
       </div>
@@ -541,18 +541,18 @@ export default function OnboardingPage() {
     // step 6 — Confirmar
     return (
       <div className="space-y-4">
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 space-y-2">
-          <p className="font-black text-slate-900">{form.businessName || "—"}</p>
-          <p className="text-sm text-slate-500">{form.segment} · {[form.city, form.state].filter(Boolean).join(", ")}</p>
-          <p className="text-sm text-slate-500">{form.description}</p>
+        <div className="rounded-2xl border border-border bg-surface p-5 space-y-2">
+          <p className="font-black text-ink">{form.businessName || "—"}</p>
+          <p className="text-sm text-muted">{form.segment} · {[form.city, form.state].filter(Boolean).join(", ")}</p>
+          <p className="text-sm text-muted">{form.description}</p>
         </div>
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-2xl border border-slate-200 bg-white p-3"><span className="font-black text-slate-500">WhatsApp</span><p className="mt-1 font-black text-slate-900">{form.whatsapp || "—"}</p></div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-3"><span className="font-black text-slate-500">Instagram</span><p className="mt-1 font-black text-slate-900 truncate">{form.instagram || "—"}</p></div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-3"><span className="font-black text-slate-500">Pix</span><p className="mt-1 font-black text-slate-900">{form.pixEnabled ? form.pixKey || "Configurado" : "Não"}</p></div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-3"><span className="font-black text-slate-500">Wi-Fi</span><p className="mt-1 font-black text-slate-900">{form.wifiEnabled ? form.wifiSsid || "Configurado" : "Não"}</p></div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-3"><span className="font-black text-slate-500">Serviços</span><p className="mt-1 font-black text-slate-900">{form.services.filter(s => s.name).length} cadastrados</p></div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-3"><span className="font-black text-slate-500">Tema</span><p className="mt-1 font-black text-slate-900">{themeOptions.find(t => t.id === form.themeId)?.label}</p></div>
+          <div className="rounded-2xl border border-border bg-card p-3"><span className="font-black text-muted">WhatsApp</span><p className="mt-1 font-black text-ink">{form.whatsapp || "—"}</p></div>
+          <div className="rounded-2xl border border-border bg-card p-3"><span className="font-black text-muted">Instagram</span><p className="mt-1 font-black text-ink truncate">{form.instagram || "—"}</p></div>
+          <div className="rounded-2xl border border-border bg-card p-3"><span className="font-black text-muted">Pix</span><p className="mt-1 font-black text-ink">{form.pixEnabled ? form.pixKey || "Configurado" : "Não"}</p></div>
+          <div className="rounded-2xl border border-border bg-card p-3"><span className="font-black text-muted">Wi-Fi</span><p className="mt-1 font-black text-ink">{form.wifiEnabled ? form.wifiSsid || "Configurado" : "Não"}</p></div>
+          <div className="rounded-2xl border border-border bg-card p-3"><span className="font-black text-muted">Serviços</span><p className="mt-1 font-black text-ink">{form.services.filter(s => s.name).length} cadastrados</p></div>
+          <div className="rounded-2xl border border-border bg-card p-3"><span className="font-black text-muted">Tema</span><p className="mt-1 font-black text-ink">{themeOptions.find(t => t.id === form.themeId)?.label}</p></div>
         </div>
         {error && <p className="rounded-2xl bg-red-50 p-4 text-sm font-bold text-red-700">{error}</p>}
       </div>
@@ -568,43 +568,43 @@ export default function OnboardingPage() {
     <DashboardShell>
       <div className="mx-auto max-w-2xl">
         <div className="mb-6">
-          <h1 className="text-2xl font-black text-slate-950">Criar bio site para cliente</h1>
-          <p className="mt-1 text-sm text-slate-500">Preencha com as informações do cliente. Você pode editar qualquer detalhe depois.</p>
+          <h1 className="text-2xl font-black text-ink">Criar bio site para cliente</h1>
+          <p className="mt-1 text-sm text-muted">Preencha com as informações do cliente. Você pode editar qualquer detalhe depois.</p>
         </div>
 
         {/* Progress */}
         <div className="mb-6 flex items-center gap-2 overflow-x-auto pb-1">
           {steps.map((s, i) => (
             <div key={s} className="flex items-center gap-2 shrink-0">
-              <div className={"flex h-7 w-7 items-center justify-center rounded-full text-xs font-black " + (i < step ? "bg-[#31c4a8] text-white" : i === step ? "bg-slate-900 text-white" : "bg-slate-200 text-slate-500")}>
+              <div className={"flex h-7 w-7 items-center justify-center rounded-full text-xs font-black " + (i < step ? "bg-accent text-white" : i === step ? "bg-ink text-white" : "bg-border text-muted")}>
                 {i < step ? <Check className="h-3.5 w-3.5" /> : i + 1}
               </div>
-              <span className={"text-xs font-black " + (i === step ? "text-slate-900" : "text-slate-400")}>{s}</span>
-              {i < steps.length - 1 && <div className="h-px w-4 bg-slate-200" />}
+              <span className={"text-xs font-black " + (i === step ? "text-ink" : "text-muted")}>{s}</span>
+              {i < steps.length - 1 && <div className="h-px w-4 bg-border" />}
             </div>
           ))}
         </div>
 
         {/* Content */}
-        <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-lg font-black text-slate-900">{steps[step]}</h2>
+        <div className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
+          <h2 className="mb-5 text-lg font-black text-ink">{steps[step]}</h2>
           {stepContent()}
         </div>
 
         {/* Navigation */}
         <div className="mt-5 flex justify-between">
           <button type="button" onClick={() => setStep(s => s - 1)} disabled={step === 0}
-            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700 disabled:opacity-40">
+            className="inline-flex items-center gap-2 rounded-2xl border border-border px-5 py-3 text-sm font-black text-ink disabled:opacity-40">
             <ChevronLeft className="h-4 w-4" /> Voltar
           </button>
           {step < steps.length - 1 ? (
             <button type="button" onClick={() => setStep(s => s + 1)} disabled={!canNext()}
-              className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-black text-white disabled:opacity-40">
+              className="inline-flex items-center gap-2 rounded-2xl bg-ink px-5 py-3 text-sm font-black text-white disabled:opacity-40">
               Próximo <ChevronRight className="h-4 w-4" />
             </button>
           ) : (
             <button type="button" onClick={submit} disabled={saving}
-              className="inline-flex items-center gap-2 rounded-2xl bg-[#31c4a8] px-6 py-3 text-sm font-black text-white disabled:opacity-60">
+              className="inline-flex items-center gap-2 rounded-2xl bg-accent px-6 py-3 text-sm font-black text-white disabled:opacity-60">
               {saving ? "Criando..." : "Criar bio site"} <Check className="h-4 w-4" />
             </button>
           )}

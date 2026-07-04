@@ -61,36 +61,36 @@ export default function ClientesPage() {
     <DashboardShell>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#31c4a8]">Clientes</p>
-          <h1 className="mt-1 text-4xl font-black text-slate-950">Acessos dos clientes</h1>
-          <p className="mt-1 text-sm text-slate-500">Entregue para cada cliente o usuário e a chave de acesso da página dele.</p>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-accent">Clientes</p>
+          <h1 className="mt-1 text-4xl font-black text-ink">Acessos dos clientes</h1>
+          <p className="mt-1 text-sm text-muted">Entregue para cada cliente o usuário e a chave de acesso da página dele.</p>
         </div>
-        <Link href="/app/novo" className="inline-flex items-center gap-2 rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#25b69a]">
+        <Link href="/app/novo" className="inline-flex items-center gap-2 rounded-2xl bg-accent px-5 py-3 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-accent-dim">
           <Plus className="h-4 w-4" /> Novo cliente
         </Link>
       </div>
 
-      <div className="mt-6 rounded-[2rem] border border-slate-100 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-100 p-4">
-          <p className="flex items-center gap-2 text-sm font-black text-slate-700">
-            <Users className="h-4 w-4 text-[#31c4a8]" />{filtered.length} cliente{filtered.length !== 1 ? "s" : ""}
+      <div className="mt-6 rounded-[2rem] border border-border bg-card shadow-sm">
+        <div className="flex items-center justify-between border-b border-border p-4">
+          <p className="flex items-center gap-2 text-sm font-black text-ink">
+            <Users className="h-4 w-4 text-accent" />{filtered.length} cliente{filtered.length !== 1 ? "s" : ""}
           </p>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar cliente..." className="rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-sm outline-none focus:border-[#31c4a8]" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar cliente..." className="rounded-xl border border-border bg-surface py-2 pl-9 pr-4 text-sm outline-none focus:border-accent" />
           </div>
         </div>
 
         {filtered.length === 0 ? (
           <div className="p-12 text-center">
-            <Users className="mx-auto h-10 w-10 text-slate-300" />
-            <p className="mt-3 font-black text-slate-400">Nenhum bio site encontrado</p>
-            <Link href="/app/novo" className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white">
+            <Users className="mx-auto h-10 w-10 text-muted" />
+            <p className="mt-3 font-black text-muted">Nenhum bio site encontrado</p>
+            <Link href="/app/novo" className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-accent px-5 py-3 text-sm font-black text-white">
               <Plus className="h-4 w-4" /> Criar primeiro bio site
             </Link>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-border">
             {filtered.map((site) => {
               const publicUrl = `${origin}${createPublicUrl(site.slug)}`;
               const editUrl = `${origin}${createEditUrl(site.slug)}`;
@@ -98,26 +98,26 @@ export default function ClientesPage() {
               return (
                 <div key={site.id} className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-100 text-lg font-black text-slate-400">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-surface text-lg font-black text-muted">
                       {site.profile.logoUrl ? <img src={site.profile.logoUrl} alt={site.profile.name} className="h-full w-full object-cover" /> : site.profile.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-black text-slate-900">{site.profile.name}</p>
-                      <p className="text-xs text-slate-400">Usuário: <span className="font-mono font-bold text-slate-600">{site.slug}</span></p>
-                      <p className="text-xs text-slate-400"><KeyRound className="mr-1 inline h-3 w-3" /><span className="font-mono font-bold text-slate-600">{site.editKey}</span></p>
+                      <p className="font-black text-ink">{site.profile.name}</p>
+                      <p className="text-xs text-muted">Usuário: <span className="font-mono font-bold text-ink">{site.slug}</span></p>
+                      <p className="text-xs text-muted"><KeyRound className="mr-1 inline h-3 w-3" /><span className="font-mono font-bold text-ink">{site.editKey}</span></p>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <button onClick={() => copy(accessMsg, `acesso-${site.id}`)} className="inline-flex items-center gap-2 rounded-2xl bg-[#31c4a8] px-4 py-2.5 text-xs font-black text-white transition hover:bg-[#25b69a]">
+                    <button onClick={() => copy(accessMsg, `acesso-${site.id}`)} className="inline-flex items-center gap-2 rounded-2xl bg-accent px-4 py-2.5 text-xs font-black text-white transition hover:bg-accent-dim">
                       {copied === `acesso-${site.id}` ? "✓ Copiado" : "↗ Copiar acesso"}
                     </button>
-                    <button onClick={() => copy(site.editKey, `chave-${site.id}`)} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-700 transition hover:border-[#31c4a8]">
+                    <button onClick={() => copy(site.editKey, `chave-${site.id}`)} className="inline-flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-2.5 text-xs font-black text-ink transition hover:border-accent">
                       <Copy className="h-3.5 w-3.5" />{copied === `chave-${site.id}` ? "Copiada!" : "Copiar chave"}
                     </button>
-                    <Link href={editUrl} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-700 transition hover:border-slate-300">
+                    <Link href={editUrl} className="inline-flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-2.5 text-xs font-black text-ink transition hover:border-accent">
                       <Edit3 className="h-3.5 w-3.5" />Editar
                     </Link>
-                    <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-700 transition hover:border-slate-300">
+                    <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-2.5 text-xs font-black text-ink transition hover:border-accent">
                       <ExternalLink className="h-3.5 w-3.5" />Abrir
                     </a>
                     <button onClick={() => deleteSite(site.slug)} disabled={deleting === site.slug} className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-black text-red-600 transition hover:bg-red-100 disabled:opacity-50">

@@ -135,52 +135,52 @@ export default function ConfiguracoesPage() {
   return (
     <DashboardShell>
       <div>
-        <p className="text-sm font-black uppercase tracking-[0.18em] text-[#31c4a8]">Configurações</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight md:text-5xl">Configurações</h1>
-        <p className="mt-2 max-w-2xl text-slate-500">Conta, plano, integrações e dados da sua conta TOQY.</p>
+        <p className="text-sm font-black uppercase tracking-[0.18em] text-accent">Configurações</p>
+        <h1 className="mt-2 text-3xl font-black tracking-tight md:text-5xl text-ink">Configurações</h1>
+        <p className="mt-2 max-w-2xl text-muted">Conta, plano, integrações e dados da sua conta TOQY.</p>
       </div>
 
       <div className="mt-7 grid gap-5 lg:grid-cols-2">
-        <section className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
+        <section className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-[#31c4a8]"><UserRound className="h-5 w-5" /></span>
-              <h2 className="text-xl font-black">Conta</h2>
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/10 text-accent"><UserRound className="h-5 w-5" /></span>
+              <h2 className="text-xl font-black text-ink">Conta</h2>
             </div>
-            <button onClick={handleLogout} className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-black text-slate-700 transition hover:border-indigo-200 hover:text-indigo-700">
+            <button onClick={handleLogout} className="inline-flex items-center gap-2 rounded-2xl border border-border px-4 py-2 text-sm font-black text-ink transition hover:border-violet/30 hover:text-violet">
               <LogOut className="h-4 w-4" />
               Sair
             </button>
           </div>
           <dl className="mt-5 grid gap-3 text-sm">
-            <div className="flex items-center justify-between"><dt className="font-bold text-slate-500">Nome</dt><dd className="font-black">{loading ? "Carregando..." : displayName}</dd></div>
-            <div className="flex items-center justify-between"><dt className="font-bold text-slate-500">E-mail</dt><dd className="font-black">{loading ? "Carregando..." : displayEmail}</dd></div>
-            <div className="flex items-center justify-between"><dt className="font-bold text-slate-500">Páginas criadas</dt><dd className="font-black">{count}</dd></div>
+            <div className="flex items-center justify-between"><dt className="font-bold text-muted">Nome</dt><dd className="font-black text-ink">{loading ? "Carregando..." : displayName}</dd></div>
+            <div className="flex items-center justify-between"><dt className="font-bold text-muted">E-mail</dt><dd className="font-black text-ink">{loading ? "Carregando..." : displayEmail}</dd></div>
+            <div className="flex items-center justify-between"><dt className="font-bold text-muted">Páginas criadas</dt><dd className="font-black text-ink">{count}</dd></div>
           </dl>
         </section>
 
-        <section className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-black">Plano atual</h2>
-          <p className="mt-2 text-sm text-slate-500">Acompanhe seu plano, assinatura e uso atual de biosites.</p>
+        <section className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
+          <h2 className="text-xl font-black text-ink">Plano atual</h2>
+          <p className="mt-2 text-sm text-muted">Acompanhe seu plano, assinatura e uso atual de biosites.</p>
           <div className="mt-4 rounded-2xl bg-emerald-50 p-4">
             <p className="text-2xl font-black text-emerald-950">{loading ? "Carregando..." : planLabel}</p>
             <p className="text-sm font-bold text-emerald-800">Status da assinatura: {loading ? "Carregando..." : subscriptionLabel}</p>
           </div>
-          <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-4">
-            <div className="flex items-center justify-between gap-3 text-sm font-bold text-slate-600">
+          <div className="mt-4 rounded-2xl border border-border bg-surface p-4">
+            <div className="flex items-center justify-between gap-3 text-sm font-bold text-muted">
               <span>Biosites criados</span>
               <span>{count} / {planLimit}</span>
             </div>
-            <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200">
-              <div className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-emerald-500 transition-all" style={{ width: `${usagePercentage}%` }} />
+            <div className="mt-3 h-3 overflow-hidden rounded-full bg-border">
+              <div className="h-full rounded-full bg-gradient-to-r from-accent to-violet transition-all" style={{ width: `${usagePercentage}%` }} />
             </div>
-            <p className="mt-3 text-sm text-slate-500">{Math.round(usagePercentage)}% do limite do plano utilizado.</p>
+            <p className="mt-3 text-sm text-muted">{Math.round(usagePercentage)}% do limite do plano utilizado.</p>
           </div>
           {planTier === "free" ? (
-            <div className="mt-4 rounded-2xl border border-indigo-200 bg-indigo-50 p-4">
-              <p className="text-base font-black text-indigo-900">Faça upgrade para criar mais biosites!</p>
-              <p className="mt-1 text-sm font-medium text-indigo-800">Desbloqueie mais páginas e recursos avançados para sua conta.</p>
-              <Link href="/#planos" className="mt-4 inline-flex rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-black text-white transition hover:bg-indigo-700">Ver planos</Link>
+            <div className="mt-4 rounded-2xl border border-violet/20 bg-violet/10 p-4">
+              <p className="text-base font-black text-ink">Faça upgrade para criar mais biosites!</p>
+              <p className="mt-1 text-sm font-medium text-muted">Desbloqueie mais páginas e recursos avançados para sua conta.</p>
+              <Link href="/#planos" className="mt-4 inline-flex rounded-2xl bg-violet px-5 py-3 text-sm font-black text-white transition hover:opacity-90">Ver planos</Link>
             </div>
           ) : null}
           {isNearLimit ? (
@@ -188,19 +188,19 @@ export default function ConfiguracoesPage() {
               Você está próximo do limite do seu plano. Considere fazer upgrade para continuar criando biosites sem bloqueios.
             </div>
           ) : null}
-          <Link href="/#planos" className="mt-4 inline-flex rounded-2xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700 transition hover:border-[#31c4a8] hover:text-[#1f9f87]">Ver todos os planos</Link>
+          <Link href="/#planos" className="mt-4 inline-flex rounded-2xl border border-border px-5 py-3 text-sm font-black text-ink transition hover:border-accent hover:text-accent-dim">Ver todos os planos</Link>
         </section>
 
         {/* Lista de bio sites */}
-        <section className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
+        <section className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-black">Meus bio sites</h2>
-            <Link href="/app/novo" className="inline-flex items-center gap-2 rounded-2xl bg-[#31c4a8] px-4 py-2.5 text-sm font-black text-white hover:bg-[#25b69a]">+ Novo</Link>
+            <h2 className="text-xl font-black text-ink">Meus bio sites</h2>
+            <Link href="/app/novo" className="inline-flex items-center gap-2 rounded-2xl bg-accent px-4 py-2.5 text-sm font-black text-white hover:bg-accent-dim">+ Novo</Link>
           </div>
           {biosites.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 py-10 text-center">
-              <p className="text-sm font-bold text-slate-400">Nenhum bio site criado ainda.</p>
-              <Link href="/app/novo" className="mt-3 inline-flex rounded-2xl bg-[#31c4a8] px-5 py-3 text-sm font-black text-white">Criar primeiro bio site</Link>
+            <div className="rounded-2xl border border-dashed border-border py-10 text-center">
+              <p className="text-sm font-bold text-muted">Nenhum bio site criado ainda.</p>
+              <Link href="/app/novo" className="mt-3 inline-flex rounded-2xl bg-accent px-5 py-3 text-sm font-black text-white">Criar primeiro bio site</Link>
             </div>
           ) : (
             <div className="space-y-3">
@@ -208,16 +208,16 @@ export default function ConfiguracoesPage() {
                 const name = site.name || site.slug;
                 const editKey = site.edit_key_hash || "—";
                 return (
-                  <div key={site.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                  <div key={site.id} className="rounded-2xl border border-border bg-surface p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="font-black text-slate-900 truncate">{name}</p>
-                        <p className="mt-0.5 text-xs font-mono text-slate-500">toqy.com.br/b/<strong>{site.slug}</strong></p>
-                        <p className="mt-0.5 text-xs text-slate-400">Chave: <span className="font-mono font-black text-slate-600">{editKey}</span></p>
+                        <p className="font-black text-ink truncate">{name}</p>
+                        <p className="mt-0.5 text-xs font-mono text-muted">toqy.com.br/b/<strong>{site.slug}</strong></p>
+                        <p className="mt-0.5 text-xs text-muted">Chave: <span className="font-mono font-black text-ink">{editKey}</span></p>
                       </div>
                       <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-                        <Link href={`/b/${site.slug}`} target="_blank" className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-600 hover:border-[#31c4a8]">Ver</Link>
-                        <Link href={`/editar/${site.slug}?key=${editKey}`} className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-600 hover:border-[#31c4a8]">Editar</Link>
+                        <Link href={`/b/${site.slug}`} target="_blank" className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-black text-ink hover:border-accent">Ver</Link>
+                        <Link href={`/editar/${site.slug}?key=${editKey}`} className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-black text-ink hover:border-accent">Editar</Link>
                         {confirmDelete === site.id ? (
                           <div className="flex gap-1">
                             <button onClick={async () => {
@@ -228,10 +228,10 @@ export default function ConfiguracoesPage() {
                               setCount(c => c - 1);
                               setDeletingId(null);
                             }} className="rounded-xl bg-red-500 px-3 py-1.5 text-xs font-black text-white">Confirmar</button>
-                            <button onClick={() => setConfirmDelete(null)} className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-500">Cancelar</button>
+                            <button onClick={() => setConfirmDelete(null)} className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-black text-muted">Cancelar</button>
                           </div>
                         ) : (
-                          <button onClick={() => setConfirmDelete(site.id)} disabled={deletingId === site.id} className="rounded-xl border border-red-200 bg-white px-3 py-1.5 text-xs font-black text-red-500 hover:bg-red-50 disabled:opacity-40">
+                          <button onClick={() => setConfirmDelete(site.id)} disabled={deletingId === site.id} className="rounded-xl border border-red-200 bg-card px-3 py-1.5 text-xs font-black text-red-500 hover:bg-red-50 disabled:opacity-40">
                             {deletingId === site.id ? "..." : "Excluir"}
                           </button>
                         )}
