@@ -231,6 +231,20 @@ export default function ConfiguracoesPage() {
           </div>
         </div>
 
+        {/* LEGAL */}
+        <div className="rounded-[2rem] border border-border bg-card p-6 shadow-sm lg:col-span-2">
+          <h2 className="mb-4 text-xl font-black text-ink">Legal</h2>
+          <div className="flex flex-wrap gap-3 text-sm font-bold text-muted">
+            <Link href="/termos" className="hover:text-accent">Termos de Uso</Link>
+            <span>·</span>
+            <Link href="/privacidade" className="hover:text-accent">Privacidade</Link>
+            <span>·</span>
+            <Link href="/cookies" className="hover:text-accent">Cookies</Link>
+            <span>·</span>
+            <Link href="/contrato-assinatura" className="hover:text-accent">Contrato de Assinatura</Link>
+          </div>
+        </div>
+
       </div>
     </DashboardShell>
   );

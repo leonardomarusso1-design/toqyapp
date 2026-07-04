@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LandingHeader } from "@/components/LandingHeader";
+import { APP_VERSION, BUILD_ID } from "@/lib/appInfo";
 import {
   CalendarCheck,
   Check,
@@ -330,9 +331,24 @@ export default function LandingPage() {
               </ul>
             </div>
           </div>
-          <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-border pt-8 text-xs text-muted sm:flex-row">
-            <p>© {new Date().getFullYear()} TOQY. Todos os direitos reservados.</p>
-            <p>Pagamentos processados com segurança pela <span className="font-bold text-ink/70">Kiwify</span></p>
+          <div className="mt-10 border-t border-border pt-8 text-xs text-muted">
+            <p className="font-bold text-ink">TOQY</p>
+            <p className="mt-1">Um produto de Marusso Produções · Leonardo Marusso · CPF 473.503.798-54 · Indaiatuba - SP</p>
+            <p className="mt-1">leonardomarusso1@gmail.com · (19) 99705-1919</p>
+            <p className="mt-1">
+              Instagram: <a href="https://instagram.com/leomvideomaker" target="_blank" rel="noopener noreferrer" className="hover:text-accent">@leomvideomaker</a>
+              {" "}· YouTube: <a href="https://youtube.com/@leomarussobr" target="_blank" rel="noopener noreferrer" className="hover:text-accent">@leomarussobr</a>
+            </p>
+            <p className="mt-3 flex flex-wrap gap-x-2 gap-y-1">
+              <Link href="/termos" className="hover:text-accent">Termos de Uso</Link> ·
+              <Link href="/privacidade" className="hover:text-accent">Privacidade</Link> ·
+              <Link href="/cookies" className="hover:text-accent">Cookies</Link> ·
+              <Link href="/contrato-assinatura" className="hover:text-accent">Contrato de Assinatura</Link>
+            </p>
+            <div className="mt-4 flex flex-col items-center justify-between gap-2 sm:flex-row">
+              <p>© {new Date().getFullYear()} Marusso Produções. Todos os direitos reservados. · v{APP_VERSION} · build {BUILD_ID}</p>
+              <p>Pagamentos processados com segurança pela <span className="font-bold text-ink/70">Kiwify</span></p>
+            </div>
           </div>
         </div>
       </footer>
