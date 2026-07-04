@@ -1,5 +1,19 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer";
 
+// Verificação leve de autenticidade — OPCIONAL, só entra em vigor se
+// KIWIFY_WEBHOOK_TOKEN estiver configurada (sem isso, comportamento
+// idêntico a antes). Sem essa verificação, qualquer um que descubra a URL
+// pode POSTar um payload fingindo "order_approved" e liberar um plano pago
+// pra qualquer e-mail de graça. Pra ativar: configurar KIWIFY_WEBHOOK_TOKEN
+// nas envs E atualizar a URL do webhook no painel da Kiwify pra incluir
+// "?token=SEU_SEGREDO".
+const KIWIFY_WEBHOOK_TOKEN = process.env.KIWIFY_WEBHOOK_TOKEN;
+
+function isAuthentic(request: Request) {
+  if (!KIWIFY_WEBHOOK_TOKEN) return true;
+  return new URL(request.url).searchParams.get("token") === KIWIFY_WEBHOOK_TOKEN;
+}
+
 function resolvePlan(productName: string): { plan: string; limit: number } | null {
   const n = productName.toLowerCase();
   if (n.includes("comunidade")) return { plan: "community", limit: 20 };
@@ -17,6 +31,8 @@ type KiwifyPayload = {
 };
 
 export async function POST(request: Request) {
+  if (!isAuthentic(request)) return Response.json({ error: "Invalid token" }, { status: 401 });
+
   let body: KiwifyPayload = {};
   try { body = await request.json(); } catch { return Response.json({ error: "Invalid JSON" }, { status: 400 }); }
 

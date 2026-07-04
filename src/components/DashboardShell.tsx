@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
-import { Home, Plus, QrCode, Settings, Users } from "lucide-react";
+import { Home, Menu, Plus, QrCode, Settings, Users, X } from "lucide-react";
 import { LogoutButton } from "@/components/LogoutButton";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -19,6 +19,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [atLimit, setAtLimit] = useState(false);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [userInitial, setUserInitial] = useState("U");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Fecha o drawer mobile automaticamente ao navegar para outra rota
+  useEffect(() => { setSidebarOpen(false); }, [pathname]);
 
   useEffect(() => {
     async function checkLimit() {
@@ -43,12 +47,20 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
   return (
     <main className="min-h-screen bg-bg text-ink lg:grid lg:grid-cols-[260px_1fr]">
-      <aside className="bg-card border-r border-border flex flex-col p-4 lg:min-h-screen">
+      {/* Fundo escuro atrás do menu, só em telas pequenas — clicar fora fecha */}
+      {sidebarOpen ? <div className="fixed inset-0 z-40 bg-ink/50 lg:hidden" onClick={() => setSidebarOpen(false)} /> : null}
+
+      <aside className={`fixed top-0 left-0 z-50 h-screen w-[260px] bg-card border-r border-border flex flex-col p-4 transition-transform duration-200 lg:static lg:h-auto lg:min-h-screen lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-full flex-col">
-          <Link href="/" className="flex items-center gap-3 px-2 py-4">
-            <img src="/brand/favicon-toqy.png" alt="TOQY" className="h-8 w-8 rounded-lg" />
-            <span className="text-xl font-bold tracking-tight text-ink">Toqy</span>
-          </Link>
+          <div className="flex items-center justify-between px-2 py-4">
+            <Link href="/" className="flex items-center gap-3">
+              <img src="/brand/favicon-toqy.png" alt="TOQY" className="h-8 w-8 rounded-lg" />
+              <span className="text-xl font-bold tracking-tight text-ink">Toqy</span>
+            </Link>
+            <button type="button" onClick={() => setSidebarOpen(false)} className="text-muted hover:text-ink lg:hidden" aria-label="Fechar menu">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
           {atLimit ? (
             <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center">
@@ -84,8 +96,11 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex flex-col min-w-0">
-        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 lg:px-8 shadow-sm z-10">
-          <div className="flex items-center gap-2 text-sm font-medium">
+        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 lg:px-8 shadow-sm z-10">
+          <div className="flex items-center gap-3 text-sm font-medium">
+            <button type="button" onClick={() => setSidebarOpen(true)} className="text-ink p-1 -ml-1 lg:hidden" aria-label="Abrir menu">
+              <Menu className="h-5 w-5" />
+            </button>
             <span className="text-ink font-semibold">Meu painel</span>
           </div>
           <div className="flex items-center gap-3">
