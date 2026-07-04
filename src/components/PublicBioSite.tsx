@@ -312,7 +312,7 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
           </header>
 
           <section className="mt-4 grid grid-cols-2 gap-2">
-            <button type="button" onClick={downloadVCard} className={`${radiusClass(site)} flex items-center justify-center gap-2 border px-4 py-3 text-xs font-black backdrop-blur-xl`} style={{ ...glassCard(site), color: col("saveContactText", site.theme.text) }}><Save className="h-4 w-4" />Salvar Contato</button>
+            {site.modules?.saveContact !== false ? <button type="button" onClick={downloadVCard} className={`${radiusClass(site)} flex items-center justify-center gap-2 border px-4 py-3 text-xs font-black backdrop-blur-xl`} style={{ ...glassCard(site), color: col("saveContactText", site.theme.text) }}><Save className="h-4 w-4" />Salvar Contato</button> : null}
             {site.contact.phone ? <button type="button" onClick={() => window.open(`tel:${site.contact.phone.replace(/\D/g, "")}`)} className={`${radiusClass(site)} flex items-center justify-center gap-2 border px-4 py-3 text-xs font-black backdrop-blur-xl`} style={{ ...glassCard(site), color: col("callText", site.theme.text) }}><Phone className="h-4 w-4" />Ligar</button> : null}
           </section>
 

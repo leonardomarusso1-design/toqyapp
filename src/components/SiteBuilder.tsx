@@ -441,6 +441,20 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
         <Section>
           <h2 className="text-2xl font-black text-ink">Pix e Wi-Fi</h2>
           <p className="mt-1 text-sm text-muted">Configure Pix com comprovante e Wi-Fi com check-in/avaliação.</p>
+
+          <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-black text-slate-800">Botão "Salvar Contato"</p>
+                <p className="text-xs text-slate-500 mt-0.5">Aparece no bio site para o cliente salvar o contato na agenda</p>
+              </div>
+              <div className="relative w-10 h-6 shrink-0 ml-3" onClick={() => update((s) => ({ ...s, modules: { ...s.modules, saveContact: !(s.modules?.saveContact ?? true) } }))}>
+                <div className={"w-10 h-6 rounded-full cursor-pointer transition-colors " + ((site.modules?.saveContact ?? true) ? "bg-[#31c4a8]" : "bg-slate-300")} />
+                <div className={"absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform " + ((site.modules?.saveContact ?? true) ? "translate-x-5" : "translate-x-1")} />
+              </div>
+            </div>
+          </div>
+
           <div className="mt-5 grid gap-5 lg:grid-cols-2">
             <div className="rounded-3xl border border-accent/20 bg-accent/5 p-4">
               <div className="flex items-center justify-between mb-4">
