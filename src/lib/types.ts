@@ -181,6 +181,9 @@ export type ToqySite = {
   catalogSubtitle?: string;
   catalogWaLabel?: string;
   showCatalogWhatsapp?: boolean; // false = esconde botão WhatsApp nos items do catálogo
+  showCatalogTitle?: boolean;    // false = esconde o título do catálogo
+  showCatalogSubtitle?: boolean; // false = esconde o subtítulo do catálogo
+  showCatalogAction?: boolean;   // false = esconde o botão "Ver" nos items do catálogo
   promoCard?: { enabled: boolean; title: string; description: string; buttonLabel: string; };
   modules: {
     saveContact: boolean;

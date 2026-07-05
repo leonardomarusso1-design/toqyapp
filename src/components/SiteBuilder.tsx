@@ -582,8 +582,26 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
 
           {/* Titulo e subtitulo do catalogo */}
           <div className="mt-4 grid gap-3 rounded-3xl border border-border bg-surface p-4 md:grid-cols-2">
-            <label><span className={label}>Título do catálogo</span><input className={field} placeholder="Nossos serviços" value={site.catalogTitle ?? ""} onChange={(e) => update((s) => ({ ...s, catalogTitle: e.target.value }))} /></label>
-            <label><span className={label}>Subtítulo</span><input className={field} placeholder="Selecionados para você..." value={site.catalogSubtitle ?? ""} onChange={(e) => update((s) => ({ ...s, catalogSubtitle: e.target.value }))} /></label>
+            <label>
+              <div className="flex items-center justify-between">
+                <span className={label}>Título do catálogo</span>
+                <div className="relative w-10 h-6 shrink-0 ml-3" onClick={() => update((s) => ({ ...s, showCatalogTitle: !(s.showCatalogTitle ?? true) }))}>
+                  <div className={"w-10 h-6 rounded-full cursor-pointer transition-colors " + ((site.showCatalogTitle ?? true) ? "bg-accent" : "bg-border")} />
+                  <div className={"absolute top-1 h-4 w-4 rounded-full bg-card shadow transition-transform " + ((site.showCatalogTitle ?? true) ? "translate-x-5" : "translate-x-1")} />
+                </div>
+              </div>
+              <input className={field} placeholder="Nossos serviços" value={site.catalogTitle ?? ""} onChange={(e) => update((s) => ({ ...s, catalogTitle: e.target.value }))} />
+            </label>
+            <label>
+              <div className="flex items-center justify-between">
+                <span className={label}>Subtítulo</span>
+                <div className="relative w-10 h-6 shrink-0 ml-3" onClick={() => update((s) => ({ ...s, showCatalogSubtitle: !(s.showCatalogSubtitle ?? true) }))}>
+                  <div className={"w-10 h-6 rounded-full cursor-pointer transition-colors " + ((site.showCatalogSubtitle ?? true) ? "bg-accent" : "bg-border")} />
+                  <div className={"absolute top-1 h-4 w-4 rounded-full bg-card shadow transition-transform " + ((site.showCatalogSubtitle ?? true) ? "translate-x-5" : "translate-x-1")} />
+                </div>
+              </div>
+              <input className={field} placeholder="Selecionados para você..." value={site.catalogSubtitle ?? ""} onChange={(e) => update((s) => ({ ...s, catalogSubtitle: e.target.value }))} />
+            </label>
           </div>
 
           {/* Layout do catalogo - multipla selecao */}
@@ -687,6 +705,16 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
               <div className="relative w-10 h-6 shrink-0 ml-3" onClick={() => update((s) => ({ ...s, showCatalogWhatsapp: !(s.showCatalogWhatsapp ?? true) }))}>
                 <div className={"w-10 h-6 rounded-full cursor-pointer transition-colors " + ((site.showCatalogWhatsapp ?? true) ? "bg-accent" : "bg-border")} />
                 <div className={"absolute top-1 h-4 w-4 rounded-full bg-card shadow transition-transform " + ((site.showCatalogWhatsapp ?? true) ? "translate-x-5" : "translate-x-1")} />
+              </div>
+            </label>
+            <label className="flex items-center justify-between">
+              <div>
+                <span className="text-sm font-black text-ink">Botão &quot;Ver&quot; nos itens</span>
+                <p className="text-xs text-muted">Botão de ação em cada card do catálogo</p>
+              </div>
+              <div className="relative w-10 h-6 shrink-0 ml-3" onClick={() => update((s) => ({ ...s, showCatalogAction: !(s.showCatalogAction ?? true) }))}>
+                <div className={"w-10 h-6 rounded-full cursor-pointer transition-colors " + ((site.showCatalogAction ?? true) ? "bg-accent" : "bg-border")} />
+                <div className={"absolute top-1 h-4 w-4 rounded-full bg-card shadow transition-transform " + ((site.showCatalogAction ?? true) ? "translate-x-5" : "translate-x-1")} />
               </div>
             </label>
             <div>
