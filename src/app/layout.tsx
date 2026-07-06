@@ -28,7 +28,7 @@ const siteUrl =
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "TOQY",
+  title: "TOQY - Biosites Profissionais",
   description: "Bio sites profissionais para QR Code, NFC, Pix e Wi-Fi.",
   icons: {
     icon: "/favicon.png",

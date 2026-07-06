@@ -107,32 +107,19 @@ export default async function LandingPage() {
 
   return (
     <main className="min-h-screen bg-bg text-ink">
-      {/* Barra de anúncio animada (estilo mypostflow) */}
+      {/* Barra de anúncio (estática) */}
       <div className="bg-ink text-white">
-        <div className="marquee-group overflow-hidden">
-          <div className="marquee marquee-left py-2.5">
-            {[...Array(2)].map((_, dup) => (
-              <div key={dup} className="flex items-center">
-                {[
-                  "Toqy cria biosites premium para empresas, lojas e profissionais em minutos.",
-                  "Venda biosites como renda extra e entregue páginas mais rápido.",
-                  "Mais conversão. Mais presença. Mais profissionalismo para o seu cliente.",
-                  "QR Code, NFC, Pix, Wi-Fi e catálogo em uma página só.",
-                ].map((t, i) => (
-                  <span key={`${dup}-${i}`} className="mx-8 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em]">
-                    <Sparkles className="h-3.5 w-3.5 text-accent" /> {t}
-                  </span>
-                ))}
-              </div>
-            ))}
-          </div>
+        <div className="flex items-center justify-center px-4 py-2.5 text-center">
+          <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em]">
+            <Sparkles className="h-3.5 w-3.5 text-accent" /> Toqy cria biosites premium para empresas, lojas e profissionais em minutos.
+          </span>
         </div>
       </div>
 
       <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
           <Link href="/" className="flex items-center gap-3">
-            <img src="/brand/logo-toqy-horizontal-dark.png" alt="TOQY" className="h-11 w-auto object-contain" />
+            <img src="/brand/logo-toqy-horizontal-dark.png" alt="TOQY" className="h-14 w-auto object-contain md:h-16" />
           </Link>
           <nav className="hidden items-center gap-9 text-sm font-semibold text-muted md:flex">
             <a className="transition hover:text-accent" href="#video">Vídeo</a>
@@ -382,6 +369,11 @@ export default async function LandingPage() {
             </article>
           ))}
         </div>
+        <img
+          src="/images/landing-recursos-infographic.png"
+          alt="Por que um bio site profissional importa"
+          className="card-glow mt-10 w-full rounded-[2rem] border border-border object-cover shadow-sm"
+        />
       </section>
 
       {/* SHOWCASE */}

@@ -23,21 +23,33 @@ export const SHOWCASE_SLUGS = [
   "studio-jessica-fernanda",
 ] as const;
 
-/** Busca os biosites reais (batch único) para exibição — nunca escreve nada. */
+/**
+ * Busca os biosites reais para exibição — nunca escreve nada.
+ *
+ * Uma query única com `.in(slug, [...12 valores])` estoura o statement
+ * timeout do Postgres (alguns desses biosites têm imagens em base64
+ * embutidas no JSONB `site_data`, então buscar os 12 de uma vez fica pesado
+ * demais). Em vez disso, busca cada slug em paralelo — mesmo padrão já usado
+ * (e comprovadamente rápido) em `/api/biosites/[slug]`.
+ */
 export async function getShowcaseSites(): Promise<ToqySite[]> {
   if (!hasSupabaseEnv()) return [];
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 
-  const { data, error } = await supabase
-    .from("toqy_biosites")
-    .select("site_data")
-    .in("slug", SHOWCASE_SLUGS)
-    .eq("status", "active");
+  const results = await Promise.all(
+    SHOWCASE_SLUGS.map((slug) =>
+      supabase
+        .from("toqy_biosites")
+        .select("site_data")
+        .eq("slug", slug)
+        .eq("status", "active")
+        .maybeSingle()
+    )
+  );
 
-  if (error || !data) return [];
-  return data
-    .map((row) => row.site_data as ToqySite | null)
+  return results
+    .map((result) => (result.error ? null : (result.data?.site_data as ToqySite | undefined)))
     .filter((site): site is ToqySite => Boolean(site));
 }
 
