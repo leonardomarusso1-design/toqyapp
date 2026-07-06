@@ -35,9 +35,9 @@ export const metadata: Metadata = {
     apple: "/brand/favicon-toqy.png",
   },
   openGraph: {
-    title: "Toqy",
+    title: "TOQY - Biosites Profissionais",
     description: "Bio sites profissionais para QR Code, NFC e plaquinhas.",
-    images: ["/images/landing-hero-toqy.png"],
+    images: [{ url: "/images/og-image.png", width: 1200, height: 630, alt: "TOQY - Biosites profissionais" }],
   },
 };
 

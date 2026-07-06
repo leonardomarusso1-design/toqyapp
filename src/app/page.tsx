@@ -3,7 +3,6 @@ import { LandingHeader } from "@/components/LandingHeader";
 import { LandingBioSiteCard } from "@/components/LandingBioSiteCard";
 import { APP_VERSION, BUILD_ID } from "@/lib/appInfo";
 import { getShowcaseSummaries } from "@/lib/realTemplates";
-import { segmentOptions } from "@/lib/segmentTemplates";
 import {
   ArrowRight,
   Building2,
@@ -96,15 +95,8 @@ const steps = [
   { n: "3", title: "Publique e venda", text: "Compartilhe por QR Code, NFC ou link. O cliente edita quando quiser com a chave.", image: "/images/landing-step-publique-venda.png" },
 ] as const;
 
-const SEGMENT_LABELS = Object.fromEntries(segmentOptions.map((item) => [item.value, item.label])) as Record<string, string>;
-
 export default async function LandingPage() {
   const showcaseSummaries = await getShowcaseSummaries();
-  const showcaseBySegment = showcaseSummaries.reduce<Record<string, typeof showcaseSummaries>>((acc, summary) => {
-    const key = summary.segment || "outro";
-    acc[key] = [...(acc[key] ?? []), summary];
-    return acc;
-  }, {});
 
   return (
     <main className="min-h-screen bg-bg text-ink">
@@ -279,11 +271,11 @@ export default async function LandingPage() {
                 <h3 className="mt-4 text-xl font-bold text-ink">{s.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted">{s.text}</p>
                 {s.image ? (
-                  <div className="mt-5 flex h-56 w-full items-center justify-center rounded-2xl bg-bg p-3">
+                  <div className="mt-5 flex h-72 w-full items-center justify-center rounded-2xl bg-bg p-3">
                     <img src={s.image} alt={s.title} className="max-h-full max-w-full rounded-lg object-contain" />
                   </div>
                 ) : (
-                  <div className="mt-5 flex h-56 w-full items-center justify-center rounded-2xl border-2 border-dashed border-border bg-surface text-xs font-semibold text-muted">
+                  <div className="mt-5 flex h-72 w-full items-center justify-center rounded-2xl border-2 border-dashed border-border bg-surface text-xs font-semibold text-muted">
                     Espaço para imagem
                   </div>
                 )}
@@ -483,18 +475,19 @@ export default async function LandingPage() {
             <Link href="/login" className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-bold text-white transition hover:bg-ink/80"><Plus className="h-4 w-4" />Novo bio site</Link>
           </div>
 
-          {Object.keys(showcaseBySegment).length ? (
-            <div className="mt-10 space-y-10">
-              {Object.entries(showcaseBySegment).map(([segment, sites]) => (
-                <div key={segment}>
-                  <h3 className="text-lg font-black text-ink">{SEGMENT_LABELS[segment] ?? "Outros negócios"}</h3>
-                  <div className="mt-5 flex gap-5 overflow-x-auto pb-4 snap-x" style={{ scrollbarWidth: "none" }}>
-                    {sites.map((summary) => (
-                      <LandingBioSiteCard key={summary.slug} slug={summary.slug} publicUrl={`https://www.toqy.com.br/b/${summary.slug}`} />
+          {showcaseSummaries.length ? (
+            <div className="marquee-group relative mt-10 overflow-hidden py-2">
+              <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-16 bg-gradient-to-r from-card to-transparent" />
+              <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-16 bg-gradient-to-l from-card to-transparent" />
+              <div className="marquee marquee-left gap-5">
+                {[...Array(2)].map((_, dup) => (
+                  <div key={dup} className="flex shrink-0 items-center gap-5">
+                    {showcaseSummaries.map((summary) => (
+                      <LandingBioSiteCard key={`${dup}-${summary.slug}`} slug={summary.slug} publicUrl={`https://www.toqy.com.br/b/${summary.slug}`} />
                     ))}
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           ) : null}
 

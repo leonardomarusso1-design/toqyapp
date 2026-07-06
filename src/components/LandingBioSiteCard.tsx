@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import type { ToqySite } from "@/lib/types";
+import { fetchShowcaseSite } from "@/lib/showcaseSiteCache";
 import { PublicBioSite } from "./PublicBioSite";
 import { PhoneMockup } from "./PhoneMockup";
 
@@ -12,13 +13,15 @@ import { PhoneMockup } from "./PhoneMockup";
 // ISR na Vercel uma vez: 36MB numa página só).
 export function LandingBioSiteCard({ slug, publicUrl }: { slug: string; publicUrl: string }) {
   const [site, setSite] = useState<ToqySite | null>(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/biosites/${slug}`)
-      .then((res) => res.json())
-      .then((data: { site?: ToqySite }) => { if (!cancelled) setSite(data.site ?? null); })
-      .catch(() => { if (!cancelled) setSite(null); });
+    fetchShowcaseSite(slug).then((result) => {
+      if (cancelled) return;
+      if (result) setSite(result);
+      else setFailed(true);
+    });
     return () => { cancelled = true; };
   }, [slug]);
 
@@ -28,8 +31,12 @@ export function LandingBioSiteCard({ slug, publicUrl }: { slug: string; publicUr
         {site ? (
           <PublicBioSite site={site} publicUrl={publicUrl} instanceId={slug} />
         ) : (
-          <div className="flex h-full items-center justify-center bg-ink/40">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+          <div className="flex h-full items-center justify-center bg-ink/40 px-4 text-center">
+            {failed ? (
+              <p className="text-xs font-semibold text-white/70">Não foi possível carregar o preview</p>
+            ) : (
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            )}
           </div>
         )}
       </PhoneMockup>
