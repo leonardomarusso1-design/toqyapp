@@ -4,7 +4,7 @@
  *
  * Somente leitura: nunca grava nada nos 12 biosites reais listados abaixo.
  */
-import type { ToqyButton, ToqySite } from "./types";
+import type { Segment, ToqyButton, ToqySite } from "./types";
 import { getSupabaseAdmin, hasSupabaseEnv } from "./supabaseServer";
 import { generateEditKey, generateId, generateSlug } from "./security";
 
@@ -23,6 +23,31 @@ export const SHOWCASE_SLUGS = [
   "studio-jessica-fernanda",
 ] as const;
 
+export type ShowcaseSummary = { slug: string; segment: Segment };
+
+/**
+ * Busca só slug+segmento (leve) — usado pela landing page pra montar os
+ * grupos por categoria sem embutir os 12 site_data completos (com imagens em
+ * base64) na página estática. Cada card busca o próprio conteúdo completo
+ * depois, no navegador (ver LandingBioSiteCard).
+ */
+export async function getShowcaseSummaries(): Promise<ShowcaseSummary[]> {
+  if (!hasSupabaseEnv()) return [];
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("toqy_biosites")
+    .select("slug, segment:site_data->>segment")
+    .in("slug", SHOWCASE_SLUGS)
+    .eq("status", "active");
+
+  if (error || !data) return [];
+  return data
+    .filter((row): row is { slug: string; segment: string } => Boolean(row.slug && row.segment))
+    .map((row) => ({ slug: row.slug, segment: row.segment as Segment }));
+}
+
 const BATCH_SIZE = 3;
 
 async function fetchBySlug(
@@ -40,7 +65,9 @@ async function fetchBySlug(
 }
 
 /**
- * Busca os biosites reais para exibição — nunca escreve nada.
+ * Busca os biosites reais completos (com imagens) — usado pela galeria de
+ * templates do editor via /api/real-templates (rota dinâmica, não faz parte
+ * da página estática, então não tem o limite de tamanho de página do ISR).
  *
  * Uma query única com `.in(slug, [...12 valores])` estoura o statement
  * timeout do Postgres (alguns desses biosites têm imagens em base64
@@ -69,6 +96,14 @@ export async function getShowcaseSites(): Promise<ToqySite[]> {
   }
 
   return SHOWCASE_SLUGS.map((slug) => bySlug.get(slug)).filter((site): site is ToqySite => Boolean(site));
+}
+
+/** Busca UM biosite real completo por slug — usado por cada card da landing, no navegador. */
+export async function getShowcaseSiteBySlug(slug: string): Promise<ToqySite | null> {
+  if (!hasSupabaseEnv()) return null;
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+  return fetchBySlug(supabase, slug);
 }
 
 // Tipos de botão cujo `url` é um valor literal próprio do dono original (não

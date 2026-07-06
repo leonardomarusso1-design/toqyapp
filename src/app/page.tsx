@@ -2,7 +2,7 @@ import Link from "next/link";
 import { LandingHeader } from "@/components/LandingHeader";
 import { LandingBioSiteCard } from "@/components/LandingBioSiteCard";
 import { APP_VERSION, BUILD_ID } from "@/lib/appInfo";
-import { getShowcaseSites } from "@/lib/realTemplates";
+import { getShowcaseSummaries } from "@/lib/realTemplates";
 import { segmentOptions } from "@/lib/segmentTemplates";
 import {
   ArrowRight,
@@ -99,10 +99,10 @@ const steps = [
 const SEGMENT_LABELS = Object.fromEntries(segmentOptions.map((item) => [item.value, item.label])) as Record<string, string>;
 
 export default async function LandingPage() {
-  const showcaseSites = await getShowcaseSites();
-  const showcaseBySegment = showcaseSites.reduce<Record<string, typeof showcaseSites>>((acc, site) => {
-    const key = site.segment || "outro";
-    acc[key] = [...(acc[key] ?? []), site];
+  const showcaseSummaries = await getShowcaseSummaries();
+  const showcaseBySegment = showcaseSummaries.reduce<Record<string, typeof showcaseSummaries>>((acc, summary) => {
+    const key = summary.segment || "outro";
+    acc[key] = [...(acc[key] ?? []), summary];
     return acc;
   }, {});
 
@@ -489,8 +489,8 @@ export default async function LandingPage() {
                 <div key={segment}>
                   <h3 className="text-lg font-black text-ink">{SEGMENT_LABELS[segment] ?? "Outros negócios"}</h3>
                   <div className="mt-5 flex gap-5 overflow-x-auto pb-4 snap-x" style={{ scrollbarWidth: "none" }}>
-                    {sites.map((site) => (
-                      <LandingBioSiteCard key={site.slug} site={site} publicUrl={`https://www.toqy.com.br/b/${site.slug}`} />
+                    {sites.map((summary) => (
+                      <LandingBioSiteCard key={summary.slug} slug={summary.slug} publicUrl={`https://www.toqy.com.br/b/${summary.slug}`} />
                     ))}
                   </div>
                 </div>
