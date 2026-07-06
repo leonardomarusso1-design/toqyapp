@@ -58,40 +58,64 @@ export type TemplatePreview = {
   mode: "dark" | "light";
 };
 
+const BATCH_SIZE = 3;
+
+async function fetchPreviewBySlug(
+  supabase: NonNullable<ReturnType<typeof getSupabaseAdmin>>,
+  slug: string
+): Promise<TemplatePreview | null> {
+  const { data, error } = await supabase
+    .from("toqy_biosites")
+    .select(
+      "slug, segment:site_data->>segment, name:site_data->profile->>name, photo:site_data->profile->>profileImageUrl, logo:site_data->profile->>logoUrl, primary:site_data->theme->>primary, background:site_data->theme->>background, mode:site_data->theme->>mode"
+    )
+    .eq("slug", slug)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (error || !data || !data.segment) return null;
+  return {
+    slug: data.slug,
+    segment: data.segment as Segment,
+    name: data.name || data.slug || "",
+    photo: data.photo || data.logo || "",
+    primary: data.primary || "#ff4d6d",
+    background: data.background || "#f7f5f1",
+    mode: (data.mode === "dark" ? "dark" : "light") as "dark" | "light",
+  };
+}
+
 /**
  * Busca um resumo "visual" leve (nome + foto + cores do tema) pra galeria de
  * templates do editor — o suficiente pra montar um card estático (não a
  * preview interativa completa, que era lenta e às vezes falhava com várias
- * instâncias simultâneas). Ainda numa query só, sem N+1.
+ * instâncias simultâneas).
+ *
+ * Mesmo extraindo só campos leves, uma query única com `.in()` pra várias
+ * colunas JSON calculadas ainda estourou o statement timeout (o Postgres
+ * precisa percorrer o JSONB inteiro — que pode ter imagens grandes em outros
+ * campos — uma vez por caminho extraído, vezes 12 linhas). Busca em lotes
+ * pequenos, como getShowcaseSites().
  */
 export async function getTemplatePreviews(): Promise<TemplatePreview[]> {
   if (!hasSupabaseEnv()) return [];
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 
-  const { data, error } = await supabase
-    .from("toqy_biosites")
-    .select(
-      "slug, segment:site_data->>segment, name:site_data->profile->>name, photo:site_data->profile->>profileImageUrl, logo:site_data->profile->>logoUrl, primary:site_data->theme->>primary, background:site_data->theme->>background, mode:site_data->theme->>mode"
-    )
-    .in("slug", SHOWCASE_SLUGS)
-    .eq("status", "active");
+  const bySlug = new Map<string, TemplatePreview | null>();
 
-  if (error || !data) return [];
-  return data
-    .filter((row) => Boolean(row.slug && row.segment))
-    .map((row) => ({
-      slug: row.slug as string,
-      segment: row.segment as Segment,
-      name: row.name || row.slug || "",
-      photo: row.photo || row.logo || "",
-      primary: row.primary || "#ff4d6d",
-      background: row.background || "#f7f5f1",
-      mode: (row.mode === "dark" ? "dark" : "light") as "dark" | "light",
-    }));
+  for (let i = 0; i < SHOWCASE_SLUGS.length; i += BATCH_SIZE) {
+    const batch = SHOWCASE_SLUGS.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(batch.map((slug) => fetchPreviewBySlug(supabase, slug)));
+    batch.forEach((slug, index) => bySlug.set(slug, results[index]));
+  }
+
+  for (const [slug, preview] of bySlug) {
+    if (!preview) bySlug.set(slug, await fetchPreviewBySlug(supabase, slug));
+  }
+
+  return SHOWCASE_SLUGS.map((slug) => bySlug.get(slug)).filter((preview): preview is TemplatePreview => Boolean(preview));
 }
-
-const BATCH_SIZE = 3;
 
 async function fetchBySlug(
   supabase: NonNullable<ReturnType<typeof getSupabaseAdmin>>,
