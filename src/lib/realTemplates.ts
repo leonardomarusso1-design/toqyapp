@@ -23,34 +23,52 @@ export const SHOWCASE_SLUGS = [
   "studio-jessica-fernanda",
 ] as const;
 
+const BATCH_SIZE = 3;
+
+async function fetchBySlug(
+  supabase: NonNullable<ReturnType<typeof getSupabaseAdmin>>,
+  slug: string
+): Promise<ToqySite | null> {
+  const { data, error } = await supabase
+    .from("toqy_biosites")
+    .select("site_data")
+    .eq("slug", slug)
+    .eq("status", "active")
+    .maybeSingle();
+  if (error) return null;
+  return (data?.site_data as ToqySite | undefined) ?? null;
+}
+
 /**
  * Busca os biosites reais para exibição — nunca escreve nada.
  *
  * Uma query única com `.in(slug, [...12 valores])` estoura o statement
  * timeout do Postgres (alguns desses biosites têm imagens em base64
  * embutidas no JSONB `site_data`, então buscar os 12 de uma vez fica pesado
- * demais). Em vez disso, busca cada slug em paralelo — mesmo padrão já usado
- * (e comprovadamente rápido) em `/api/biosites/[slug]`.
+ * demais). Buscar os 12 em paralelo de uma vez também sobrecarrega — os mais
+ * pesados individualmente ainda estouram o timeout sob concorrência alta.
+ * Em vez disso, busca em lotes pequenos (sequenciais entre lotes, paralelo
+ * dentro do lote) e tenta de novo uma vez os que falharem no primeiro passo.
  */
 export async function getShowcaseSites(): Promise<ToqySite[]> {
   if (!hasSupabaseEnv()) return [];
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 
-  const results = await Promise.all(
-    SHOWCASE_SLUGS.map((slug) =>
-      supabase
-        .from("toqy_biosites")
-        .select("site_data")
-        .eq("slug", slug)
-        .eq("status", "active")
-        .maybeSingle()
-    )
-  );
+  const bySlug = new Map<string, ToqySite | null>();
 
-  return results
-    .map((result) => (result.error ? null : (result.data?.site_data as ToqySite | undefined)))
-    .filter((site): site is ToqySite => Boolean(site));
+  for (let i = 0; i < SHOWCASE_SLUGS.length; i += BATCH_SIZE) {
+    const batch = SHOWCASE_SLUGS.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(batch.map((slug) => fetchBySlug(supabase, slug)));
+    batch.forEach((slug, index) => bySlug.set(slug, results[index]));
+  }
+
+  // Segunda tentativa (sequencial, sem concorrência) só para quem falhou
+  for (const [slug, site] of bySlug) {
+    if (!site) bySlug.set(slug, await fetchBySlug(supabase, slug));
+  }
+
+  return SHOWCASE_SLUGS.map((slug) => bySlug.get(slug)).filter((site): site is ToqySite => Boolean(site));
 }
 
 // Tipos de botão cujo `url` é um valor literal próprio do dono original (não
