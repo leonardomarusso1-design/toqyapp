@@ -48,6 +48,49 @@ export async function getShowcaseSummaries(): Promise<ShowcaseSummary[]> {
     .map((row) => ({ slug: row.slug, segment: row.segment as Segment }));
 }
 
+export type TemplatePreview = {
+  slug: string;
+  segment: Segment;
+  name: string;
+  photo: string;
+  primary: string;
+  background: string;
+  mode: "dark" | "light";
+};
+
+/**
+ * Busca um resumo "visual" leve (nome + foto + cores do tema) pra galeria de
+ * templates do editor — o suficiente pra montar um card estático (não a
+ * preview interativa completa, que era lenta e às vezes falhava com várias
+ * instâncias simultâneas). Ainda numa query só, sem N+1.
+ */
+export async function getTemplatePreviews(): Promise<TemplatePreview[]> {
+  if (!hasSupabaseEnv()) return [];
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("toqy_biosites")
+    .select(
+      "slug, segment:site_data->>segment, name:site_data->profile->>name, photo:site_data->profile->>profileImageUrl, logo:site_data->profile->>logoUrl, primary:site_data->theme->>primary, background:site_data->theme->>background, mode:site_data->theme->>mode"
+    )
+    .in("slug", SHOWCASE_SLUGS)
+    .eq("status", "active");
+
+  if (error || !data) return [];
+  return data
+    .filter((row) => Boolean(row.slug && row.segment))
+    .map((row) => ({
+      slug: row.slug as string,
+      segment: row.segment as Segment,
+      name: row.name || row.slug || "",
+      photo: row.photo || row.logo || "",
+      primary: row.primary || "#ff4d6d",
+      background: row.background || "#f7f5f1",
+      mode: (row.mode === "dark" ? "dark" : "light") as "dark" | "light",
+    }));
+}
+
 const BATCH_SIZE = 3;
 
 async function fetchBySlug(

@@ -1,6 +1,6 @@
-import { getShowcaseSummaries } from "@/lib/realTemplates";
+import { getTemplatePreviews } from "@/lib/realTemplates";
 
 export async function GET() {
-  const templates = await getShowcaseSummaries();
+  const templates = await getTemplatePreviews();
   return Response.json({ templates });
 }

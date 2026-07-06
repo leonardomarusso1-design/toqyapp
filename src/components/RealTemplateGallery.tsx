@@ -1,78 +1,102 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Segment, ToqySite } from "@/lib/types";
+import { Loader2 } from "lucide-react";
+import type { Segment } from "@/lib/types";
 import { segmentOptions } from "@/lib/segmentTemplates";
 import { cloneRealTemplate } from "@/lib/realTemplates";
+import type { TemplatePreview } from "@/lib/realTemplates";
 import { fetchShowcaseSite } from "@/lib/showcaseSiteCache";
-import { PublicBioSite } from "./PublicBioSite";
-import { PhoneMockup } from "./PhoneMockup";
+import type { ToqySite } from "@/lib/types";
 
 const SEGMENT_LABELS = Object.fromEntries(segmentOptions.map((item) => [item.value, item.label])) as Record<Segment, string>;
 
-type Summary = { slug: string; segment: Segment };
+function getInitials(name: string) {
+  return name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "T";
+}
 
-function TemplateCard({ slug, businessName, onApply }: { slug: string; businessName: string; onApply: (site: ToqySite) => void }) {
-  const [site, setSite] = useState<ToqySite | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchShowcaseSite(slug).then((result) => { if (!cancelled) setSite(result); });
-    return () => { cancelled = true; };
-  }, [slug]);
-
+function TemplateCard({
+  preview,
+  applying,
+  onSelect,
+}: {
+  preview: TemplatePreview;
+  applying: boolean;
+  onSelect: (slug: string) => void;
+}) {
   return (
     <button
       type="button"
-      disabled={!site}
-      onClick={() => site && onApply(cloneRealTemplate(site, { name: businessName }))}
-      className="card-glow group rounded-[1.75rem] border border-border bg-white p-3 text-left shadow-sm transition hover:border-accent disabled:cursor-wait disabled:opacity-70"
+      disabled={applying}
+      onClick={() => onSelect(preview.slug)}
+      className="card-glow group overflow-hidden rounded-[1.75rem] border border-border bg-white text-left shadow-sm transition hover:border-accent disabled:cursor-wait disabled:opacity-70"
     >
-      <PhoneMockup className="mx-auto h-80 w-full max-w-[180px]">
-        {site ? (
-          <PublicBioSite site={site} publicUrl={`https://www.toqy.com.br/b/${slug}`} instanceId={`gallery-${slug}`} />
+      {/* Card estático (foto + nome) — só busca o site completo ao clicar,
+          em vez de renderizar a preview interativa completa pra cada item
+          (era pesado e algumas instâncias falhavam ao carregar juntas). */}
+      <div
+        className="flex h-40 w-full items-center justify-center"
+        style={{ background: `linear-gradient(135deg, ${preview.primary}33, ${preview.background})` }}
+      >
+        {preview.photo ? (
+          <img src={preview.photo} alt={preview.name} className="h-20 w-20 rounded-full object-cover shadow-lg" />
         ) : (
-          <div className="flex h-full items-center justify-center bg-ink/40">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+          <div
+            className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-black text-white shadow-lg"
+            style={{ background: preview.primary }}
+          >
+            {getInitials(preview.name)}
           </div>
         )}
-      </PhoneMockup>
-      <p className="mt-3 truncate text-sm font-bold text-ink">{site?.profile.name ?? slug}</p>
-      <p className="mt-2 inline-flex items-center rounded-full bg-accent/10 px-3 py-1 text-xs font-black text-accent-dim transition group-hover:bg-accent group-hover:text-white">
-        {site ? "Usar este modelo" : "Carregando..."}
-      </p>
+      </div>
+      <div className="p-3">
+        <p className="truncate text-sm font-bold text-ink">{preview.name}</p>
+        <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-accent/10 px-3 py-1 text-xs font-black text-accent-dim transition group-hover:bg-accent group-hover:text-white">
+          {applying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+          {applying ? "Aplicando..." : "Usar este modelo"}
+        </p>
+      </div>
     </button>
   );
 }
 
 export function RealTemplateGallery({ businessName, onApply }: { businessName: string; onApply: (site: ToqySite) => void }) {
-  const [summaries, setSummaries] = useState<Summary[] | null>(null);
+  const [previews, setPreviews] = useState<TemplatePreview[] | null>(null);
   const [activeSegment, setActiveSegment] = useState<Segment | null>(null);
+  const [applyingSlug, setApplyingSlug] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/real-templates")
       .then((res) => res.json())
-      .then((data: { templates?: Summary[] }) => {
+      .then((data: { templates?: TemplatePreview[] }) => {
         if (cancelled) return;
         const list = data.templates ?? [];
-        setSummaries(list);
+        setPreviews(list);
         setActiveSegment((current) => current ?? list[0]?.segment ?? null);
       })
-      .catch(() => { if (!cancelled) setSummaries([]); });
+      .catch(() => { if (!cancelled) setPreviews([]); });
     return () => { cancelled = true; };
   }, []);
 
-  if (summaries === null) {
+  async function handleSelect(slug: string) {
+    if (applyingSlug) return;
+    setApplyingSlug(slug);
+    const site = await fetchShowcaseSite(slug);
+    setApplyingSlug(null);
+    if (site) onApply(cloneRealTemplate(site, { name: businessName }));
+  }
+
+  if (previews === null) {
     return <p className="mt-5 text-sm font-semibold text-muted">Carregando modelos reais...</p>;
   }
 
-  if (!summaries.length) {
+  if (!previews.length) {
     return <p className="mt-5 text-sm font-semibold text-muted">Não foi possível carregar os modelos agora. Você pode continuar e personalizar do zero.</p>;
   }
 
-  const segments = Array.from(new Set(summaries.map((t) => t.segment)));
-  const visible = summaries.filter((t) => t.segment === activeSegment);
+  const segments = Array.from(new Set(previews.map((t) => t.segment)));
+  const visible = previews.filter((t) => t.segment === activeSegment);
 
   return (
     <div className="mt-5">
@@ -92,8 +116,8 @@ export function RealTemplateGallery({ businessName, onApply }: { businessName: s
       </div>
 
       <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {visible.map((summary) => (
-          <TemplateCard key={summary.slug} slug={summary.slug} businessName={businessName} onApply={onApply} />
+        {visible.map((preview) => (
+          <TemplateCard key={preview.slug} preview={preview} applying={applyingSlug === preview.slug} onSelect={handleSelect} />
         ))}
       </div>
     </div>
