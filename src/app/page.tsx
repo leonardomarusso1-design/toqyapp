@@ -1,18 +1,34 @@
 import Link from "next/link";
 import { LandingHeader } from "@/components/LandingHeader";
+import { LandingBioSiteCard } from "@/components/LandingBioSiteCard";
 import { APP_VERSION, BUILD_ID } from "@/lib/appInfo";
+import { getShowcaseSites } from "@/lib/realTemplates";
+import { segmentOptions } from "@/lib/segmentTemplates";
 import {
-  CalendarCheck,
+  ArrowRight,
+  Building2,
   Check,
   CreditCard,
+  Globe,
   MapPin,
   MessageCircle,
+  PlayCircle,
   Plus,
   QrCode,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
+  Star,
+  Store,
+  TrendingUp,
+  Users,
   Wifi,
+  BriefcaseBusiness,
+  CalendarCheck,
+  Zap,
+  Clock3,
+  HelpCircle,
+  Heart,
 } from "lucide-react";
 
 const features = [
@@ -26,13 +42,6 @@ const features = [
   ["Chave do cliente", "Cliente edita sem acessar o painel admin.", ShieldCheck],
 ] as const;
 
-// Atualizado com os assets e slugs reais que você mapeou na sua pasta public
-const examples = [
-  ["Barbearia", "barbearia-andrian", "/templates/template-bg-barbearia.png"],
-  ["Restaurante", "pastel-da-praca", "/templates/template-bg-restaurante.png"],
-  ["Assistência Técnica", "my-cell", "/templates/template-bg-assistencia-tecnica.png"],
-] as const;
-
 const plans = [
   { name: "Gratuito", price: "R$0", period: "", description: "Para conhecer a plataforma e gerar seus primeiros leads.", highlight: false, cta: "Começar grátis", items: ["1 bio site", "Domínio toqy.app/seunome", "QR Code básico", "Preview em tempo real", "Marca TOQY na página"] },
   { name: "Comunidade", price: "R$29,90", period: "/mês", description: "Acesso exclusivo para alunos. Crie páginas profissionais para seus clientes.", highlight: true, cta: "Assinar", items: ["Até 20 bio sites inclusos", "Apenas R$5,00 por site extra", "Catálogo, Pix e Wi-Fi", "QR personalizado e NFC", "Suporte direto no Discord"] },
@@ -41,103 +50,321 @@ const plans = [
 ] as const;
 
 const featureShowcase = [
-  {
-    title: "Editor visual com preview ao vivo",
-    text: "Personalize paletas, botões, fundos, logo e módulos sem mexer em código.",
-    image: "/images/landing-feature-editor-preview.png",
-    alt: "Editor visual do TOQY com preview ao vivo",
-  },
-  {
-    title: "Pix inteligente",
-    text: "Receba pagamentos com Pix, chave copiável, QR Code e envio de comprovante pelo WhatsApp.",
-    image: "/images/landing-feature-pix.png",
-    alt: "Módulo Pix inteligente com QR Code",
-  },
-  {
-    title: "Wi-Fi com check-in",
-    text: "Gere QR Code de Wi-Fi, facilite a conexão e direcione o cliente para avaliação no Google, Instagram ou Facebook.",
-    image: "/images/landing-feature-wifi-checkin.png",
-    alt: "Wi-Fi com check-in e avaliação",
-  },
-  {
-    title: "Catálogo flexível",
-    text: "Mostre produtos e serviços em carrossel, grid, categorias ou lista vertical.",
-    image: "/images/landing-feature-catalogo.png",
-    alt: "Catálogo de produtos e serviços no TOQY",
-  },
+  { title: "Editor visual com preview ao vivo", text: "Personalize paletas, botões, fundos, logo e módulos sem mexer em código.", image: "/images/landing-feature-editor-preview.png", alt: "Editor visual do TOQY com preview ao vivo" },
+  { title: "Pix inteligente", text: "Receba pagamentos com Pix, chave copiável, QR Code e envio de comprovante pelo WhatsApp.", image: "/images/landing-feature-pix.png", alt: "Módulo Pix inteligente com QR Code" },
+  { title: "Wi-Fi com check-in", text: "Gere QR Code de Wi-Fi, facilite a conexão e direcione o cliente para avaliação no Google, Instagram ou Facebook.", image: "/images/landing-feature-wifi-checkin.png", alt: "Wi-Fi com check-in e avaliação" },
+  { title: "Catálogo flexível", text: "Mostre produtos e serviços em carrossel, grid, categorias ou lista vertical.", image: "/images/landing-feature-catalogo.png", alt: "Catálogo de produtos e serviços no TOQY" },
 ] as const;
 
-export default function LandingPage() {
+const testimonials = [
+  { name: "Marina", text: "Usei o Toqy para vender biosites como serviço e fechei meus primeiros clientes em uma semana.", image: "" },
+  { name: "Caio", text: "O visual ficou mais profissional e meu catálogo começou a converter melhor no WhatsApp.", image: "" },
+  { name: "Lívia", text: "Agora consigo mostrar valor antes mesmo do cliente pedir orçamento.", image: "" },
+  { name: "André", text: "Entrego biosites prontos no mesmo dia. Minha agência ganhou um produto novo.", image: "" },
+] as const;
+
+const businessUseCases = [
+  { title: "Empresas e serviços", icon: Building2, text: "Institucional, orçamento, atendimento e links estratégicos." },
+  { title: "Lojas e restaurantes", icon: Store, text: "Catálogo, promoções, localização e pedido rápido." },
+  { title: "Freelancer e agências", icon: BriefcaseBusiness, text: "Venda biosites como produto e crie renda recorrente." },
+] as const;
+
+const savings = [
+  { label: "Designer + copy + editor", value: "R$ 650/mês" },
+  { label: "Tempo manual por biosite", value: "4 a 8 horas" },
+  { label: "Com Toqy", value: "minutos" },
+] as const;
+
+// Lista de "instagrams" que passam no marquee (duplicada pra loop perfeito)
+const instagramStrip = [
+  "@studio.toqy",
+  "@bioempresas",
+  "@vendacomtoqy",
+  "@freela.bio",
+  "@lojas.toqy",
+  "@agencia.bio",
+  "@marina.digital",
+  "@caio.agencia",
+  "@livia.freela",
+  "@andre.lojas",
+];
+
+const steps = [
+  { n: "1", title: "Escolha o segmento", text: "Comece a partir de um modelo pronto para o nicho do cliente e personalize em segundos.", image: "" },
+  { n: "2", title: "O Toqy monta tudo", text: "Editor visual gera logo, cores, botões, catálogo, Pix e Wi-Fi — sem código.", image: "" },
+  { n: "3", title: "Publique e venda", text: "Compartilhe por QR Code, NFC ou link. O cliente edita quando quiser com a chave.", image: "" },
+] as const;
+
+const SEGMENT_LABELS = Object.fromEntries(segmentOptions.map((item) => [item.value, item.label])) as Record<string, string>;
+
+export default async function LandingPage() {
+  const showcaseSites = await getShowcaseSites();
+  const showcaseBySegment = showcaseSites.reduce<Record<string, typeof showcaseSites>>((acc, site) => {
+    const key = site.segment || "outro";
+    acc[key] = [...(acc[key] ?? []), site];
+    return acc;
+  }, {});
+
   return (
     <main className="min-h-screen bg-bg text-ink">
+      {/* Barra de anúncio animada (estilo mypostflow) */}
+      <div className="bg-ink text-white">
+        <div className="marquee-group overflow-hidden">
+          <div className="marquee marquee-left py-2.5">
+            {[...Array(2)].map((_, dup) => (
+              <div key={dup} className="flex items-center">
+                {[
+                  "Toqy cria biosites premium para empresas, lojas e profissionais em minutos.",
+                  "Venda biosites como renda extra e entregue páginas mais rápido.",
+                  "Mais conversão. Mais presença. Mais profissionalismo para o seu cliente.",
+                  "QR Code, NFC, Pix, Wi-Fi e catálogo em uma página só.",
+                ].map((t, i) => (
+                  <span key={`${dup}-${i}`} className="mx-8 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em]">
+                    <Sparkles className="h-3.5 w-3.5 text-accent" /> {t}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
           <Link href="/" className="flex items-center gap-3">
             <img src="/brand/logo-toqy-horizontal-dark.png" alt="TOQY" className="h-11 w-auto object-contain" />
           </Link>
           <nav className="hidden items-center gap-9 text-sm font-semibold text-muted md:flex">
+            <a className="transition hover:text-accent" href="#video">Vídeo</a>
+            <a className="transition hover:text-accent" href="#verdade">Por que importa</a>
             <a className="transition hover:text-accent" href="#recursos">Recursos</a>
-            <a className="transition hover:text-accent" href="#como-funciona">Como funciona</a>
-            <a className="transition hover:text-accent" href="#planos">Planos</a>
             <a className="transition hover:text-accent" href="#exemplos">Exemplos</a>
+            <a className="transition hover:text-accent" href="#planos">Planos</a>
           </nav>
           <LandingHeader />
         </div>
       </header>
 
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-accent/5 to-transparent" />
-        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 py-16 lg:grid-cols-[1fr_520px] lg:py-24">
-          <div>
-            <p className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-2 text-sm font-bold text-accent-dim">
-              <Sparkles className="h-4 w-4 text-accent" /> QR Code + NFC + Bio site
-            </p>
-            <h1 className="mt-8 max-w-3xl text-5xl font-extrabold leading-[1.05] tracking-tight text-ink md:text-7xl">
-              Bio sites profissionais para QR Code, NFC e plaquinhas.
-            </h1>
-            <p className="mt-7 max-w-2xl text-xl leading-relaxed text-muted">
-              Crie páginas editáveis com WhatsApp, Pix, Wi-Fi, catálogo, localização, avaliações e links importantes para qualquer negócio local.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-8 py-3.5 text-base font-bold text-white shadow-lg shadow-accent/20 transition hover:-translate-y-0.5 hover:bg-accent-dim">
-                Criar meu bio site grátis <span aria-hidden="true">-&gt;</span>
-              </Link>
-              <a href="#como-funciona" className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-8 py-3.5 text-base font-bold text-ink shadow-sm transition hover:-translate-y-0.5">
-                Como funciona
-              </a>
+      {/* HERO + VÍDEO (no topo) */}
+      <section className="hero-gradient relative overflow-hidden">
+        <div className="shimmer-line h-1 w-full" />
+        {/* blobs animados */}
+        <div className="blob float-slow -left-24 top-10 h-72 w-72 bg-accent/30" />
+        <div className="blob float-slow right-0 top-32 h-80 w-80 bg-violet/30" style={{ animationDelay: "1.2s" }} />
+        <div className="blob float-slow bottom-0 left-1/3 h-72 w-72 bg-[#ffc850]/30" style={{ animationDelay: "2s" }} />
+
+        <div className="relative mx-auto max-w-7xl px-5 py-16 lg:py-20">
+          <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+            <div>
+              <span className="pill inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-bold text-accent-dim shadow-sm fade-up">
+                <Sparkles className="h-4 w-4 text-accent" /> Biosites premium para empresas, lojas e renda extra
+              </span>
+              <h1 className="fade-up mt-6 text-3xl font-extrabold leading-[1.1] tracking-tight text-ink md:text-4xl lg:text-5xl" style={{ animationDelay: "0.05s" }}>
+                Biosites que <span className="gradient-text">vendem mais</span> e ficam prontos em minutos.
+              </h1>
+              <p className="fade-up mt-5 max-w-xl text-base leading-relaxed text-muted md:text-lg" style={{ animationDelay: "0.1s" }}>
+                Crie páginas profissionais com WhatsApp, Pix, Wi-Fi, catálogo, localização e avaliações. Para empresas, lojas, profissionais ou para vender como renda extra.
+              </p>
+              <div className="fade-up mt-7 flex flex-col gap-3 sm:flex-row" style={{ animationDelay: "0.15s" }}>
+                <Link href="/login" className="btn-glow inline-flex items-center justify-center gap-2 rounded-full px-7 py-3 text-sm font-bold text-white">
+                  Quero criar meu Toqy <ArrowRight className="h-4 w-4" />
+                </Link>
+                <a href="#video" className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-white px-7 py-3 text-sm font-bold text-ink shadow-sm transition hover:-translate-y-0.5 hover:border-accent">
+                  <PlayCircle className="h-4 w-4 text-accent" /> Assistir vídeo
+                </a>
+              </div>
+              <div className="fade-up mt-6 flex flex-wrap gap-3 text-xs font-semibold text-muted" style={{ animationDelay: "0.2s" }}>
+                {[
+                  ["Grátis para começar", Check],
+                  ["Sem código", Zap],
+                  ["Publica em minutos", Clock3],
+                ].map(([t, Icon]) => (
+                  <span key={t as string} className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5">
+                    <Icon className="h-3.5 w-3.5 text-accent" /> {t as string}
+                  </span>
+                ))}
+              </div>
             </div>
-            <div className="mt-8 flex flex-wrap gap-6 text-sm font-semibold text-muted">
-              {["Grátis para começar", "Sem código", "Publica em minutos"].map((item) => (
-                <span key={item} className="inline-flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-accent" />
-                  {item}
-                </span>
-              ))}
+
+            {/* VÍDEO ao lado do título */}
+            <div id="video" className="fade-up relative" style={{ animationDelay: "0.25s" }}>
+              <div className="gradient-border p-2 shadow-2xl">
+                <div className="aspect-video overflow-hidden rounded-[1.25rem] bg-[linear-gradient(135deg,#fff,#fbe9ee)]">
+                  <div className="relative flex h-full items-center justify-center">
+                    <div className="absolute inset-0 opacity-50 [background-image:radial-gradient(circle_at_1px_1px,rgba(255,77,109,0.18)_1px,transparent_0)] [background-size:22px_22px]" />
+                    <div className="relative text-center">
+                      <button className="group relative mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent text-white shadow-xl transition hover:scale-105">
+                        <PlayCircle className="h-8 w-8" />
+                        <span className="absolute inset-0 rounded-full bg-accent/40 pulse-soft" />
+                      </button>
+                      <p className="mt-4 text-base font-extrabold text-ink">Vídeo de apresentação do Toqy</p>
+                      <p className="mt-1 text-xs text-muted">Coloque aqui um vídeo curto explicando o produto.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p className="mt-3 text-center text-xs font-semibold text-muted">
+                Demonstração completa · Usuário real em ação
+              </p>
             </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[520px]">
-            <div className="absolute -left-14 top-16 z-20 hidden animate-[float_4s_ease-in-out_infinite] rounded-2xl bg-card px-5 py-4 shadow-xl lg:block">
-              <div className="flex items-center gap-3">
-                <QrCode className="h-6 w-6 text-accent" />
-                <div><p className="text-sm font-bold">QR Code</p><p className="text-xs text-muted">Escaneou ✓</p></div>
-              </div>
+          {/* Marquee de Instagram (passando da esquerda pra direita) */}
+          <div className="marquee-group relative mt-14 overflow-hidden py-2">
+            <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-24 bg-gradient-to-r from-[#f8f5ef] to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-24 bg-gradient-to-l from-[#f8f5ef] to-transparent" />
+            <div className="marquee marquee-left gap-4">
+              {[...Array(2)].map((_, dup) => (
+                <div key={dup} className="flex shrink-0 items-center gap-4">
+                  {instagramStrip.map((handle, i) => (
+                    <span
+                      key={`${dup}-${i}`}
+                      className="group inline-flex items-center gap-3 rounded-full border border-border bg-white px-5 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-accent"
+                    >
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-[#ff4d6d] via-[#ff8a5b] to-[#ffc850] text-white shadow-md">
+                        <span className="font-display text-sm font-bold">{handle.replace("@", "").charAt(0).toUpperCase()}</span>
+                      </span>
+                      <span className="text-sm font-bold text-ink">{handle}</span>
+                      <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-black uppercase text-accent-dim">Toqy</span>
+                    </span>
+                  ))}
+                </div>
+              ))}
             </div>
-            <div className="absolute -right-10 bottom-28 z-20 hidden animate-[float_4.6s_ease-in-out_infinite] rounded-2xl bg-card px-5 py-4 shadow-xl lg:block">
-              <div className="flex items-center gap-3">
-                <Wifi className="h-6 w-6 text-violet" />
-                <div><p className="text-sm font-bold">NFC</p><p className="text-xs text-muted">Aproximou ✓</p></div>
-              </div>
-            </div>
-            <img
-              src="/images/landing-hero-toqy.png"
-              alt="Bio sites profissionais com QR Code, NFC, Pix e Wi-Fi"
-              className="w-full rounded-3xl object-cover shadow-2xl shadow-border/40 border border-border"
-            />
           </div>
         </div>
       </section>
 
+      {/* A VERDADE */}
+      <section id="verdade" className="relative overflow-hidden border-y border-border bg-card py-20">
+        <div className="shimmer-line absolute left-0 top-0 h-1 w-full" />
+        <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 lg:grid-cols-2">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">A verdade que ninguém te conta</p>
+            <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-ink md:text-5xl">
+              Biosite não é enfeite. É a <span className="gradient-text">primeira impressão</span> do seu cliente.
+            </h2>
+            <p className="mt-5 text-lg text-muted">
+              Quem toca numa plaquinha ou escaneia um QR Code decide em segundos se confia no negócio. Um biosite bem feito transmite profissionalismo, centraliza os contatos e acelera a venda. Sem biosite, você perde cliente todo dia — sem saber.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link href="/login" className="btn-glow inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white">
+                Quero parar de perder cliente <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a href="#planos" className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-6 py-3 text-sm font-bold text-ink transition hover:border-accent">
+                Ver planos
+              </a>
+            </div>
+          </div>
+          <div className="grid gap-4">
+            {[
+              ["7 em 10", "clientes avaliam a empresa pela aparência digital antes de comprar", TrendingUp],
+              ["3 segundos", "é o tempo médio pra decidir se vai continuar ou sair da página", Clock3],
+              ["+R$650/mês", "é o que se gasta montando isso manualmente com designer e ferramentas", CreditCard],
+            ].map(([big, small, Icon]) => (
+              <div key={big as string} className="card-glow flex items-center gap-5 rounded-2xl border border-border bg-white p-6 shadow-sm">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent/10 text-accent">
+                  <Icon className="h-7 w-7" />
+                </div>
+                <div>
+                  <p className="text-2xl font-extrabold text-ink">{big as string}</p>
+                  <p className="text-sm text-muted">{small as string}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 3 PASSOS */}
+      <section id="como-funciona" className="bg-bg py-20">
+        <div className="mx-auto max-w-7xl px-5">
+          <div className="text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Em 3 passos</p>
+            <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-ink md:text-5xl">Tão simples que parece mágica</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-muted">3 passos. Poucos minutos. Biosite pronto pra vender.</p>
+          </div>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {steps.map((s) => (
+              <article key={s.n} className="card-glow relative rounded-[1.75rem] border border-border bg-card p-8 shadow-sm">
+                <span className="gradient-text text-6xl font-extrabold">{s.n}</span>
+                <h3 className="mt-4 text-xl font-bold text-ink">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">{s.text}</p>
+                {s.image ? (
+                  <img src={s.image} alt={s.title} className="mt-5 aspect-video w-full rounded-2xl object-cover" />
+                ) : (
+                  <div className="mt-5 flex aspect-video w-full items-center justify-center rounded-2xl border-2 border-dashed border-border bg-surface text-xs font-semibold text-muted">
+                    Espaço para imagem
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAÇA AS CONTAS + USOS */}
+      <section className="bg-card py-20 border-y border-border">
+        <div className="mx-auto max-w-7xl px-5">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <article className="gradient-border card-glow p-8">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Faça as contas</p>
+              <h2 className="mt-3 text-3xl font-extrabold text-ink">Quanto você pagaria por tudo isso separado?</h2>
+              <div className="mt-6 grid gap-3">
+                {savings.map((item) => {
+                  const isSaving = item.label === "Com Toqy";
+                  return (
+                    <div
+                      key={item.label}
+                      className={`flex items-center justify-between rounded-2xl border-2 px-5 py-4 ${
+                        isSaving ? "border-emerald-300 bg-emerald-50" : "border-red-300 bg-red-50/60"
+                      }`}
+                    >
+                      <span className={`text-sm font-semibold ${isSaving ? "text-emerald-800" : "text-red-800/80"}`}>{item.label}</span>
+                      <span className={`text-sm font-black ${isSaving ? "text-emerald-700" : "text-red-700"}`}>{item.value}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-5 rounded-2xl border-2 border-emerald-300 bg-ink px-5 py-4 text-white">
+                <p className="text-sm font-semibold">No Toqy você paga pouco e entrega biosites premium no mesmo dia.</p>
+              </div>
+            </article>
+
+            <article className="card-glow rounded-[1.75rem] border border-border bg-[linear-gradient(135deg,#fff,#fef2f4)] p-8 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Usos do Toqy</p>
+              <h2 className="mt-3 text-3xl font-extrabold text-ink">Para empresa, loja, profissional ou renda extra</h2>
+              <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                {[
+                  ["Empresas", Globe],
+                  ["Comércio local", ShoppingBag],
+                  ["Agências", Users],
+                ].map(([label, Icon]) => (
+                  <div key={label as string} className="rounded-2xl border border-border bg-white p-5 text-center transition hover:-translate-y-1">
+                    <Icon className="mx-auto h-6 w-6 text-accent" />
+                    <p className="mt-3 text-sm font-bold text-ink">{label as string}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {businessUseCases.map((item) => (
+                  <div key={item.title} className="rounded-2xl border border-border bg-white p-5">
+                    <item.icon className="h-6 w-6 text-accent" />
+                    <h3 className="mt-3 text-base font-bold text-ink">{item.title}</h3>
+                    <p className="mt-1 text-sm text-muted">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-accent/10 to-violet/10 px-5 py-4">
+                <TrendingUp className="h-6 w-6 text-accent" />
+                <p className="text-sm font-semibold text-ink">Venda biosites como serviço recorrente e gere renda extra todo mês.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      {/* RECURSOS */}
       <section id="recursos" className="mx-auto max-w-7xl px-5 py-20">
         <div className="text-center">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Recursos</p>
@@ -146,7 +373,7 @@ export default function LandingPage() {
         </div>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {features.map(([title, text, Icon]) => (
-            <article key={title} className="rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+            <article key={title} className="card-glow rounded-2xl border border-border bg-card p-6 shadow-sm">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 text-accent">
                 <Icon className="h-6 w-6" />
               </div>
@@ -157,11 +384,12 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* SHOWCASE */}
       <section className="bg-card py-20 border-y border-border">
         <div className="mx-auto max-w-7xl px-5">
           <div className="grid gap-8 lg:grid-cols-2">
             {featureShowcase.map((item) => (
-              <article key={item.title} className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
+              <article key={item.title} className="card-glow overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
                 <img src={item.image} alt={item.alt} className="aspect-[16/10] w-full object-cover" />
                 <div className="p-6">
                   <h3 className="text-2xl font-bold text-ink">{item.title}</h3>
@@ -173,23 +401,51 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="como-funciona" className="bg-bg py-20">
-        <div className="mx-auto max-w-7xl px-5">
-          <div className="text-center">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Como funciona</p>
-            <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-ink md:text-5xl">Do QR Code ao atendimento em minutos</h2>
+      {/* DEPOIMENTOS */}
+      <section className="py-20">
+        <div className="mx-auto flex max-w-7xl items-end justify-between gap-4 px-5">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Depoimentos</p>
+            <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-ink md:text-5xl">Quem usa sente a diferença</h2>
           </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {["Crie o bio site completo.", "Use o link no QR Code ou NFC.", "O cliente edita quando quiser com a chave."].map((item, index) => (
-              <article key={item} className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-                <span className="text-5xl font-extrabold text-accent">0{index + 1}</span>
-                <p className="mt-6 text-xl font-bold text-ink">{item}</p>
-              </article>
+          <div className="hidden items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-muted md:flex">
+            <Star className="h-4 w-4 text-accent" /> prova social e percepção premium
+          </div>
+        </div>
+        <div className="marquee-group relative mt-10 overflow-hidden py-2">
+          <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-24 bg-gradient-to-r from-[#f7f5f1] to-transparent" />
+          <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-24 bg-gradient-to-l from-[#f7f5f1] to-transparent" />
+          <div className="marquee marquee-left gap-6">
+            {[...Array(2)].map((_, dup) => (
+              <div key={dup} className="flex shrink-0 items-center gap-6">
+                {testimonials.map((t) => (
+                  <article key={`${dup}-${t.name}`} className="card-glow w-64 shrink-0 rounded-2xl border border-border bg-white p-4 shadow-sm">
+                    {t.image ? (
+                      <img src={t.image} alt={`Depoimento de ${t.name}`} className="aspect-[3/4] w-full rounded-xl object-cover" />
+                    ) : (
+                      <div className="flex aspect-[3/4] w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border bg-surface p-4 text-center">
+                        <div className="flex items-center gap-1 text-accent">
+                          {[0, 1, 2, 3, 4].map((star) => <Star key={star} className="h-3.5 w-3.5 fill-current" />)}
+                        </div>
+                        <p className="text-xs leading-relaxed text-muted">{t.text}</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted/70">Espaço para print real</p>
+                      </div>
+                    )}
+                    <div className="mt-3 flex items-center gap-3">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-[#ff4d6d] via-[#ff8a5b] to-[#ffc850] text-xs font-bold text-white">
+                        {t.name.charAt(0)}
+                      </span>
+                      <p className="text-sm font-bold text-ink">{t.name}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* PLANOS */}
       <section id="planos" className="mx-auto max-w-7xl px-5 py-20">
         <div className="text-center">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Planos</p>
@@ -197,7 +453,7 @@ export default function LandingPage() {
         </div>
         <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {plans.map((plan) => (
-            <article key={plan.name} className={`relative flex flex-col rounded-2xl border bg-card p-7 shadow-sm ${plan.highlight ? "border-accent shadow-xl shadow-accent/10" : "border-border"}`}>
+            <article key={plan.name} className={`relative flex flex-col rounded-2xl border bg-card p-7 shadow-sm ${plan.highlight ? "border-accent shadow-xl shadow-accent/10 glow-pulse" : "border-border card-glow"}`}>
               {plan.highlight ? <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent px-5 py-2 text-xs font-extrabold text-white uppercase tracking-wider">Mais popular</span> : null}
               <h3 className="text-2xl font-bold text-ink">{plan.name}</h3>
               <p className="mt-2 min-h-[4rem] text-sm text-muted">{plan.description}</p>
@@ -210,20 +466,7 @@ export default function LandingPage() {
                   </p>
                 ))}
               </div>
-              <a
-                href={
-                  plan.name === "Comunidade"
-                    ? "https://pay.kiwify.com.br/12uYE0c"
-                    : plan.name === "Freelancer"
-                    ? "https://pay.kiwify.com.br/gTIhv6I"
-                    : plan.name === "Agência"
-                    ? "https://pay.kiwify.com.br/xFdnxvE"
-                    : "/login"
-                }
-                target={plan.name === "Gratuito" ? undefined : "_blank"}
-                rel={plan.name === "Gratuito" ? undefined : "noreferrer noopener"}
-                className={`mt-7 inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "bg-accent text-white hover:bg-accent-dim" : "border border-border text-ink hover:border-accent"}`}
-              >
+              <a href={plan.name === "Comunidade" ? "https://pay.kiwify.com.br/12uYE0c" : plan.name === "Freelancer" ? "https://pay.kiwify.com.br/gTIhv6I" : plan.name === "Agência" ? "https://pay.kiwify.com.br/xFdnxvE" : "/login"} target={plan.name === "Gratuito" ? undefined : "_blank"} rel={plan.name === "Gratuito" ? undefined : "noreferrer noopener"} className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}>
                 {plan.cta}
               </a>
             </article>
@@ -231,37 +474,61 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* EXEMPLOS — biosites reais criados com o Toqy */}
       <section id="exemplos" className="bg-card py-20 border-t border-border">
         <div className="mx-auto max-w-7xl px-5">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Exemplos</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Biosites criados com o Toqy</p>
               <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-ink md:text-5xl">Modelos por segmento</h2>
-              <p className="mt-2 text-base text-muted">Cada bio site é criado e personalizado para o negócio do seu cliente. Esses são alguns exemplos de layout.</p>
+              <p className="mt-2 text-base text-muted">Biosites reais, em produção agora, criados por quem já usa o Toqy. Toque em qualquer celular para abrir o biosite de verdade.</p>
             </div>
-            <Link href="/login" className="inline-flex items-center gap-2 rounded-xl bg-ink px-5 py-3 text-sm font-bold text-white transition hover:bg-ink/80"><Plus className="h-4 w-4" />Novo bio site</Link>
+            <Link href="/login" className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-bold text-white transition hover:bg-ink/80"><Plus className="h-4 w-4" />Novo bio site</Link>
           </div>
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {examples.map(([name, , imgPath]) => (
-              <div key={name} className="group rounded-2xl border border-border bg-surface p-4 shadow-sm">
-                <div className="overflow-hidden rounded-xl bg-border/40 relative">
-                  <img src={imgPath} alt={name} className="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105" />
-                  <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/60 to-transparent opacity-0 transition group-hover:opacity-100">
-                    <p className="w-full p-4 text-center text-sm font-black text-white">Modelo {name}</p>
+
+          {Object.keys(showcaseBySegment).length ? (
+            <div className="mt-10 space-y-12">
+              {Object.entries(showcaseBySegment).map(([segment, sites]) => (
+                <div key={segment}>
+                  <h3 className="text-lg font-black text-ink">{SEGMENT_LABELS[segment] ?? "Outros negócios"}</h3>
+                  <div className="mt-5 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {sites.map((site) => (
+                      <LandingBioSiteCard key={site.slug} site={site} publicUrl={`https://www.toqy.com.br/b/${site.slug}`} />
+                    ))}
                   </div>
                 </div>
-                <p className="mt-4 font-bold text-ink">{name}</p>
-                <p className="mt-1 text-sm text-muted">Layout personalizado para o segmento</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : null}
+
           <p className="mt-8 text-center text-sm text-muted">Cada bio site é único — você personaliza logo, cores, botões, catálogo e muito mais.</p>
         </div>
       </section>
 
+      {/* PRECISA DE AJUDA? */}
+      <section className="bg-ink py-20 text-white">
+        <div className="mx-auto max-w-5xl px-5 text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-accent/20 text-accent">
+            <HelpCircle className="h-8 w-8" />
+          </div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Precisa de ajuda?</p>
+          <h2 className="mt-3 text-4xl font-extrabold tracking-tight md:text-5xl">Nossa equipe está aqui para você</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-white/70">Fale com a nossa central de suporte pelo canal que preferir. Respondemos rápido e estamos sempre prontos para ajudar.</p>
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <a href="https://wa.me/5519997051919" target="_blank" rel="noreferrer noopener" className="btn-glow inline-flex items-center gap-2 rounded-full px-8 py-3.5 text-base font-bold text-white">
+              <MessageCircle className="h-5 w-5" /> Falar com o suporte
+            </a>
+            <a href="#faq" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-8 py-3.5 text-base font-bold text-white transition hover:bg-white/10">
+              Ver dúvidas frequentes
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA FINAL */}
       <section className="bg-bg px-5 py-20 text-center border-t border-border">
         <h2 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight text-ink md:text-5xl">Crie uma página profissional para seu cliente em poucos minutos.</h2>
-        <Link href="/login" className="mt-8 inline-flex rounded-xl bg-accent px-8 py-4 font-bold text-white shadow-lg shadow-accent/20 transition hover:-translate-y-0.5 hover:bg-accent-dim">Começar agora</Link>
+        <Link href="/login" className="btn-glow mt-8 inline-flex items-center gap-2 rounded-full px-8 py-4 font-bold text-white">Começar agora <ArrowRight className="h-4 w-4" /></Link>
       </section>
 
       {/* FAQ */}
@@ -274,11 +541,11 @@ export default function LandingPage() {
           {[
             ["O que é um bio site TOQY?", "É uma página digital profissional que concentra todos os links, contatos, catálogo, Pix e Wi-Fi do seu negócio em um único lugar, acessível por QR Code ou NFC."],
             ["Preciso saber programar?", "Não. O TOQY tem um editor visual completo — você personaliza logo, cores, botões e catálogo sem tocar em código."],
-            ["O que é a plaquinha física?", "É uma placa acrílica com QR Code e/ou chip NFC que o cliente toca ou escaneia com o celular para abrir o bio site. Você cria a plaquinha e entrega para o negócio do seu cliente."],
-            ["O cliente pode editar o bio site dele?", "Sim. Cada bio site tem uma chave de acesso exclusiva. O cliente acessa toqy.com.br/me e usa a chave para editar sua própria página a qualquer momento."],
-            ["Posso usar o TOQY para vender para outros negócios?", "Sim! Os planos Comunidade, Freelancer e Agência são feitos para isso. Você cria os bio sites, personaliza para cada cliente e entrega a chave de acesso."],
-            ["Como funciona o plano Gratuito?", "Você pode criar 1 bio site gratuitamente para conhecer a plataforma. Para criar mais e ter acesso a recursos completos (Pix, Wi-Fi, catálogo), faça upgrade para um plano pago."],
-            ["Os pagamentos são seguros?", "Sim. Os pagamentos são processados pela Kiwify, uma plataforma brasileira de pagamentos digitais com certificação de segurança."],
+            ["O que é a plaquinha física?", "É uma placa acrílica com QR Code e/ou chip NFC que o cliente toca ou escaneia com o celular para abrir o bio site."],
+            ["O cliente pode editar o bio site dele?", "Sim. Cada bio site tem uma chave de acesso exclusiva para o cliente editar a própria página quando quiser."],
+            ["Posso usar o TOQY para vender para outros negócios?", "Sim. Os planos Comunidade, Freelancer e Agência são feitos para isso."],
+            ["Como funciona o plano Gratuito?", "Você pode criar 1 bio site gratuitamente para conhecer a plataforma. Para recursos completos, faça upgrade para um plano pago."],
+            ["Os pagamentos são seguros?", "Sim. Os pagamentos são processados pela Kiwify, com certificação de segurança."],
             ["Posso cancelar quando quiser?", "Sim. Você pode cancelar a assinatura a qualquer momento pelo painel da Kiwify."],
           ].map(([q, a]) => (
             <details key={q} className="group rounded-2xl border border-border bg-card px-6 py-4 shadow-sm">
@@ -292,7 +559,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Rodapé */}
+      {/* RODAPÉ */}
       <footer className="border-t border-border bg-card">
         <div className="mx-auto max-w-7xl px-5 py-12">
           <div className="grid gap-8 md:grid-cols-4">
@@ -302,12 +569,15 @@ export default function LandingPage() {
                 <span className="text-lg font-black text-ink">TOQY</span>
               </Link>
               <p className="mt-3 text-sm text-muted">Bio sites profissionais para QR Code, NFC e plaquinhas.</p>
+              <div className="mt-4 flex items-center gap-2 text-sm text-muted">
+                <Heart className="h-4 w-4 text-accent" /> Feito com carinho no Brasil
+              </div>
             </div>
             <div>
               <p className="text-sm font-black text-ink">Produto</p>
               <ul className="mt-3 space-y-2 text-sm text-muted">
                 <li><a href="#recursos" className="hover:text-accent">Recursos</a></li>
-                <li><a href="#como-funciona" className="hover:text-accent">Como funciona</a></li>
+                <li><a href="#video" className="hover:text-accent">Vídeo</a></li>
                 <li><a href="#planos" className="hover:text-accent">Planos</a></li>
                 <li><a href="#exemplos" className="hover:text-accent">Exemplos</a></li>
                 <li><a href="#faq" className="hover:text-accent">FAQ</a></li>
@@ -355,3 +625,6 @@ export default function LandingPage() {
     </main>
   );
 }
+
+// Vitrine de biosites reais muda raramente — revalida em background a cada 5 min
+export const revalidate = 300;

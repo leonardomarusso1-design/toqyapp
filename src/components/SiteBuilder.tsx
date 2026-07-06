@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, CheckCircle2, Copy, ExternalLink, Eye, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import type { CatalogItem, CatalogLayout, Segment, ThemePreset, ToqySite } from "@/lib/types";
-import { applySegmentTemplate, getSegmentTemplate, segmentOptions } from "@/lib/segmentTemplates";
+import type { CatalogItem, CatalogLayout, ThemePreset, ToqySite } from "@/lib/types";
 import { createEditUrl, createPublicUrl, generateSlug } from "@/lib/dataProvider";
+import { RealTemplateGallery } from "./RealTemplateGallery";
 import { syncBiositeToSupabase } from "@/lib/biositeSync";
 import { checkBiositeLimit } from "@/lib/planLimits";
 import { supabase } from "@/lib/supabaseClient";
@@ -83,7 +83,6 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   const [isSaving, setIsSaving] = useState(false);
   const publicLink = createPublicUrl(site.slug);
   const editLink = createEditUrl(site.slug);
-  const selectedTemplate = getSegmentTemplate(site.segment);
 
   function update(next: ToqySite | ((current: ToqySite) => ToqySite)) {
     setSite((current) => {
@@ -189,9 +188,8 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
       return (
         <Section>
           <h2 className="text-2xl font-black text-ink">Modelo</h2>
-          <p className="mt-1 text-sm text-muted">Escolha o segmento e aplique um template realmente diferente: cores, botões, catálogo, categorias e layout.</p>
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
-            <label><span className={label}>Segmento</span><select className={field} value={site.segment} onChange={(e) => update((s) => ({ ...s, segment: e.target.value as Segment }))}>{segmentOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+          <p className="mt-1 text-sm text-muted">Escolha um biosite real de outro negócio como ponto de partida — cores, botões, catálogo e layout já vêm prontos, você só troca as informações do seu negócio.</p>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
             <label><span className={label}>Nome do negócio</span><input className={field} value={site.profile.name} onChange={(e) => {
               const name = e.target.value;
               update((s) => ({
@@ -223,12 +221,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
               </div>
             </label>
           </div>
-          <div className="mt-5 rounded-3xl border border-accent/20 bg-accent/5 p-4">
-            <p className="font-black text-ink">{selectedTemplate.templateName}</p>
-            <p className="mt-1 text-sm text-muted">{selectedTemplate.description}</p>
-            <p className="mt-2 text-xs font-bold text-accent-dim">Layout de catálogo sugerido: {selectedTemplate.catalogLayout ?? "carousel"}</p>
-            <button type="button" onClick={() => update((s) => applySegmentTemplate(s, site.segment))} className="mt-4 rounded-2xl bg-accent px-5 py-3 text-sm font-black text-white">Aplicar template deste segmento</button>
-          </div>
+          <RealTemplateGallery businessName={site.profile.name} onApply={(cloned) => update(() => ({ ...cloned, slug: site.slug, editKey: site.editKey, id: site.id }))} />
         </Section>
       );
     }

@@ -56,6 +56,8 @@ h3,
   color: white;
 }
 
+/* ---------- Animações ---------- */
+
 @keyframes float {
   0%, 100% {
     transform: translateY(0);
@@ -65,6 +67,86 @@ h3,
   }
 }
 
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-16px) rotate(-2deg);
+  }
+}
+
+/* Marquee contínuo: o conteúdo precisa estar duplicado (2x) e o track
+   translada de 0 até -50% — assim o final do segundo conjunto encaixa
+   perfeitamente no início do primeiro, criando loop sem "pulo". */
+@keyframes marqueeLeft {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marqueeRight {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.20), 0 0 30px rgba(255, 77, 109, 0.12);
+  }
+  50% {
+    box-shadow: 0 0 0 16px rgba(255, 77, 109, 0), 0 0 60px rgba(255, 77, 109, 0.22);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes fadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseSoft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+/* ---------- Utilitários de fundo / gradiente ---------- */
+
 .bg-radial-premium {
   background:
     radial-gradient(circle at top left, rgba(59, 130, 246, 0.25), transparent 40%),
@@ -72,9 +154,152 @@ h3,
     linear-gradient(135deg, #0f172a 0%, #020617 100%);
 }
 
+/* Texto com gradiente nas cores da marca (acented + violeta), animado */
 .gradient-text {
-  background: linear-gradient(135deg, #60a5fa 0%, #38bdf8 50%, #0ea5e9 100%);
+  background: linear-gradient(90deg, #ff4d6d 0%, #8b5cf6 50%, #ff4d6d 100%);
+  background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  animation: gradientShift 6s ease infinite;
+}
+
+/* Hero: fundo claro premium com manchas de cor suaves + grid sutil */
+.hero-gradient {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 77, 109, 0.16), transparent 30%),
+    radial-gradient(circle at 82% 22%, rgba(139, 92, 246, 0.16), transparent 28%),
+    radial-gradient(circle at 50% 90%, rgba(255, 200, 80, 0.18), transparent 32%),
+    linear-gradient(180deg, #fffefb 0%, #f8f5ef 100%);
+}
+
+/* Linha de brilho animada no topo de seções (estilo mypostflow) */
+.shimmer-line {
+  background: linear-gradient(90deg, rgba(255, 77, 109, 0.0), rgba(255, 77, 109, 0.6), rgba(139, 92, 246, 0.6), rgba(255, 200, 80, 0.6), rgba(255, 77, 109, 0.0));
+  background-size: 200% 100%;
+  animation: shimmer 6s linear infinite;
+}
+
+/* Manchas de cor que flutuam no fundo do hero */
+.blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(64px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* ---------- Tracks de marquee ---------- */
+
+.marquee {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+.marquee-left {
+  animation: marqueeLeft 28s linear infinite;
+}
+.marquee-right {
+  animation: marqueeRight 32s linear infinite;
+}
+.marquee-fast {
+  animation: marqueeLeft 18s linear infinite;
+}
+.marquee-group:hover .marquee,
+.marquee-group:hover .marquee-left,
+.marquee-group:hover .marquee-right,
+.marquee-group:hover .marquee-fast {
+  animation-play-state: paused;
+}
+
+/* ---------- Efeitos de elemento ---------- */
+
+.glow-pulse {
+  animation: glowPulse 3.2s ease-in-out infinite;
+}
+
+.float-slow {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+.fade-up {
+  animation: fadeUp 0.7s ease-out both;
+}
+
+.pulse-soft {
+  animation: pulseSoft 2.4s ease-in-out infinite;
+}
+
+.spin-slow {
+  animation: spinSlow 14s linear infinite;
+}
+
+/* Cartão com brilho/glow colorido */
+.card-glow {
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card-glow:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 24px 60px -24px rgba(255, 77, 109, 0.45);
+}
+
+/* Botão com brilho + gradiente animado */
+.btn-glow {
+  position: relative;
+  background: linear-gradient(90deg, #ff4d6d 0%, #8b5cf6 50%, #ff4d6d 100%);
+  background-size: 200% auto;
+  animation: gradientShift 5s ease infinite;
+  box-shadow: 0 12px 32px -10px rgba(255, 77, 109, 0.6);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.btn-glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 48px -12px rgba(255, 77, 109, 0.7);
+}
+
+/* Borda com gradiente (uso: wrapper com bg-card por dentro) */
+.gradient-border {
+  position: relative;
+  background: var(--color-card);
+  border-radius: 1.5rem;
+}
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 77, 109, 0.6), rgba(139, 92, 246, 0.5), rgba(255, 200, 80, 0.5));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Badge "pílula" com brilho */
+.pill {
+  position: relative;
+  overflow: hidden;
+}
+.pill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 20%, rgba(255, 255, 255, 0.55) 50%, transparent 80%);
+  transform: translateX(-100%);
+  animation: shimmer 4s linear infinite;
+}
+
+/* Scrollbar discreta */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(23, 20, 26, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 77, 109, 0.4);
 }

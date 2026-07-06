@@ -188,9 +188,16 @@ function uniqueGroups(items: CatalogItem[]) {
   return Array.from(groups.entries());
 }
 
-export function PublicBioSite({ site }: { site: ToqySite }) {
+export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite; publicUrl?: string; instanceId?: string }) {
   const [modal, setModal] = useState<Modal>(null);
   const [qrModal, setQrModal] = useState(false);
+
+  // URL e id do catálogo — quando publicUrl/instanceId são omitidos, comportamento
+  // idêntico ao anterior (window.location.href e id fixo "catalogo-toqy"). Necessário
+  // pra renderizar várias instâncias simultâneas (vitrine da landing/galeria de templates)
+  // sem que todas mostrem o mesmo QR Code ou disputem o mesmo id de scroll.
+  const url = publicUrl ?? (typeof window !== "undefined" ? window.location.href : "");
+  const catalogId = instanceId ? `catalogo-toqy-${instanceId}` : "catalogo-toqy";
 
   // Helper: retorna cor granular com fallback para tema global
   const col = (key: keyof NonNullable<typeof site.theme.colors>, fallback: string) =>
@@ -210,7 +217,6 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
   }
 
   async function shareSite() {
-    const url = typeof window !== "undefined" ? window.location.href : "";
     if (navigator.share) {
       try {
         await navigator.share({ title: site.profile.name, text: site.profile.description, url });
@@ -225,22 +231,22 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
   }
 
   function downloadVCard() {
-    const pageUrl = typeof window !== "undefined" ? window.location.href : site.contact.website;
+    const pageUrl = url || site.contact.website;
     const contactCard = site.contact.website || !pageUrl ? vcard : vcard.replace("END:VCARD", `URL:${pageUrl}\nEND:VCARD`);
     const blob = new Blob([contactCard], { type: "text/vcard;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
+    const blobUrl = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
+    a.href = blobUrl;
     a.download = `${site.slug || "toqy"}.vcf`;
     a.click();
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(blobUrl);
   }
 
   function handleButton(button: ToqyButton) {
     if (button.type === "wifi") return setModal("wifi");
     if (button.type === "pix" || button.type === "pixHub") return setModal("pix");
     if (button.type === "catalog") {
-      document.getElementById("catalogo-toqy")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById(catalogId)?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
     const href = buttonHref(site, button);
@@ -375,11 +381,11 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
             <section className="mt-5 rounded-[1.75rem] border p-4 backdrop-blur-xl" style={glassCard(site)}>
               <p className="text-sm font-black">{site.promoCard?.title || "Mais praticidade em um só lugar"}</p>
               <p className="mt-1 text-xs leading-relaxed" style={{ color: site.theme.muted }}>{site.promoCard?.description || "Acesse contatos, Pix, Wi-Fi, catálogo, rotas e avaliações sem procurar em vários lugares."}</p>
-              <button type="button" onClick={() => document.getElementById("catalogo-toqy")?.scrollIntoView({ behavior: "smooth" })} className="mt-3 rounded-full px-4 py-2 text-xs font-black" style={{ background: site.theme.text, color: site.theme.background }}>{site.promoCard?.buttonLabel || "Ver mais"}</button>
+              <button type="button" onClick={() => document.getElementById(catalogId)?.scrollIntoView({ behavior: "smooth" })} className="mt-3 rounded-full px-4 py-2 text-xs font-black" style={{ background: site.theme.text, color: site.theme.background }}>{site.promoCard?.buttonLabel || "Ver mais"}</button>
             </section>
           ) : null}
 
-          {activeCatalog.length ? <CatalogSection site={site} items={activeCatalog} layout={catalogLayout} /> : null}
+          {activeCatalog.length ? <CatalogSection site={site} items={activeCatalog} layout={catalogLayout} catalogId={catalogId} /> : null}
 
           <footer className="mt-8 pb-6 text-center text-xs font-bold leading-relaxed" style={{ color: site.theme.muted }}>
             <p style={{ color: site.theme.muted }}>© {new Date().getFullYear()} {site.profile.name}. Todos os direitos reservados.</p>
@@ -399,10 +405,10 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
             <p className="mb-4 text-sm font-black text-slate-500 uppercase tracking-widest">QR Code</p>
             <p className="mb-5 font-black text-slate-900 text-lg">{site.profile.name}</p>
             <div className="rounded-2xl border border-slate-100 bg-white p-4 inline-block">
-              <QRCodeSVG value={typeof window !== "undefined" ? window.location.href : ""} size={200} />
+              <QRCodeSVG value={url} size={200} />
             </div>
-            <p className="mt-4 text-xs text-slate-400 break-all max-w-[240px] mx-auto">{typeof window !== "undefined" ? window.location.href : ""}</p>
-            <button onClick={() => { copyText(typeof window !== "undefined" ? window.location.href : "", "qr"); }} className="mt-4 block w-full rounded-2xl bg-slate-900 px-5 py-3 text-sm font-black text-white">
+            <p className="mt-4 text-xs text-slate-400 break-all max-w-[240px] mx-auto">{url}</p>
+            <button onClick={() => { copyText(url, "qr"); }} className="mt-4 block w-full rounded-2xl bg-slate-900 px-5 py-3 text-sm font-black text-white">
               {copied === "qr" ? "✓ Link copiado!" : "Copiar link"}
             </button>
             <button onClick={() => setQrModal(false)} className="mt-2 block w-full rounded-2xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-600">Fechar</button>
@@ -415,7 +421,7 @@ export function PublicBioSite({ site }: { site: ToqySite }) {
   );
 }
 
-function CatalogSection({ site, items, layout }: { site: ToqySite; items: CatalogItem[]; layout: CatalogLayout }) {
+function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; items: CatalogItem[]; layout: CatalogLayout; catalogId: string }) {
   const [activeCategory, setActiveCategory] = useState<string>("Todas");
   const categories = useMemo(() => Array.from(new Set(items.map((item) => item.category?.trim() || "Destaques"))), [items]);
   const filteredItems = activeCategory === "Todas" ? items : items.filter((item) => (item.category?.trim() || "Destaques") === activeCategory);
@@ -463,7 +469,7 @@ function CatalogSection({ site, items, layout }: { site: ToqySite; items: Catalo
   };
 
   return (
-    <section id="catalogo-toqy" className="mt-8 scroll-mt-8">
+    <section id={catalogId} className="mt-8 scroll-mt-8">
       <p className="text-xs font-black uppercase tracking-[0.22em]" style={{ color: site.theme.accent }}>Catálogo</p>
       {(site.showCatalogTitle ?? true) ? <h2 className="mt-1 text-2xl font-black">{site.catalogTitle || "Produtos e serviços"}</h2> : null}
       {(site.showCatalogSubtitle ?? true) ? <p className="mt-1 text-sm leading-relaxed" style={{ color: site.theme.muted }}>{site.catalogSubtitle || "Selecionados para você. Toque em um item para pedir ou agendar."}</p> : null}
