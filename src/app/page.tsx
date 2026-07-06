@@ -51,6 +51,7 @@ const plans = [
 
 const featureShowcase = [
   { title: "Editor visual com preview ao vivo", text: "Personalize paletas, botões, fundos, logo e módulos sem mexer em código.", image: "/images/landing-feature-editor-preview.png", alt: "Editor visual do TOQY com preview ao vivo" },
+  { title: "Onboarding guiado pra criar pro cliente", text: "Um passo a passo simples — negócio, localização, visual, contato — pra criar o bio site do seu cliente em minutos.", image: "/images/landing-feature-onboarding.png", alt: "Onboarding guiado para criar bio site de cliente" },
   { title: "Pix inteligente", text: "Receba pagamentos com Pix, chave copiável, QR Code e envio de comprovante pelo WhatsApp.", image: "/images/landing-feature-pix.png", alt: "Módulo Pix inteligente com QR Code" },
   { title: "Wi-Fi com check-in", text: "Gere QR Code de Wi-Fi, facilite a conexão e direcione o cliente para avaliação no Google, Instagram ou Facebook.", image: "/images/landing-feature-wifi-checkin.png", alt: "Wi-Fi com check-in e avaliação" },
   { title: "Catálogo flexível", text: "Mostre produtos e serviços em carrossel, grid, categorias ou lista vertical.", image: "/images/landing-feature-catalogo.png", alt: "Catálogo de produtos e serviços no TOQY" },
@@ -90,9 +91,9 @@ const instagramStrip = [
 ];
 
 const steps = [
-  { n: "1", title: "Escolha o segmento", text: "Comece a partir de um modelo pronto para o nicho do cliente e personalize em segundos.", image: "" },
-  { n: "2", title: "O Toqy monta tudo", text: "Editor visual gera logo, cores, botões, catálogo, Pix e Wi-Fi — sem código.", image: "" },
-  { n: "3", title: "Publique e venda", text: "Compartilhe por QR Code, NFC ou link. O cliente edita quando quiser com a chave.", image: "" },
+  { n: "1", title: "Escolha o segmento", text: "Comece a partir de um modelo pronto para o nicho do cliente e personalize em segundos.", image: "/images/landing-step-escolha-segmento.png" },
+  { n: "2", title: "O Toqy monta tudo", text: "Editor visual gera logo, cores, botões, catálogo, Pix e Wi-Fi — sem código.", image: "/images/landing-step-toqy-monta.png" },
+  { n: "3", title: "Publique e venda", text: "Compartilhe por QR Code, NFC ou link. O cliente edita quando quiser com a chave.", image: "/images/landing-step-publique-venda.png" },
 ] as const;
 
 const SEGMENT_LABELS = Object.fromEntries(segmentOptions.map((item) => [item.value, item.label])) as Record<string, string>;
@@ -278,9 +279,11 @@ export default async function LandingPage() {
                 <h3 className="mt-4 text-xl font-bold text-ink">{s.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted">{s.text}</p>
                 {s.image ? (
-                  <img src={s.image} alt={s.title} className="mt-5 aspect-video w-full rounded-2xl object-cover" />
+                  <div className="mt-5 flex h-56 w-full items-center justify-center rounded-2xl bg-bg p-3">
+                    <img src={s.image} alt={s.title} className="max-h-full max-w-full rounded-lg object-contain" />
+                  </div>
                 ) : (
-                  <div className="mt-5 flex aspect-video w-full items-center justify-center rounded-2xl border-2 border-dashed border-border bg-surface text-xs font-semibold text-muted">
+                  <div className="mt-5 flex h-56 w-full items-center justify-center rounded-2xl border-2 border-dashed border-border bg-surface text-xs font-semibold text-muted">
                     Espaço para imagem
                   </div>
                 )}
@@ -372,7 +375,7 @@ export default async function LandingPage() {
         <img
           src="/images/landing-recursos-infographic.png"
           alt="Por que um bio site profissional importa"
-          className="card-glow mt-10 w-full rounded-[2rem] border border-border object-cover shadow-sm"
+          className="card-glow mx-auto mt-10 w-full max-w-2xl rounded-2xl border border-border shadow-sm"
         />
       </section>
 
@@ -382,7 +385,9 @@ export default async function LandingPage() {
           <div className="grid gap-8 lg:grid-cols-2">
             {featureShowcase.map((item) => (
               <article key={item.title} className="card-glow overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
-                <img src={item.image} alt={item.alt} className="aspect-[16/10] w-full object-cover" />
+                <div className="flex h-72 items-center justify-center bg-bg p-4">
+                  <img src={item.image} alt={item.alt} className="max-h-full max-w-full rounded-lg object-contain" />
+                </div>
                 <div className="p-6">
                   <h3 className="text-2xl font-bold text-ink">{item.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted">{item.text}</p>
@@ -479,11 +484,11 @@ export default async function LandingPage() {
           </div>
 
           {Object.keys(showcaseBySegment).length ? (
-            <div className="mt-10 space-y-12">
+            <div className="mt-10 space-y-10">
               {Object.entries(showcaseBySegment).map(([segment, sites]) => (
                 <div key={segment}>
                   <h3 className="text-lg font-black text-ink">{SEGMENT_LABELS[segment] ?? "Outros negócios"}</h3>
-                  <div className="mt-5 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  <div className="mt-5 flex gap-5 overflow-x-auto pb-4 snap-x" style={{ scrollbarWidth: "none" }}>
                     {sites.map((site) => (
                       <LandingBioSiteCard key={site.slug} site={site} publicUrl={`https://www.toqy.com.br/b/${site.slug}`} />
                     ))}
