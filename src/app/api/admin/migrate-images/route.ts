@@ -2,6 +2,15 @@ import { getSupabaseAdmin, hasSupabaseEnv } from "@/lib/supabaseServer";
 import { uploadImageIfBase64 } from "@/lib/imageStorage";
 import type { ToqySite } from "@/lib/types";
 
+// Erros do Supabase (PostgrestError) são objetos simples { message, code,
+// details, hint }, não instâncias de Error — String(err) neles vira
+// "[object Object]" e esconde a causa real.
+function errorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (err && typeof err === "object" && "message" in err) return String((err as { message: unknown }).message);
+  return String(err);
+}
+
 // Rota TEMPORÁRIA — migra biosites e avatares já existentes que salvaram
 // imagem em base64 direto no banco (bug real corrigido em 2026-07-06, ver
 // src/lib/imageStorage.ts) para links reais no Supabase Storage. Roda uma
@@ -81,7 +90,7 @@ export async function POST(request: Request) {
       }
       results.push({ slug, migrated });
     } catch (err) {
-      results.push({ slug, migrated, error: err instanceof Error ? err.message : String(err) });
+      results.push({ slug, migrated, error: errorMessage(err) });
     }
   }
 
@@ -103,7 +112,7 @@ export async function POST(request: Request) {
         if (updateError) throw updateError;
         profileResults.push({ id: p.id, migrated: true });
       } catch (err) {
-        profileResults.push({ id: p.id, migrated: false, error: err instanceof Error ? err.message : String(err) });
+        profileResults.push({ id: p.id, migrated: false, error: errorMessage(err) });
       }
     }
 
