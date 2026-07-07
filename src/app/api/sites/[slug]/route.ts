@@ -40,8 +40,8 @@ export async function POST(
       return Response.json(response, { status: 401 });
     }
 
-    // Validate key format (XXXX-XXXX)
-    if (!/^\d{4}-\d{4}$/.test(editKey)) {
+    // Validate key format (XXXX-XXXX-XXXX — 3º grupo adicionado em 2026-07-07, ver src/lib/security.ts)
+    if (!/^\d{4}-\d{4}-\d{4}$/.test(editKey)) {
       const response: VerifyResponse = { 
         ok: false,
         message: "Invalid key format",
