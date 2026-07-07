@@ -16,6 +16,7 @@ export async function POST(request: Request) {
 
   const supabase = getSupabaseAdmin()!;
   const results: { slug: string; migrated: number; error?: string }[] = [];
+  let biositesFetchError: string | null = null;
 
   // Biosites — paginado (mesmo teto de 1000 linhas por select do Postgres/
   // PostgREST, já documentado em projetos irmãos).
@@ -26,6 +27,7 @@ export async function POST(request: Request) {
       .from("toqy_biosites")
       .select("id, slug, site_data")
       .range(from, from + PAGE - 1);
+    if (error) biositesFetchError = error.message;
     if (error || !rows || rows.length === 0) break;
 
     for (const row of rows) {
@@ -104,6 +106,7 @@ export async function POST(request: Request) {
       total: results.length,
       migrated: results.filter((r) => r.migrated > 0).length,
       errors: results.filter((r) => r.error),
+      fetchError: biositesFetchError,
     },
     profiles: {
       migrated: profileResults.filter((r) => r.migrated).length,
