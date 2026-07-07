@@ -236,6 +236,8 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 label="Logo do negócio"
                 value={site.profile.logoUrl}
                 onChange={(url) => setProfile({ logoUrl: url })}
+                slug={site.slug}
+                fieldId="logo"
               />
               <ImageGuidelineHint type="logo" />
               <p className="mt-1 text-xs text-muted">Use PNG com fundo transparente para melhor resultado.</p>
@@ -272,6 +274,8 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 value={site.profile.logoSignatureUrl}
                 onChange={(url) => setProfile({ logoSignatureUrl: url })}
                 placeholder="URL da imagem de assinatura"
+                slug={site.slug}
+                fieldId="logo-signature"
               />
             </div>
             <label><span className={label}>Título/subtítulo</span><input className={field} value={site.profile.title ?? ""} onChange={(e) => setProfile({ title: e.target.value })} /></label>
@@ -321,7 +325,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
               <div className="mb-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
                 <strong>💡 Dica para melhor resultado:</strong> Use imagem <strong>1080×1920px</strong> (formato celular). A imagem fica fixa e o conteúdo rola por cima — ela não vai esticar.
               </div>
-              <ImageUploadField label="" value={site.profile.backgroundImageUrl} onChange={(url) => setProfile({ backgroundImageUrl: url })} placeholder="URL da imagem de fundo" />
+              <ImageUploadField label="" value={site.profile.backgroundImageUrl} onChange={(url) => setProfile({ backgroundImageUrl: url })} placeholder="URL da imagem de fundo" slug={site.slug} fieldId="background" />
               <ImageGuidelineHint type="background" />
             </label>
           </div>
@@ -679,7 +683,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                   <label><span className={label}>Badge / Destaque</span><input className={field} placeholder='Ex: "Mais vendido", "Novidade"' value={item.highlight ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { highlight: e.target.value }) }))} /></label>
                   <label className="md:col-span-2"><span className={label}>Descrição</span><textarea className={field} rows={2} value={item.description} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { description: e.target.value }) }))} /></label>
                 </div>
-                <div className="mt-3"><ImageUploadField label="Imagem do item" value={item.imageUrl} onChange={(url) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageUrl: url }) }))} /><ImageGuidelineHint type={item.imageLayout === "square" ? "productSquare" : "productHorizontal"} /></div>
+                <div className="mt-3"><ImageUploadField label="Imagem do item" value={item.imageUrl} onChange={(url) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageUrl: url }) }))} slug={site.slug} fieldId={`catalog-${item.id}`} /><ImageGuidelineHint type={item.imageLayout === "square" ? "productSquare" : "productHorizontal"} /></div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <input className={field} placeholder="Texto do botão (ex: Agendar)" value={item.actionLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionLabel: e.target.value }) }))} />
                   <input className={field} placeholder="Link do botão (opcional)" value={item.actionUrl ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionUrl: e.target.value }) }))} />

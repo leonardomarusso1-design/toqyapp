@@ -72,10 +72,23 @@ export default function ConfiguracoesPage() {
     const reader = new FileReader();
     reader.onload = async () => {
       const dataUrl = reader.result as string;
-      await supabase.from("profiles").update({ avatar_url: dataUrl }).eq("id", profile.id);
-      setProfile(p => p ? { ...p, avatar_url: dataUrl } : p);
-      setAvatarUploading(false);
-      if (avatarRef.current) avatarRef.current.value = "";
+      // Bug real corrigido em 2026-07-06: mesmo problema de bandwidth do
+      // site_data dos biosites (ver src/lib/imageStorage.ts) — avatar_url
+      // ia direto como base64 pro banco. Sobe pro Storage e salva só o link.
+      try {
+        const res = await fetch("/api/upload-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dataUrl, slug: profile.id, fieldId: "avatar" }),
+        });
+        const data: { url?: string } = await res.json();
+        const finalUrl = data.url ?? dataUrl;
+        await supabase.from("profiles").update({ avatar_url: finalUrl }).eq("id", profile.id);
+        setProfile(p => p ? { ...p, avatar_url: finalUrl } : p);
+      } finally {
+        setAvatarUploading(false);
+        if (avatarRef.current) avatarRef.current.value = "";
+      }
     };
     reader.readAsDataURL(file);
   }

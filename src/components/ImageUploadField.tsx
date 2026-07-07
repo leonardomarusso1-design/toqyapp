@@ -40,6 +40,8 @@ export function ImageUploadField({
   showPositionControl,
   position,
   onPositionChange,
+  slug,
+  fieldId,
 }: {
   label: string;
   value?: string;
@@ -49,6 +51,12 @@ export function ImageUploadField({
   showPositionControl?: boolean;
   position?: string;
   onPositionChange?: (pos: string) => void;
+  // Bug real corrigido em 2026-07-06: antes a imagem ia direto como base64
+  // pro site_data (estourou o limite de bandwidth da Vercel — ver
+  // src/lib/imageStorage.ts). Agora sobe pro Supabase Storage e só o link
+  // público entra no site. slug/fieldId identificam onde salvar o arquivo.
+  slug?: string;
+  fieldId?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
@@ -63,9 +71,22 @@ export function ImageUploadField({
     setLoading(true);
     try {
       const dataUrl = await resizeImage(file);
-      onChange(dataUrl);
+      if (!slug || !fieldId) {
+        // Sem slug/fieldId (uso legado/isolado) — mantém o comportamento
+        // anterior em vez de quebrar quem ainda não passou essas props.
+        onChange(dataUrl);
+        return;
+      }
+      const res = await fetch("/api/upload-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dataUrl, slug, fieldId }),
+      });
+      const data: { url?: string; error?: string } = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error || "Upload falhou");
+      onChange(data.url);
     } catch {
-      setError("Não foi possível carregar a imagem.");
+      setError("Não foi possível enviar a imagem.");
     } finally {
       setLoading(false);
       // Reseta o input para permitir selecionar o mesmo arquivo novamente

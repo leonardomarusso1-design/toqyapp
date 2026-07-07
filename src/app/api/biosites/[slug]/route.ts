@@ -3,16 +3,27 @@ import { getMockSiteBySlug } from "@/lib/mockSites";
 
 type Params = { params: Promise<{ slug: string }> };
 
+// Cache curto (Parte 4 da migração de imagens, 2026-07-06): depois de migrar
+// as imagens pra Storage, a resposta já fica pequena (link em vez de
+// base64) — cachear por alguns minutos reduz ainda mais a repetição de
+// transferência pro mesmo slug (vitrine da landing, galeria de templates).
+const CACHE_HEADERS = { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600" };
+
 export async function GET(_req: Request, { params }: Params) {
   const { slug } = await params;
   if (hasSupabaseEnv()) {
     const supabase = getSupabaseAdmin()!;
     const { data, error } = await supabase.from("toqy_biosites").select("*").eq("slug", slug).single();
-    if (!error && data) return Response.json({ site: { ...data.site_data, id: data.id, slug: data.slug, status: data.status }, source: "supabase" });
+    if (!error && data) {
+      return Response.json(
+        { site: { ...data.site_data, id: data.id, slug: data.slug, status: data.status }, source: "supabase" },
+        { headers: CACHE_HEADERS }
+      );
+    }
   }
   const site = getMockSiteBySlug(slug);
   if (!site) return Response.json({ error: "Bio site nao encontrado" }, { status: 404 });
-  return Response.json({ site, source: "mock" });
+  return Response.json({ site, source: "mock" }, { headers: CACHE_HEADERS });
 }
 
 export async function PATCH(request: Request, { params }: Params) {
