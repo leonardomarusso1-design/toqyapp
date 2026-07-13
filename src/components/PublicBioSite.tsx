@@ -11,6 +11,7 @@ import {
   FileText,
   Globe2,
   Image as ImageIcon,
+  Images,
   Link as LinkIcon,
   Mail,
   MapPin,
@@ -425,6 +426,29 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
   const [activeCategory, setActiveCategory] = useState<string>("Todas");
   const categories = useMemo(() => Array.from(new Set(items.map((item) => item.category?.trim() || "Destaques"))), [items]);
   const filteredItems = activeCategory === "Todas" ? items : items.filter((item) => (item.category?.trim() || "Destaques") === activeCategory);
+
+  // Vitrine flutuante por categoria (2026-07-13) — pedido real de clientes
+  // do Toqy (ex: restaurante de yakisoba com categoria "Yakisoba de carne"):
+  // clicar na FOTO de um item abre uma mini galeria mostrando os outros
+  // itens da mesma categoria, sem sair da página. Usa a mesma lista COMPLETA
+  // de itens (não a filtrada por activeCategory) — clicar na foto sempre
+  // mostra a categoria inteira daquele item, mesmo que a pessoa esteja
+  // vendo "Todas" no momento.
+  const [galleryCategory, setGalleryCategory] = useState<string | null>(null);
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    items.forEach((item) => {
+      const key = item.category?.trim() || "Destaques";
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    });
+    return counts;
+  }, [items]);
+  // Só abre a galeria se a categoria tiver mais de 1 item — categoria única
+  // não tem "mais peças" pra mostrar, clicar na foto não faria nada útil.
+  const openGallery = (category: string) => {
+    if ((categoryCounts.get(category) ?? 0) > 1) setGalleryCategory(category);
+  };
+  const galleryItems = galleryCategory ? items.filter((item) => (item.category?.trim() || "Destaques") === galleryCategory) : [];
   const whatsapp = whatsappUrl(site);
   const chipStyle = (active: boolean): React.CSSProperties => active
     ? { background: site.theme.primary, color: site.theme.mode === "light" ? "#fff" : "#06111F", borderColor: "transparent" }
@@ -449,15 +473,15 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
           {uniqueGroups(items2).map(([group, groupItems]) => (
             <div key={group}>
               <h3 className="mb-3 text-base font-black" style={{ color: site.theme.muted }}>{group}</h3>
-              <CatalogScroller site={site} items={groupItems} />
+              <CatalogScroller site={site} items={groupItems} onOpenGallery={openGallery} />
             </div>
           ))}
         </div>
       );
     }
-    if (l === "grid") return <div className="grid grid-cols-2 gap-3">{items2.map((item) => <CatalogCard key={item.id} site={site} item={item} compact />)}</div>;
-    if (l === "stack") return <div className="space-y-4">{items2.map((item) => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>;
-    return <CatalogScroller site={site} items={items2} />;
+    if (l === "grid") return <div className="grid grid-cols-2 gap-3">{items2.map((item) => <CatalogCard key={item.id} site={site} item={item} compact onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>;
+    if (l === "stack") return <div className="space-y-4">{items2.map((item) => <CatalogCard key={item.id} site={site} item={item} stacked onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>;
+    return <CatalogScroller site={site} items={items2} onOpenGallery={openGallery} categoryCounts={categoryCounts} />;
   }
 
   const LAYOUT_LABELS: Record<CatalogLayout, string> = {
@@ -490,30 +514,30 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
             {itemsBySection.destaques.length > 0 && (
               <div>
                 <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.accent }}>Destaques</p>
-                <div className="space-y-4">{itemsBySection.destaques.map(item => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
+                <div className="space-y-4">{itemsBySection.destaques.map(item => <CatalogCard key={item.id} site={site} item={item} stacked onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
               </div>
             )}
             {itemsBySection.carrossel.length > 0 && (
               <div>
                 <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{itemsBySection.carrossel[0].category || "Carrossel"}</p>
-                <CatalogScroller site={site} items={itemsBySection.carrossel} />
+                <CatalogScroller site={site} items={itemsBySection.carrossel} onOpenGallery={openGallery} categoryCounts={categoryCounts} />
               </div>
             )}
             {itemsBySection.grade.length > 0 && (
               <div>
                 <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{itemsBySection.grade[0].category || "Grade"}</p>
-                <div className="grid grid-cols-2 gap-3">{itemsBySection.grade.map(item => <CatalogCard key={item.id} site={site} item={item} compact />)}</div>
+                <div className="grid grid-cols-2 gap-3">{itemsBySection.grade.map(item => <CatalogCard key={item.id} site={site} item={item} compact onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
               </div>
             )}
             {itemsBySection.lista.length > 0 && (
               <div>
                 <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{itemsBySection.lista[0].category || "Lista"}</p>
-                <div className="space-y-4">{itemsBySection.lista.map(item => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
+                <div className="space-y-4">{itemsBySection.lista.map(item => <CatalogCard key={item.id} site={site} item={item} stacked onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
               </div>
             )}
             {itemsBySection.padrao.length > 0 && (
               <div>
-                <CatalogScroller site={site} items={itemsBySection.padrao} />
+                <CatalogScroller site={site} items={itemsBySection.padrao} onOpenGallery={openGallery} categoryCounts={categoryCounts} />
               </div>
             )}
           </div>
@@ -544,22 +568,47 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
           {whatsapp ? <button type="button" onClick={() => window.open(whatsapp, "_blank", "noopener,noreferrer")} className="mt-3 inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-xs font-black" style={{ background: site.theme.primary, color: "#fff" }}><WhatsAppIcon className="h-4 w-4" />Fale com a gente no WhatsApp</button> : null}
         </div>
       ) : null}
+
+      {galleryCategory ? (
+        <CategoryGalleryModal site={site} category={galleryCategory} items={galleryItems} onClose={() => setGalleryCategory(null)} />
+      ) : null}
     </section>
   );
 }
 
-function CatalogScroller({ site, items }: { site: ToqySite; items: CatalogItem[] }) {
-  return <div className="flex snap-x gap-4 overflow-x-auto pb-3">{items.map((item) => <CatalogCard key={item.id} site={site} item={item} />)}</div>;
+function CatalogScroller({ site, items, onOpenGallery, categoryCounts }: { site: ToqySite; items: CatalogItem[]; onOpenGallery?: (category: string) => void; categoryCounts?: Map<string, number> }) {
+  return (
+    <div className="flex snap-x gap-4 overflow-x-auto pb-3">
+      {items.map((item) => (
+        <CatalogCard key={item.id} site={site} item={item} onOpenGallery={onOpenGallery} categoryCount={categoryCounts?.get(item.category?.trim() || "Destaques") ?? 1} />
+      ))}
+    </div>
+  );
 }
 
-function CatalogCard({ site, item, compact = false, stacked = false }: { site: ToqySite; item: CatalogItem; compact?: boolean; stacked?: boolean }) {
+function CatalogCard({ site, item, compact = false, stacked = false, onOpenGallery, categoryCount = 1 }: { site: ToqySite; item: CatalogItem; compact?: boolean; stacked?: boolean; onOpenGallery?: (category: string) => void; categoryCount?: number }) {
   const width = stacked ? "w-full" : compact ? "w-full" : "min-w-[275px]";
   const imageHeight = compact ? "h-28" : item.imageLayout === "horizontal" ? "h-36" : "h-52";
   const whatsapp = whatsappUrl(site);
+  // Vitrine por categoria: só clicável quando tem mais de 1 item na mesma
+  // categoria (senão não há "mais peças" pra mostrar na galeria).
+  const canOpenGallery = Boolean(onOpenGallery) && categoryCount > 1;
+  const handleImageClick = canOpenGallery ? () => onOpenGallery!(item.category?.trim() || "Destaques") : undefined;
   return (
     <article className={`${width} snap-start overflow-hidden rounded-[1.6rem] border shadow-xl backdrop-blur`} style={{ background: site.theme.colors?.catalogItemBg ?? site.theme.card, borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.14)" }}>
-      <div className={imageHeight} style={{ background: `linear-gradient(135deg, ${site.theme.primary}33, ${site.theme.secondary}44)` }}>
+      <div
+        className={`${imageHeight} relative ${canOpenGallery ? "cursor-pointer" : ""}`}
+        style={{ background: `linear-gradient(135deg, ${site.theme.primary}33, ${site.theme.secondary}44)` }}
+        onClick={handleImageClick}
+        role={canOpenGallery ? "button" : undefined}
+        aria-label={canOpenGallery ? `Ver mais itens de ${item.category?.trim() || "Destaques"}` : undefined}
+      >
         {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><FileText className="h-10 w-10 opacity-60" /></div>}
+        {canOpenGallery ? (
+          <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-black text-white backdrop-blur-sm">
+            <Images className="h-3 w-3" />+{categoryCount - 1}
+          </span>
+        ) : null}
       </div>
       <div className={compact ? "p-3" : "p-4"}>
         {item.highlight ? <span className="mb-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-black" style={{ background: site.theme.colors?.catalogItemHighlight ? site.theme.colors.catalogItemHighlight + "22" : "#fef3c7", color: site.theme.colors?.catalogItemHighlight ?? "#b45309" }}>{item.highlight}</span> : null}
@@ -574,6 +623,39 @@ function CatalogCard({ site, item, compact = false, stacked = false }: { site: T
         </div>
       </div>
     </article>
+  );
+}
+
+// Vitrine flutuante de categoria (2026-07-13) — abre por cima da página ao
+// clicar na foto de um item do catálogo, mostrando os outros itens da MESMA
+// categoria em grade. Reusa o ModalShell já usado pelo Pix/Wi-Fi, mesmo
+// padrão visual (bottom-sheet no mobile, fecha ao tocar fora ou no X).
+function CategoryGalleryModal({ site, category, items, onClose }: { site: ToqySite; category: string; items: CatalogItem[]; onClose: () => void }) {
+  const whatsapp = whatsappUrl(site);
+  return (
+    <ModalShell title={category} onClose={onClose} site={site} icon={<Images className="h-6 w-6" />}>
+      <div className="grid grid-cols-2 gap-3">
+        {items.map((item) => (
+          <div key={item.id} className="overflow-hidden rounded-[1.2rem] border" style={{ background: site.theme.colors?.catalogItemBg ?? site.theme.card, borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.14)" }}>
+            <div className="h-28" style={{ background: `linear-gradient(135deg, ${site.theme.primary}33, ${site.theme.secondary}44)` }}>
+              {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><FileText className="h-8 w-8 opacity-60" /></div>}
+            </div>
+            <div className="p-2.5">
+              <p className="line-clamp-2 text-xs font-black leading-tight" style={{ color: site.theme.colors?.catalogItemName ?? site.theme.text }}>{item.name}</p>
+              {item.price ? <p className="mt-1 text-xs font-black" style={{ color: site.theme.colors?.catalogItemPrice ?? site.theme.accent }}>{item.price}</p> : null}
+              <button
+                type="button"
+                onClick={() => { const href = item.actionUrl ? ensureUrl(item.actionUrl) : whatsapp; if (href) window.open(href, "_blank", "noopener,noreferrer"); }}
+                className="mt-2 w-full rounded-full px-2 py-1.5 text-[11px] font-black"
+                style={{ background: site.theme.colors?.catalogActionBg ?? site.theme.primary, color: site.theme.colors?.catalogActionText ?? (site.theme.mode === "light" ? "#fff" : "#06111F") }}
+              >
+                {item.actionLabel || "Ver"}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </ModalShell>
   );
 }
 
