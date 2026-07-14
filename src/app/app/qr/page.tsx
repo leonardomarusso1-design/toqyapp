@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Copy, Download, ExternalLink, Link2, Lock, QrCode, Smartphone } from "lucide-react";
+import { Copy, Download, ExternalLink, Link2, Lock, QrCode, Smartphone, Trash2 } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { createPublicUrl } from "@/lib/dataProvider";
 import { listBiositesFromSupabase } from "@/lib/biositeSync";
@@ -158,6 +158,30 @@ export default function QRPage() {
     }
   }
 
+  // Excluir QR salvo (2026-07-15, pedido do Leonardo: "quando criar algo
+  // editável, também poder excluir" — regra geral pra toda a plataforma,
+  // não só aqui).
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  async function deleteQrCode(id: string) {
+    if (!window.confirm("Excluir este QR Code salvo? O link público para de funcionar.")) return;
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/qr-codes/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Falha ao excluir");
+      if (editingId === id) cancelEdit();
+      fetchSavedList(accessToken);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Falha ao excluir");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   const plan = getPlan(resolvePlanTier(planTier));
   const selectedSite = useMemo(() => sites.find((site) => site.slug === selectedSlug) ?? sites[0], [selectedSlug, sites]);
   const publicUrl = selectedSite && typeof window !== "undefined" ? `${window.location.origin}${createPublicUrl(selectedSite.slug)}` : "";
@@ -168,7 +192,17 @@ export default function QRPage() {
     return generatePixBRCode({ key: pixKey.trim(), merchantName: pixName.trim(), city: pixCity.trim() || "BRASIL", amount });
   }, [mode, pixKey, pixName, pixCity, pixAmount]);
 
-  const qrValue = mode === "biosite" ? publicUrl : mode === "pix" ? pixValue : ensureHttp(linkUrl);
+  // O QR Code IMPRESSO precisa ser sempre o LINK público estável
+  // (/qr/{slug}), nunca o dado bruto do Pix/link (2026-07-15, achado real
+  // do Leonardo: "quando mudo alguma informação no editar, o QR code
+  // muda... a plaquinha é a mesma, só muda a informação dentro do qr
+  // code"). QR Code é uma codificação direta do texto — qualquer edição no
+  // Pix/link muda literalmente o desenho do QR. Por isso, pra pix/link,
+  // só existe QR "definitivo" DEPOIS de salvo (savedUrl) — antes disso é
+  // só uma prévia, e o botão de baixar fica bloqueado, pra nunca imprimir
+  // um QR que vai virar obsoleto na primeira edição.
+  const qrIsFinal = mode === "biosite" || Boolean(savedUrl);
+  const qrValue = mode === "biosite" ? publicUrl : mode === "pix" ? savedUrl || pixValue : savedUrl || ensureHttp(linkUrl);
   const previewLabel = mode === "biosite" ? (selectedSite?.profile.name ?? "Bio site") : mode === "pix" ? (pixName || "Pix") : "Link";
 
   async function copy(value: string) {
@@ -180,7 +214,7 @@ export default function QRPage() {
 
   function downloadQr() {
     const svg = qrRef.current?.querySelector("svg");
-    if (!svg || !qrValue) return;
+    if (!svg || !qrValue || !qrIsFinal) return;
     const source = new XMLSerializer().serializeToString(svg);
     const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -290,10 +324,13 @@ export default function QRPage() {
                   <button type="button" onClick={() => copy(pixValue)} disabled={!pixValue} className="inline-flex items-center gap-2 rounded-2xl bg-accent px-5 py-3 text-sm font-black text-white disabled:opacity-50">
                     <Copy className="h-4 w-4" />{copied === "pix" ? "Copiado" : "Copiar código Pix"}
                   </button>
-                  <button type="button" onClick={downloadQr} disabled={!pixValue} className="inline-flex items-center gap-2 rounded-2xl border border-border bg-card px-5 py-3 text-sm font-black text-ink disabled:opacity-50">
+                  <button type="button" onClick={downloadQr} disabled={!qrIsFinal} title={qrIsFinal ? undefined : "Gere o link pra NFC primeiro — esse é o QR que fica fixo na plaquinha"} className="inline-flex items-center gap-2 rounded-2xl border border-border bg-card px-5 py-3 text-sm font-black text-ink disabled:opacity-50">
                     <Download className="h-4 w-4" /> Baixar QR
                   </button>
                 </div>
+                {!qrIsFinal ? (
+                  <p className="mt-3 text-xs font-bold text-accent">Gere o link pra NFC abaixo antes de baixar/imprimir — esse é o QR definitivo, que nunca muda mesmo se você editar os dados do Pix depois.</p>
+                ) : null}
               </div>
               <NfcLinkPanel saving={saving} saveError={saveError} savedUrl={savedUrl} savedSeq={savedSeq} onSave={saveAndGetLink} canSave={Boolean(pixValue)} isEditing={Boolean(editingId)} onCancelEdit={cancelEdit} />
             </div>
@@ -309,10 +346,13 @@ export default function QRPage() {
                   <button type="button" onClick={() => copy(ensureHttp(linkUrl))} disabled={!linkUrl} className="inline-flex items-center gap-2 rounded-2xl bg-accent px-5 py-3 text-sm font-black text-white disabled:opacity-50">
                     <Copy className="h-4 w-4" />{copied === "link" ? "Copiado" : "Copiar link"}
                   </button>
-                  <button type="button" onClick={downloadQr} disabled={!linkUrl} className="inline-flex items-center gap-2 rounded-2xl border border-border bg-card px-5 py-3 text-sm font-black text-ink disabled:opacity-50">
+                  <button type="button" onClick={downloadQr} disabled={!qrIsFinal} title={qrIsFinal ? undefined : "Gere o link pra NFC primeiro — esse é o QR que fica fixo na plaquinha"} className="inline-flex items-center gap-2 rounded-2xl border border-border bg-card px-5 py-3 text-sm font-black text-ink disabled:opacity-50">
                     <Download className="h-4 w-4" /> Baixar QR
                   </button>
                 </div>
+                {!qrIsFinal ? (
+                  <p className="mt-3 text-xs font-bold text-accent">Gere o link pra NFC abaixo antes de baixar/imprimir — esse é o QR definitivo, que nunca muda mesmo se você editar o link depois.</p>
+                ) : null}
               </div>
               <NfcLinkPanel saving={saving} saveError={saveError} savedUrl={savedUrl} savedSeq={savedSeq} onSave={saveAndGetLink} canSave={Boolean(linkUrl.trim())} isEditing={Boolean(editingId)} onCancelEdit={cancelEdit} />
             </div>
@@ -329,7 +369,9 @@ export default function QRPage() {
             <Smartphone className="h-7 w-7" />
           </div>
           <h2 className="mt-4 text-2xl font-black text-ink">{previewLabel}</h2>
-          <p className="mt-1 text-sm text-muted">Prévia da plaquinha</p>
+          <p className="mt-1 text-sm text-muted">
+            {mode === "biosite" ? "Prévia da plaquinha" : qrIsFinal ? "QR definitivo — não muda ao editar" : "Prévia (ainda não salvo)"}
+          </p>
           <div ref={qrRef} className="mx-auto mt-6 w-fit rounded-[2rem] border border-border bg-card p-5 shadow-xl">
             {qrValue ? <QRCodeSVG value={qrValue} size={220} /> : <div className="flex h-[220px] w-[220px] items-center justify-center text-sm text-muted">Preencha os dados</div>}
           </div>
@@ -358,13 +400,24 @@ export default function QRPage() {
                   </p>
                   <p className="mt-0.5 break-all text-xs text-muted">{`${typeof window !== "undefined" ? window.location.origin : ""}/qr/${row.slug}`}</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => startEdit(row)}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-border bg-surface px-4 py-2 text-sm font-black text-ink hover:border-accent"
-                >
-                  Editar
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => startEdit(row)}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-border bg-surface px-4 py-2 text-sm font-black text-ink hover:border-accent"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteQrCode(row.id)}
+                    disabled={deletingId === row.id}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-border bg-surface px-3 py-2 text-sm font-black text-red-500 hover:border-red-400 disabled:opacity-50"
+                    title="Excluir"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

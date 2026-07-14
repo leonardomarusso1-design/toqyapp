@@ -71,3 +71,31 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (updateError) return Response.json({ error: updateError.message }, { status: 500 });
   return Response.json({ qrCode });
 }
+
+// Exclui um QR Code salvo (2026-07-15, pedido do Leonardo: "quando criar
+// algo editável, também poder excluir").
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!hasSupabaseEnv()) return Response.json({ error: "Servidor não configurado" }, { status: 500 });
+  const supabase = getSupabaseAdmin()!;
+
+  const userId = await getAuthenticatedUserId(request, supabase);
+  if (!userId) return Response.json({ error: "Não autenticado" }, { status: 401 });
+
+  const { id } = await params;
+
+  const { data: existing, error: findError } = await supabase
+    .from("toqy_qr_codes")
+    .select("id, owner_profile_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (findError) return Response.json({ error: findError.message }, { status: 500 });
+  if (!existing || existing.owner_profile_id !== userId) {
+    return Response.json({ error: "QR Code não encontrado" }, { status: 404 });
+  }
+
+  const { error: deleteError } = await supabase.from("toqy_qr_codes").delete().eq("id", id);
+  if (deleteError) return Response.json({ error: deleteError.message }, { status: 500 });
+
+  return Response.json({ ok: true });
+}
