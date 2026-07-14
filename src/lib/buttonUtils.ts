@@ -1,5 +1,6 @@
 import type { ToqyButton, ToqySite } from "./types";
 import { ensureUrl, normalizeInstagram, normalizePhone } from "./security";
+import { extractCityFromLocation, generatePixBRCode } from "./pixBrCode";
 
 export function whatsappUrl(site: ToqySite) {
   const phone = normalizePhone(site.contact.whatsapp || site.contact.phone);
@@ -40,9 +41,20 @@ export function wifiPayload(site: ToqySite) {
   return `WIFI:T:${enc};S:${site.wifi.ssid};P:${password};H:false;;`;
 }
 
+// Bug real corrigido em 2026-07-13 (Leonardo): isto retornava um texto
+// solto ("PIX chave | recebedor"), NÃO um Pix de verdade — nenhum app de
+// banco reconhece esse formato, o QR Code parecia funcionar mas não pagava
+// nada. Agora gera o BR Code EMV real (padrão oficial do Banco Central),
+// usado tanto no QR Code quanto no botão "Copiar código Pix" (Pix Copia e
+// Cola) — os dois precisam ser o MESMO valor, é assim que o recurso
+// funciona de verdade.
 export function pixPayload(site: ToqySite, amount?: number) {
-  const value = amount ? ` | Valor: R$ ${amount.toFixed(2).replace(".", ",")}` : "";
-  return `PIX ${site.pix.key || "chave-pix"} | ${site.pix.receiver || site.profile.name}${value}`;
+  return generatePixBRCode({
+    key: site.pix.key || "",
+    merchantName: site.pix.receiver || site.profile.name,
+    city: extractCityFromLocation(site.profile.location || ""),
+    amount,
+  });
 }
 
 export function createVCard(site: ToqySite) {
