@@ -38,8 +38,15 @@ export async function POST(request: Request) {
 
   const credits = await checkAiArtCredits(userId);
   if (!credits.allowed) {
+    // DEBUG TEMPORÁRIO (2026-07-13) — investigando por que agency com
+    // 0 créditos usados deu 403 mesmo devendo ter 30 (ou bypass ilimitado).
+    // Expõe userId/planTier resolvidos no servidor pra comparar contra o
+    // profile real. Remover assim que a causa for confirmada.
     return Response.json(
-      { error: `Limite de artes geradas por IA do plano atingido (${credits.used}/${credits.limit}). Fale com o suporte pra saber sobre pacotes extras.` },
+      {
+        error: `Limite de artes geradas por IA do plano atingido (${credits.used}/${credits.limit}). Fale com o suporte pra saber sobre pacotes extras. [debug: userId=${userId} planTier=${credits.planTier}]`,
+        debug: { userId, planTier: credits.planTier, used: credits.used, limit: credits.limit },
+      },
       { status: 403 }
     );
   }
