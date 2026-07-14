@@ -2,6 +2,7 @@ import { getSupabaseAdmin, hasSupabaseEnv } from "@/lib/supabaseServer";
 import { checkAiArtCredits } from "@/lib/planLimits";
 import { generatePlaqueArt, type PlaqueType, type PlaqueSize } from "@/lib/plaqueGenerator";
 import { uploadPlaqueImage } from "@/lib/plaqueStorage";
+import { stampSeqNumber } from "@/lib/stampNumber";
 
 type GenerateBody = {
   plaqueType: PlaqueType;
@@ -80,9 +81,26 @@ export async function POST(request: Request) {
     return Response.json({ error: err instanceof Error ? err.message : "Falha ao gerar a arte" }, { status: 502 });
   }
 
+  // Número sequencial por usuário (2026-07-14) — próximo número da
+  // sequência dele, independente de outros usuários. Carimbado na imagem
+  // depois via sharp (não pela IA — texto pequeno gerado por IA não é
+  // confiável), pra rastrear/reimprimir peças físicas individualmente.
+  const { count: existingCount } = await supabase
+    .from("toqy_plaque_designs")
+    .select("id", { count: "exact", head: true })
+    .eq("owner_profile_id", userId);
+  const seqNumber = (existingCount ?? 0) + 1;
+
+  let stampedBuffer: Buffer;
+  try {
+    stampedBuffer = await stampSeqNumber(Buffer.from(generated.base64, "base64"), seqNumber);
+  } catch (err) {
+    return Response.json({ error: err instanceof Error ? err.message : "Falha ao numerar a arte gerada" }, { status: 500 });
+  }
+
   let imageUrl: string;
   try {
-    imageUrl = await uploadPlaqueImage(supabase, userId, generated.base64, generated.mediaType);
+    imageUrl = await uploadPlaqueImage(supabase, userId, stampedBuffer, "image/png");
   } catch (err) {
     return Response.json({ error: err instanceof Error ? err.message : "Falha ao salvar a arte gerada" }, { status: 500 });
   }
@@ -98,6 +116,7 @@ export async function POST(request: Request) {
       extra_info: body.extraInfo?.trim() || null,
       logo_url: null, // logo é enviada só pra IA usar como referência — não fica persistida separada por padrão
       image_url: imageUrl,
+      seq_number: seqNumber,
       status: "ready",
     })
     .select()

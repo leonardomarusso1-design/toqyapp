@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Copy, Download, ExternalLink, Lock, QrCode, Smartphone } from "lucide-react";
+import { Copy, Download, ExternalLink, Link2, Lock, QrCode, Smartphone } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { createPublicUrl } from "@/lib/dataProvider";
 import { listBiositesFromSupabase } from "@/lib/biositeSync";
@@ -32,9 +32,20 @@ export default function QRPage() {
   const [pixAmount, setPixAmount] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
 
+  // Link público pra NFC (2026-07-14) — o QR gerado nesta tela era só uma
+  // prévia efêmera na tela, sem link nenhum. NFC grava um LINK, não uma
+  // imagem — então salva o Pix/link num registro com slug público e devolve
+  // essa URL, que é o que de fato vai gravado dentro do chip da tag.
+  const [accessToken, setAccessToken] = useState("");
+  const [savedUrl, setSavedUrl] = useState("");
+  const [savedSeq, setSavedSeq] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) return;
+      setAccessToken(session.access_token);
       const [allSites, { data: profile }] = await Promise.all([
         listBiositesFromSupabase(),
         supabase.from("profiles").select("plan_toqy, plan_tier").eq("id", session.user.id).maybeSingle(),
@@ -44,6 +55,39 @@ export default function QRPage() {
       setPlanTier(profile?.plan_toqy || profile?.plan_tier || "free");
     });
   }, []);
+
+  // Reseta o link salvo sempre que os dados do Pix/link mudam — o link
+  // salvo anteriormente não reflete mais o que está preenchido na tela.
+  useEffect(() => {
+    setSavedUrl("");
+    setSavedSeq(null);
+    setSaveError("");
+  }, [mode, pixKey, pixName, pixCity, pixAmount, linkUrl]);
+
+  async function saveAndGetLink() {
+    if (mode === "biosite") return;
+    setSaving(true);
+    setSaveError("");
+    try {
+      const res = await fetch("/api/qr-codes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify(
+          mode === "pix"
+            ? { mode: "pix", pixKey, pixReceiverName: pixName, pixCity, pixAmount: pixAmount ? Number(pixAmount.replace(",", ".")) : undefined }
+            : { mode: "link", label: previewLabel, targetUrl: ensureHttp(linkUrl) }
+        ),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Falha ao gerar o link");
+      setSavedUrl(`${window.location.origin}/qr/${json.qrCode.slug}`);
+      setSavedSeq(json.qrCode.seq_number);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Falha ao gerar o link");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const plan = getPlan(resolvePlanTier(planTier));
   const selectedSite = useMemo(() => sites.find((site) => site.slug === selectedSlug) ?? sites[0], [selectedSlug, sites]);
@@ -182,6 +226,7 @@ export default function QRPage() {
                   </button>
                 </div>
               </div>
+              <NfcLinkPanel saving={saving} saveError={saveError} savedUrl={savedUrl} savedSeq={savedSeq} onSave={saveAndGetLink} canSave={Boolean(pixValue)} />
             </div>
           ) : (
             <div className="space-y-4">
@@ -200,11 +245,17 @@ export default function QRPage() {
                   </button>
                 </div>
               </div>
+              <NfcLinkPanel saving={saving} saveError={saveError} savedUrl={savedUrl} savedSeq={savedSeq} onSave={saveAndGetLink} canSave={Boolean(linkUrl.trim())} />
             </div>
           )}
         </section>
 
-        <aside className="rounded-[2rem] border border-border bg-card p-6 text-center shadow-sm">
+        <aside className="relative rounded-[2rem] border border-border bg-card p-6 text-center shadow-sm">
+          {savedSeq ? (
+            <span className="absolute right-5 top-5 rounded-full bg-ink/80 px-2.5 py-1 text-[11px] font-bold text-white/80">
+              #{String(savedSeq).padStart(3, "0")}
+            </span>
+          ) : null}
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 text-accent">
             <Smartphone className="h-7 w-7" />
           </div>
@@ -228,4 +279,59 @@ function ensureHttp(url: string) {
   const trimmed = url.trim();
   if (!trimmed) return "";
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+// Painel "gerar link pra NFC" (2026-07-14) — o QR/Pix desta tela, sozinho,
+// não serve pra gravar num chip NFC (NFC grava link, não imagem nem texto
+// solto). Este botão salva os dados e devolve um link público fixo
+// (/qr/{slug}) que abre uma página mostrando o QR + copia-e-cola — é essa
+// URL que vai dentro da tag.
+function NfcLinkPanel({
+  saving,
+  saveError,
+  savedUrl,
+  savedSeq,
+  onSave,
+  canSave,
+}: {
+  saving: boolean;
+  saveError: string;
+  savedUrl: string;
+  savedSeq: number | null;
+  onSave: () => void;
+  canSave: boolean;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  async function copyLink() {
+    if (!savedUrl) return;
+    await navigator.clipboard.writeText(savedUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
+  return (
+    <div className="rounded-[2rem] border border-dashed border-accent/40 bg-accent/5 p-5">
+      <p className="flex items-center gap-2 text-sm font-black text-ink">
+        <Link2 className="h-4 w-4 text-accent" /> Link pra gravar no NFC
+      </p>
+      <p className="mt-1 text-sm leading-relaxed text-muted">
+        A tag NFC grava um link, não uma imagem. Gere um link fixo que abre uma página com este QR Code + copia-e-cola — é esse link que você grava na tag.
+      </p>
+      {savedUrl ? (
+        <div className="mt-4 rounded-2xl border border-border bg-card p-4">
+          <p className="break-all text-sm font-black text-ink">{savedUrl}</p>
+          {savedSeq ? <p className="mt-1 text-xs text-muted">Peça nº {String(savedSeq).padStart(3, "0")}</p> : null}
+          <button type="button" onClick={copyLink} className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-accent px-4 py-2.5 text-sm font-black text-white">
+            <Copy className="h-4 w-4" />{copied ? "Copiado" : "Copiar link"}
+          </button>
+        </div>
+      ) : (
+        <button type="button" onClick={onSave} disabled={saving || !canSave} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-accent px-5 py-3 text-sm font-black text-white disabled:opacity-50">
+          <Link2 className="h-4 w-4" />{saving ? "Gerando..." : "Gerar link pra NFC"}
+        </button>
+      )}
+      {saveError ? <p className="mt-3 text-sm font-bold text-red-500">{saveError}</p> : null}
+    </div>
+  );
 }

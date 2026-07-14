@@ -28,14 +28,14 @@ async function ensureBucket(supabase: SupabaseClient) {
 export async function uploadPlaqueImage(
   supabase: SupabaseClient,
   ownerProfileId: string,
-  base64: string,
+  base64OrBuffer: string | Buffer,
   mediaType: string
 ): Promise<string> {
   await ensureBucket(supabase);
 
   const ext = mediaType.split("/")[1] === "jpeg" ? "jpg" : mediaType.split("/")[1] || "png";
   const path = `${ownerProfileId}/${Date.now()}.${ext}`;
-  const buffer = Buffer.from(base64, "base64");
+  const buffer = Buffer.isBuffer(base64OrBuffer) ? base64OrBuffer : Buffer.from(base64OrBuffer, "base64");
 
   const { error } = await supabase.storage.from(PLAQUE_DESIGNS_BUCKET).upload(path, buffer, {
     contentType: mediaType,
