@@ -12,6 +12,10 @@ type GenerateBody = {
   extraInfo?: string;
   logoDataUrl?: string; // data:image/...;base64,xxxx
   biositeId?: string;
+  pixReceiverName?: string;
+  pixKeyText?: string;
+  wifiNetworkName?: string;
+  wifiPasswordText?: string;
 };
 
 // Autenticação real do usuário (2026-07-13) — diferente de outras rotas
@@ -67,6 +71,10 @@ export async function POST(request: Request) {
       extraInfo: body.extraInfo?.trim(),
       logoBase64: logoMatch?.[2],
       logoMediaType: logoMatch?.[1],
+      pixReceiverName: body.pixReceiverName?.trim(),
+      pixKeyText: body.pixKeyText?.trim(),
+      wifiNetworkName: body.wifiNetworkName?.trim(),
+      wifiPasswordText: body.wifiPasswordText?.trim(),
     });
   } catch (err) {
     return Response.json({ error: err instanceof Error ? err.message : "Falha ao gerar a arte" }, { status: 502 });

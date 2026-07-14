@@ -34,6 +34,10 @@ export default function ArtesPage() {
   const [customHeight, setCustomHeight] = useState("15");
   const [businessName, setBusinessName] = useState("");
   const [extraInfo, setExtraInfo] = useState("");
+  const [pixReceiverName, setPixReceiverName] = useState("");
+  const [pixKeyText, setPixKeyText] = useState("");
+  const [wifiNetworkName, setWifiNetworkName] = useState("");
+  const [wifiPasswordText, setWifiPasswordText] = useState("");
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
@@ -85,6 +89,10 @@ export default function ArtesPage() {
           businessName: businessName.trim(),
           extraInfo: extraInfo.trim() || undefined,
           logoDataUrl: logoDataUrl || undefined,
+          pixReceiverName: plaqueType === "pix" ? pixReceiverName.trim() || undefined : undefined,
+          pixKeyText: plaqueType === "pix" ? pixKeyText.trim() || undefined : undefined,
+          wifiNetworkName: plaqueType === "wifi" ? wifiNetworkName.trim() || undefined : undefined,
+          wifiPasswordText: plaqueType === "wifi" ? wifiPasswordText.trim() || undefined : undefined,
         }),
       });
       const data = await res.json();
@@ -158,6 +166,32 @@ export default function ArtesPage() {
               <span className="text-sm font-black text-ink">Nome do negócio</span>
               <input value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Ex: Barbearia Andrian" className="mt-2 w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm font-bold text-ink outline-none focus:border-accent focus:ring-4 focus:ring-accent/10" />
             </label>
+
+            {plaqueType === "pix" ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="text-sm font-black text-ink">Nome do favorecido (opcional)</span>
+                  <input value={pixReceiverName} onChange={(e) => setPixReceiverName(e.target.value)} placeholder="Como aparece pro banco" className="mt-2 w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm font-bold text-ink outline-none focus:border-accent focus:ring-4 focus:ring-accent/10" />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-black text-ink">Chave Pix (opcional, só texto na arte)</span>
+                  <input value={pixKeyText} onChange={(e) => setPixKeyText(e.target.value)} placeholder="CPF, e-mail, telefone..." className="mt-2 w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm font-bold text-ink outline-none focus:border-accent focus:ring-4 focus:ring-accent/10" />
+                </label>
+              </div>
+            ) : null}
+
+            {plaqueType === "wifi" ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="text-sm font-black text-ink">Nome da rede (opcional)</span>
+                  <input value={wifiNetworkName} onChange={(e) => setWifiNetworkName(e.target.value)} placeholder="Ex: Loja_WiFi" className="mt-2 w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm font-bold text-ink outline-none focus:border-accent focus:ring-4 focus:ring-accent/10" />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-black text-ink">Senha (opcional, só texto na arte)</span>
+                  <input value={wifiPasswordText} onChange={(e) => setWifiPasswordText(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm font-bold text-ink outline-none focus:border-accent focus:ring-4 focus:ring-accent/10" />
+                </label>
+              </div>
+            ) : null}
 
             <label className="block">
               <span className="text-sm font-black text-ink">Informações extras (opcional)</span>
