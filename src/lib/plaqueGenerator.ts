@@ -18,11 +18,16 @@ import { google } from "@ai-sdk/google";
 export type PlaqueType = "biosite" | "pix" | "wifi" | "google_review";
 export type PlaqueSize = "10x15" | "5x10" | "custom";
 
+// Brief real por tipo (2026-07-13, v2) — reescrito depois do Leonardo
+// mandar exemplos do que espera (posts promocionais tipo Canva: cores
+// vibrantes, mascotes, moldura decorativa no QR) vs. o que a v1 do prompt
+// gerava (foto de mockup de plaquinha pendurada na parede, realista demais
+// e "sem graça" perto da referência).
 const PLAQUE_TYPE_BRIEF: Record<PlaqueType, string> = {
-  biosite: "uma plaquinha de identificação com QR Code que leva ao perfil/bio site digital do negócio",
-  pix: "uma plaquinha de pagamento via Pix, com QR Code pra pagar direto pelo celular",
-  wifi: "uma plaquinha de acesso à rede Wi-Fi do estabelecimento, com QR Code pra conectar automaticamente",
-  google_review: "uma plaquinha convidando o cliente a deixar uma avaliação no Google, com QR Code pra abrir a página de avaliação",
+  biosite: "convite pra acessar o bio site/perfil digital do negócio — chamada tipo \"ACESSE NOSSO BIOSITE\" ou \"TUDO EM UM SÓ LUGAR\", com ícones de celular/QR/NFC",
+  pix: "chamada \"PAGUE COM PIX\" em destaque, usando o verde/turquesa característico do Pix (ou as cores da marca do negócio, se contrastarem bem)",
+  wifi: "chamada tipo \"CONECTE-SE AO NOSSO WI-FI\" ou \"WI-FI GRÁTIS\", com ícone de sinal Wi-Fi",
+  google_review: "chamada \"NOS AVALIE NO GOOGLE\" com estrelas douradas em destaque e frase de impacto tipo \"Sua opinião faz a diferença\"",
 };
 
 export type PlaqueGenerationInput = {
@@ -45,16 +50,19 @@ function buildPrompt(input: PlaqueGenerationInput): string {
         : `${input.size}cm`;
 
   const lines = [
-    `Crie a arte de uma plaquinha física de acrílico para ponto de venda, no formato ${sizeLabel} (proporção retrato ou paisagem conforme as dimensões).`,
-    `Tipo de plaquinha: ${PLAQUE_TYPE_BRIEF[input.plaqueType]}.`,
-    `Nome do negócio: "${input.businessName}" — deve aparecer com destaque, tipografia legível, sem erros de escrita.`,
-    input.extraInfo ? `Informação adicional a incluir no design: "${input.extraInfo}".` : "",
+    `Crie um design gráfico promocional para uma plaquinha de sinalização digital (formato ${sizeLabel}, proporção retrato).`,
+    `Objetivo do design: ${PLAQUE_TYPE_BRIEF[input.plaqueType]}.`,
+    `Nome do negócio: "${input.businessName}" — deve aparecer com destaque, tipografia bold e legível, sem erros de escrita ou palavras inventadas.`,
+    input.extraInfo ? `Instruções adicionais do cliente (siga à risca): "${input.extraInfo}".` : "",
     input.logoBase64
-      ? "Use a logo enviada em anexo como referência de identidade visual (cores, estilo) e inclua a própria logo na composição."
-      : "Sem logo enviada — crie uma composição visual limpa e profissional baseada só no nome do negócio.",
-    "Design minimalista, moderno, alto contraste, adequado para impressão em acrílico.",
-    "IMPORTANTE: deixe uma área quadrada lisa e neutra (fundo sólido, sem elementos gráficos por cima) reservada no canto inferior ou centro da composição — esse espaço será usado depois para colar um QR Code funcional por fora. Não desenhe nenhum padrão de QR Code ou código de barras na imagem.",
-    "Sem texto borrado, sem palavras inventadas ou ilegíveis.",
+      ? "Use a logo enviada em anexo: mantenha as MESMAS cores e estilo da logo em toda a composição (não invente uma paleta nova), e inclua a própria logo com destaque no topo do design."
+      : "Sem logo enviada — crie uma identidade visual vibrante e coerente baseada no nome e no tipo de negócio.",
+    // Estilo-alvo: o v1 gerava foto realista de plaquinha na parede (mockup
+    // 3D, sombra, parafusos) — Leonardo quer o design PRONTO, plano, estilo
+    // post de Instagram/template de Canva pra pequeno negócio brasileiro.
+    "ESTILO OBRIGATÓRIO: design gráfico plano (flat design) igual um post promocional de Instagram ou template do Canva para pequenos negócios — cores vibrantes e saturadas, elementos decorativos (respingos de cor, faixas, formas geométricas, estrelas, fitas), tipografia grande e bold, pode incluir um mascote/personagem ilustrado se combinar com o nicho do negócio (comida, serviço, etc). Composição cheia e viva, não minimalista.",
+    "PROIBIDO: não renderize como fotografia de produto, não mostre a plaquinha física pendurada numa parede, sem sombra 3D, sem parafusos, sem perspectiva — a imagem deve ser o PRÓPRIO design final, visto de frente, ocupando o quadro inteiro, pronto pra impressão.",
+    "Reserve uma área quadrada, com moldura decorativa nas cores do design (cantos estilo mira de câmera, ou fundo em cartão arredondado) pronta pra receber um QR Code por cima depois — a moldura/decoração ao redor pode (e deve) seguir o estilo do resto do design, mas o MIOLO dessa área precisa ficar completamente liso e neutro (branco ou cor sólida clara), sem nenhum padrão de QR Code, código de barras, ou qualquer desenho dentro dela — só o entorno é decorado.",
   ].filter(Boolean);
 
   return lines.join(" ");
