@@ -47,19 +47,31 @@ function getAiArtCreditLimit(planTier: string) {
   return PLAN_AI_ART_CREDITS[normalized] ?? PLAN_AI_ART_CREDITS.free;
 }
 
+// Bypass de crédito pro dono do Toqy (2026-07-13, pedido do Leonardo) —
+// mesmo o plano mais alto (Agência, 30 créditos vitalícios) esgotaria
+// rápido só com uso interno de teste. Lista pequena e explícita (não é
+// "todo admin", é literalmente o e-mail do dono) — usada tanto aqui
+// (checagem real no servidor) quanto na tela /app/artes (pra não mostrar
+// "créditos esgotados" pra ele por engano).
+export const UNLIMITED_AI_ART_EMAILS = ["leonardomarusso1@gmail.com"];
+
 export async function checkAiArtCredits(userId: string): Promise<AiArtCreditCheckResult> {
   if (!userId) return { allowed: false, used: 0, limit: 0, planTier: "free" };
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("plan_toqy, plan_tier, ai_art_credits_used")
+    .select("email, plan_toqy, plan_tier, ai_art_credits_used")
     .eq("id", userId)
     .maybeSingle();
 
   const planTier = profile?.plan_toqy || profile?.plan_tier || "free";
-  const limit = getAiArtCreditLimit(planTier);
   const used = profile?.ai_art_credits_used ?? 0;
 
+  if (profile?.email && UNLIMITED_AI_ART_EMAILS.includes(profile.email.toLowerCase())) {
+    return { allowed: true, used, limit: Infinity, planTier };
+  }
+
+  const limit = getAiArtCreditLimit(planTier);
   return { allowed: used < limit, used, limit, planTier };
 }
 

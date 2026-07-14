@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Download, ImagePlus, Loader2, Lock, Sparkles, X } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { resolvePlanTier } from "@/lib/subscriptions";
-import { PLAN_AI_ART_CREDITS } from "@/lib/planLimits";
+import { PLAN_AI_ART_CREDITS, UNLIMITED_AI_ART_EMAILS } from "@/lib/planLimits";
 import { supabase } from "@/lib/supabaseClient";
 import type { PlaqueSize, PlaqueType } from "@/lib/plaqueGenerator";
 
@@ -26,6 +26,7 @@ export default function ArtesPage() {
   const [planTier, setPlanTier] = useState<string | null>(null);
   const [creditsUsed, setCreditsUsed] = useState(0);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [unlimited, setUnlimited] = useState(false);
 
   const [plaqueType, setPlaqueType] = useState<PlaqueType>("biosite");
   const [size, setSize] = useState<PlaqueSize>("10x15");
@@ -51,11 +52,12 @@ export default function ArtesPage() {
         .maybeSingle();
       setPlanTier(profile?.plan_toqy || profile?.plan_tier || "free");
       setCreditsUsed(profile?.ai_art_credits_used ?? 0);
+      setUnlimited(Boolean(session.user.email && UNLIMITED_AI_ART_EMAILS.includes(session.user.email.toLowerCase())));
     });
   }, []);
 
-  const creditsLimit = PLAN_AI_ART_CREDITS[resolvePlanTier(planTier)];
-  const hasCredits = creditsUsed < creditsLimit;
+  const creditsLimit = unlimited ? Infinity : PLAN_AI_ART_CREDITS[resolvePlanTier(planTier)];
+  const hasCredits = unlimited || creditsUsed < creditsLimit;
 
   function handleLogoFile(file?: File) {
     if (!file) return;
@@ -105,7 +107,7 @@ export default function ArtesPage() {
           <p className="mt-2 max-w-2xl text-muted">Sobe a logo, preenche as informações e a IA cria a arte pronta pra sua plaquinha física.</p>
         </div>
         <div className="flex items-center gap-2 rounded-2xl bg-accent/10 px-4 py-3 text-sm font-black text-accent-dim">
-          <Sparkles className="h-4 w-4" /> {creditsUsed}/{creditsLimit || 0} créditos usados
+          <Sparkles className="h-4 w-4" /> {unlimited ? `${creditsUsed}/∞ créditos usados` : `${creditsUsed}/${creditsLimit || 0} créditos usados`}
         </div>
       </div>
 
