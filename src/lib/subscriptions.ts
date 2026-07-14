@@ -31,6 +31,9 @@ export type Plan = {
   hasCatalog: boolean;
   hasPix: boolean;
   hasWifi: boolean;
+  // Gera QR Code avulso (Pix/link, sem precisar de bio site) — feature nova
+  // de 2026-07-13, mesmo nível que "QR personalizado" já prometia na tabela.
+  hasCustomQr: boolean;
   supportLevel: "community" | "email" | "priority";
   highlight?: boolean;
 };
@@ -58,6 +61,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasCatalog: false,
     hasPix: false,
     hasWifi: false,
+    hasCustomQr: false,
     supportLevel: "community",
   },
 
@@ -84,6 +88,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasCatalog: true,
     hasPix: true,
     hasWifi: true,
+    hasCustomQr: true,
     supportLevel: "email",
   },
 
@@ -110,6 +115,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasCatalog: true,
     hasPix: true,
     hasWifi: true,
+    hasCustomQr: true,
     supportLevel: "priority",
     highlight: true,
   },
@@ -138,6 +144,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasCatalog: true,
     hasPix: true,
     hasWifi: true,
+    hasCustomQr: true,
     supportLevel: "priority",
   },
 };
