@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { ToqySite } from "@/lib/types";
 import { getSiteBySlug } from "@/lib/siteStorage";
 import { loadBiositeFromSupabase } from "@/lib/biositeSync";
+import { getPlan, resolvePlanTier } from "@/lib/subscriptions";
 import { PixHub } from "./PixHub";
 
 export default function StoredPixHub({ slug }: { slug: string }) {
@@ -33,6 +34,23 @@ export default function StoredPixHub({ slug }: { slug: string }) {
       </div>
     </main>
   );
+
+  // Gating real de plano (2026-07-13) — esta rota (/[slug]/pix) é um
+  // caminho INDEPENDENTE do modal de Pix dentro de PublicBioSite.tsx (dá
+  // pra acessar direto pela URL, sem passar pelo botão gateado). Sem essa
+  // checagem, um bio site do plano Gratuito continuaria com Pix funcional
+  // completo só não tendo o botão visível na página principal.
+  if (!getPlan(resolvePlanTier(site.ownerPlan)).hasPix) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 px-5 text-center text-white">
+        <div>
+          <p className="text-sm font-black uppercase tracking-[0.22em] text-cyan-300">TOQY</p>
+          <h1 className="mt-3 text-3xl font-black">Pix não disponível</h1>
+          <p className="mt-2 text-slate-400">Este recurso não está incluso no plano deste bio site.</p>
+        </div>
+      </main>
+    );
+  }
 
   return <PixHub site={site} />;
 }

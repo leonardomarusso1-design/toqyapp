@@ -20,6 +20,17 @@ export type Plan = {
   hasAnalytics: boolean;
   hasWhiteLabel: boolean;
   hasCustomDomain: boolean;
+  // Gating real de feature por plano (2026-07-13) — antes disso, essas 3
+  // colunas existiam só na tabela comparativa (PLAN_FEATURES_COMPARISON,
+  // texto pra exibir na landing) mas NADA no produto de verdade checava
+  // isso: catálogo/Pix/Wi-Fi ficavam liberados pra QUALQUER plano,
+  // inclusive Gratuito, porque a única coisa que checkBiositeLimit() e o
+  // resto do código realmente aplicavam era a quantidade de bio sites.
+  // Agora esses 3 campos são a fonte de verdade que PublicBioSite.tsx
+  // (renderização pública) e SiteBuilder.tsx (editor) devem consultar.
+  hasCatalog: boolean;
+  hasPix: boolean;
+  hasWifi: boolean;
   supportLevel: "community" | "email" | "priority";
   highlight?: boolean;
 };
@@ -44,6 +55,9 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasAnalytics: false,
     hasWhiteLabel: false,
     hasCustomDomain: false,
+    hasCatalog: false,
+    hasPix: false,
+    hasWifi: false,
     supportLevel: "community",
   },
 
@@ -67,8 +81,10 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasAnalytics: true,
     hasWhiteLabel: false,
     hasCustomDomain: false,
+    hasCatalog: true,
+    hasPix: true,
+    hasWifi: true,
     supportLevel: "email",
-    highlight: true,
   },
 
   freelancer: {
@@ -91,7 +107,11 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasAnalytics: true,
     hasWhiteLabel: false,
     hasCustomDomain: false,
+    hasCatalog: true,
+    hasPix: true,
+    hasWifi: true,
     supportLevel: "priority",
+    highlight: true,
   },
 
   agency: {
@@ -115,9 +135,31 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasAnalytics: true,
     hasWhiteLabel: true,
     hasCustomDomain: true,
+    hasCatalog: true,
+    hasPix: true,
+    hasWifi: true,
     supportLevel: "priority",
   },
 };
+
+// Retirado do funil de venda (2026-07-13, decisão do Leonardo): "Comunidade"
+// não é mais vendido separadamente — acesso à comunidade agora é gratuito,
+// e quem compra um plano pago não entra na comunidade só por isso (é link
+// interno no Discord, fora do fluxo de pagamento). Quem JÁ tinha esse plano
+// continua normalmente (grandfathered) — SUBSCRIPTION_PLANS.community e o
+// reconhecimento em resolvePlan() do webhook da Kiwify continuam existindo
+// de propósito, só não aparece mais como opção de compra (ver
+// SubscriptionPlansDisplay.tsx e src/app/page.tsx).
+export const SELLABLE_PLANS: PlanType[] = ["free", "freelancer", "agency"];
+
+// Resolve um valor de plano vindo do banco (profiles.plan_toqy) pra um
+// PlanType válido, com fallback seguro pra "free" — protege getPlan() de
+// receber string desconhecida (ex: valor legado, typo, plano descontinuado
+// que não existe mais em SUBSCRIPTION_PLANS) e quebrar em runtime.
+export function resolvePlanTier(rawPlan?: string | null): PlanType {
+  const normalized = (rawPlan || "free").toLowerCase();
+  return normalized in SUBSCRIPTION_PLANS ? (normalized as PlanType) : "free";
+}
 
 export const PLAN_FEATURES_COMPARISON = [
   { feature: "Bio sites", free: "1", community: "20", freelancer: "20", agency: "100" },

@@ -10,8 +10,15 @@
 
 import { Check } from "lucide-react";
 import Link from "next/link";
-import { SUBSCRIPTION_PLANS, formatPrice, getAnnualSavings } from "@/lib/subscriptions";export function SubscriptionPlansDisplay() {
-  const plans = Object.values(SUBSCRIPTION_PLANS);
+import { SUBSCRIPTION_PLANS, SELLABLE_PLANS, formatPrice, getAnnualSavings } from "@/lib/subscriptions";
+
+export function SubscriptionPlansDisplay() {
+  // Retirado do funil (2026-07-13, decisão do Leonardo): "Comunidade" não é
+  // mais vendida como plano do Toqy — acesso à comunidade agora é gratuito
+  // e por fora (Discord), não faz parte da assinatura paga. SUBSCRIPTION_PLANS
+  // ainda tem a entrada "community" (pra quem já é assinante continuar
+  // funcionando normalmente), só não aparece mais aqui pra compra nova.
+  const plans = SELLABLE_PLANS.map((id) => SUBSCRIPTION_PLANS[id]);
 
   return (
     <section className="mx-auto max-w-7xl px-5 py-16">
@@ -72,9 +79,7 @@ import { SUBSCRIPTION_PLANS, formatPrice, getAnnualSavings } from "@/lib/subscri
             {/* CTA Button */}
             <a
               href={
-                plan.id === "community"
-                  ? "https://pay.kiwify.com.br/12uYE0c"
-                  : plan.id === "freelancer"
+                plan.id === "freelancer"
                   ? "https://pay.kiwify.com.br/Oc2YP5A"
                   : plan.id === "agency"
                   ? "https://pay.kiwify.com.br/X71Qhtu"
@@ -117,29 +122,37 @@ import { SUBSCRIPTION_PLANS, formatPrice, getAnnualSavings } from "@/lib/subscri
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {[
-                { label: "Bio sites", values: ["1", "20", "20", "100"] },
-                { label: "QR Code", values: ["Básico", "Personalizado", "Personalizado", "Personalizado"] },
-                { label: "Pix & Wi-Fi", values: ["Não", "Sim", "Sim", "Sim"] },
-                { label: "Catálogo", values: ["Não", "Básico", "Completo", "Completo"] },
-                { label: "Analytics", values: ["Não", "Básico", "Avançado", "Avançado + API"] },
-                { label: "White Label", values: ["Não", "Não", "Não", "Sim"] },
-                { label: "Domínio próprio", values: ["Não", "Não", "Não", "Sim"] },
-                { label: "Suporte", values: ["Community", "Email", "Prioritário", "24/7"] },
-              ].map((row) => (
+              {/* Derivado direto dos flags de cada plano (hasCatalog/hasPix/...)
+                  em vez de arrays fixas por posição (2026-07-13) — o bug que
+                  motivou essa troca: removendo "Comunidade" da lista de planos
+                  vendáveis, um array fixo de 4 valores desalinhava com os 3
+                  planos restantes (cada coluna mostrava o dado do plano errado). */}
+              {([
+                { label: "Bio sites", value: (p: typeof plans[number]) => String(p.maxSites) },
+                { label: "QR Code", value: (p: typeof plans[number]) => (p.id === "free" ? "Básico" : "Personalizado") },
+                { label: "Pix & Wi-Fi", value: (p: typeof plans[number]) => (p.hasPix && p.hasWifi ? "Sim" : "Não") },
+                { label: "Catálogo", value: (p: typeof plans[number]) => (p.hasCatalog ? "Sim" : "Não") },
+                { label: "Analytics", value: (p: typeof plans[number]) => (p.hasAnalytics ? "Sim" : "Não") },
+                { label: "White Label", value: (p: typeof plans[number]) => (p.hasWhiteLabel ? "Sim" : "Não") },
+                { label: "Domínio próprio", value: (p: typeof plans[number]) => (p.hasCustomDomain ? "Sim" : "Não") },
+                { label: "Suporte", value: (p: typeof plans[number]) => (p.supportLevel === "community" ? "Community" : p.supportLevel === "email" ? "Email" : "Prioritário") },
+              ]).map((row) => (
                 <tr key={row.label} className="hover:bg-slate-50">
                   <td className="px-6 py-4 font-semibold text-slate-900">{row.label}</td>
-                  {row.values.map((value, idx) => (
-                    <td key={idx} className="px-6 py-4 text-center text-sm text-slate-600">
-                      {value === "Sim" ? (
-                        <Check className="mx-auto h-5 w-5 text-indigo-600" />
-                      ) : value === "Não" ? (
-                        <span className="text-slate-450">—</span>
-                      ) : (
-                        value
-                      )}
-                    </td>
-                  ))}
+                  {plans.map((plan) => {
+                    const value = row.value(plan);
+                    return (
+                      <td key={plan.id} className="px-6 py-4 text-center text-sm text-slate-600">
+                        {value === "Sim" ? (
+                          <Check className="mx-auto h-5 w-5 text-indigo-600" />
+                        ) : value === "Não" ? (
+                          <span className="text-slate-450">—</span>
+                        ) : (
+                          value
+                        )}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>

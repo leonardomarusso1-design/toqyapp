@@ -27,6 +27,7 @@ import {
 import type { CatalogItem, CatalogLayout, ToqyButton, ToqyLinkType, ToqySite } from "@/lib/types";
 import { buttonHref, createVCard, pixPayload, whatsappUrl, wifiPayload } from "@/lib/buttonUtils";
 import { ensureUrl, normalizeInstagram } from "@/lib/security";
+import { getPlan, resolvePlanTier } from "@/lib/subscriptions";
 
 // SVGs reais das marcas
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -205,8 +206,24 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
     site.theme.colors?.[key] ?? fallback;
   const [copied, setCopied] = useState("");
   const [selectedAmount, setSelectedAmount] = useState<number | undefined>();
-  const activeButtons = site.buttons.filter((button) => button.enabled);
-  const activeCatalog = site.catalog.filter((item) => item.enabled);
+
+  // Gating real de plano (2026-07-13) — antes disso, Catálogo/Pix/Wi-Fi
+  // ficavam liberados pra QUALQUER plano no site público, mesmo Gratuito,
+  // porque nada aqui checava site.ownerPlan (só a quantidade de bio sites
+  // era travada, em outro lugar do app). site.ownerPlan é gravado no
+  // save/fetch do bio site (ver biositeSync.ts, api/biosite/save) — se por
+  // algum motivo vier vazio, cai em "free" (mais restritivo, nunca libera
+  // por engano).
+  const plan = getPlan(resolvePlanTier(site.ownerPlan));
+  const activeButtons = site.buttons
+    .filter((button) => button.enabled)
+    .filter((button) => {
+      if ((button.type === "pix" || button.type === "pixHub") && !plan.hasPix) return false;
+      if (button.type === "wifi" && !plan.hasWifi) return false;
+      if (button.type === "catalog" && !plan.hasCatalog) return false;
+      return true;
+    });
+  const activeCatalog = plan.hasCatalog ? site.catalog.filter((item) => item.enabled) : [];
   const catalogLayout: CatalogLayout = site.catalogLayout ?? "carousel";
   const vcard = useMemo(() => createVCard(site), [site]);
 
@@ -264,7 +281,7 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
   const socialButtons = activeButtons.filter((b) =>
     b.displayAs === "icon" || (!b.displayAs && SOCIAL_TYPES.includes(b.type))
   ).filter(b => b.displayAs !== "button");
-  const wifiInline = site.wifi?.enabled && site.wifi.ssid && site.wifi.showInline !== false;
+  const wifiInline = plan.hasWifi && site.wifi?.enabled && site.wifi.ssid && site.wifi.showInline !== false;
   const mainButtons = activeButtons.filter((b) =>
     b.displayAs === "button" || (!b.displayAs && !SOCIAL_TYPES.includes(b.type) && b.type !== "phone" && !(wifiInline && b.type === "wifi"))
   );

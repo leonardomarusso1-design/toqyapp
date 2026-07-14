@@ -41,11 +41,17 @@ const features = [
   ["Chave do cliente", "Cliente edita sem acessar o painel admin.", ShieldCheck],
 ] as const;
 
+// "Comunidade" retirada do funil de venda (2026-07-13, decisão do
+// Leonardo): acesso à comunidade agora é gratuito e por fora (link interno
+// do Discord), não é mais um plano pago do Toqy — comprar um plano pago
+// não dá acesso à comunidade, e vice-versa. Quem já assinava esse plano
+// continua funcionando (webhook da Kiwify e SUBSCRIPTION_PLANS ainda
+// reconhecem "community" de propósito), só não aparece mais aqui pra venda
+// nova. Freelancer virou o plano em destaque no lugar dele.
 const plans = [
   { name: "Gratuito", price: "R$0", period: "", description: "Para conhecer a plataforma e gerar seus primeiros leads.", highlight: false, cta: "Começar grátis", items: ["1 bio site", "Domínio toqy.app/seunome", "QR Code básico", "Preview em tempo real", "Marca TOQY na página"] },
-  { name: "Comunidade", price: "R$29,90", period: "/mês", description: "Acesso exclusivo para alunos. Crie páginas profissionais para seus clientes.", highlight: true, cta: "Assinar", items: ["Até 20 bio sites inclusos", "Apenas R$5,00 por site extra", "Catálogo, Pix e Wi-Fi", "QR personalizado e NFC", "Suporte direto no Discord"] },
-  { name: "Freelancer", price: "R$59,90", period: "", description: "Para profissionais que criam para clientes, sem estar na comunidade. Pagamento unico.", highlight: false, cta: "Comprar acesso", items: ["Até 20 bio sites", "QR personalizado", "Pix e Wi-Fi", "Catálogo completo", "Suporte prioritário"] },
-  { name: "Agência", price: "R$149,90", period: "", description: "Para equipes e agências em escala. Pagamento unico.", highlight: false, cta: "Comprar acesso", items: ["Até 100 bio sites", "White label parcial", "Domínio próprio", "Gestão de equipe", "Tudo do Freelancer"] },
+  { name: "Freelancer", price: "R$59,90", period: "", description: "Para profissionais que criam bio sites para clientes. Pagamento único.", highlight: true, cta: "Comprar acesso", items: ["Até 20 bio sites", "QR personalizado", "Pix e Wi-Fi", "Catálogo completo", "Suporte prioritário"] },
+  { name: "Agência", price: "R$149,90", period: "", description: "Para equipes e agências em escala. Pagamento único.", highlight: false, cta: "Comprar acesso", items: ["Até 100 bio sites", "White label parcial", "Domínio próprio", "Gestão de equipe", "Tudo do Freelancer"] },
 ] as const;
 
 const featureShowcase = [
@@ -455,7 +461,7 @@ export default async function LandingPage() {
                   </p>
                 ))}
               </div>
-              <a href={plan.name === "Comunidade" ? "https://pay.kiwify.com.br/12uYE0c" : plan.name === "Freelancer" ? "https://pay.kiwify.com.br/gTIhv6I" : plan.name === "Agência" ? "https://pay.kiwify.com.br/xFdnxvE" : "/login"} target={plan.name === "Gratuito" ? undefined : "_blank"} rel={plan.name === "Gratuito" ? undefined : "noreferrer noopener"} className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}>
+              <a href={plan.name === "Freelancer" ? "https://pay.kiwify.com.br/gTIhv6I" : plan.name === "Agência" ? "https://pay.kiwify.com.br/xFdnxvE" : "/login"} target={plan.name === "Gratuito" ? undefined : "_blank"} rel={plan.name === "Gratuito" ? undefined : "noreferrer noopener"} className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}>
                 {plan.cta}
               </a>
             </article>
@@ -533,7 +539,7 @@ export default async function LandingPage() {
             ["Preciso saber programar?", "Não. O TOQY tem um editor visual completo — você personaliza logo, cores, botões e catálogo sem tocar em código."],
             ["O que é a plaquinha física?", "É uma placa acrílica com QR Code e/ou chip NFC que o cliente toca ou escaneia com o celular para abrir o bio site."],
             ["O cliente pode editar o bio site dele?", "Sim. Cada bio site tem uma chave de acesso exclusiva para o cliente editar a própria página quando quiser."],
-            ["Posso usar o TOQY para vender para outros negócios?", "Sim. Os planos Comunidade, Freelancer e Agência são feitos para isso."],
+            ["Posso usar o TOQY para vender para outros negócios?", "Sim. Os planos Freelancer e Agência são feitos para isso."],
             ["Como funciona o plano Gratuito?", "Você pode criar 1 bio site gratuitamente para conhecer a plataforma. Para recursos completos, faça upgrade para um plano pago."],
             ["Os pagamentos são seguros?", "Sim. Os pagamentos são processados pela Kiwify, com certificação de segurança."],
             ["Posso cancelar quando quiser?", "Sim. Você pode cancelar a assinatura a qualquer momento pelo painel da Kiwify."],
@@ -577,7 +583,6 @@ export default async function LandingPage() {
               <p className="text-sm font-black text-ink">Planos</p>
               <ul className="mt-3 space-y-2 text-sm text-muted">
                 <li><Link href="/login" className="hover:text-accent">Gratuito</Link></li>
-                <li><a href="https://pay.kiwify.com.br/12uYE0c" target="_blank" rel="noopener noreferrer" className="hover:text-accent">Comunidade — R$29,90/mês</a></li>
                 <li><a href="https://pay.kiwify.com.br/gTIhv6I" target="_blank" rel="noopener noreferrer" className="hover:text-accent">Freelancer — R$59,90</a></li>
                 <li><a href="https://pay.kiwify.com.br/xFdnxvE" target="_blank" rel="noopener noreferrer" className="hover:text-accent">Agência — R$149,90</a></li>
               </ul>
@@ -587,7 +592,9 @@ export default async function LandingPage() {
               <ul className="mt-3 space-y-2 text-sm text-muted">
                 <li><Link href="/login" className="hover:text-accent">Entrar / Criar conta</Link></li>
                 <li><Link href="/me" className="hover:text-accent">Acessar meu bio site</Link></li>
-                <li><a href="https://pay.kiwify.com.br/12uYE0c" target="_blank" rel="noopener noreferrer" className="hover:text-accent">Comunidade Discord</a></li>
+                {/* "Comunidade Discord" apontava pro link de PAGAMENTO da Kiwify
+                    (errado agora que virou acesso gratuito) — removido até
+                    o Leonardo passar o link de convite real do Discord. */}
               </ul>
             </div>
           </div>
