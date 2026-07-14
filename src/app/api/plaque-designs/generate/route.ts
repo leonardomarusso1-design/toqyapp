@@ -36,17 +36,15 @@ export async function POST(request: Request) {
   const userId = await getAuthenticatedUserId(request, supabase);
   if (!userId) return Response.json({ error: "Não autenticado" }, { status: 401 });
 
-  const credits = await checkAiArtCredits(userId);
+  // Passa o client ADMIN (service role) explicitamente — ver nota completa
+  // em planLimits.ts: sem isso, a RLS de profiles filtrava a linha inteira
+  // dentro desta API route (client anônimo não carrega sessão server-side)
+  // e todo mundo caía no plano "free" (0 créditos), mesmo quem realmente
+  // era Agência.
+  const credits = await checkAiArtCredits(userId, supabase);
   if (!credits.allowed) {
-    // DEBUG TEMPORÁRIO (2026-07-13) — investigando por que agency com
-    // 0 créditos usados deu 403 mesmo devendo ter 30 (ou bypass ilimitado).
-    // Expõe userId/planTier resolvidos no servidor pra comparar contra o
-    // profile real. Remover assim que a causa for confirmada.
     return Response.json(
-      {
-        error: `Limite de artes geradas por IA do plano atingido (${credits.used}/${credits.limit}). Fale com o suporte pra saber sobre pacotes extras. [debug: userId=${userId} planTier=${credits.planTier}]`,
-        debug: { userId, planTier: credits.planTier, used: credits.used, limit: credits.limit },
-      },
+      { error: `Limite de artes geradas por IA do plano atingido (${credits.used}/${credits.limit}). Fale com o suporte pra saber sobre pacotes extras.` },
       { status: 403 }
     );
   }

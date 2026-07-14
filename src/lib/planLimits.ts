@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
 
 export const PLAN_BIOSITE_LIMITS = {
@@ -55,10 +56,20 @@ function getAiArtCreditLimit(planTier: string) {
 // "créditos esgotados" pra ele por engano).
 export const UNLIMITED_AI_ART_EMAILS = ["leonardomarusso1@gmail.com"];
 
-export async function checkAiArtCredits(userId: string): Promise<AiArtCreditCheckResult> {
+// Bug real corrigido em 2026-07-13 (Leonardo, plano Agência dando 0/0):
+// esta função usava o client anônimo (supabaseClient.ts, chave anon +
+// sessão salva no localStorage do NAVEGADOR) — funciona bem quando chamada
+// do lado do cliente, mas dentro de uma API route server-side (como
+// /api/plaque-designs/generate) esse client não carrega sessão nenhuma,
+// então a RLS de "profiles" (auth.uid() = id) filtrava a linha inteira e
+// o profile vinha vazio, caindo no fallback "free". Agora aceita um client
+// opcional — API routes devem passar getSupabaseAdmin() (service role,
+// ignora RLS de propósito), chamadas do lado do cliente continuam
+// funcionando sem passar nada (usa o client anônimo de sempre).
+export async function checkAiArtCredits(userId: string, client: SupabaseClient = supabase): Promise<AiArtCreditCheckResult> {
   if (!userId) return { allowed: false, used: 0, limit: 0, planTier: "free" };
 
-  const { data: profile } = await supabase
+  const { data: profile } = await client
     .from("profiles")
     .select("email, plan_toqy, plan_tier, ai_art_credits_used")
     .eq("id", userId)
