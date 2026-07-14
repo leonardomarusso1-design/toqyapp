@@ -7,6 +7,20 @@ export const PLAN_BIOSITE_LIMITS = {
   agency: 100,
 } as const;
 
+// Créditos VITALÍCIOS (não mensais) de geração de arte com IA por plano
+// (2026-07-13) — os planos pagos do Toqy são pagamento único, não
+// assinatura recorrente, então um limite mensal recorrente não faz sentido
+// contra uma cobrança que só acontece uma vez. Números iniciais, ajustar
+// conforme custo real observado (~R$0,20-0,25 por geração via Gemini 2.5
+// Flash Image) — se a demanda for maior que isso, o caminho é vender
+// pacotes de créditos extras via Kiwify, não aumentar o limite grátis.
+export const PLAN_AI_ART_CREDITS = {
+  free: 0,
+  community: 5,
+  freelancer: 10,
+  agency: 30,
+} as const;
+
 type PlanTier = keyof typeof PLAN_BIOSITE_LIMITS;
 
 export type BiositeLimitCheckResult = {
@@ -19,6 +33,34 @@ export type BiositeLimitCheckResult = {
 function getPlanLimit(planTier: string) {
   const normalized = planTier.toLowerCase() as PlanTier;
   return PLAN_BIOSITE_LIMITS[normalized] ?? PLAN_BIOSITE_LIMITS.free;
+}
+
+export type AiArtCreditCheckResult = {
+  allowed: boolean;
+  used: number;
+  limit: number;
+  planTier: string;
+};
+
+function getAiArtCreditLimit(planTier: string) {
+  const normalized = planTier.toLowerCase() as keyof typeof PLAN_AI_ART_CREDITS;
+  return PLAN_AI_ART_CREDITS[normalized] ?? PLAN_AI_ART_CREDITS.free;
+}
+
+export async function checkAiArtCredits(userId: string): Promise<AiArtCreditCheckResult> {
+  if (!userId) return { allowed: false, used: 0, limit: 0, planTier: "free" };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("plan_toqy, plan_tier, ai_art_credits_used")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const planTier = profile?.plan_toqy || profile?.plan_tier || "free";
+  const limit = getAiArtCreditLimit(planTier);
+  const used = profile?.ai_art_credits_used ?? 0;
+
+  return { allowed: used < limit, used, limit, planTier };
 }
 
 export async function checkBiositeLimit(userId: string): Promise<BiositeLimitCheckResult> {

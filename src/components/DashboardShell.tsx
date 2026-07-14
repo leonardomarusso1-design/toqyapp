@@ -4,13 +4,15 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
-import { Home, Menu, Plus, QrCode, Settings, Users, X } from "lucide-react";
+import { Home, Menu, Plus, QrCode, Settings, Sparkles, Users, X } from "lucide-react";
 import { LogoutButton } from "@/components/LogoutButton";
 import { supabase } from "@/lib/supabaseClient";
 
 const navItems = [
   { href: "/app", icon: Home, label: "Painel" },
   { href: "/onboarding", icon: Users, label: "Novo cliente" },
+  { href: "/app/qr", icon: QrCode, label: "QR Codes" },
+  { href: "/app/artes", icon: Sparkles, label: "Artes com IA" },
   { href: "/app/configuracoes", icon: Settings, label: "Configurações" },
 ];
 
