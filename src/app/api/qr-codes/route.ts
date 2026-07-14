@@ -74,3 +74,23 @@ export async function POST(request: Request) {
 
   return Response.json({ qrCode });
 }
+
+// Lista os QR Codes salvos do usuário (2026-07-14, pedido do Leonardo) —
+// depois de gerar um link ele não conseguia ver de novo em lugar nenhum
+// ("já criou 003 mas não consigo ver em personalizados").
+export async function GET(request: Request) {
+  if (!hasSupabaseEnv()) return Response.json({ error: "Servidor não configurado" }, { status: 500 });
+  const supabase = getSupabaseAdmin()!;
+
+  const userId = await getAuthenticatedUserId(request, supabase);
+  if (!userId) return Response.json({ error: "Não autenticado" }, { status: 401 });
+
+  const { data: qrCodes, error } = await supabase
+    .from("toqy_qr_codes")
+    .select("*")
+    .eq("owner_profile_id", userId)
+    .order("seq_number", { ascending: false });
+
+  if (error) return Response.json({ error: error.message }, { status: 500 });
+  return Response.json({ qrCodes });
+}

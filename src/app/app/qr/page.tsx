@@ -14,6 +14,20 @@ import { supabase } from "@/lib/supabaseClient";
 
 type Mode = "biosite" | "pix" | "link";
 
+type SavedQrCode = {
+  id: string;
+  seq_number: number;
+  slug: string;
+  mode: "pix" | "link";
+  label: string | null;
+  pix_key: string | null;
+  pix_receiver_name: string | null;
+  pix_city: string | null;
+  pix_amount: number | null;
+  target_url: string | null;
+  created_at: string;
+};
+
 export default function QRPage() {
   const [sites, setSites] = useState<ToqySite[]>([]);
   const [selectedSlug, setSelectedSlug] = useState("");
@@ -42,6 +56,27 @@ export default function QRPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
 
+  // Lista dos QR Codes já salvos + edição no lugar (2026-07-15, pedido do
+  // Leonardo: "criei o pix e gerou o link, mas não ficou salvo em lugar
+  // nenhum... nem consigo editar sem precisar mudar o QR que já tá na
+  // plaquinha"). editingId != null = estamos editando um QR existente: o
+  // botão salva com PATCH (mesmo slug, mesmo QR físico) em vez de criar um
+  // novo registro.
+  const [savedList, setSavedList] = useState<SavedQrCode[]>([]);
+  const [loadingList, setLoadingList] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  async function fetchSavedList(token: string) {
+    setLoadingList(true);
+    try {
+      const res = await fetch("/api/qr-codes", { headers: { Authorization: `Bearer ${token}` } });
+      const json = await res.json();
+      if (res.ok) setSavedList(json.qrCodes || []);
+    } finally {
+      setLoadingList(false);
+    }
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) return;
@@ -53,24 +88,57 @@ export default function QRPage() {
       setSites(allSites);
       setSelectedSlug(new URLSearchParams(window.location.search).get("site") || allSites[0]?.slug || "");
       setPlanTier(profile?.plan_toqy || profile?.plan_tier || "free");
+      fetchSavedList(session.access_token);
     });
   }, []);
 
   // Reseta o link salvo sempre que os dados do Pix/link mudam — o link
   // salvo anteriormente não reflete mais o que está preenchido na tela.
+  // Não reseta ao ENTRAR em modo de edição (o efeito abaixo já popula
+  // savedUrl/savedSeq direto do registro sendo editado).
   useEffect(() => {
+    if (editingId) return;
     setSavedUrl("");
     setSavedSeq(null);
     setSaveError("");
-  }, [mode, pixKey, pixName, pixCity, pixAmount, linkUrl]);
+  }, [mode, pixKey, pixName, pixCity, pixAmount, linkUrl, editingId]);
+
+  function startEdit(row: SavedQrCode) {
+    setEditingId(row.id);
+    setMode(row.mode);
+    if (row.mode === "pix") {
+      setPixKey(row.pix_key || "");
+      setPixName(row.pix_receiver_name || "");
+      setPixCity(row.pix_city || "");
+      setPixAmount(row.pix_amount ? String(row.pix_amount) : "");
+    } else {
+      setLinkUrl(row.target_url || "");
+    }
+    setSavedUrl(`${window.location.origin}/qr/${row.slug}`);
+    setSavedSeq(row.seq_number);
+    setSaveError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setPixKey("");
+    setPixName("");
+    setPixCity("");
+    setPixAmount("");
+    setLinkUrl("");
+    setSavedUrl("");
+    setSavedSeq(null);
+  }
 
   async function saveAndGetLink() {
     if (mode === "biosite") return;
     setSaving(true);
     setSaveError("");
     try {
-      const res = await fetch("/api/qr-codes", {
-        method: "POST",
+      const url = editingId ? `/api/qr-codes/${editingId}` : "/api/qr-codes";
+      const res = await fetch(url, {
+        method: editingId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify(
           mode === "pix"
@@ -79,11 +147,12 @@ export default function QRPage() {
         ),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Falha ao gerar o link");
+      if (!res.ok) throw new Error(json.error || "Falha ao salvar");
       setSavedUrl(`${window.location.origin}/qr/${json.qrCode.slug}`);
       setSavedSeq(json.qrCode.seq_number);
+      fetchSavedList(accessToken);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Falha ao gerar o link");
+      setSaveError(err instanceof Error ? err.message : "Falha ao salvar");
     } finally {
       setSaving(false);
     }
@@ -226,7 +295,7 @@ export default function QRPage() {
                   </button>
                 </div>
               </div>
-              <NfcLinkPanel saving={saving} saveError={saveError} savedUrl={savedUrl} savedSeq={savedSeq} onSave={saveAndGetLink} canSave={Boolean(pixValue)} />
+              <NfcLinkPanel saving={saving} saveError={saveError} savedUrl={savedUrl} savedSeq={savedSeq} onSave={saveAndGetLink} canSave={Boolean(pixValue)} isEditing={Boolean(editingId)} onCancelEdit={cancelEdit} />
             </div>
           ) : (
             <div className="space-y-4">
@@ -245,7 +314,7 @@ export default function QRPage() {
                   </button>
                 </div>
               </div>
-              <NfcLinkPanel saving={saving} saveError={saveError} savedUrl={savedUrl} savedSeq={savedSeq} onSave={saveAndGetLink} canSave={Boolean(linkUrl.trim())} />
+              <NfcLinkPanel saving={saving} saveError={saveError} savedUrl={savedUrl} savedSeq={savedSeq} onSave={saveAndGetLink} canSave={Boolean(linkUrl.trim())} isEditing={Boolean(editingId)} onCancelEdit={cancelEdit} />
             </div>
           )}
         </section>
@@ -271,6 +340,36 @@ export default function QRPage() {
           </div>
         </aside>
       </div>
+
+      <div className="mt-10 rounded-[2rem] border border-border bg-card p-6 shadow-sm">
+        <h2 className="text-xl font-black text-ink">Meus QR Codes salvos ({savedList.length})</h2>
+        <p className="mt-1 text-sm text-muted">Pix e links personalizados que já viraram link público — clique em Editar pra mudar o conteúdo sem trocar o QR já impresso.</p>
+        {loadingList ? (
+          <p className="mt-4 text-sm text-muted">Carregando...</p>
+        ) : savedList.length === 0 ? (
+          <p className="mt-4 text-sm text-muted">Nenhum QR Code salvo ainda — gere um link acima e ele aparece aqui.</p>
+        ) : (
+          <div className="mt-4 divide-y divide-border">
+            {savedList.map((row) => (
+              <div key={row.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <div>
+                  <p className="text-sm font-black text-ink">
+                    #{String(row.seq_number).padStart(3, "0")} · {row.mode === "pix" ? row.pix_receiver_name : row.label || "Link"}
+                  </p>
+                  <p className="mt-0.5 break-all text-xs text-muted">{`${typeof window !== "undefined" ? window.location.origin : ""}/qr/${row.slug}`}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => startEdit(row)}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-border bg-surface px-4 py-2 text-sm font-black text-ink hover:border-accent"
+                >
+                  Editar
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </DashboardShell>
   );
 }
@@ -293,6 +392,8 @@ function NfcLinkPanel({
   savedSeq,
   onSave,
   canSave,
+  isEditing,
+  onCancelEdit,
 }: {
   saving: boolean;
   saveError: string;
@@ -300,6 +401,8 @@ function NfcLinkPanel({
   savedSeq: number | null;
   onSave: () => void;
   canSave: boolean;
+  isEditing: boolean;
+  onCancelEdit: () => void;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -310,27 +413,41 @@ function NfcLinkPanel({
     setTimeout(() => setCopied(false), 1500);
   }
 
+  // Em modo de edição, o link já existe (mesmo slug, mesmo QR impresso na
+  // plaquinha) — sempre mostra o botão de salvar, nunca troca o link.
+  const showSaveButton = isEditing || !savedUrl;
+
   return (
     <div className="rounded-[2rem] border border-dashed border-accent/40 bg-accent/5 p-5">
-      <p className="flex items-center gap-2 text-sm font-black text-ink">
-        <Link2 className="h-4 w-4 text-accent" /> Link pra gravar no NFC
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="flex items-center gap-2 text-sm font-black text-ink">
+          <Link2 className="h-4 w-4 text-accent" /> {isEditing ? "Editando QR salvo" : "Link pra gravar no NFC"}
+        </p>
+        {isEditing ? (
+          <button type="button" onClick={onCancelEdit} className="text-xs font-bold text-muted hover:text-ink">
+            Cancelar edição
+          </button>
+        ) : null}
+      </div>
       <p className="mt-1 text-sm leading-relaxed text-muted">
-        A tag NFC grava um link, não uma imagem. Gere um link fixo que abre uma página com este QR Code + copia-e-cola — é esse link que você grava na tag.
+        {isEditing
+          ? "Alterando o conteúdo deste QR sem trocar o link já impresso na plaquinha."
+          : "A tag NFC grava um link, não uma imagem. Gere um link fixo que abre uma página com este QR Code + copia-e-cola — é esse link que você grava na tag."}
       </p>
       {savedUrl ? (
         <div className="mt-4 rounded-2xl border border-border bg-card p-4">
           <p className="break-all text-sm font-black text-ink">{savedUrl}</p>
           {savedSeq ? <p className="mt-1 text-xs text-muted">Peça nº {String(savedSeq).padStart(3, "0")}</p> : null}
-          <button type="button" onClick={copyLink} className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-accent px-4 py-2.5 text-sm font-black text-white">
+          <button type="button" onClick={copyLink} className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-border bg-surface px-4 py-2.5 text-sm font-black text-ink">
             <Copy className="h-4 w-4" />{copied ? "Copiado" : "Copiar link"}
           </button>
         </div>
-      ) : (
+      ) : null}
+      {showSaveButton ? (
         <button type="button" onClick={onSave} disabled={saving || !canSave} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-accent px-5 py-3 text-sm font-black text-white disabled:opacity-50">
-          <Link2 className="h-4 w-4" />{saving ? "Gerando..." : "Gerar link pra NFC"}
+          <Link2 className="h-4 w-4" />{saving ? "Salvando..." : isEditing ? "Salvar alterações" : "Gerar link pra NFC"}
         </button>
-      )}
+      ) : null}
       {saveError ? <p className="mt-3 text-sm font-bold text-red-500">{saveError}</p> : null}
     </div>
   );
