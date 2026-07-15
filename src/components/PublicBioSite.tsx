@@ -574,30 +574,43 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
         {hasCustomSections ? (
           // Modo por seção: cada grupo aparece separado com seu layout
           <div className="space-y-8">
+            {/* Correção de bug real reportado por cliente (2026-07-16): antes
+                desta correção, TODOS os itens com o mesmo "Onde aparece"
+                (destaque/carrossel/grade/lista) eram jogados numa ÚNICA
+                fileira/grade, com o título tirado só do PRIMEIRO item — 2
+                categorias diferentes marcadas como "Carrossel" apareciam
+                juntas, lado a lado, na mesma fileira, em vez de cada
+                categoria virar sua própria fileira embaixo da outra. Agora
+                cada seção agrupa por categoria primeiro (uniqueGroups),
+                igual o layout "Por categoria" já fazia. */}
+            {/* "Destaques" fica como UMA faixa só, título fixo — é uma
+                vitrine cruzada de itens marcados como destaque, não uma
+                fileira por categoria (diferente de carrossel/grade/lista
+                abaixo, onde o bug foi reportado). */}
             {itemsBySection.destaques.length > 0 && (
               <div>
                 <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.accent }}>Destaques</p>
                 <div className="space-y-4">{representativeItemsByCategory(itemsBySection.destaques).map(item => <CatalogCard key={item.id} site={site} item={item} stacked onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
               </div>
             )}
-            {itemsBySection.carrossel.length > 0 && (
-              <div>
-                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{itemsBySection.carrossel[0].category || "Carrossel"}</p>
-                <CatalogScroller site={site} items={representativeItemsByCategory(itemsBySection.carrossel)} onOpenGallery={openGallery} categoryCounts={categoryCounts} />
+            {itemsBySection.carrossel.length > 0 && uniqueGroups(itemsBySection.carrossel).map(([group, groupItems]) => (
+              <div key={`carrossel-${group}`}>
+                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{group}</p>
+                <CatalogScroller site={site} items={representativeItemsByCategory(groupItems)} onOpenGallery={openGallery} categoryCounts={categoryCounts} />
               </div>
-            )}
-            {itemsBySection.grade.length > 0 && (
-              <div>
-                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{itemsBySection.grade[0].category || "Grade"}</p>
-                <div className="grid grid-cols-2 gap-3">{representativeItemsByCategory(itemsBySection.grade).map(item => <CatalogCard key={item.id} site={site} item={item} compact onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
+            ))}
+            {itemsBySection.grade.length > 0 && uniqueGroups(itemsBySection.grade).map(([group, groupItems]) => (
+              <div key={`grade-${group}`}>
+                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{group}</p>
+                <div className="grid grid-cols-2 gap-3">{representativeItemsByCategory(groupItems).map(item => <CatalogCard key={item.id} site={site} item={item} compact onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
               </div>
-            )}
-            {itemsBySection.lista.length > 0 && (
-              <div>
-                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{itemsBySection.lista[0].category || "Lista"}</p>
-                <div className="space-y-4">{representativeItemsByCategory(itemsBySection.lista).map(item => <CatalogCard key={item.id} site={site} item={item} stacked onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
+            ))}
+            {itemsBySection.lista.length > 0 && uniqueGroups(itemsBySection.lista).map(([group, groupItems]) => (
+              <div key={`lista-${group}`}>
+                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{group}</p>
+                <div className="space-y-4">{representativeItemsByCategory(groupItems).map(item => <CatalogCard key={item.id} site={site} item={item} stacked onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
               </div>
-            )}
+            ))}
             {itemsBySection.padrao.length > 0 && (
               <div>
                 <CatalogScroller site={site} items={representativeItemsByCategory(itemsBySection.padrao)} onOpenGallery={openGallery} categoryCounts={categoryCounts} />
@@ -675,8 +688,11 @@ function CatalogCard({ site, item, compact = false, stacked = false, onOpenGalle
       </div>
       <div className={compact ? "p-3" : "p-4"}>
         {item.highlight ? <span className="mb-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-black" style={{ background: site.theme.colors?.catalogItemHighlight ? site.theme.colors.catalogItemHighlight + "22" : "#fef3c7", color: site.theme.colors?.catalogItemHighlight ?? "#b45309" }}>{item.highlight}</span> : null}
-        <h3 className={compact ? "text-sm font-black leading-tight" : "text-lg font-black"} style={{ color: site.theme.colors?.catalogItemName ?? site.theme.text }}>{item.name}</h3>
-        <p className={compact ? "mt-1 line-clamp-3 text-xs leading-relaxed" : "mt-2 text-sm leading-relaxed"} style={{ color: site.theme.colors?.catalogItemDesc ?? site.theme.muted }}>{item.description}</p>
+        {/* Item "só foto" (2026-07-16) — nome/descrição agora são opcionais
+            (ver BulkCatalogPhotoAdd/SiteBuilder). Sem isso, um item sem nome
+            mostrava um <h3> vazio ocupando espaço em branco no card. */}
+        {item.name ? <h3 className={compact ? "text-sm font-black leading-tight" : "text-lg font-black"} style={{ color: site.theme.colors?.catalogItemName ?? site.theme.text }}>{item.name}</h3> : null}
+        {item.description ? <p className={compact ? "mt-1 line-clamp-3 text-xs leading-relaxed" : "mt-2 text-sm leading-relaxed"} style={{ color: site.theme.colors?.catalogItemDesc ?? site.theme.muted }}>{item.description}</p> : null}
         <div className="mt-4 flex items-center justify-between gap-3">
           {item.price ? <span className={compact ? "text-xs font-black" : "font-black"} style={{ color: site.theme.colors?.catalogItemPrice ?? site.theme.accent }}>{item.price}</span> : <span />}
           <div className="flex items-center gap-2">
@@ -703,18 +719,24 @@ function CategoryGalleryModal({ site, category, items, onClose }: { site: ToqySi
             <div className="h-28" style={{ background: `linear-gradient(135deg, ${site.theme.primary}33, ${site.theme.secondary}44)` }}>
               {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><FileText className="h-8 w-8 opacity-60" /></div>}
             </div>
-            <div className="p-2.5">
-              <p className="line-clamp-2 text-xs font-black leading-tight" style={{ color: site.theme.colors?.catalogItemName ?? site.theme.text }}>{item.name}</p>
-              {item.price ? <p className="mt-1 text-xs font-black" style={{ color: site.theme.colors?.catalogItemPrice ?? site.theme.accent }}>{item.price}</p> : null}
-              <button
-                type="button"
-                onClick={() => { const href = item.actionUrl ? ensureUrl(item.actionUrl) : whatsapp; if (href) window.open(href, "_blank", "noopener,noreferrer"); }}
-                className="mt-2 w-full rounded-full px-2 py-1.5 text-[11px] font-black"
-                style={{ background: site.theme.colors?.catalogActionBg ?? site.theme.primary, color: site.theme.colors?.catalogActionText ?? (site.theme.mode === "light" ? "#fff" : "#06111F") }}
-              >
-                {item.actionLabel || "Ver"}
-              </button>
-            </div>
+            {/* Item "só foto" (2026-07-16): sem nome/preço/link próprio, não
+                mostra rodapé nenhum (nome vazio + botão "Ver" abrindo o
+                WhatsApp do site por padrão não fazia sentido pra uma foto
+                solta de galeria, ex: "Diretoria"). */}
+            {(item.name || item.price || item.actionUrl) ? (
+              <div className="p-2.5">
+                {item.name ? <p className="line-clamp-2 text-xs font-black leading-tight" style={{ color: site.theme.colors?.catalogItemName ?? site.theme.text }}>{item.name}</p> : null}
+                {item.price ? <p className="mt-1 text-xs font-black" style={{ color: site.theme.colors?.catalogItemPrice ?? site.theme.accent }}>{item.price}</p> : null}
+                <button
+                  type="button"
+                  onClick={() => { const href = item.actionUrl ? ensureUrl(item.actionUrl) : whatsapp; if (href) window.open(href, "_blank", "noopener,noreferrer"); }}
+                  className="mt-2 w-full rounded-full px-2 py-1.5 text-[11px] font-black"
+                  style={{ background: site.theme.colors?.catalogActionBg ?? site.theme.primary, color: site.theme.colors?.catalogActionText ?? (site.theme.mode === "light" ? "#fff" : "#06111F") }}
+                >
+                  {item.actionLabel || "Ver"}
+                </button>
+              </div>
+            ) : null}
           </div>
         ))}
       </div>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, CheckCircle2, Copy, ExternalLink, Eye, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, CheckCircle2, Copy, ExternalLink, Eye, Images, Loader2, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import type { CatalogItem, CatalogLayout, ThemePreset, ToqySite } from "@/lib/types";
 import { createEditUrl, createPublicUrl, generateSlug } from "@/lib/dataProvider";
@@ -12,7 +12,7 @@ import { checkBiositeLimit } from "@/lib/planLimits";
 import { supabase } from "@/lib/supabaseClient";
 import { validateSite } from "@/lib/validation";
 import { ImageGuidelineHint } from "./ImageGuidelineHint";
-import { ImageUploadField } from "./ImageUploadField";
+import { ImageUploadField, uploadImageFile } from "./ImageUploadField";
 import { LiveBioSitePreview } from "./LiveBioSitePreview";
 import { PublicBioSite } from "./PublicBioSite";
 import { ThemePresetPicker } from "./ThemePresetPicker";
@@ -34,6 +34,39 @@ function Help({ children }: { children: React.ReactNode }) {
   return <p className="mt-2 text-xs font-semibold leading-relaxed text-muted">{children}</p>;
 }
 
+// Bug real corrigido (2026-07-16): TODOS os 10 presets em themePresets.ts
+// usam `card: "rgba(...)"` (transparência) — mas <input type="color">
+// nativo só aceita "#rrggbb". Quando recebe qualquer outro formato (rgba,
+// nome de cor CSS, hex de 3 dígitos), o navegador silenciosamente troca
+// pra #000000 assim que o usuário toca no seletor — "mudo a cor e fica
+// tudo preto", reportado por cliente. normalizeToHex() resolve QUALQUER
+// string de cor CSS válida pro hex equivalente (via canvas), pra alimentar
+// o <input> nativo com um valor sempre seguro, sem perder a cor real na
+// bolinha de preview (que aceita rgba/qualquer CSS normalmente).
+function normalizeToHex(input: string): string {
+  const hex6 = /^#[0-9a-fA-F]{6}$/;
+  const hex3 = /^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/;
+  if (hex6.test(input)) return input.toLowerCase();
+  const m3 = input.match(hex3);
+  if (m3) return `#${m3[1]}${m3[1]}${m3[2]}${m3[2]}${m3[3]}${m3[3]}`.toLowerCase();
+  if (typeof document === "undefined") return "#000000";
+  try {
+    const ctx = document.createElement("canvas").getContext("2d");
+    if (!ctx) return "#000000";
+    const sentinel = "#123456";
+    ctx.fillStyle = sentinel;
+    ctx.fillStyle = input;
+    // Canvas ignora silenciosamente valores invalidos (mantem o anterior) —
+    // se ainda é o sentinel e o input não era literalmente essa cor, foi rejeitado.
+    if (ctx.fillStyle === sentinel && input.toLowerCase() !== sentinel) return "#000000";
+    ctx.fillRect(0, 0, 1, 1);
+    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+    return `#${[r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+  } catch {
+    return "#000000";
+  }
+}
+
 function ColorPicker({ label, hint, value, onChange }: { label: string; hint: string; value: string; onChange: (v: string) => void }) {
   const [local, setLocal] = useState(value);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -48,11 +81,13 @@ function ColorPicker({ label, hint, value, onChange }: { label: string; hint: st
     timerRef.current = setTimeout(() => onChange(v), 80);
   }
 
+  const safeHex = normalizeToHex(local);
+
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
       <label className="relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center">
         <span className="h-10 w-10 rounded-full border-2 border-[#ffffff] shadow-md ring-1 ring-border transition hover:scale-110" style={{ background: local }} />
-        <input type="color" value={local}
+        <input type="color" value={safeHex}
           onChange={(e) => handleColorChange(e.target.value)}
           className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
       </label>
@@ -70,6 +105,83 @@ function ColorPicker({ label, hint, value, onChange }: { label: string; hint: st
 
 function updateCatalogItem(items: CatalogItem[], index: number, patch: Partial<CatalogItem>) {
   return items.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item);
+}
+
+// Adicionar várias fotos de uma vez numa categoria (2026-07-16) — pedido
+// real de cliente: categoria com várias fotos (ex: "Diretoria") não deveria
+// exigir repetir "Adicionar item" + preencher nome/descrição pra cada foto.
+// Digita a categoria uma vez, escolhe várias imagens de uma vez, cada uma
+// vira um item novo com nome/descrição vazios (CatalogCard já esconde esses
+// campos quando vazios — ver PublicBioSite.tsx).
+function BulkCatalogPhotoAdd({ slug, onAdd }: { slug: string; onAdd: (items: CatalogItem[]) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [category, setCategory] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [error, setError] = useState("");
+
+  async function handleFiles(fileList: FileList | null) {
+    const files = Array.from(fileList ?? []);
+    if (!files.length) return;
+    if (!category.trim()) { setError("Digite o nome da categoria primeiro."); return; }
+    setError("");
+    setUploading(true);
+    setProgress({ done: 0, total: files.length });
+
+    const newItems: CatalogItem[] = [];
+    for (const file of files) {
+      try {
+        const imageUrl = await uploadImageFile(file, slug, `catalog-bulk-${generateId("img")}`);
+        newItems.push({
+          id: generateId("prd"),
+          name: "",
+          description: "",
+          price: "",
+          imageUrl,
+          imageLayout: "square",
+          category: category.trim(),
+          enabled: true,
+          actionLabel: "",
+          actionUrl: "",
+        });
+      } catch {
+        // Uma foto falhando no upload não derruba as outras — segue o lote.
+      }
+      setProgress((p) => p ? { ...p, done: p.done + 1 } : p);
+    }
+
+    if (newItems.length) onAdd(newItems);
+    if (newItems.length < files.length) setError(`${files.length - newItems.length} foto(s) falharam no envio.`);
+    setUploading(false);
+    setProgress(null);
+    if (inputRef.current) inputRef.current.value = "";
+  }
+
+  return (
+    <div className="rounded-2xl border border-dashed border-border bg-surface p-4">
+      <p className="text-sm font-black text-ink">Adicionar várias fotos</p>
+      <p className="mt-1 text-xs text-muted">Pra categorias tipo "Diretoria" — sobe várias fotos de uma vez, sem precisar preencher nome/descrição em cada uma. Só a foto de capa aparece na página principal; o resto abre na galeria ao clicar.</p>
+      <div className="mt-3 grid gap-2 md:grid-cols-[1fr_auto]">
+        <input
+          className="rounded-xl border border-border bg-card px-3 py-2.5 text-sm font-black text-ink outline-none focus:border-accent"
+          placeholder="Nome da categoria (ex: Diretoria)"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        />
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading || !category.trim()}
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-accent px-4 py-2.5 text-sm font-black text-accent-dim transition hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Images className="h-4 w-4" />}
+          {uploading ? `Enviando ${progress?.done ?? 0}/${progress?.total ?? 0}` : "Escolher fotos"}
+        </button>
+        <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
+      </div>
+      {error ? <p className="mt-2 text-xs font-bold text-red-600">{error}</p> : null}
+    </div>
+  );
 }
 
 export function SiteBuilder({ mode, initialSite, onSave }: Props) {
@@ -553,7 +665,11 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
               <h2 className="text-2xl font-black text-ink">Catalogo</h2>
               <p className="mt-1 text-sm text-muted">Configure itens, layout e textos do catalogo.</p>
             </div>
-            <button type="button" onClick={() => update((s) => ({ ...s, catalog: [...s.catalog, { id: generateId("prd"), name: "Novo item", description: "Descricao do item", price: "", imageUrl: "", imageLayout: "square", category: "Destaques", enabled: true, actionLabel: "Ver detalhes", actionUrl: "" }] }))} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-3 text-sm font-black text-white"><Plus className="h-4 w-4" />Adicionar item</button>
+            <button type="button" onClick={() => update((s) => ({ ...s, catalog: [...s.catalog, { id: generateId("prd"), name: "", description: "", price: "", imageUrl: "", imageLayout: "square", category: "Destaques", enabled: true, actionLabel: "", actionUrl: "" }] }))} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-3 text-sm font-black text-white"><Plus className="h-4 w-4" />Adicionar item</button>
+          </div>
+
+          <div className="mt-4">
+            <BulkCatalogPhotoAdd slug={site.slug} onAdd={(items) => update((s) => ({ ...s, catalog: [...s.catalog, ...items] }))} />
           </div>
 
           {/* Card promo editavel */}
@@ -658,7 +774,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                   </div>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
-                  <label><span className={label}>Nome</span><input className={field} value={item.name} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { name: e.target.value }) }))} /></label>
+                  <label><span className={label}>Nome (opcional — deixe vazio pra só foto)</span><input className={field} placeholder="Ex: Corte degradê" value={item.name} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { name: e.target.value }) }))} /></label>
                   <label><span className={label}>Categoria</span><input className={field} placeholder="Ex: Cortes social" value={item.category ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { category: e.target.value }) }))} /></label>
                   <label>
                     <span className={label}>Onde aparece no bio site</span>
@@ -681,7 +797,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                   </label>
                   <label><span className={label}>Formato da foto</span><select className={field} value={item.imageLayout} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageLayout: e.target.value as typeof item.imageLayout }) }))}><option value="square">Quadrada</option><option value="horizontal">Horizontal</option></select></label>
                   <label><span className={label}>Badge / Destaque</span><input className={field} placeholder='Ex: "Mais vendido", "Novidade"' value={item.highlight ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { highlight: e.target.value }) }))} /></label>
-                  <label className="md:col-span-2"><span className={label}>Descrição</span><textarea className={field} rows={2} value={item.description} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { description: e.target.value }) }))} /></label>
+                  <label className="md:col-span-2"><span className={label}>Descrição (opcional)</span><textarea className={field} rows={2} placeholder="Deixe vazio pra mostrar só a foto, sem texto" value={item.description} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { description: e.target.value }) }))} /></label>
                 </div>
                 <div className="mt-3"><ImageUploadField label="Imagem do item" value={item.imageUrl} onChange={(url) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageUrl: url }) }))} slug={site.slug} fieldId={`catalog-${item.id}`} /><ImageGuidelineHint type={item.imageLayout === "square" ? "productSquare" : "productHorizontal"} /></div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">

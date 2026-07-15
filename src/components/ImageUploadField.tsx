@@ -6,7 +6,7 @@ import { ImagePlus, Link2, Loader2, X } from "lucide-react";
 const MAX_DIMENSION = 800; // reduzido de 1280 — suficiente para bio site mobile
 const MAX_BYTES = 5 * 1024 * 1024; // reduzido de 8MB para 5MB
 
-function resizeImage(file: File): Promise<string> {
+export function resizeImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -30,6 +30,27 @@ function resizeImage(file: File): Promise<string> {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+// Extraído do handleFile de ImageUploadField (2026-07-16) — reusado pelo
+// upload em lote de fotos do catálogo (adicionar várias fotos de uma vez
+// numa categoria, sem precisar repetir "Adicionar item" pra cada uma).
+// Mesma validação/resize/destino (Supabase Storage) do upload individual.
+export async function uploadImageFile(file: File, slug?: string, fieldId?: string): Promise<string> {
+  if (!file.type.startsWith("image/")) throw new Error("Selecione um arquivo de imagem.");
+  if (file.size > MAX_BYTES) throw new Error("Imagem muito grande (máx. 5MB).");
+
+  const dataUrl = await resizeImage(file);
+  if (!slug || !fieldId) return dataUrl;
+
+  const res = await fetch("/api/upload-image", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dataUrl, slug, fieldId }),
+  });
+  const data: { url?: string; error?: string } = await res.json();
+  if (!res.ok || !data.url) throw new Error(data.error || "Upload falhou");
+  return data.url;
 }
 
 export function ImageUploadField({
@@ -65,28 +86,13 @@ export function ImageUploadField({
 
   async function handleFile(file?: File) {
     if (!file) return;
-    if (!file.type.startsWith("image/")) { setError("Selecione um arquivo de imagem."); return; }
-    if (file.size > MAX_BYTES) { setError("Imagem muito grande (máx. 8MB)."); return; }
     setError("");
     setLoading(true);
     try {
-      const dataUrl = await resizeImage(file);
-      if (!slug || !fieldId) {
-        // Sem slug/fieldId (uso legado/isolado) — mantém o comportamento
-        // anterior em vez de quebrar quem ainda não passou essas props.
-        onChange(dataUrl);
-        return;
-      }
-      const res = await fetch("/api/upload-image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dataUrl, slug, fieldId }),
-      });
-      const data: { url?: string; error?: string } = await res.json();
-      if (!res.ok || !data.url) throw new Error(data.error || "Upload falhou");
-      onChange(data.url);
-    } catch {
-      setError("Não foi possível enviar a imagem.");
+      const url = await uploadImageFile(file, slug, fieldId);
+      onChange(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível enviar a imagem.");
     } finally {
       setLoading(false);
       // Reseta o input para permitir selecionar o mesmo arquivo novamente
@@ -162,7 +168,7 @@ export function ImageUploadField({
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
               {loading ? "Enviando..." : value ? "Trocar imagem" : "Enviar imagem do dispositivo"}
             </button>
-            <p className="mt-1 text-xs font-semibold text-muted">JPG ou PNG, até 8MB. A imagem é otimizada automaticamente.</p>
+            <p className="mt-1 text-xs font-semibold text-muted">JPG ou PNG, até 5MB. A imagem é otimizada automaticamente.</p>
           </div>
         )}
       </div>
