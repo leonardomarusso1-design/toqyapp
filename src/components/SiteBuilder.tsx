@@ -110,12 +110,23 @@ function updateCatalogItem(items: CatalogItem[], index: number, patch: Partial<C
 // Adicionar várias fotos de uma vez numa categoria (2026-07-16) — pedido
 // real de cliente: categoria com várias fotos (ex: "Diretoria") não deveria
 // exigir repetir "Adicionar item" + preencher nome/descrição pra cada foto.
-// Digita a categoria uma vez, escolhe várias imagens de uma vez, cada uma
-// vira um item novo com nome/descrição vazios (CatalogCard já esconde esses
-// campos quando vazios — ver PublicBioSite.tsx).
-function BulkCatalogPhotoAdd({ slug, onAdd }: { slug: string; onAdd: (items: CatalogItem[]) => void }) {
+// Escolhe a categoria (existente, já com seu modo de exibição — Carrossel/
+// Grade/Lista/padrão — ou uma nova), escolhe várias imagens de uma vez.
+//
+// 2ª versão (2026-07-16): a 1ª versão só tinha campo de texto livre pra
+// categoria — risco de digitar "diretoria" com D minúsculo e criar uma
+// categoria NOVA/duplicada sem querer, e as fotos novas não herdavam o
+// "Onde aparece" (displaySection) da categoria existente — se "Diretoria"
+// já estava em modo Carrossel, fotos adicionadas em lote caíam no balde
+// "padrão" (ver PublicBioSite.tsx), aparecendo numa seção diferente em vez
+// de entrar na mesma fileira de carrossel. Agora escolhe de uma lista das
+// categorias que já existem no catálogo e herda o displaySection do
+// primeiro item encontrado daquela categoria.
+function BulkCatalogPhotoAdd({ slug, catalog, onAdd }: { slug: string; catalog: CatalogItem[]; onAdd: (items: CatalogItem[]) => void }) {
+  const existingCategories = Array.from(new Set(catalog.map((i) => i.category?.trim()).filter((c): c is string => Boolean(c))));
   const inputRef = useRef<HTMLInputElement>(null);
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(existingCategories[0] ?? "");
+  const [isNewCategory, setIsNewCategory] = useState(existingCategories.length === 0);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [error, setError] = useState("");
@@ -123,10 +134,16 @@ function BulkCatalogPhotoAdd({ slug, onAdd }: { slug: string; onAdd: (items: Cat
   async function handleFiles(fileList: FileList | null) {
     const files = Array.from(fileList ?? []);
     if (!files.length) return;
-    if (!category.trim()) { setError("Digite o nome da categoria primeiro."); return; }
+    if (!category.trim()) { setError("Escolha ou digite o nome da categoria primeiro."); return; }
     setError("");
     setUploading(true);
     setProgress({ done: 0, total: files.length });
+
+    // Herda o "Onde aparece" (displaySection) de um item já existente
+    // dessa categoria — pra foto nova entrar na MESMA fileira/carrossel,
+    // não cair num balde diferente (ex: "padrão").
+    const existingItem = catalog.find((i) => i.category?.trim() === category.trim());
+    const displaySection = existingItem?.displaySection;
 
     const newItems: CatalogItem[] = [];
     for (const file of files) {
@@ -143,6 +160,7 @@ function BulkCatalogPhotoAdd({ slug, onAdd }: { slug: string; onAdd: (items: Cat
           enabled: true,
           actionLabel: "",
           actionUrl: "",
+          ...(displaySection ? { displaySection } : {}),
         });
       } catch {
         // Uma foto falhando no upload não derruba as outras — segue o lote.
@@ -160,14 +178,28 @@ function BulkCatalogPhotoAdd({ slug, onAdd }: { slug: string; onAdd: (items: Cat
   return (
     <div className="rounded-2xl border border-dashed border-border bg-surface p-4">
       <p className="text-sm font-black text-ink">Adicionar várias fotos</p>
-      <p className="mt-1 text-xs text-muted">Pra categorias tipo "Diretoria" — sobe várias fotos de uma vez, sem precisar preencher nome/descrição em cada uma. Só a foto de capa aparece na página principal; o resto abre na galeria ao clicar.</p>
+      <p className="mt-1 text-xs text-muted">Escolha a categoria (ex: "Diretoria") e suba várias fotos de uma vez, sem precisar preencher nome/descrição em cada uma. Entram no mesmo modo de exibição que a categoria já usa.</p>
       <div className="mt-3 grid gap-2 md:grid-cols-[1fr_auto]">
-        <input
-          className="rounded-xl border border-border bg-card px-3 py-2.5 text-sm font-black text-ink outline-none focus:border-accent"
-          placeholder="Nome da categoria (ex: Diretoria)"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        />
+        {isNewCategory || existingCategories.length === 0 ? (
+          <input
+            className="rounded-xl border border-border bg-card px-3 py-2.5 text-sm font-black text-ink outline-none focus:border-accent"
+            placeholder="Nome da categoria (ex: Diretoria)"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          />
+        ) : (
+          <select
+            className="rounded-xl border border-border bg-card px-3 py-2.5 text-sm font-black text-ink outline-none focus:border-accent"
+            value={category}
+            onChange={(e) => {
+              if (e.target.value === "__new__") { setIsNewCategory(true); setCategory(""); return; }
+              setCategory(e.target.value);
+            }}
+          >
+            {existingCategories.map((c) => <option key={c} value={c}>{c}</option>)}
+            <option value="__new__">+ Nova categoria...</option>
+          </select>
+        )}
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
@@ -179,6 +211,9 @@ function BulkCatalogPhotoAdd({ slug, onAdd }: { slug: string; onAdd: (items: Cat
         </button>
         <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
       </div>
+      {isNewCategory && existingCategories.length > 0 ? (
+        <button type="button" onClick={() => { setIsNewCategory(false); setCategory(existingCategories[0]); }} className="mt-2 text-xs font-bold text-accent-dim underline">Usar categoria existente</button>
+      ) : null}
       {error ? <p className="mt-2 text-xs font-bold text-red-600">{error}</p> : null}
     </div>
   );
@@ -669,7 +704,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
           </div>
 
           <div className="mt-4">
-            <BulkCatalogPhotoAdd slug={site.slug} onAdd={(items) => update((s) => ({ ...s, catalog: [...s.catalog, ...items] }))} />
+            <BulkCatalogPhotoAdd slug={site.slug} catalog={site.catalog} onAdd={(items) => update((s) => ({ ...s, catalog: [...s.catalog, ...items] }))} />
           </div>
 
           {/* Card promo editavel */}
