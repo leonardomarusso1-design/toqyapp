@@ -409,10 +409,19 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
                   tiktok: "#010101", linkedin: "#0A66C2", youtube: "#FF0000", email: "#EA4335",
                 };
                 const useGlass = site.theme.socialIconStyle === "glass";
+                const isBrandType = button.type in brandColor;
                 const bg = useGlass
                   ? (site.theme.mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)")
                   : (brandColor[button.type] ?? site.theme.primary);
-                const iconColor = useGlass ? site.theme.text : "#fff";
+                // Bug real corrigido (2026-07-16): ícone branco fixo quebrava
+                // (sumia) quando o fundo caía no fallback theme.primary (tipo
+                // sem cor de marca, ex: mapa/localização) E o usuário definia
+                // "Cor dos botões" como branco — branco no branco, invisível.
+                // Marcas (whatsapp/instagram/...) sempre têm fundo saturado o
+                // suficiente pra branco ficar legível; pro fallback, usa
+                // theme.text (a mesma cor que o usuário já ajusta pra
+                // legibilidade geral do site).
+                const iconColor = useGlass || !isBrandType ? site.theme.text : "#fff";
                 return (
                   <button key={button.id} type="button" onClick={() => handleButton(button)} aria-label={button.label}
                     className="flex h-12 w-12 items-center justify-center rounded-full shadow-md transition active:scale-90 hover:scale-105 backdrop-blur-sm"
@@ -641,7 +650,14 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
       {(whatsapp || site.catalogWaLabel) ? (
         <div className="mt-5 rounded-[1.5rem] border p-4 text-center backdrop-blur-xl" style={{ background: site.theme.mode === "light" ? "rgba(255,255,255,0.66)" : "rgba(255,255,255,0.08)", borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.16)" }}>
           <p className="text-sm font-black" style={{ color: site.theme.text }}>{site.catalogWaLabel || "Não encontrou o que procura?"}</p>
-          {whatsapp ? <button type="button" onClick={() => window.open(whatsapp, "_blank", "noopener,noreferrer")} className="mt-3 inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-xs font-black" style={{ background: site.theme.primary, color: "#fff" }}><WhatsAppIcon className="h-4 w-4" />Fale com a gente no WhatsApp</button> : null}
+          {/* Bug real corrigido (2026-07-16): cor do texto vinha fixa em
+              "#fff" no código — se o usuário definisse "Cor dos botões"
+              (theme.primary) como branco, o botão virava branco-no-branco,
+              invisível, sem NENHUM controle de cor pra corrigir (não existia
+              picker pra este botão específico). Agora reusa
+              catalogActionBg/catalogActionText — os mesmos já editáveis na
+              aba Catálogo ("Fundo botão de ação"/"Texto botão de ação"). */}
+          {whatsapp ? <button type="button" onClick={() => window.open(whatsapp, "_blank", "noopener,noreferrer")} className="mt-3 inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-xs font-black" style={{ background: site.theme.colors?.catalogActionBg ?? site.theme.primary, color: site.theme.colors?.catalogActionText ?? (site.theme.mode === "light" ? "#fff" : "#06111F") }}><WhatsAppIcon className="h-4 w-4" />Fale com a gente no WhatsApp</button> : null}
         </div>
       ) : null}
 
