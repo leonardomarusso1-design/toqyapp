@@ -124,23 +124,30 @@ function logoShape(site: ToqySite) {
   return "rounded-2xl";
 }
 
-function backgroundStyle(site: ToqySite): React.CSSProperties {
+// Fundo de imagem "fixo" (2026-07-16) — bug real corrigido: a imagem era
+// aplicada com backgroundAttachment: "scroll" (nunca fixo de verdade) direto
+// no container que cresce com o conteúdo (min-h-screen, mas mais alto se a
+// página tiver mais conteúdo que 1 tela) — background-size: "cover" recalcula
+// contra essa altura CRESCENTE, esticando a imagem cada vez mais conforme
+// mais seções eram adicionadas. background-attachment: fixed também não é
+// confiável no Safari/iOS. Fix: camada position:fixed separada (ver
+// backgroundImageUrl() abaixo) — altura sempre = viewport, nunca estica,
+// conteúdo rola livremente por cima.
+function backgroundImageUrl(site: ToqySite): string | undefined {
   const plaque = site.plaqueTheme?.useSameBackground && site.plaqueTheme.backgroundImageUrl;
   const image = plaque ? site.plaqueTheme?.backgroundImageUrl : site.profile.backgroundImageUrl;
-  if ((site.theme.backgroundType === "image" || plaque) && image) {
-    const isDark = site.theme.mode === "dark";
-    const overlay = isDark
-      ? "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.55) 100%)"
-      : "linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 40%, rgba(0,0,0,0.30) 100%)";
-    return {
-      backgroundColor: site.theme.background,
-      backgroundImage: `${overlay}, url(${image})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center top",
-      backgroundRepeat: "no-repeat",
-      backgroundAttachment: "scroll",
-    };
-  }
+  return (site.theme.backgroundType === "image" || plaque) && image ? image : undefined;
+}
+
+function backgroundOverlayGradient(site: ToqySite): string {
+  const isDark = site.theme.mode === "dark";
+  return isDark
+    ? "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.55) 100%)"
+    : "linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 40%, rgba(0,0,0,0.30) 100%)";
+}
+
+function backgroundStyle(site: ToqySite): React.CSSProperties {
+  if (backgroundImageUrl(site)) return { backgroundColor: site.theme.background };
   if (site.theme.backgroundType === "solid") return { background: site.theme.background };
   return { background: `radial-gradient(circle at 50% 0%, ${site.theme.primary}33, transparent 34%), linear-gradient(160deg, ${site.theme.gradientFrom}, ${site.theme.gradientTo})` };
 }
@@ -338,8 +345,21 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
     b.displayAs === "button" || (!b.displayAs && !SOCIAL_TYPES.includes(b.type) && b.type !== "phone" && !(wifiInline && b.type === "wifi"))
   );
 
+  const bgImage = backgroundImageUrl(site);
+
   return (
     <div className="min-h-screen w-full" style={{ ...backgroundStyle(site), color: site.theme.text }}>
+      {bgImage ? (
+        <div
+          className="fixed inset-0 -z-10"
+          style={{
+            backgroundImage: `${backgroundOverlayGradient(site)}, url(${bgImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center top",
+            backgroundRepeat: "no-repeat",
+          }}
+        />
+      ) : null}
       <div className="min-h-screen w-full">
         <main className="mx-auto w-full max-w-[430px] px-4 py-6">
           <div className="mb-6 flex items-center justify-between gap-3">
