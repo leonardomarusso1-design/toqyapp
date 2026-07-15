@@ -65,10 +65,23 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     supportLevel: "community",
   },
 
+  // Renomeado de "Comunidade" pra "Essencial" (2026-07-16, pedido do
+  // Leonardo) — o acesso à comunidade no Discord virou gratuito/aberto,
+  // separado dos planos pagos, então chamar este plano de "Comunidade"
+  // não faz mais sentido. O id interno continua "community" de propósito
+  // (bate com o valor já gravado em profiles.plan_toqy de quem já assinou,
+  // e com o texto "comunidade" que o webhook da Kiwify usa pra reconhecer
+  // o produto — ver resolvePlan() em kiwify/webhook/route.ts). Preço e
+  // features continuam os mesmos de antes, só a comunicação muda.
+  //
+  // Motivo de trazer de volta: os planos Freelancer/Agência hoje são
+  // pagamento ÚNICO (ver SELLABLE_PLANS + página de preços) — não geram
+  // receita recorrente. Este plano é o único mensal de verdade, e é o que
+  // sustenta MRR.
   community: {
     id: "community",
-    name: "Comunidade",
-    description: "Para quem está na comunidade e cria páginas para clientes.",
+    name: "Essencial",
+    description: "Para quem cria bio sites para clientes com um custo mensal baixo.",
     priceMonthly: 29.9,
     priceAnnual: 299,
     features: [
@@ -76,7 +89,6 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
       "Sem taxa por bio site",
       "Catálogo, Pix e Wi-Fi",
       "QR personalizado",
-      "Acesso à comunidade TOQY",
       "Analytics básico",
       "Suporte por email",
     ],
@@ -149,15 +161,15 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
   },
 };
 
-// Retirado do funil de venda (2026-07-13, decisão do Leonardo): "Comunidade"
-// não é mais vendido separadamente — acesso à comunidade agora é gratuito,
-// e quem compra um plano pago não entra na comunidade só por isso (é link
-// interno no Discord, fora do fluxo de pagamento). Quem JÁ tinha esse plano
-// continua normalmente (grandfathered) — SUBSCRIPTION_PLANS.community e o
-// reconhecimento em resolvePlan() do webhook da Kiwify continuam existindo
-// de propósito, só não aparece mais como opção de compra (ver
-// SubscriptionPlansDisplay.tsx e src/app/page.tsx).
-export const SELLABLE_PLANS: PlanType[] = ["free", "freelancer", "agency"];
+// De volta ao funil de venda (2026-07-16, pedido do Leonardo) — motivo:
+// Freelancer/Agência viraram pagamento único (não geram recorrência), e
+// "community" (rebatizado "Essencial" na UI, ver SUBSCRIPTION_PLANS acima)
+// é o único plano mensal de verdade, precisa voltar a ser vendável pra
+// sustentar MRR. Historia: tinha sido retirado em 2026-07-13 porque a
+// comunidade do Discord virou acesso gratuito/aberto — isso continua
+// verdade, só que agora o plano é vendido pelas FEATURES (bio sites,
+// catálogo, Pix, Wi-Fi, QR), não mais pelo acesso à comunidade.
+export const SELLABLE_PLANS: PlanType[] = ["free", "community", "freelancer", "agency"];
 
 // Resolve um valor de plano vindo do banco (profiles.plan_toqy) pra um
 // PlanType válido, com fallback seguro pra "free" — protege getPlan() de

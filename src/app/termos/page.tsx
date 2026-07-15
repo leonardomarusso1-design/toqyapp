@@ -4,7 +4,7 @@ export const metadata = { title: "Termos de Uso — TOQY" };
 
 export default function TermosPage() {
   return (
-    <LegalPageShell title="Termos de Uso" updatedAt="03/07/2026">
+    <LegalPageShell title="Termos de Uso" updatedAt="16/07/2026">
       <p>
         Estes Termos de Uso regulam o acesso e uso do serviço <strong>TOQY</strong> (toqy.com.br),
         oferecido por Leonardo Marusso (CPF 473.503.798-54), atuando sob a marca <strong>Marusso Produções</strong> (&quot;nós&quot;).
@@ -29,9 +29,9 @@ export default function TermosPage() {
 
       <h2>3. Planos, limites e pagamento</h2>
       <p>
-        O serviço é oferecido nos planos Gratuito, Comunidade, Freelancer e Agência, cada um com limite de
+        O serviço é oferecido nos planos Gratuito, Essencial, Freelancer e Agência, cada um com limite de
         número de bio sites e recursos específicos (detalhados na página de planos do site). O plano
-        Comunidade é cobrado de forma recorrente mensal; os planos Freelancer e Agência são de pagamento
+        Essencial é cobrado de forma recorrente mensal; os planos Freelancer e Agência são de pagamento
         único. Ver <a href="/contrato-assinatura">Contrato de Assinatura</a> para detalhes de cobrança,
         cancelamento e reembolso.
       </p>

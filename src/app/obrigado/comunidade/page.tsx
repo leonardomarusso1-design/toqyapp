@@ -45,9 +45,9 @@ export default function ObrigadoComunidade() {
         <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
       </div>
       <h1 className="mt-8 text-3xl font-black">Acesso restrito</h1>
-      <p className="mt-4 max-w-md text-muted">Esta página é exclusiva para membros com plano ativo. Adquira o plano Comunidade para ter acesso ao Discord e a todos os recursos.</p>
+      <p className="mt-4 max-w-md text-muted">Esta página é exclusiva para membros com plano ativo. Adquira o plano Essencial para ter acesso a todos os recursos.</p>
       <a href="https://pay.kiwify.com.br/12uYE0c" className="mt-8 inline-flex rounded-2xl bg-accent px-8 py-4 font-black text-white transition hover:bg-accent-dim">
-        Assinar Comunidade — R$29,90/mês
+        Assinar Essencial — R$29,90/mês
       </a>
       <Link href="/" className="mt-4 text-sm text-muted hover:text-ink">Voltar para o início</Link>
     </main>
@@ -61,7 +61,7 @@ export default function ObrigadoComunidade() {
       </div>
       <h1 className="mt-8 text-4xl font-black tracking-tight md:text-5xl">Compra confirmada! 🎉</h1>
       <p className="mt-4 max-w-lg text-lg leading-relaxed text-muted">
-        Seu plano <span className="font-black text-accent">Comunidade TOQY</span> está ativo.
+        Seu plano <span className="font-black text-accent">Essencial</span> está ativo.
         Você tem acesso a <strong className="text-ink">20 bio sites</strong>, catálogo, Pix, Wi-Fi e QR Code personalizado.
       </p>
       <div className="mt-10 w-full max-w-md rounded-[2rem] bg-violet p-8 shadow-sm">

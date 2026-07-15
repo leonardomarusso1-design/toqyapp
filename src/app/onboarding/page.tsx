@@ -296,7 +296,7 @@ export default function OnboardingPage() {
         <div className="mt-6 flex flex-col gap-3">
           <a href="https://pay.kiwify.com.br/12uYE0c" target="_blank" rel="noopener noreferrer"
             className="block rounded-2xl bg-accent px-5 py-4 font-black text-white hover:bg-accent-dim">
-            Fazer upgrade — Comunidade R$29,90/mês
+            Fazer upgrade — Essencial R$29,90/mês
           </a>
           <Link href="/#planos" className="block rounded-2xl border border-border px-5 py-4 font-black text-ink hover:border-accent">
             Ver todos os planos

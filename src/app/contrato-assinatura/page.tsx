@@ -4,7 +4,7 @@ export const metadata = { title: "Contrato de Assinatura — TOQY" };
 
 export default function ContratoAssinaturaPage() {
   return (
-    <LegalPageShell title="Contrato de Assinatura" updatedAt="03/07/2026">
+    <LegalPageShell title="Contrato de Assinatura" updatedAt="16/07/2026">
       <p>
         Este Contrato regula a contratação de planos pagos do <strong>TOQY</strong> (toqy.com.br), oferecido
         por Leonardo Marusso (CPF 473.503.798-54), atuando sob a marca <strong>Marusso Produções</strong>.
@@ -17,16 +17,16 @@ export default function ContratoAssinaturaPage() {
         <thead><tr><th>Plano</th><th>Preço</th><th>Cobrança</th><th>Limite de bio sites</th></tr></thead>
         <tbody>
           <tr><td>Gratuito</td><td>R$0</td><td>—</td><td>1</td></tr>
-          <tr><td>Comunidade</td><td>R$29,90/mês</td><td>Recorrente mensal</td><td>20 (site extra: R$5,00)</td></tr>
+          <tr><td>Essencial</td><td>R$29,90/mês</td><td>Recorrente mensal</td><td>20 (site extra: R$5,00)</td></tr>
           <tr><td>Freelancer</td><td>R$59,90</td><td>Pagamento único</td><td>20</td></tr>
           <tr><td>Agência</td><td>R$149,90</td><td>Pagamento único</td><td>100</td></tr>
         </tbody>
       </table>
       <p>
-        <strong>Atenção:</strong> apenas o plano Comunidade é uma assinatura com cobrança recorrente. Os
+        <strong>Atenção:</strong> apenas o plano Essencial é uma assinatura com cobrança recorrente. Os
         planos Freelancer e Agência são pagamento único, com acesso liberado indefinidamente aos recursos do
         plano contratado — as seções 3, 5 e 6 abaixo (cobrança recorrente, cancelamento de renovação,
-        reajuste) se aplicam apenas ao plano Comunidade.
+        reajuste) se aplicam apenas ao plano Essencial.
       </p>
 
       <h2>2. Processamento de pagamento</h2>
@@ -36,9 +36,9 @@ export default function ContratoAssinaturaPage() {
         política de segurança dela.
       </p>
 
-      <h2>3. Cobrança recorrente (plano Comunidade)</h2>
+      <h2>3. Cobrança recorrente (plano Essencial)</h2>
       <p>
-        O plano Comunidade é cobrado de forma recorrente mensal. A cobrança é renovada automaticamente a
+        O plano Essencial é cobrado de forma recorrente mensal. A cobrança é renovada automaticamente a
         cada mês, no mesmo valor vigente, até que você cancele.
       </p>
 
@@ -46,23 +46,23 @@ export default function ContratoAssinaturaPage() {
       <p>
         Conforme o art. 49 do Código de Defesa do Consumidor, você tem o direito de <strong>desistir da
         contratação em até 7 (sete) dias corridos</strong> a partir da data de adesão a qualquer plano pago
-        (Comunidade, Freelancer ou Agência), com <strong>reembolso integral</strong> do valor pago, sem
+        (Essencial, Freelancer ou Agência), com <strong>reembolso integral</strong> do valor pago, sem
         necessidade de justificativa. Para exercer esse direito, entre em contato em
         leonardomarusso1@gmail.com dentro desse prazo.
       </p>
       <p>Após esse prazo, planos de pagamento único (Freelancer, Agência) não têm reembolso.</p>
 
-      <h2>5. Cancelamento (plano Comunidade)</h2>
+      <h2>5. Cancelamento (plano Essencial)</h2>
       <p>
-        Você pode cancelar sua assinatura Comunidade a qualquer momento, solicitando por
+        Você pode cancelar sua assinatura Essencial a qualquer momento, solicitando por
         leonardomarusso1@gmail.com. O cancelamento interrompe a renovação futura — o acesso ao plano
         permanece até o fim do ciclo mensal já pago. Não há reembolso proporcional de dias não utilizados
         dentro de um ciclo já cobrado, exceto no caso do direito de arrependimento (seção 4).
       </p>
 
-      <h2>6. Reajuste de preço (plano Comunidade)</h2>
+      <h2>6. Reajuste de preço (plano Essencial)</h2>
       <p>
-        Podemos reajustar o valor da assinatura Comunidade mediante aviso prévio de pelo menos 30 (trinta)
+        Podemos reajustar o valor da assinatura Essencial mediante aviso prévio de pelo menos 30 (trinta)
         dias por e-mail. O novo valor só se aplica a partir do próximo ciclo de cobrança após o aviso; você
         pode cancelar antes disso sem ônus caso não concorde com o novo valor.
       </p>
@@ -73,9 +73,9 @@ export default function ContratoAssinaturaPage() {
         imediatamente conforme o novo plano contratado.
       </p>
 
-      <h2>8. Inadimplência (plano Comunidade)</h2>
+      <h2>8. Inadimplência (plano Essencial)</h2>
       <p>
-        Em caso de falha na cobrança recorrente da assinatura Comunidade, poderemos suspender o acesso aos
+        Em caso de falha na cobrança recorrente da assinatura Essencial, poderemos suspender o acesso aos
         recursos do plano até a regularização, mantendo o acesso equivalente ao plano gratuito.
         Notificaremos por e-mail antes da suspensão.
       </p>

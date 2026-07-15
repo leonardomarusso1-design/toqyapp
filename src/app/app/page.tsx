@@ -30,7 +30,7 @@ type Profile = {
 
 const PLAN_LABELS: Record<PlanTier, string> = {
   free: "Gratuito",
-  community: "Comunidade",
+  community: "Essencial",
   freelancer: "Freelancer",
   agency: "Agência",
 };

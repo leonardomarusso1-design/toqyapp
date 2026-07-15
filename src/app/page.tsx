@@ -46,10 +46,20 @@ const features = [
 // do Discord), não é mais um plano pago do Toqy — comprar um plano pago
 // não dá acesso à comunidade, e vice-versa. Quem já assinava esse plano
 // continua funcionando (webhook da Kiwify e SUBSCRIPTION_PLANS ainda
-// reconhecem "community" de propósito), só não aparece mais aqui pra venda
-// nova. Freelancer virou o plano em destaque no lugar dele.
+// reconhecem "community" de propósito).
+//
+// "Essencial" volta ao funil (2026-07-16, pedido do Leonardo) — é o mesmo
+// plano de antes (mesmo preço, mesmas features, mesmo produto na Kiwify),
+// só sem falar de comunidade: Freelancer/Agência viraram pagamento ÚNICO
+// (ver descrições "Pagamento único" abaixo), então não geram MRR nenhum —
+// Essencial é o único plano mensal recorrente de verdade, e é ele que
+// sustenta receita recorrente. Link da Kiwify reaproveitado do que já
+// existia antes de a "Comunidade" sair do funil — confirmar com o
+// Leonardo que o produto continua ativo no painel da Kiwify antes de
+// considerar isso testado ponta a ponta.
 const plans = [
   { name: "Gratuito", price: "R$0", period: "", description: "Para conhecer a plataforma e gerar seus primeiros leads.", highlight: false, cta: "Começar grátis", items: ["1 bio site", "Domínio toqy.app/seunome", "QR Code básico", "Preview em tempo real", "Marca TOQY na página"] },
+  { name: "Essencial", price: "R$29,90", period: "/mês", description: "Para quem cria bio sites para clientes com um custo mensal baixo.", highlight: false, cta: "Assinar", items: ["Até 20 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "QR personalizado", "Suporte por email"] },
   { name: "Freelancer", price: "R$59,90", period: "", description: "Para profissionais que criam bio sites para clientes. Pagamento único.", highlight: true, cta: "Comprar acesso", items: ["Até 20 bio sites", "QR personalizado", "Pix e Wi-Fi", "Catálogo completo", "Suporte prioritário"] },
   { name: "Agência", price: "R$149,90", period: "", description: "Para equipes e agências em escala. Pagamento único.", highlight: false, cta: "Comprar acesso", items: ["Até 100 bio sites", "White label parcial", "Domínio próprio", "Gestão de equipe", "Tudo do Freelancer"] },
 ] as const;
@@ -461,7 +471,7 @@ export default async function LandingPage() {
                   </p>
                 ))}
               </div>
-              <a href={plan.name === "Freelancer" ? "https://pay.kiwify.com.br/gTIhv6I" : plan.name === "Agência" ? "https://pay.kiwify.com.br/xFdnxvE" : "/login"} target={plan.name === "Gratuito" ? undefined : "_blank"} rel={plan.name === "Gratuito" ? undefined : "noreferrer noopener"} className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}>
+              <a href={plan.name === "Essencial" ? "https://pay.kiwify.com.br/12uYE0c" : plan.name === "Freelancer" ? "https://pay.kiwify.com.br/gTIhv6I" : plan.name === "Agência" ? "https://pay.kiwify.com.br/xFdnxvE" : "/login"} target={plan.name === "Gratuito" ? undefined : "_blank"} rel={plan.name === "Gratuito" ? undefined : "noreferrer noopener"} className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}>
                 {plan.cta}
               </a>
             </article>
@@ -583,6 +593,7 @@ export default async function LandingPage() {
               <p className="text-sm font-black text-ink">Planos</p>
               <ul className="mt-3 space-y-2 text-sm text-muted">
                 <li><Link href="/login" className="hover:text-accent">Gratuito</Link></li>
+                <li><a href="https://pay.kiwify.com.br/12uYE0c" target="_blank" rel="noopener noreferrer" className="hover:text-accent">Essencial — R$29,90/mês</a></li>
                 <li><a href="https://pay.kiwify.com.br/gTIhv6I" target="_blank" rel="noopener noreferrer" className="hover:text-accent">Freelancer — R$59,90</a></li>
                 <li><a href="https://pay.kiwify.com.br/xFdnxvE" target="_blank" rel="noopener noreferrer" className="hover:text-accent">Agência — R$149,90</a></li>
               </ul>
