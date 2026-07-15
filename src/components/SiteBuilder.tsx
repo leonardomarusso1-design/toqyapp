@@ -142,10 +142,16 @@ function CatalogCategoryDisplayControl({ catalog, onChangeCategory }: { catalog:
               <option value="carrossel">Carrossel — desliza todas as fotos</option>
               <option value="grade">Grade — todas, 2 por linha</option>
               <option value="lista">Lista — todas, uma embaixo da outra</option>
+              <option value="subcategorias">Subcategorias — 1 capa por subcategoria</option>
             </select>
           </div>
         ))}
       </div>
+      {categories.some((cat) => categoryCommonDisplaySection(catalog, cat) === "subcategorias") ? (
+        <p className="mt-3 text-xs text-muted">
+          Categoria em "Subcategorias": preencha o campo <b>Subcategoria</b> em cada foto (ex: "Cadeiras", "Mesas", "Estantes") — cada subcategoria vira sua própria capa, lado a lado, e clicar abre só as fotos dela.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -879,6 +885,11 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 <div className="grid gap-3 md:grid-cols-2">
                   <label><span className={label}>Nome (opcional — deixe vazio pra só foto)</span><input className={field} placeholder="Ex: Corte degradê" value={item.name} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { name: e.target.value }) }))} /></label>
                   <label><span className={label}>Categoria</span><input className={field} placeholder="Ex: Cortes social" value={item.category ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { category: e.target.value }) }))} /></label>
+                  <label>
+                    <span className={label}>Subcategoria (opcional)</span>
+                    <input className={field} placeholder="Ex: Cadeiras, Mesas, Estantes" value={item.subcategory ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { subcategory: e.target.value }) }))} />
+                    <p className="mt-1 text-xs text-muted">Só faz efeito se a categoria estiver com exibição "Subcategorias" (ver painel acima).</p>
+                  </label>
                   {/* "Onde aparece no bio site" por item foi removido (2026-07-16)
                       — virou "Exibição por categoria" acima, uma escolha só
                       pra categoria inteira. O checkbox "Destaque" (no header

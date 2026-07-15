@@ -548,8 +548,9 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
     const carrossel = filteredItems.filter(i => i.displaySection === "carrossel");
     const grade = filteredItems.filter(i => i.displaySection === "grade");
     const lista = filteredItems.filter(i => i.displaySection === "lista");
+    const subcategorias = filteredItems.filter(i => i.displaySection === "subcategorias");
     const padrao = filteredItems.filter(i => !i.displaySection || i.displaySection === "padrao");
-    return { destaques, carrossel, grade, lista, padrao };
+    return { destaques, carrossel, grade, lista, subcategorias, padrao };
   }, [filteredItems]);
 
   const hasCustomSections = filteredItems.some(i => i.displaySection && i.displaySection !== "padrao");
@@ -632,6 +633,17 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
               <div key={`lista-${group}`}>
                 <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{group}</p>
                 <div className="space-y-4">{groupItems.map(item => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
+              </div>
+            ))}
+            {/* Subcategorias (2026-07-16): categoria vira um cabeçalho
+                (ex: "Home Office"), e dentro dela 1 capa por subcategoria
+                (ex: Cadeiras, Mesas, Estantes) lado a lado — cada capa abre
+                a galeria só das fotos daquela subcategoria (groupKey já
+                separa por categoria+subcategoria nesse modo). */}
+            {itemsBySection.subcategorias.length > 0 && uniqueGroups(itemsBySection.subcategorias).map(([group, groupItems]) => (
+              <div key={`subcat-${group}`}>
+                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{group}</p>
+                <CatalogScroller site={site} items={representativeItemsByCategory(groupItems)} onOpenGallery={openGallery} categoryCounts={categoryCounts} />
               </div>
             ))}
             {/* Categorias "padrão" (sem exibição específica escolhida em
