@@ -191,6 +191,33 @@ function uniqueGroups(items: CatalogItem[]) {
   return Array.from(groups.entries());
 }
 
+// Correção de bug real reportado por cliente (2026-07-16): antes desta
+// função, uma categoria com várias fotos (ex: "Diretoria" com 5 fotos)
+// aparecia com as 5 fotos soltas, como cards separados, direto na página
+// principal do catálogo — clicar em qualquer uma abria a galeria da
+// categoria (CategoryGalleryModal) mostrando os MESMOS itens já visíveis,
+// sem nada de "escondido" de verdade (o clique parecia não fazer nada).
+// Agora a página principal mostra só 1 card por categoria — o primeiro
+// item cadastrado nela, na ordem em que foi criado — com o badge "+N"
+// (já existente) indicando quantas fotos a mais existem. As demais fotos
+// só aparecem ao clicar na foto e abrir a galeria. Categoria com 1 item só
+// não muda em nada (nunca teve o que esconder). Usado em toda renderização
+// "achatada" (grid/stack/scroller simples e as seções destaque/carrossel/
+// grade/lista/padrão) — NÃO no layout "Por categoria" (grouped/
+// category-carousel), que mostra cada categoria inteira de propósito,
+// como um modo de exibição alternativo e deliberado.
+function representativeItemsByCategory(items: CatalogItem[]): CatalogItem[] {
+  const seen = new Set<string>();
+  const result: CatalogItem[] = [];
+  items.forEach((item) => {
+    const key = item.category?.trim() || "Destaques";
+    if (seen.has(key)) return;
+    seen.add(key);
+    result.push(item);
+  });
+  return result;
+}
+
 export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite; publicUrl?: string; instanceId?: string }) {
   const [modal, setModal] = useState<Modal>(null);
   const [qrModal, setQrModal] = useState(false);
@@ -514,9 +541,10 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
         </div>
       );
     }
-    if (l === "grid") return <div className="grid grid-cols-2 gap-3">{items2.map((item) => <CatalogCard key={item.id} site={site} item={item} compact onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>;
-    if (l === "stack") return <div className="space-y-4">{items2.map((item) => <CatalogCard key={item.id} site={site} item={item} stacked onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>;
-    return <CatalogScroller site={site} items={items2} onOpenGallery={openGallery} categoryCounts={categoryCounts} />;
+    const representative = representativeItemsByCategory(items2);
+    if (l === "grid") return <div className="grid grid-cols-2 gap-3">{representative.map((item) => <CatalogCard key={item.id} site={site} item={item} compact onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>;
+    if (l === "stack") return <div className="space-y-4">{representative.map((item) => <CatalogCard key={item.id} site={site} item={item} stacked onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>;
+    return <CatalogScroller site={site} items={representative} onOpenGallery={openGallery} categoryCounts={categoryCounts} />;
   }
 
   const LAYOUT_LABELS: Record<CatalogLayout, string> = {
@@ -549,30 +577,30 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
             {itemsBySection.destaques.length > 0 && (
               <div>
                 <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.accent }}>Destaques</p>
-                <div className="space-y-4">{itemsBySection.destaques.map(item => <CatalogCard key={item.id} site={site} item={item} stacked onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
+                <div className="space-y-4">{representativeItemsByCategory(itemsBySection.destaques).map(item => <CatalogCard key={item.id} site={site} item={item} stacked onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
               </div>
             )}
             {itemsBySection.carrossel.length > 0 && (
               <div>
                 <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{itemsBySection.carrossel[0].category || "Carrossel"}</p>
-                <CatalogScroller site={site} items={itemsBySection.carrossel} onOpenGallery={openGallery} categoryCounts={categoryCounts} />
+                <CatalogScroller site={site} items={representativeItemsByCategory(itemsBySection.carrossel)} onOpenGallery={openGallery} categoryCounts={categoryCounts} />
               </div>
             )}
             {itemsBySection.grade.length > 0 && (
               <div>
                 <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{itemsBySection.grade[0].category || "Grade"}</p>
-                <div className="grid grid-cols-2 gap-3">{itemsBySection.grade.map(item => <CatalogCard key={item.id} site={site} item={item} compact onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
+                <div className="grid grid-cols-2 gap-3">{representativeItemsByCategory(itemsBySection.grade).map(item => <CatalogCard key={item.id} site={site} item={item} compact onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
               </div>
             )}
             {itemsBySection.lista.length > 0 && (
               <div>
                 <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{itemsBySection.lista[0].category || "Lista"}</p>
-                <div className="space-y-4">{itemsBySection.lista.map(item => <CatalogCard key={item.id} site={site} item={item} stacked onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
+                <div className="space-y-4">{representativeItemsByCategory(itemsBySection.lista).map(item => <CatalogCard key={item.id} site={site} item={item} stacked onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
               </div>
             )}
             {itemsBySection.padrao.length > 0 && (
               <div>
-                <CatalogScroller site={site} items={itemsBySection.padrao} onOpenGallery={openGallery} categoryCounts={categoryCounts} />
+                <CatalogScroller site={site} items={representativeItemsByCategory(itemsBySection.padrao)} onOpenGallery={openGallery} categoryCounts={categoryCounts} />
               </div>
             )}
           </div>
