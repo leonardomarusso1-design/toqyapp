@@ -29,7 +29,7 @@ export function LandingBioSiteCard({ slug, publicUrl }: { slug: string; publicUr
     <a href={publicUrl} target="_blank" rel="noreferrer" className="group block w-[190px] shrink-0 snap-start">
       <PhoneMockup className="mx-auto h-[380px] w-full transition duration-300 group-hover:-translate-y-1">
         {site ? (
-          <PublicBioSite site={site} publicUrl={publicUrl} instanceId={slug} embedded />
+          <PublicBioSite site={site} publicUrl={publicUrl} instanceId={slug} />
         ) : (
           <div className="flex h-full items-center justify-center bg-ink/40 px-4 text-center">
             {failed ? (

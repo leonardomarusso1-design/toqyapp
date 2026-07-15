@@ -133,6 +133,24 @@ function logoShape(site: ToqySite) {
 // confiável no Safari/iOS. Fix: camada position:fixed separada (ver
 // backgroundImageUrl() abaixo) — altura sempre = viewport, nunca estica,
 // conteúdo rola livremente por cima.
+//
+// Segundo bug real corrigido (2026-07-15): biosite é um formato de CELULAR
+// (conteúdo em <main class="max-w-[430px]">), mas a camada de fundo usava
+// inset:0 do viewport inteiro. Num navegador desktop isso espalhava a
+// imagem pela tela toda (ex: 1920px), sem nenhuma relação com a coluna
+// estreita de conteúdo por cima — e o crop do "cover" mudava a cada
+// resize da janela, então preview/publicado nunca mostravam o mesmo
+// pedaço da imagem. E no preview embutido (LiveBioSitePreview/PhoneMockup),
+// como não havia containing block pra position:fixed dentro da moldura, o
+// código caía pra position:absolute — que, dentro de um ancestral
+// min-h-screen (crescente com o conteúdo do catálogo), esticava o "cover"
+// por várias telas de altura, ficando quase liso/sem imagem visível.
+// Fix: a camada de fundo agora é SEMPRE position:fixed (ver PhoneMockup.tsx,
+// que ganhou um `transform` só pra virar o containing block do fixed
+// dentro da moldura do celular simulado) e a imagem em si fica presa a uma
+// coluna central de max-w-[430px] — a mesma largura do <main> — em vez de
+// esticar pelo viewport inteiro. Fora dessa coluna (telas largas), quem
+// preenche é o mesmo gradiente do tema (themeGradient), não a foto.
 function backgroundImageUrl(site: ToqySite): string | undefined {
   const plaque = site.plaqueTheme?.useSameBackground && site.plaqueTheme.backgroundImageUrl;
   const image = plaque ? site.plaqueTheme?.backgroundImageUrl : site.profile.backgroundImageUrl;
@@ -146,16 +164,21 @@ function backgroundOverlayGradient(site: ToqySite): string {
     : "linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 40%, rgba(0,0,0,0.30) 100%)";
 }
 
+function themeGradient(site: ToqySite): string {
+  return `radial-gradient(circle at 50% 0%, ${site.theme.primary}33, transparent 34%), linear-gradient(160deg, ${site.theme.gradientFrom}, ${site.theme.gradientTo})`;
+}
+
 function backgroundStyle(site: ToqySite): React.CSSProperties {
   // Bug real corrigido (2026-07-16): backgroundColor sólido aqui tampava a
   // camada de imagem (position:fixed, -z-10, ver render abaixo) — o
   // container normal (z-index:auto) fica NA FRENTE de um filho com z-index
   // negativo no mesmo contexto de empilhamento, escondendo a imagem inteira
   // atrás de uma cor sólida. Com imagem, este container fica transparente —
-  // quem pinta o fundo é só a camada fixa.
+  // quem pinta o fundo é só a camada fixa (que já leva seu próprio
+  // themeGradient como "letterbox" fora da coluna de 430px, ver render).
   if (backgroundImageUrl(site)) return {};
   if (site.theme.backgroundType === "solid") return { background: site.theme.background };
-  return { background: `radial-gradient(circle at 50% 0%, ${site.theme.primary}33, transparent 34%), linear-gradient(160deg, ${site.theme.gradientFrom}, ${site.theme.gradientTo})` };
+  return { background: themeGradient(site) };
 }
 
 function solidBg(_site: ToqySite): React.CSSProperties { return {}; }
@@ -245,7 +268,7 @@ function representativeItemsByCategory(items: CatalogItem[]): CatalogItem[] {
   return result;
 }
 
-export function PublicBioSite({ site, publicUrl, instanceId, embedded }: { site: ToqySite; publicUrl?: string; instanceId?: string; embedded?: boolean }) {
+export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite; publicUrl?: string; instanceId?: string }) {
   const [modal, setModal] = useState<Modal>(null);
   const [qrModal, setQrModal] = useState(false);
 
@@ -356,15 +379,17 @@ export function PublicBioSite({ site, publicUrl, instanceId, embedded }: { site:
   return (
     <div className="relative min-h-screen w-full" style={{ ...backgroundStyle(site), color: site.theme.text }}>
       {bgImage ? (
-        <div
-          className={`${embedded ? "absolute" : "fixed"} inset-0 -z-10`}
-          style={{
-            backgroundImage: `${backgroundOverlayGradient(site)}, url(${bgImage})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center top",
-            backgroundRepeat: "no-repeat",
-          }}
-        />
+        <div className="fixed inset-0 -z-10" style={{ background: themeGradient(site) }}>
+          <div
+            className="absolute inset-0 mx-auto w-full max-w-[430px]"
+            style={{
+              backgroundImage: `${backgroundOverlayGradient(site)}, url(${bgImage})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center top",
+              backgroundRepeat: "no-repeat",
+            }}
+          />
+        </div>
       ) : null}
       <div className="min-h-screen w-full">
         <main className="mx-auto w-full max-w-[430px] px-4 py-6">
