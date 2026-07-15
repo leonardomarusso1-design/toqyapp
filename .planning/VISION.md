@@ -4,6 +4,23 @@
 > via WebSearch (GoHighLevel, Vendasta, SuiteDash, mercado brasileiro de "Consultor
 > Google Meu Negócio", nicho de cartões/plaquinhas QR-NFC de avaliação Google).
 > Ver seção "Fontes" no fim.
+>
+> **Reconciliado no mesmo dia com contexto pré-existente do Mega Brain**
+> (`agents/sua-empresa/products/TOQY.md` + `inbox/LEONARDO-MARUSSO/ECOSSISTEMA/
+> ecossistema-leonardo-marusso.md`, material anterior a esta sessão): o
+> posicionamento "não parecer Linktree brasileiro, ser plataforma premium de
+> QR/NFC/Bio Site/Google Reviews/produtos físicos" **já era decisão tomada
+> antes desta conversa**, não uma ideia nova — a pesquisa de mercado desta
+> sessão chegou de forma independente na mesma direção, o que é bom sinal de
+> validação cruzada. TOQY faz parte de um ecossistema maior (Audiovisual,
+> ZapFlow, TOQY, PhotoForge AI, Produtos com IA, Comunidade), com um funil
+> já pensado: Conteúdo → Comunidade → Produtos → SaaS → Assinaturas → IA →
+> Escala — é por isso que blog/ebook (Fase 9) não é só marketing de bio
+> site, é o topo do funil de TUDO. **Diretriz explícita a respeitar**: "não
+> quero reconstruir o que já está aprovado" — TOQY já passou por rodadas de
+> branding/posicionamento antes; antes de redesenhar a landing (Fase 3),
+> perguntar o que já está validado (identidade visual, Instagram, etc.) em
+> vez de propor do zero.
 
 ## O pivô, na visão do Leonardo (verbatim, 2026-07-16)
 
