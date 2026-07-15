@@ -1060,7 +1060,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             <p className="text-sm font-black text-white">Preview — /b/{site.slug}</p>
             <button type="button" onClick={() => setShowMobilePreview(false)} className="rounded-xl bg-white/10 px-4 py-2 text-sm font-black text-white">Fechar</button>
           </div>
-          <div className="flex-1 overflow-y-auto"><PublicBioSite site={site} /></div>
+          <div className="flex-1 overflow-y-auto"><PublicBioSite site={site} embedded /></div>
         </div>
       ) : null}
     </div>

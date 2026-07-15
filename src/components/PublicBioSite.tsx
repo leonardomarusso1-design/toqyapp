@@ -245,7 +245,7 @@ function representativeItemsByCategory(items: CatalogItem[]): CatalogItem[] {
   return result;
 }
 
-export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite; publicUrl?: string; instanceId?: string }) {
+export function PublicBioSite({ site, publicUrl, instanceId, embedded }: { site: ToqySite; publicUrl?: string; instanceId?: string; embedded?: boolean }) {
   const [modal, setModal] = useState<Modal>(null);
   const [qrModal, setQrModal] = useState(false);
 
@@ -354,10 +354,10 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
   const bgImage = backgroundImageUrl(site);
 
   return (
-    <div className="min-h-screen w-full" style={{ ...backgroundStyle(site), color: site.theme.text }}>
+    <div className="relative min-h-screen w-full" style={{ ...backgroundStyle(site), color: site.theme.text }}>
       {bgImage ? (
         <div
-          className="fixed inset-0 -z-10"
+          className={`${embedded ? "absolute" : "fixed"} inset-0 -z-10`}
           style={{
             backgroundImage: `${backgroundOverlayGradient(site)}, url(${bgImage})`,
             backgroundSize: "cover",

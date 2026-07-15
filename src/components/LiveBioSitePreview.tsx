@@ -9,7 +9,7 @@ export function LiveBioSitePreview({ site }: { site: ToqySite }) {
         <span>Preview ao vivo</span><span className="text-accent">/b/{site.slug}</span>
       </div>
       <PhoneMockup className="mx-auto h-[calc(100%-4rem)] w-full max-w-[420px]">
-        <PublicBioSite site={site} />
+        <PublicBioSite site={site} embedded />
       </PhoneMockup>
     </aside>
   );
