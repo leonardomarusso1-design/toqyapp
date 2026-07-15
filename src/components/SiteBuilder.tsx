@@ -795,30 +795,30 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             </label>
           </div>
 
-          {/* Layout do catalogo - multipla selecao */}
+          {/* Layout do catalogo - escolha única (2026-07-16, simplificado)
+              Antes permitia marcar até 3 layouts, e o site mostrava TODOS
+              em sequência — isso que causava a página duplicar (ex:
+              "Destaques" seguido de "Lista completa" com os MESMOS
+              produtos) — bug real reportado por cliente. Também removida
+              a opção "Carrossel por categoria": virou redundante com o
+              painel "Exibição por categoria" abaixo, que já faz isso por
+              categoria, sem duplicar nem esconder. Este seletor agora só
+              define o estilo padrão pra categorias que não tiverem uma
+              exibição específica escolhida ali embaixo. */}
           <div className="mt-4 rounded-3xl border border-border bg-surface p-4">
-            <span className={label}>Como exibir no bio site</span>
-            <p className="mb-3 mt-1 text-xs text-muted">Marque até 3 layouts. O bio site vai mostrar os itens em todos os layouts marcados, nessa ordem.</p>
+            <span className={label}>Estilo padrão do catálogo</span>
+            <p className="mb-3 mt-1 text-xs text-muted">Vale pras categorias que não tiverem uma exibição específica escolhida no painel "Exibição por categoria" abaixo.</p>
             <div className="grid gap-2 sm:grid-cols-2">
               {([
-                ["carousel",          "Carrossel horizontal", "Arrasta para o lado, ideal para destaques"],
-                ["grid",              "Grade 2 colunas",      "Visual de loja, dois itens por linha"],
-                ["stack",             "Lista vertical",       "Uma foto grande embaixo da outra"],
-                ["category-carousel", "Carrossel por categoria", "Agrupa: Cortes, Barba, Tratamentos..."],
+                ["carousel", "Carrossel horizontal", "Capa por categoria, arrasta para o lado — clique abre as outras fotos"],
+                ["grid",     "Grade 2 colunas",      "Visual de loja, dois itens por linha"],
+                ["stack",    "Lista vertical",       "Uma foto grande embaixo da outra"],
               ] as const).map(([value, lbl2, desc]) => {
-                const activeLayouts: CatalogLayout[] = site.catalogLayouts?.length ? site.catalogLayouts : [site.catalogLayout ?? "carousel"];
-                const active = activeLayouts.includes(value);
-                const toggle = () => {
-                  const next = active
-                    ? activeLayouts.filter((l) => l !== value)
-                    : activeLayouts.length >= 3 ? activeLayouts : [...activeLayouts, value];
-                  if (next.length === 0) return; // sempre manter pelo menos 1
-                  update((s) => ({ ...s, catalogLayouts: next as CatalogLayout[], catalogLayout: next[0] }));
-                };
+                const active = (site.catalogLayout ?? "carousel") === value;
                 return (
-                  <button key={value} type="button" onClick={toggle}
+                  <button key={value} type="button" onClick={() => update((s) => ({ ...s, catalogLayout: value, catalogLayouts: [value] }))}
                     className={"flex items-start gap-3 rounded-2xl border p-3 text-left transition " + (active ? "border-accent bg-accent/10" : "border-border bg-card hover:border-accent")}>
-                    <span className={"mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 text-xs font-black " + (active ? "border-accent bg-accent text-white" : "border-border bg-card text-muted")}>
+                    <span className={"mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-xs font-black " + (active ? "border-accent bg-accent text-white" : "border-border bg-card text-muted")}>
                       {active ? "✓" : ""}
                     </span>
                     <div>
@@ -829,9 +829,6 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 );
               })}
             </div>
-            {(site.catalogLayouts?.length ?? 0) > 1 ? (
-              <p className="mt-2 text-xs font-bold text-accent-dim">{site.catalogLayouts!.length} layouts selecionados — o site vai exibir todos em sequência.</p>
-            ) : null}
           </div>
 
           <CatalogCategoryDisplayControl

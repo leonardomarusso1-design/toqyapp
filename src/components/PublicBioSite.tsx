@@ -556,14 +556,6 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
     return <CatalogScroller site={site} items={representative} onOpenGallery={openGallery} categoryCounts={categoryCounts} />;
   }
 
-  const LAYOUT_LABELS: Record<CatalogLayout, string> = {
-    carousel: "Destaques",
-    grid: "Grade",
-    stack: "Lista completa",
-    grouped: "Por categoria",
-    "category-carousel": "Por categoria",
-  };
-
   return (
     <section id={catalogId} className="mt-8 scroll-mt-8">
       <p className="text-xs font-black uppercase tracking-[0.22em]" style={{ color: site.theme.accent }}>Catálogo</p>
@@ -625,30 +617,24 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
                 <div className="space-y-4">{groupItems.map(item => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
               </div>
             ))}
+            {/* Categorias "padrão" (sem exibição específica escolhida em
+                "Exibição por categoria") respeitam o Estilo padrão do
+                catálogo (renderLayout), igual ao modo sem seções
+                customizadas — antes ficava travado num carrossel fixo,
+                ignorando o estilo escolhido, assim que QUALQUER outra
+                categoria ganhava uma exibição específica (ex: Diretoria em
+                Carrossel fazia até categorias sem nada configurado, tipo
+                "Bolsas de couro", pararem de respeitar o Estilo padrão). */}
             {itemsBySection.padrao.length > 0 && (
               <div>
-                <CatalogScroller site={site} items={representativeItemsByCategory(itemsBySection.padrao)} onOpenGallery={openGallery} categoryCounts={categoryCounts} />
+                {renderLayout(layout, itemsBySection.padrao)}
               </div>
             )}
           </div>
         ) : (
-          // Modo layouts gerais
-          (() => {
-            const layouts: CatalogLayout[] = site.catalogLayouts?.length ? site.catalogLayouts : [layout];
-            if (layouts.length > 1) {
-              return (
-                <div className="space-y-8">
-                  {layouts.map((l) => (
-                    <div key={l}>
-                      <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{LAYOUT_LABELS[l]}</p>
-                      {renderLayout(l, filteredItems)}
-                    </div>
-                  ))}
-                </div>
-              );
-            }
-            return renderLayout(layouts[0], filteredItems);
-          })()
+          // Modo sem seções customizadas — nenhuma categoria tem exibição
+          // específica, tudo segue o Estilo padrão do catálogo.
+          renderLayout(layout, filteredItems)
         )}
       </div>
 
@@ -718,7 +704,14 @@ function CatalogCard({ site, item, compact = false, stacked = false, onOpenGalle
           {item.price ? <span className={compact ? "text-xs font-black" : "font-black"} style={{ color: site.theme.colors?.catalogItemPrice ?? site.theme.accent }}>{item.price}</span> : <span />}
           <div className="flex items-center gap-2">
             {whatsapp && site.showCatalogWhatsapp !== false ? <button type="button" aria-label="Falar no WhatsApp" onClick={() => window.open(whatsapp, "_blank", "noopener,noreferrer")} className="flex h-9 w-9 items-center justify-center rounded-full border" style={{ borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.12)" : "rgba(255,255,255,0.18)", color: site.theme.text }}><WhatsAppIcon className="h-4 w-4" /></button> : null}
-            {site.showCatalogAction !== false ? <button type="button" onClick={() => { const href = item.actionUrl ? ensureUrl(item.actionUrl) : whatsapp; if (href) window.open(href, "_blank", "noopener,noreferrer"); }} className="rounded-full px-4 py-2 text-xs font-black" style={{ background: site.theme.colors?.catalogActionBg ?? site.theme.primary, color: site.theme.colors?.catalogActionText ?? (site.theme.mode === "light" ? "#fff" : "#06111F") }}>{item.actionLabel || "Ver"}</button> : null}
+            {/* Bug real corrigido (2026-07-16): botão "Ver" aparecia em TODO
+                item enquanto o toggle geral "Botão Ver nos itens" estivesse
+                ligado, mesmo em fotos sem nenhum texto/link configurado —
+                sem jeito de tirar o botão de UMA foto específica. Agora só
+                aparece se o próprio item tem "Texto do botão" ou "Link do
+                botão" preenchido — item vazio (só foto) não mostra botão,
+                mesmo com o toggle geral ligado. */}
+            {site.showCatalogAction !== false && (item.actionLabel || item.actionUrl) ? <button type="button" onClick={() => { const href = item.actionUrl ? ensureUrl(item.actionUrl) : whatsapp; if (href) window.open(href, "_blank", "noopener,noreferrer"); }} className="rounded-full px-4 py-2 text-xs font-black" style={{ background: site.theme.colors?.catalogActionBg ?? site.theme.primary, color: site.theme.colors?.catalogActionText ?? (site.theme.mode === "light" ? "#fff" : "#06111F") }}>{item.actionLabel || "Ver"}</button> : null}
           </div>
         </div>
       </div>
