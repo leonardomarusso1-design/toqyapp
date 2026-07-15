@@ -4,6 +4,7 @@ import { LandingBioSiteCard } from "@/components/LandingBioSiteCard";
 import { ReferralCapture } from "@/components/ReferralCapture";
 import { APP_VERSION, BUILD_ID } from "@/lib/appInfo";
 import { getShowcaseSummaries } from "@/lib/realTemplates";
+import { KIWIFY_LINKS } from "@/lib/subscriptions";
 import {
   ArrowRight,
   Building2,
@@ -50,36 +51,32 @@ const features = [
 // reconhecem "community" de propósito).
 //
 // "Essencial" volta ao funil (2026-07-16, pedido do Leonardo) — é o mesmo
-// plano de antes (mesmo preço, mesmas features, mesmo produto na Kiwify),
-// só sem falar de comunidade: Freelancer/Agência viraram pagamento ÚNICO
-// (ver descrições "Pagamento único" abaixo), então não geram MRR nenhum —
-// Essencial é o único plano mensal recorrente de verdade, e é ele que
-// sustenta receita recorrente. Link da Kiwify reaproveitado do que já
-// existia antes de a "Comunidade" sair do funil — confirmar com o
-// Leonardo que o produto continua ativo no painel da Kiwify antes de
-// considerar isso testado ponta a ponta.
+// plano de antes (mesmo preço, mesmas features, mesmo produto na Kiwify).
+// Essencial é o plano de entrada recorrente mais barato, e sustenta a
+// maior parte do MRR.
 //
-// Destaque movido de Freelancer pra Essencial (2026-07-16) — pedido
-// explícito do Leonardo (ele quer recorrência, não pagamento único).
-// Padrão de mercado usado (pesquisa Linktree/Beacons): destacar o plano
-// onde a restrição "dolorida" do grátis desaparece com o MENOR investimento
-// inicial, não o mais caro — Essencial libera exatamente as mesmas 20
-// bio sites/catálogo/Pix/Wi-Fi/QR que o Freelancer, por quase metade do
-// preço de entrada (R$29,90 vs R$59,90), com o adicional de poder
-// cancelar quando quiser. `tag` = badge curto que aparece embaixo do
+// Destaque em Essencial (2026-07-16) — pedido explícito do Leonardo (ele
+// quer recorrência). Padrão de mercado usado (pesquisa Linktree/Beacons):
+// destacar o plano onde a restrição "dolorida" do grátis desaparece com o
+// MENOR investimento inicial. `tag` = badge curto que aparece embaixo do
 // preço, pensado pra ficar "chamativo"/comparável rápido entre os planos.
 //
-// QR personalizado editável + Gerador de arte com IA (2026-07-16, pedido
-// explícito do Leonardo, "chamando muita atenção"): removidos do
-// Freelancer de propósito — só Essencial e Agência têm (ver
-// subscriptions.ts hasCustomQr + planLimits.ts PLAN_AI_ART_CREDITS, que
-// são a fonte de verdade real do gating). Prefixo "★ " marca um item como
-// exclusivo pro rendering abaixo (ícone/cor diferente, chama mais atenção
-// que os itens normais).
+// Freelancer migrado de pagamento único pra assinatura mensal (Fase 1 do
+// roadmap, 2026-07-16 — ver .planning/ROADMAP.md e subscriptions.ts). QR
+// personalizado editável e Gerador de arte com IA RESTAURADOS nele (tinham
+// sido removidos em 2026-07-16, decisão revertida na mesma data ao
+// planejar esta fase) — sem eles, o Freelancer (R$39,90/mês) não tinha
+// diferencial real sobre o Essencial (R$29,90/mês). Diferencial agora:
+// mais créditos de arte (10 vs 5) + suporte prioritário. Quem comprou o
+// Freelancer como pagamento único antes desta mudança mantém acesso
+// vitalício (ver `legacy_lifetime_access` em profiles).
+//
+// Prefixo "★ " marca um item como exclusivo pro rendering abaixo
+// (ícone/cor diferente, chama mais atenção que os itens normais).
 const plans = [
   { name: "Gratuito", price: "R$0", period: "", tag: "Pra testar", description: "Para conhecer a plataforma e gerar seus primeiros leads.", highlight: false, cta: "Começar grátis", items: ["1 bio site", "Domínio toqy.app/seunome", "QR Code básico", "Preview em tempo real", "Marca TOQY na página"] },
-  { name: "Essencial", price: "R$29,90", period: "/mês", tag: "Menor investimento pra começar", description: "As mesmas 20 bio sites do Freelancer, por quase metade do preço de entrada — mensal, cancele quando quiser.", highlight: true, cta: "Assinar agora", items: ["Até 20 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "★ QR personalizado editável", "★ Gerador de arte com IA", "Suporte por email", "Cancele quando quiser"] },
-  { name: "Freelancer", price: "R$59,90", period: "", tag: "Pague uma vez, use pra sempre", description: "Para quem já validou o uso e prefere não ter cobrança recorrente. Pagamento único.", highlight: false, cta: "Comprar acesso", items: ["Até 20 bio sites", "Pix e Wi-Fi", "Catálogo completo", "Suporte prioritário"] },
+  { name: "Essencial", price: "R$29,90", period: "/mês", tag: "Menor investimento pra começar", description: "As mesmas 20 bio sites do Freelancer, mensal, cancele quando quiser.", highlight: true, cta: "Assinar agora", items: ["Até 20 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "★ QR personalizado editável", "★ Gerador de arte com IA (5 créditos)", "Suporte por email", "Cancele quando quiser"] },
+  { name: "Freelancer", price: "R$39,90", period: "/mês", tag: "Mais recursos, suporte prioritário", description: "Para quem cria pra clientes com mais frequência — mais créditos de arte e suporte prioritário. Mensal, cancele quando quiser.", highlight: false, cta: "Assinar agora", items: ["Até 20 bio sites", "Pix e Wi-Fi", "Catálogo completo", "★ QR personalizado editável", "★ Gerador de arte com IA (10 créditos)", "Suporte prioritário", "Cancele quando quiser"] },
   { name: "Agência", price: "R$149,90", period: "", tag: "Pra escalar em equipe", description: "Para equipes e agências em escala. Pagamento único.", highlight: false, cta: "Comprar acesso", items: ["Até 100 bio sites", "★ QR personalizado editável", "★ Gerador de arte com IA", "White label parcial", "Domínio próprio", "Gestão de equipe"] },
 ] as const;
 
@@ -501,7 +498,7 @@ export default async function LandingPage() {
                   );
                 })}
               </div>
-              <a href={plan.name === "Essencial" ? "https://pay.kiwify.com.br/12uYE0c" : plan.name === "Freelancer" ? "https://pay.kiwify.com.br/gTIhv6I" : plan.name === "Agência" ? "https://pay.kiwify.com.br/xFdnxvE" : "/login"} target={plan.name === "Gratuito" ? undefined : "_blank"} rel={plan.name === "Gratuito" ? undefined : "noreferrer noopener"} className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}>
+              <a href={plan.name === "Essencial" ? KIWIFY_LINKS.community : plan.name === "Freelancer" ? KIWIFY_LINKS.freelancer : plan.name === "Agência" ? KIWIFY_LINKS.agency : "/login"} target={plan.name === "Gratuito" ? undefined : "_blank"} rel={plan.name === "Gratuito" ? undefined : "noreferrer noopener"} className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}>
                 {plan.cta}
               </a>
             </article>
@@ -510,11 +507,11 @@ export default async function LandingPage() {
         <div className="mx-auto mt-8 max-w-3xl space-y-3 text-center">
           <div className="rounded-2xl border border-accent/20 bg-accent/5 p-6">
             <p className="text-sm font-bold text-ink">
-              💡 <strong>Mensal ou pagamento único?</strong> No Essencial você entra pagando quase metade do Freelancer, testa com clientes reais e só continua pagando enquanto estiver usando — sem compromisso longo. Já o Freelancer é pra quem só quer o básico de bio site, pago uma vez, sem pensar mais nisso.
+              💡 <strong>Essencial ou Freelancer?</strong> Os dois são mensais e você pode cancelar quando quiser. O Essencial é o ponto de entrada mais barato. O Freelancer custa um pouco mais e traz mais créditos de arte com IA e suporte prioritário — vale a pena se você atende clientes com mais frequência.
             </p>
           </div>
           <p className="flex items-center justify-center gap-1.5 text-xs font-bold text-muted">
-            <Star className="h-3.5 w-3.5 fill-accent text-accent" /> QR Code personalizado editável e gerador de arte com IA são exclusivos dos planos Essencial e Agência.
+            <Star className="h-3.5 w-3.5 fill-accent text-accent" /> QR Code personalizado editável e gerador de arte com IA são exclusivos dos planos pagos (Essencial, Freelancer e Agência).
           </p>
         </div>
       </section>
@@ -633,9 +630,9 @@ export default async function LandingPage() {
               <p className="text-sm font-black text-ink">Planos</p>
               <ul className="mt-3 space-y-2 text-sm text-muted">
                 <li><Link href="/login" className="hover:text-accent">Gratuito</Link></li>
-                <li><a href="https://pay.kiwify.com.br/12uYE0c" target="_blank" rel="noopener noreferrer" className="hover:text-accent">Essencial — R$29,90/mês</a></li>
-                <li><a href="https://pay.kiwify.com.br/gTIhv6I" target="_blank" rel="noopener noreferrer" className="hover:text-accent">Freelancer — R$59,90</a></li>
-                <li><a href="https://pay.kiwify.com.br/xFdnxvE" target="_blank" rel="noopener noreferrer" className="hover:text-accent">Agência — R$149,90</a></li>
+                <li><a href={KIWIFY_LINKS.community} target="_blank" rel="noopener noreferrer" className="hover:text-accent">Essencial — R$29,90/mês</a></li>
+                <li><a href={KIWIFY_LINKS.freelancer} target="_blank" rel="noopener noreferrer" className="hover:text-accent">Freelancer — R$39,90/mês</a></li>
+                <li><a href={KIWIFY_LINKS.agency} target="_blank" rel="noopener noreferrer" className="hover:text-accent">Agência — R$149,90</a></li>
               </ul>
             </div>
             <div>

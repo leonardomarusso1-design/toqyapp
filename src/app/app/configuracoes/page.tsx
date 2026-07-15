@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { LogOut, Camera, CheckCircle2, ChevronRight } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { PLAN_BIOSITE_LIMITS } from "@/lib/planLimits";
+import { KIWIFY_LINKS } from "@/lib/subscriptions";
 import { supabase } from "@/lib/supabaseClient";
 import { getOrCreateReferralCode } from "@/lib/referral";
 
@@ -25,10 +26,16 @@ const PLAN_COLORS: Record<string, string> = {
   free: "bg-surface text-muted", community: "bg-emerald-100 text-emerald-800",
   freelancer: "bg-violet/10 text-violet", agency: "bg-amber-100 text-amber-800",
 };
+// Links de checkout: fonte única em src/lib/subscriptions.ts (KIWIFY_LINKS)
+// desde a Fase 1 do roadmap (2026-07-16) — antes disso este mapa duplicava
+// os mesmos links definidos em outros 4 arquivos, e podia divergir deles
+// (achado real: SubscriptionPlansDisplay.tsx tinha links diferentes destes
+// pros mesmos planos). Mantido como const local só pra não reescrever as
+// referências abaixo (`PLAN_KIWIFY.xxx`), mas os valores vêm todos de KIWIFY_LINKS.
 const PLAN_KIWIFY: Record<string, string> = {
-  community: "https://pay.kiwify.com.br/12uYE0c",
-  freelancer: "https://pay.kiwify.com.br/gTIhv6I",
-  agency: "https://pay.kiwify.com.br/xFdnxvE",
+  community: KIWIFY_LINKS.community,
+  freelancer: KIWIFY_LINKS.freelancer,
+  agency: KIWIFY_LINKS.agency,
 };
 
 export default function ConfiguracoesPage() {

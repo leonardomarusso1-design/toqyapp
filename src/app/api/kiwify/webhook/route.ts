@@ -1,4 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer";
+import { getKiwifySale } from "@/lib/kiwifyApi";
+import { resolvePlan, shouldDowngradeOnCancel, resolveAttributionStatus } from "./webhookLogic";
 
 // Verificação leve de autenticidade — OPCIONAL, só entra em vigor se
 // KIWIFY_WEBHOOK_TOKEN estiver configurada (sem isso, comportamento
@@ -12,14 +14,6 @@ const KIWIFY_WEBHOOK_TOKEN = process.env.KIWIFY_WEBHOOK_TOKEN;
 function isAuthentic(request: Request) {
   if (!KIWIFY_WEBHOOK_TOKEN) return true;
   return new URL(request.url).searchParams.get("token") === KIWIFY_WEBHOOK_TOKEN;
-}
-
-function resolvePlan(productName: string): { plan: string; limit: number } | null {
-  const n = productName.toLowerCase();
-  if (n.includes("comunidade")) return { plan: "community", limit: 20 };
-  if (n.includes("freelancer")) return { plan: "freelancer", limit: 20 };
-  if (n.includes("agencia") || n.includes("agência")) return { plan: "agency", limit: 100 };
-  return null;
 }
 
 type KiwifyPayload = {
@@ -122,6 +116,56 @@ export async function POST(request: Request) {
         }
       }
 
+      // Comissão de revenda (Fase 2 do roadmap, 2026-07-16) — só relevante
+      // se o comprador for um cliente gerenciado por um revendedor Agência.
+      // Nunca deixa falha aqui quebrar o webhook (plano já foi concedido
+      // acima) — qualquer erro só é logado pra reconciliação manual.
+      try {
+        const { data: managedClient } = await supabase
+          .from("toqy_managed_clients")
+          .select("id, reseller_profile_id")
+          .eq("client_profile_id", userId)
+          .eq("status", "active")
+          .maybeSingle();
+
+        if (managedClient && orderId) {
+          const { data: reseller } = await supabase
+            .from("toqy_resellers")
+            .select("kiwify_affiliate_id")
+            .eq("profile_id", managedClient.reseller_profile_id)
+            .maybeSingle();
+
+          const saleDetail = await getKiwifySale(orderId);
+          if (saleDetail?.affiliate_commission) {
+            const attributionStatus = resolveAttributionStatus(
+              reseller?.kiwify_affiliate_id,
+              saleDetail.affiliate_commission.id
+            );
+
+            await supabase.from("toqy_commission_ledger").upsert({
+              managed_client_id: managedClient.id,
+              reseller_profile_id: managedClient.reseller_profile_id,
+              client_profile_id: userId,
+              kiwify_order_id: orderId,
+              kiwify_affiliate_id: saleDetail.affiliate_commission.id ?? null,
+              product_name: productName,
+              sale_amount_cents: saleDetail.amount ?? null,
+              commission_amount_cents: saleDetail.affiliate_commission.amount ?? null,
+              event_type: eventType,
+              attribution_status: attributionStatus,
+              raw_sale_detail: saleDetail,
+              occurred_at: new Date().toISOString(),
+            }, { onConflict: "kiwify_order_id" });
+          }
+        }
+      } catch (err) {
+        await supabase.from("toqy_kiwify_events").insert({
+          event_type: "commission_attribution_failed",
+          product_name: productName, customer_email: email, order_id: orderId,
+          raw_payload: { error: String(err) },
+        });
+      }
+
       return Response.json({ ok: true, plan: planInfo.plan, applied: "immediate" });
     } else {
       // Usuário ainda não criou conta → grava plano pendente
@@ -136,6 +180,23 @@ export async function POST(request: Request) {
   }
 
   if (isCanceled) {
+    // Fase 1 do roadmap (2026-07-16): checar acesso vitalício legado ANTES
+    // de rebaixar — ver shouldDowngradeOnCancel() em webhookLogic.ts.
+    const { data: profileForCheck } = await supabase
+      .from("profiles")
+      .select("legacy_lifetime_access")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (!shouldDowngradeOnCancel(profileForCheck)) {
+      await supabase.from("toqy_kiwify_events").insert({
+        event_type: `${eventType}_ignored_legacy_lifetime_access`,
+        product_name: productName, customer_email: email, order_id: orderId,
+        raw_payload: { note: "Downgrade ignorado: perfil tem legacy_lifetime_access=true" },
+      });
+      return Response.json({ ok: true, downgraded: false, reason: "legacy_lifetime_access" });
+    }
+
     await supabase.from("profiles").update({
       plan_toqy: "free", biosites_limit: 1,
       plan_toqy_expires_at: new Date().toISOString(),

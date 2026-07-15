@@ -7,6 +7,7 @@ import type { ToqySite } from "@/lib/types";
 import { supabase } from "@/lib/supabaseClient";
 import { syncBiositeToSupabase } from "@/lib/biositeSync";
 import { generateEditKey, generateId, generateSlug } from "@/lib/security";
+import { KIWIFY_LINKS } from "@/lib/subscriptions";
 import { DashboardShell } from "@/components/DashboardShell";
 import { ChevronRight, ChevronLeft, Check, Lock } from "lucide-react";
 
@@ -294,7 +295,7 @@ export default function OnboardingPage() {
         </p>
         <p className="mt-2 text-sm text-muted">Faça upgrade para criar mais bio sites para seus clientes.</p>
         <div className="mt-6 flex flex-col gap-3">
-          <a href="https://pay.kiwify.com.br/12uYE0c" target="_blank" rel="noopener noreferrer"
+          <a href={KIWIFY_LINKS.community} target="_blank" rel="noopener noreferrer"
             className="block rounded-2xl bg-accent px-5 py-4 font-black text-white hover:bg-accent-dim">
             Fazer upgrade — Essencial R$29,90/mês
           </a>

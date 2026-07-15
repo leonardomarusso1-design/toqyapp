@@ -11,7 +11,7 @@ vez dela, não todas de uma vez — mesmo princípio do GSD (`/gsd:plan-phase N`
 
 ## Phases
 
-- [ ] **Phase 1: Planos e Preços — recorrência total** - Freelancer migra pra assinatura mensal, novo preço, migração de quem já comprou, produtos Kiwify novos
+- [x] **Phase 1: Planos e Preços — recorrência total** - Freelancer migra pra assinatura mensal, novo preço, migração de quem já comprou, produtos Kiwify novos
 - [ ] **Phase 2: Revenue Share — Agência** - Agência vira gratuita + comissão 30/70, mecanismo de pagamento com split, definição do que conta como venda
 - [ ] **Phase 3: Landing Page** - Reposicionamento completo em torno de "plano de negócio", nova seção de renda, cards de plano refletindo a nova estrutura
 - [ ] **Phase 4: Subsistema Google Meu Negócio** - Modo QR de avaliação dedicado + o que mais falta pra vender isso como serviço
@@ -119,7 +119,7 @@ si, só dependem de 1), 9 por último.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|-----------------|--------|-----------|
-| 1. Planos e Preços | 0/TBD | Not started | - |
+| 1. Planos e Preços | 1/1 | Complete | 2026-07-15 |
 | 2. Revenue Share — Agência | 0/TBD | Not started | - |
 | 3. Landing Page | 0/TBD | Not started | - |
 | 4. Google Meu Negócio | 0/TBD | Not started | - |

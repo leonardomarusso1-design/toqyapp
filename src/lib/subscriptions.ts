@@ -8,10 +8,18 @@
 
 export type PlanType = "free" | "community" | "freelancer" | "agency";
 
+// Tipo de cobrança do plano (adicionado na Fase 1 do roadmap, 2026-07-16 —
+// ver .planning/ROADMAP.md). Antes disso essa distinção só existia em
+// texto solto (comentários, copy da landing, contrato-assinatura/page.tsx),
+// duplicada e sem uma única fonte de verdade. "one_time" hoje só se aplica
+// à Agência (migra pra revenue-share na Fase 2 do roadmap).
+export type BillingType = "recurring" | "one_time";
+
 export type Plan = {
   id: PlanType;
   name: string;
   description: string;
+  billingType: BillingType;
   priceMonthly: number;
   priceAnnual: number | null;
   features: string[];
@@ -43,6 +51,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     id: "free",
     name: "Gratuito",
     description: "Para conhecer a plataforma e gerar seus primeiros leads.",
+    billingType: "recurring",
     priceMonthly: 0,
     priceAnnual: null,
     features: [
@@ -82,6 +91,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     id: "community",
     name: "Essencial",
     description: "Para quem cria bio sites para clientes com um custo mensal baixo.",
+    billingType: "recurring",
     priceMonthly: 29.9,
     priceAnnual: 299,
     features: [
@@ -106,25 +116,32 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     highlight: true,
   },
 
-  // QR personalizado/editável e gerador de arte com IA REMOVIDOS do
-  // Freelancer (2026-07-16, pedido explícito do Leonardo) — decisão de
-  // negócio pra diferenciar o plano recorrente (Essencial) e o de topo
-  // (Agência) do pagamento único intermediário: quem quer essas duas
-  // features precisa ou pagar mensal (Essencial, entrada mais barata) ou
-  // ir direto pra Agência — Freelancer vira o "só o essencial de bio
-  // site", sem elas. Ver também PLAN_AI_ART_CREDITS em planLimits.ts
-  // (freelancer: 0) e a seção de planos da landing (page.tsx), que precisa
-  // deixar isso explícito por pedido dele.
+  // Migrado de pagamento único pra assinatura mensal (Fase 1 do roadmap,
+  // 2026-07-16 — ver .planning/ROADMAP.md e .planning/PROJECT.md PLAN-01/02).
+  // Motivo da mudança de preço/features: como assinatura, o Freelancer
+  // (R$59,90 único) tinha MENOS recursos que o Essencial (R$29,90/mês) —
+  // tinha perdido QR personalizável e créditos de arte na decisão de
+  // 2026-07-16 anterior a esta. Sem diferenciação real, ninguém pagaria
+  // mais por ele. Decisão: restaurar QR personalizável + créditos de arte
+  // (o dobro do Essencial, ver PLAN_AI_ART_CREDITS em planLimits.ts),
+  // preço mensal R$39,90 (acima do Essencial, abaixo de uma conversão
+  // ingênua do preço único antigo). Quem já comprou o Freelancer como
+  // pagamento único mantém acesso vitalício (ver `legacy_lifetime_access`
+  // em profiles — coluna nova, migração em supabase/migrations/) e nunca
+  // é cobrado de novo.
   freelancer: {
     id: "freelancer",
     name: "Freelancer",
     description: "Para profissionais que criam para clientes, sem comunidade.",
-    priceMonthly: 59.9,
-    priceAnnual: 599,
+    billingType: "recurring",
+    priceMonthly: 39.9,
+    priceAnnual: 399,
     features: [
       "Até 20 bio sites",
       "Pix e Wi-Fi",
       "Catálogo completo",
+      "QR personalizado editável",
+      "Gerador de arte com IA (10 créditos)",
       "Analytics avançado",
       "Integração com APIs",
       "Suporte prioritário",
@@ -137,14 +154,18 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasCatalog: true,
     hasPix: true,
     hasWifi: true,
-    hasCustomQr: false,
+    hasCustomQr: true,
     supportLevel: "priority",
   },
 
+  // Continua pagamento único nesta fase — migra pra "gratuito + 30% de
+  // comissão sobre venda do revendedor" na Fase 2 do roadmap (Revenue
+  // Share), não nesta. Ver .planning/VISION.md seção E.1.
   agency: {
     id: "agency",
     name: "Agência",
     description: "Para equipes e agências em escala.",
+    billingType: "one_time",
     priceMonthly: 149.9,
     priceAnnual: 1499,
     features: [
@@ -181,6 +202,24 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
 // verdade, só que agora o plano é vendido pelas FEATURES (bio sites,
 // catálogo, Pix, Wi-Fi, QR), não mais pelo acesso à comunidade.
 export const SELLABLE_PLANS: PlanType[] = ["free", "community", "freelancer", "agency"];
+
+// Fonte única dos links de checkout Kiwify (Fase 1 do roadmap, 2026-07-16).
+// Antes desta mudança esses links estavam hardcoded, duplicados e
+// DIVERGENTES em 5 arquivos (src/app/page.tsx, src/app/app/configuracoes/
+// page.tsx, src/app/onboarding/page.tsx, src/app/obrigado/comunidade/
+// page.tsx, e o componente órfão SubscriptionPlansDisplay.tsx tinha um
+// terceiro conjunto de links diferente pra freelancer/agency). Todo lugar
+// que precisar de um link de checkout deve importar daqui.
+//
+// freelancer: produto recorrente novo ("TOQY Freelancer", R$39,90/mês),
+// criado na Kiwify em 2026-07-16 — substitui o link antigo de pagamento
+// único (gTIhv6I). Lembrar de desativar o produto antigo na Kiwify pra
+// ninguém comprar o modelo de pagamento único por engano.
+export const KIWIFY_LINKS: Record<Exclude<PlanType, "free">, string> = {
+  community: "https://pay.kiwify.com.br/12uYE0c",
+  freelancer: "https://pay.kiwify.com.br/jSvUXd5",
+  agency: "https://pay.kiwify.com.br/xFdnxvE",
+};
 
 // Resolve um valor de plano vindo do banco (profiles.plan_toqy) pra um
 // PlanType válido, com fallback seguro pra "free" — protege getPlan() de

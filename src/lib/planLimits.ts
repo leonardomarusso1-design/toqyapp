@@ -9,23 +9,25 @@ export const PLAN_BIOSITE_LIMITS = {
 } as const;
 
 // Créditos VITALÍCIOS de geração de arte com IA por plano (2026-07-13,
-// ajustado 2026-07-16). Removido do Freelancer de propósito (pedido do
-// Leonardo) — só Essencial e Agência têm gerador de arte, é diferencial
-// exclusivo desses dois planos, não do Freelancer (pagamento único
-// intermediário). Números iniciais, ajustar conforme custo real
-// observado (~R$0,20-0,25 por geração via gpt-image-2) — se a demanda for
-// maior que isso, o caminho é vender pacotes de créditos extras via
-// Kiwify, não aumentar o limite grátis.
+// ajustado 2026-07-16, restaurado no Freelancer na Fase 1 do roadmap
+// 2026-07-16 — ver .planning/ROADMAP.md e src/lib/subscriptions.ts). O
+// Freelancer virou assinatura mensal e precisava de diferencial real
+// frente ao Essencial — ganhou o dobro dos créditos dele (10 vs 5) pra
+// justificar o preço mais alto (R$39,90 vs R$29,90). Números iniciais,
+// ajustar conforme custo real observado (~R$0,20-0,25 por geração via
+// gpt-image-2) — se a demanda for maior que isso, o caminho é vender
+// pacotes de créditos extras via Kiwify, não aumentar o limite grátis.
 //
-// Nota: Essencial agora é recorrente mensal (não mais pagamento único) —
-// "vitalício" nele soa estranho a longo prazo (créditos que nunca
-// resetam mesmo pagando todo mês). Reset mensal de créditos pra esse
-// plano especificamente é uma melhoria futura razoável, não implementada
-// agora (exigiria um job recorrente pra zerar ai_art_credits_used).
+// Nota: Essencial e Freelancer agora são recorrentes mensais (não mais
+// pagamento único) — "vitalício" neles soa estranho a longo prazo
+// (créditos que nunca resetam mesmo pagando todo mês). Reset mensal de
+// créditos pra esses planos é uma melhoria futura razoável, não
+// implementada agora (exigiria um job recorrente pra zerar
+// ai_art_credits_used).
 export const PLAN_AI_ART_CREDITS = {
   free: 0,
   community: 5,
-  freelancer: 0,
+  freelancer: 10,
   agency: 30,
 } as const;
 
