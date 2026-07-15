@@ -425,7 +425,12 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
               <div className="mt-2 flex flex-col items-center gap-0.5">
               <div className="flex items-start justify-center gap-1">
                 <svg className="mt-0.5 h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" style={{ color: col("location", site.theme.muted) }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                <p className="text-center text-sm font-semibold leading-snug" style={{ color: col("location", site.theme.muted) }}>{site.profile.location}</p>
+                {/* text-left (2026-07-15): com text-center, um endereço que
+                    quebra em 2 linhas fica com a 2ª linha (mais curta)
+                    centralizada sob a 1ª — visualmente longe do ícone, que só
+                    alinha com a 1ª linha. Com as linhas coladas à esquerda,
+                    ambas ficam rente ao ícone. */}
+                <p className="text-left text-sm font-semibold leading-snug" style={{ color: col("location", site.theme.muted) }}>{site.profile.location}</p>
               </div>
             </div>
             ) : null}
