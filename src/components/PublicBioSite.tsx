@@ -147,7 +147,13 @@ function backgroundOverlayGradient(site: ToqySite): string {
 }
 
 function backgroundStyle(site: ToqySite): React.CSSProperties {
-  if (backgroundImageUrl(site)) return { backgroundColor: site.theme.background };
+  // Bug real corrigido (2026-07-16): backgroundColor sólido aqui tampava a
+  // camada de imagem (position:fixed, -z-10, ver render abaixo) — o
+  // container normal (z-index:auto) fica NA FRENTE de um filho com z-index
+  // negativo no mesmo contexto de empilhamento, escondendo a imagem inteira
+  // atrás de uma cor sólida. Com imagem, este container fica transparente —
+  // quem pinta o fundo é só a camada fixa.
+  if (backgroundImageUrl(site)) return {};
   if (site.theme.backgroundType === "solid") return { background: site.theme.background };
   return { background: `radial-gradient(circle at 50% 0%, ${site.theme.primary}33, transparent 34%), linear-gradient(160deg, ${site.theme.gradientFrom}, ${site.theme.gradientTo})` };
 }
