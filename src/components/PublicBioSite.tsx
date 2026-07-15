@@ -191,26 +191,40 @@ function uniqueGroups(items: CatalogItem[]) {
   return Array.from(groups.entries());
 }
 
+// Chave de agrupamento (2026-07-16, subcategorias): normalmente é só a
+// categoria do item. Mas quando a categoria está em modo "Subcategorias"
+// (ex: "Home Office" com Cadeiras/Mesas/Estantes dentro) e o item tem uma
+// subcategoria preenchida, a chave vira categoria+subcategoria — assim
+// "Cadeiras" e "Mesas" viram capas SEPARADAS (cada uma com sua própria
+// galeria), em vez de tudo cair numa capa só de "Home Office".
+function groupKey(item: CatalogItem): string {
+  if (item.displaySection === "subcategorias" && item.subcategory?.trim()) {
+    return `${item.category?.trim() || "Destaques"}::${item.subcategory.trim()}`;
+  }
+  return item.category?.trim() || "Destaques";
+}
+
 // Correção de bug real reportado por cliente (2026-07-16): antes desta
 // função, uma categoria com várias fotos (ex: "Diretoria" com 5 fotos)
 // aparecia com as 5 fotos soltas, como cards separados, direto na página
 // principal do catálogo — clicar em qualquer uma abria a galeria da
 // categoria (CategoryGalleryModal) mostrando os MESMOS itens já visíveis,
 // sem nada de "escondido" de verdade (o clique parecia não fazer nada).
-// Agora a página principal mostra só 1 card por categoria — o primeiro
-// item cadastrado nela, na ordem em que foi criado — com o badge "+N"
-// (já existente) indicando quantas fotos a mais existem. As demais fotos
-// só aparecem ao clicar na foto e abrir a galeria. Categoria com 1 item só
-// não muda em nada (nunca teve o que esconder). Usado em toda renderização
-// "achatada" (grid/stack/scroller simples e as seções destaque/carrossel/
-// grade/lista/padrão) — NÃO no layout "Por categoria" (grouped/
-// category-carousel), que mostra cada categoria inteira de propósito,
-// como um modo de exibição alternativo e deliberado.
+// Agora a página principal mostra só 1 card por categoria (ou por
+// categoria+subcategoria, ver groupKey acima) — o primeiro item cadastrado
+// nela, na ordem em que foi criado — com o badge "+N" (já existente)
+// indicando quantas fotos a mais existem. As demais fotos só aparecem ao
+// clicar na foto e abrir a galeria. Grupo com 1 item só não muda em nada
+// (nunca teve o que esconder). Usado em toda renderização "achatada"
+// (grid/stack/scroller simples e as seções destaque/carrossel/grade/lista/
+// padrão) — NÃO no layout "Por categoria" (grouped/category-carousel), que
+// mostra cada categoria inteira de propósito, como um modo de exibição
+// alternativo e deliberado.
 function representativeItemsByCategory(items: CatalogItem[]): CatalogItem[] {
   const seen = new Set<string>();
   const result: CatalogItem[] = [];
   items.forEach((item) => {
-    const key = item.category?.trim() || "Destaques";
+    const key = groupKey(item);
     if (seen.has(key)) return;
     seen.add(key);
     result.push(item);
@@ -509,17 +523,20 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
     items.forEach((item) => {
-      const key = item.category?.trim() || "Destaques";
+      const key = groupKey(item);
       counts.set(key, (counts.get(key) ?? 0) + 1);
     });
     return counts;
   }, [items]);
-  // Só abre a galeria se a categoria tiver mais de 1 item — categoria única
-  // não tem "mais peças" pra mostrar, clicar na foto não faria nada útil.
-  const openGallery = (category: string) => {
-    if ((categoryCounts.get(category) ?? 0) > 1) setGalleryCategory(category);
+  // Só abre a galeria se o grupo (categoria, ou categoria+subcategoria) tiver
+  // mais de 1 item — grupo único não tem "mais peças" pra mostrar.
+  const openGallery = (key: string) => {
+    if ((categoryCounts.get(key) ?? 0) > 1) setGalleryCategory(key);
   };
-  const galleryItems = galleryCategory ? items.filter((item) => (item.category?.trim() || "Destaques") === galleryCategory) : [];
+  const galleryItems = galleryCategory ? items.filter((item) => groupKey(item) === galleryCategory) : [];
+  // Título da galeria: se for um grupo de subcategoria, mostra só a parte
+  // depois do "::" (ex: "Cadeiras"), não a chave interna inteira.
+  const galleryTitle = galleryCategory?.includes("::") ? galleryCategory.split("::")[1] : galleryCategory;
   const whatsapp = whatsappUrl(site);
   const chipStyle = (active: boolean): React.CSSProperties => active
     ? { background: site.theme.primary, color: site.theme.mode === "light" ? "#fff" : "#06111F", borderColor: "transparent" }
@@ -551,8 +568,8 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
       );
     }
     const representative = representativeItemsByCategory(items2);
-    if (l === "grid") return <div className="grid grid-cols-2 gap-3">{representative.map((item) => <CatalogCard key={item.id} site={site} item={item} compact onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>;
-    if (l === "stack") return <div className="space-y-4">{representative.map((item) => <CatalogCard key={item.id} site={site} item={item} stacked onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>;
+    if (l === "grid") return <div className="grid grid-cols-2 gap-3">{representative.map((item) => <CatalogCard key={item.id} site={site} item={item} compact onOpenGallery={openGallery} categoryCount={categoryCounts.get(groupKey(item)) ?? 1} />)}</div>;
+    if (l === "stack") return <div className="space-y-4">{representative.map((item) => <CatalogCard key={item.id} site={site} item={item} stacked onOpenGallery={openGallery} categoryCount={categoryCounts.get(groupKey(item)) ?? 1} />)}</div>;
     return <CatalogScroller site={site} items={representative} onOpenGallery={openGallery} categoryCounts={categoryCounts} />;
   }
 
@@ -653,7 +670,7 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
       ) : null}
 
       {galleryCategory ? (
-        <CategoryGalleryModal site={site} category={galleryCategory} items={galleryItems} onClose={() => setGalleryCategory(null)} />
+        <CategoryGalleryModal site={site} category={galleryTitle ?? galleryCategory} items={galleryItems} onClose={() => setGalleryCategory(null)} />
       ) : null}
     </section>
   );
@@ -663,7 +680,7 @@ function CatalogScroller({ site, items, onOpenGallery, categoryCounts }: { site:
   return (
     <div className="flex snap-x gap-4 overflow-x-auto pb-3">
       {items.map((item) => (
-        <CatalogCard key={item.id} site={site} item={item} onOpenGallery={onOpenGallery} categoryCount={categoryCounts?.get(item.category?.trim() || "Destaques") ?? 1} />
+        <CatalogCard key={item.id} site={site} item={item} onOpenGallery={onOpenGallery} categoryCount={categoryCounts?.get(groupKey(item)) ?? 1} />
       ))}
     </div>
   );
@@ -676,7 +693,7 @@ function CatalogCard({ site, item, compact = false, stacked = false, onOpenGalle
   // Vitrine por categoria: só clicável quando tem mais de 1 item na mesma
   // categoria (senão não há "mais peças" pra mostrar na galeria).
   const canOpenGallery = Boolean(onOpenGallery) && categoryCount > 1;
-  const handleImageClick = canOpenGallery ? () => onOpenGallery!(item.category?.trim() || "Destaques") : undefined;
+  const handleImageClick = canOpenGallery ? () => onOpenGallery!(groupKey(item)) : undefined;
   return (
     <article className={`${width} snap-start overflow-hidden rounded-[1.6rem] border shadow-xl backdrop-blur`} style={{ background: site.theme.colors?.catalogItemBg ?? site.theme.card, borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.14)" }}>
       <div
@@ -684,7 +701,7 @@ function CatalogCard({ site, item, compact = false, stacked = false, onOpenGalle
         style={{ background: `linear-gradient(135deg, ${site.theme.primary}33, ${site.theme.secondary}44)` }}
         onClick={handleImageClick}
         role={canOpenGallery ? "button" : undefined}
-        aria-label={canOpenGallery ? `Ver mais itens de ${item.category?.trim() || "Destaques"}` : undefined}
+        aria-label={canOpenGallery ? `Ver mais itens de ${item.subcategory?.trim() || item.category?.trim() || "Destaques"}` : undefined}
       >
         {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><FileText className="h-10 w-10 opacity-60" /></div>}
         {canOpenGallery ? (

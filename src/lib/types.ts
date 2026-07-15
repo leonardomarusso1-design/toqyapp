@@ -64,6 +64,7 @@ export type CatalogItem = {
   imageUrl?: string;
   imageLayout: "square" | "horizontal";
   category?: string;
+  subcategory?: string;
   enabled: boolean;
   actionLabel?: string;
   actionUrl?: string;
