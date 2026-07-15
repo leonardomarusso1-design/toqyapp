@@ -123,7 +123,7 @@ export default function ArtesPage() {
         <div className="mt-7 rounded-[2rem] border border-dashed border-accent/40 bg-accent/5 p-8 text-center">
           <Lock className="mx-auto h-8 w-8 text-accent" />
           <p className="mt-3 text-lg font-black text-ink">Recurso do plano pago</p>
-          <p className="mt-1 text-sm text-muted">O gerador de arte com IA está disponível a partir do plano Freelancer.</p>
+          <p className="mt-1 text-sm text-muted">O gerador de arte com IA está disponível nos planos Essencial e Agência.</p>
           <Link href="/#planos" className="mt-4 inline-flex items-center justify-center rounded-2xl bg-accent px-5 py-3 text-sm font-black text-white">Ver planos</Link>
         </div>
       ) : !hasCredits ? (

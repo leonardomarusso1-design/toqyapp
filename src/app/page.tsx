@@ -68,11 +68,19 @@ const features = [
 // preço de entrada (R$29,90 vs R$59,90), com o adicional de poder
 // cancelar quando quiser. `tag` = badge curto que aparece embaixo do
 // preço, pensado pra ficar "chamativo"/comparável rápido entre os planos.
+//
+// QR personalizado editável + Gerador de arte com IA (2026-07-16, pedido
+// explícito do Leonardo, "chamando muita atenção"): removidos do
+// Freelancer de propósito — só Essencial e Agência têm (ver
+// subscriptions.ts hasCustomQr + planLimits.ts PLAN_AI_ART_CREDITS, que
+// são a fonte de verdade real do gating). Prefixo "★ " marca um item como
+// exclusivo pro rendering abaixo (ícone/cor diferente, chama mais atenção
+// que os itens normais).
 const plans = [
   { name: "Gratuito", price: "R$0", period: "", tag: "Pra testar", description: "Para conhecer a plataforma e gerar seus primeiros leads.", highlight: false, cta: "Começar grátis", items: ["1 bio site", "Domínio toqy.app/seunome", "QR Code básico", "Preview em tempo real", "Marca TOQY na página"] },
-  { name: "Essencial", price: "R$29,90", period: "/mês", tag: "Menor investimento pra começar", description: "As mesmas 20 bio sites do Freelancer, por quase metade do preço de entrada — mensal, cancele quando quiser.", highlight: true, cta: "Assinar agora", items: ["Até 20 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "QR personalizado", "Suporte por email", "Cancele quando quiser"] },
-  { name: "Freelancer", price: "R$59,90", period: "", tag: "Pague uma vez, use pra sempre", description: "Para quem já validou o uso e prefere não ter cobrança recorrente. Pagamento único.", highlight: false, cta: "Comprar acesso", items: ["Até 20 bio sites", "QR personalizado", "Pix e Wi-Fi", "Catálogo completo", "Suporte prioritário"] },
-  { name: "Agência", price: "R$149,90", period: "", tag: "Pra escalar em equipe", description: "Para equipes e agências em escala. Pagamento único.", highlight: false, cta: "Comprar acesso", items: ["Até 100 bio sites", "White label parcial", "Domínio próprio", "Gestão de equipe", "Tudo do Freelancer"] },
+  { name: "Essencial", price: "R$29,90", period: "/mês", tag: "Menor investimento pra começar", description: "As mesmas 20 bio sites do Freelancer, por quase metade do preço de entrada — mensal, cancele quando quiser.", highlight: true, cta: "Assinar agora", items: ["Até 20 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "★ QR personalizado editável", "★ Gerador de arte com IA", "Suporte por email", "Cancele quando quiser"] },
+  { name: "Freelancer", price: "R$59,90", period: "", tag: "Pague uma vez, use pra sempre", description: "Para quem já validou o uso e prefere não ter cobrança recorrente. Pagamento único.", highlight: false, cta: "Comprar acesso", items: ["Até 20 bio sites", "Pix e Wi-Fi", "Catálogo completo", "Suporte prioritário"] },
+  { name: "Agência", price: "R$149,90", period: "", tag: "Pra escalar em equipe", description: "Para equipes e agências em escala. Pagamento único.", highlight: false, cta: "Comprar acesso", items: ["Até 100 bio sites", "★ QR personalizado editável", "★ Gerador de arte com IA", "White label parcial", "Domínio próprio", "Gestão de equipe"] },
 ] as const;
 
 const featureShowcase = [
@@ -477,12 +485,21 @@ export default async function LandingPage() {
               <p className="mt-4 text-4xl font-extrabold text-ink">{plan.price}<span className="text-base font-bold text-muted">{plan.period}</span></p>
               <span className={`mt-3 inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-extrabold ${plan.highlight ? "bg-accent/15 text-accent" : "bg-surface text-muted"}`}>{plan.tag}</span>
               <div className="mt-6 grid gap-3 flex-1">
-                {plan.items.map((item) => (
-                  <p key={item} className="flex items-center gap-3 text-sm font-semibold text-ink/80">
-                    <Check className="h-4 w-4 shrink-0 text-accent" />
-                    {item}
-                  </p>
-                ))}
+                {plan.items.map((item) => {
+                  const isExclusive = item.startsWith("★ ");
+                  const label = isExclusive ? item.slice(2) : item;
+                  return isExclusive ? (
+                    <p key={item} className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-accent/15 to-transparent px-2 py-1 text-sm font-black text-accent">
+                      <Star className="h-4 w-4 shrink-0 fill-accent text-accent" />
+                      {label}
+                    </p>
+                  ) : (
+                    <p key={item} className="flex items-center gap-3 text-sm font-semibold text-ink/80">
+                      <Check className="h-4 w-4 shrink-0 text-accent" />
+                      {label}
+                    </p>
+                  );
+                })}
               </div>
               <a href={plan.name === "Essencial" ? "https://pay.kiwify.com.br/12uYE0c" : plan.name === "Freelancer" ? "https://pay.kiwify.com.br/gTIhv6I" : plan.name === "Agência" ? "https://pay.kiwify.com.br/xFdnxvE" : "/login"} target={plan.name === "Gratuito" ? undefined : "_blank"} rel={plan.name === "Gratuito" ? undefined : "noreferrer noopener"} className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}>
                 {plan.cta}
@@ -490,9 +507,14 @@ export default async function LandingPage() {
             </article>
           ))}
         </div>
-        <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-accent/20 bg-accent/5 p-6 text-center">
-          <p className="text-sm font-bold text-ink">
-            💡 <strong>Mensal ou pagamento único?</strong> No Essencial você entra pagando quase metade do Freelancer, testa com clientes reais e só continua pagando enquanto estiver usando — sem compromisso longo. Se depois preferir pagar uma vez e não pensar mais nisso, o Freelancer libera exatamente as mesmas 20 bio sites, pra sempre.
+        <div className="mx-auto mt-8 max-w-3xl space-y-3 text-center">
+          <div className="rounded-2xl border border-accent/20 bg-accent/5 p-6">
+            <p className="text-sm font-bold text-ink">
+              💡 <strong>Mensal ou pagamento único?</strong> No Essencial você entra pagando quase metade do Freelancer, testa com clientes reais e só continua pagando enquanto estiver usando — sem compromisso longo. Já o Freelancer é pra quem só quer o básico de bio site, pago uma vez, sem pensar mais nisso.
+            </p>
+          </div>
+          <p className="flex items-center justify-center gap-1.5 text-xs font-bold text-muted">
+            <Star className="h-3.5 w-3.5 fill-accent text-accent" /> QR Code personalizado editável e gerador de arte com IA são exclusivos dos planos Essencial e Agência.
           </p>
         </div>
       </section>
@@ -621,9 +643,12 @@ export default async function LandingPage() {
               <ul className="mt-3 space-y-2 text-sm text-muted">
                 <li><Link href="/login" className="hover:text-accent">Entrar / Criar conta</Link></li>
                 <li><Link href="/me" className="hover:text-accent">Acessar meu bio site</Link></li>
-                {/* "Comunidade Discord" apontava pro link de PAGAMENTO da Kiwify
-                    (errado agora que virou acesso gratuito) — removido até
-                    o Leonardo passar o link de convite real do Discord. */}
+                {/* Não é mais o convite direto do Discord — o Leonardo tem um
+                    quiz/formulário de entrada (2026-07-16) que roda ANTES do
+                    convite, pra ele saber quem realmente está na comunidade e
+                    poder integrar isso depois. Todo link de "comunidade" do
+                    site aponta pra esse formulário, não pro discord.gg direto. */}
+                <li><a href="https://www.leonardomarusso.com.br/comunidade" target="_blank" rel="noopener noreferrer" className="hover:text-accent">Comunidade TOQY</a></li>
               </ul>
             </div>
           </div>

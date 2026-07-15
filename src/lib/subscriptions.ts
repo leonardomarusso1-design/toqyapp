@@ -88,7 +88,8 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
       "Até 20 bio sites",
       "Sem taxa por bio site",
       "Catálogo, Pix e Wi-Fi",
-      "QR personalizado",
+      "QR personalizado editável",
+      "Gerador de arte com IA",
       "Analytics básico",
       "Suporte por email",
     ],
@@ -102,8 +103,18 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasWifi: true,
     hasCustomQr: true,
     supportLevel: "email",
+    highlight: true,
   },
 
+  // QR personalizado/editável e gerador de arte com IA REMOVIDOS do
+  // Freelancer (2026-07-16, pedido explícito do Leonardo) — decisão de
+  // negócio pra diferenciar o plano recorrente (Essencial) e o de topo
+  // (Agência) do pagamento único intermediário: quem quer essas duas
+  // features precisa ou pagar mensal (Essencial, entrada mais barata) ou
+  // ir direto pra Agência — Freelancer vira o "só o essencial de bio
+  // site", sem elas. Ver também PLAN_AI_ART_CREDITS em planLimits.ts
+  // (freelancer: 0) e a seção de planos da landing (page.tsx), que precisa
+  // deixar isso explícito por pedido dele.
   freelancer: {
     id: "freelancer",
     name: "Freelancer",
@@ -112,7 +123,6 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     priceAnnual: 599,
     features: [
       "Até 20 bio sites",
-      "QR personalizado",
       "Pix e Wi-Fi",
       "Catálogo completo",
       "Analytics avançado",
@@ -127,9 +137,8 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasCatalog: true,
     hasPix: true,
     hasWifi: true,
-    hasCustomQr: true,
+    hasCustomQr: false,
     supportLevel: "priority",
-    highlight: true,
   },
 
   agency: {
@@ -140,6 +149,8 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     priceAnnual: 1499,
     features: [
       "Até 100 bio sites",
+      "QR personalizado editável",
+      "Gerador de arte com IA",
       "White label parcial",
       "Domínio próprio",
       "Gestão de equipe completa",

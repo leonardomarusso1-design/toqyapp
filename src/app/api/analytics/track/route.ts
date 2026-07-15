@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { getSupabaseAdmin, hasSupabaseEnv } from "@/lib/supabaseServer";
 
 type TrackEventBody = {
   eventType: string;
@@ -11,64 +12,46 @@ type TrackEventBody = {
 
 /**
  * POST /api/analytics/track
- * 
- * Track an analytics event for a biosite.
- * This is a simple endpoint that logs events.
- * 
- * Phase 7: Currently logs to console/database
- * Phase 8: Will integrate with Supabase analytics_events table
- * 
- * Body: {
- *   eventType: AnalyticsEventType,
- *   bioSiteId: string,
- *   buttonId?: string,
- *   buttonLabel?: string,
- *   userAgent?: string,
- *   metadata?: object
- * }
- * 
- * Response: { success: boolean }
+ *
+ * Grava um evento de analytics real (2026-07-16) — antes desta correção,
+ * esta rota recebia o evento e DESCARTAVA (insert comentado como "TODO
+ * Phase 8"), então o plano prometia "Analytics" mas nada era salvo.
+ * Insert público via admin client (visitante do bio site nunca está
+ * autenticado) — mesmo padrão de "grava mas só o dono lê" do resto do
+ * projeto (ver toqy_analytics_events RLS).
  */
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json().catch(() => ({}))) as TrackEventBody;
 
-    // Validate required fields
     if (!body.eventType || !body.bioSiteId) {
-      return Response.json(
-        { success: false, error: "Missing required fields" },
-        { status: 400 }
-      );
+      return Response.json({ success: false, error: "Missing required fields" }, { status: 400 });
     }
 
-    // Get request metadata
-    const ipAddress = request.headers.get("x-forwarded-for") || 
-                     request.headers.get("x-real-ip") ||
-                     "unknown";
+    if (!hasSupabaseEnv()) return Response.json({ success: false, error: "Servidor não configurado" }, { status: 500 });
+    const supabase = getSupabaseAdmin()!;
+
     const userAgent = body.userAgent || request.headers.get("user-agent");
     const referer = request.headers.get("referer");
 
-    // TODO: Phase 8 - persist to Supabase analytics_events table
-    // await supabase
-    //   .from('analytics_events')
-    //   .insert({
-    //     bio_site_id: body.bioSiteId,
-    //     event_type: body.eventType,
-    //     button_id: body.buttonId,
-    //     button_label: body.buttonLabel,
-    //     user_agent: userAgent,
-    //     ip_address: ipAddress,
-    //     referer,
-    //     metadata: body.metadata,
-    //   });
+    const { error } = await supabase.from("toqy_analytics_events").insert({
+      bio_site_id: body.bioSiteId,
+      event_type: body.eventType,
+      button_id: body.buttonId ?? null,
+      button_label: body.buttonLabel ?? null,
+      user_agent: userAgent,
+      referer,
+      metadata: body.metadata ?? null,
+    });
+
+    if (error) {
+      console.error("[Analytics] Erro ao gravar evento:", error);
+      return Response.json({ success: false, error: "Failed to track event" }, { status: 500 });
+    }
 
     return Response.json({ success: true }, { status: 200 });
-
   } catch (error) {
     console.error("[Analytics] Error tracking event:", error);
-    return Response.json(
-      { success: false, error: "Failed to track event" },
-      { status: 500 }
-    );
+    return Response.json({ success: false, error: "Failed to track event" }, { status: 500 });
   }
 }

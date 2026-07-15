@@ -8,17 +8,24 @@ export const PLAN_BIOSITE_LIMITS = {
   agency: 100,
 } as const;
 
-// Créditos VITALÍCIOS (não mensais) de geração de arte com IA por plano
-// (2026-07-13) — os planos pagos do Toqy são pagamento único, não
-// assinatura recorrente, então um limite mensal recorrente não faz sentido
-// contra uma cobrança que só acontece uma vez. Números iniciais, ajustar
-// conforme custo real observado (~R$0,20-0,25 por geração via Gemini 2.5
-// Flash Image) — se a demanda for maior que isso, o caminho é vender
-// pacotes de créditos extras via Kiwify, não aumentar o limite grátis.
+// Créditos VITALÍCIOS de geração de arte com IA por plano (2026-07-13,
+// ajustado 2026-07-16). Removido do Freelancer de propósito (pedido do
+// Leonardo) — só Essencial e Agência têm gerador de arte, é diferencial
+// exclusivo desses dois planos, não do Freelancer (pagamento único
+// intermediário). Números iniciais, ajustar conforme custo real
+// observado (~R$0,20-0,25 por geração via gpt-image-2) — se a demanda for
+// maior que isso, o caminho é vender pacotes de créditos extras via
+// Kiwify, não aumentar o limite grátis.
+//
+// Nota: Essencial agora é recorrente mensal (não mais pagamento único) —
+// "vitalício" nele soa estranho a longo prazo (créditos que nunca
+// resetam mesmo pagando todo mês). Reset mensal de créditos pra esse
+// plano especificamente é uma melhoria futura razoável, não implementada
+// agora (exigiria um job recorrente pra zerar ai_art_credits_used).
 export const PLAN_AI_ART_CREDITS = {
   free: 0,
   community: 5,
-  freelancer: 10,
+  freelancer: 0,
   agency: 30,
 } as const;
 

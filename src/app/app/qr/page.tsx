@@ -267,7 +267,7 @@ export default function QRPage() {
             <div className="rounded-[1.6rem] border border-dashed border-accent/40 bg-accent/5 p-6 text-center">
               <Lock className="mx-auto h-8 w-8 text-accent" />
               <p className="mt-3 text-lg font-black text-ink">Recurso do plano pago</p>
-              <p className="mt-1 text-sm text-muted">QR Code de Pix e de link personalizado fazem parte do QR Code personalizado, disponível a partir do plano Freelancer.</p>
+              <p className="mt-1 text-sm text-muted">QR Code de Pix e de link personalizado fazem parte do QR Code personalizado editável, disponível nos planos Essencial e Agência.</p>
               <Link href="/#planos" className="mt-4 inline-flex items-center justify-center rounded-2xl bg-accent px-5 py-3 text-sm font-black text-white">Ver planos</Link>
             </div>
           ) : mode === "biosite" ? (

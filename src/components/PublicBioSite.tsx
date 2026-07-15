@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import {
   CalendarCheck,
@@ -28,6 +28,7 @@ import type { CatalogItem, CatalogLayout, ToqyButton, ToqyLinkType, ToqySite } f
 import { buttonHref, createVCard, pixPayload, whatsappUrl, wifiPayload } from "@/lib/buttonUtils";
 import { ensureUrl, normalizeInstagram } from "@/lib/security";
 import { getPlan, resolvePlanTier } from "@/lib/subscriptions";
+import { analytics } from "@/lib/analytics";
 
 // SVGs reais das marcas
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -200,6 +201,16 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
   // sem que todas mostrem o mesmo QR Code ou disputem o mesmo id de scroll.
   const url = publicUrl ?? (typeof window !== "undefined" ? window.location.href : "");
   const catalogId = instanceId ? `catalogo-toqy-${instanceId}` : "catalogo-toqy";
+
+  // Analytics real (2026-07-16) — só conta como "visualização" quando é a
+  // página pública de verdade (sem instanceId), nunca as instâncias de
+  // vitrine/showcase da landing (que reusam este mesmo componente pra
+  // mostrar vários bio sites de exemplo na mesma página).
+  useEffect(() => {
+    if (instanceId) return;
+    analytics.trackPageView(site.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [site.id, instanceId]);
 
   // Helper: retorna cor granular com fallback para tema global
   const col = (key: keyof NonNullable<typeof site.theme.colors>, fallback: string) =>

@@ -70,9 +70,11 @@ export default function ObrigadoComunidade() {
           <h2 className="text-xl font-black text-white">Entre na comunidade</h2>
         </div>
         <p className="mt-3 text-sm leading-relaxed text-white/70">Servidor exclusivo no Discord — tire dúvidas, receba novidades e conecte-se com outros membros.</p>
-        <a href="https://discord.gg/Sc6t4eJPvH" target="_blank" rel="noopener noreferrer"
+        {/* Aponta pro formulário de entrada, não pro convite direto do
+            Discord (2026-07-16) — ver nota em app/configuracoes/page.tsx. */}
+        <a href="https://www.leonardomarusso.com.br/comunidade" target="_blank" rel="noopener noreferrer"
           className="mt-6 block w-full rounded-2xl bg-ink py-4 text-center font-black text-white transition hover:-translate-y-0.5 hover:opacity-90">
-          Entrar no Discord agora
+          Responder formulário e entrar
         </a>
       </div>
       <div className="mt-6 w-full max-w-md rounded-[2rem] border border-accent/20 bg-accent/5 p-6">

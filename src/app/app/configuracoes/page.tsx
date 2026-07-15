@@ -222,43 +222,22 @@ export default function ConfiguracoesPage() {
           </div>
 
           {/* Discord — aberto pra qualquer plano (2026-07-16): acesso à
-              comunidade virou gratuito/aberto, não é mais exclusivo de quem
-              paga o plano "Essencial" (ex-"Comunidade") — antes só aparecia
-              pra planTier === "community", agora aparece pra todo mundo. */}
-          <a href="https://discord.gg/EsjFsRVyCC" target="_blank" rel="noopener noreferrer"
+              comunidade virou gratuito/aberto. Aponta pro formulário/quiz de
+              entrada (leonardomarusso.com.br/comunidade), não pro convite
+              direto do Discord — o Leonardo usa esse formulário como porta
+              de entrada pra saber quem de fato está na comunidade e poder
+              integrar isso com o resto depois. */}
+          <a href="https://www.leonardomarusso.com.br/comunidade" target="_blank" rel="noopener noreferrer"
             className="mt-4 flex items-center justify-between rounded-2xl bg-violet p-4 shadow-sm">
             <div className="flex items-center gap-3">
               <svg className="h-6 w-6 text-white/80" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.003.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
               <div>
                 <p className="font-black text-white text-sm">Comunidade TOQY</p>
-                <p className="text-xs text-white/70">Servidor exclusivo no Discord</p>
+                <p className="text-xs text-white/70">Responda o formulário e entre no Discord</p>
               </div>
             </div>
             <ChevronRight className="h-5 w-5 text-white/70" />
           </a>
-
-          {/* Programa de indicação (2026-07-16) */}
-          <div className="mt-4 rounded-2xl border border-accent/20 bg-accent/5 p-4">
-            <p className="font-black text-ink">Indique e ganhe bio sites extras</p>
-            <p className="mt-1 text-sm text-muted">
-              Compartilhe seu link. Quando alguém se cadastra por ele e assina qualquer plano do Toqy, você ganha <strong className="text-ink">+3 bio sites</strong> no seu painel — pra sempre.
-            </p>
-            {referralLink ? (
-              <>
-                <div className="mt-3 flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5">
-                  <span className="flex-1 truncate text-sm font-bold text-ink">{referralLink}</span>
-                  <button type="button" onClick={copyReferralLink} className="shrink-0 rounded-lg bg-accent px-3 py-1.5 text-xs font-black text-white hover:bg-accent-dim">
-                    {copiedReferral ? "Copiado!" : "Copiar"}
-                  </button>
-                </div>
-                <p className="mt-2 text-xs text-muted">
-                  {referralCount > 0
-                    ? `${referralCount} indicação${referralCount > 1 ? "ões" : ""} já convertida${referralCount > 1 ? "s" : ""} · +${(profile?.referral_bonus_biosites ?? 0)} bio sites de bônus`
-                    : "Ainda sem indicações convertidas."}
-                </p>
-              </>
-            ) : null}
-          </div>
 
           {/* Upgrade para free */}
           {planTier === "free" && (
@@ -272,6 +251,44 @@ export default function ConfiguracoesPage() {
             </div>
           )}
         </div>
+
+        {/* PROGRAMA DE INDICAÇÃO (2026-07-16) — seção própria, em evidência
+            (pedido explícito do Leonardo: "deixa bem aparecido"), não mais
+            escondida dentro do card de Plano. Só libera pra quem já pagou
+            algum plano ("qualquer pessoa que já pagou consegue indicar") —
+            free vê uma prévia bloqueada, o que também empurra upgrade. */}
+        {planTier !== "free" ? (
+          <div className="rounded-[2rem] border-2 border-accent bg-gradient-to-br from-accent/10 via-card to-card p-6 shadow-xl shadow-accent/10">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-accent px-3 py-1 text-xs font-black uppercase tracking-wider text-white">Indique e ganhe</span>
+            </div>
+            <h2 className="mt-3 text-2xl font-black text-ink">Ganhe +3 bio sites pra cada pessoa que você trouxer</h2>
+            <p className="mt-2 text-sm text-muted">
+              Compartilhe seu link pessoal. Quando alguém se cadastra por ele e assina <strong className="text-ink">qualquer plano</strong> do Toqy, você ganha <strong className="text-accent">+3 bio sites</strong> no seu painel — de vez, sem limite de quantas vezes.
+            </p>
+            {referralLink ? (
+              <>
+                <div className="mt-4 flex items-center gap-2 rounded-2xl border border-accent/30 bg-card px-4 py-3">
+                  <span className="flex-1 truncate text-sm font-black text-ink">{referralLink}</span>
+                  <button type="button" onClick={copyReferralLink} className="shrink-0 rounded-xl bg-accent px-4 py-2 text-xs font-black text-white hover:bg-accent-dim">
+                    {copiedReferral ? "Copiado!" : "Copiar link"}
+                  </button>
+                </div>
+                <p className="mt-3 text-sm font-bold text-ink">
+                  {referralCount > 0
+                    ? `🎉 ${referralCount} indicação${referralCount > 1 ? "ões" : ""} convertida${referralCount > 1 ? "s" : ""} · +${(profile?.referral_bonus_biosites ?? 0)} bio sites de bônus já garantidos`
+                    : "Ainda sem indicações convertidas — assim que alguém pagar pelo seu link, os bio sites caem automaticamente aqui."}
+                </p>
+              </>
+            ) : null}
+          </div>
+        ) : (
+          <div className="rounded-[2rem] border border-dashed border-border bg-surface p-6 text-center">
+            <p className="font-black text-ink">🔒 Indique e ganhe bio sites extras</p>
+            <p className="mt-1 text-sm text-muted">Disponível a partir do plano Essencial — assine e ganhe seu link pessoal de indicação.</p>
+            <Link href="/#planos" className="mt-4 inline-flex rounded-2xl bg-accent px-5 py-2.5 text-sm font-black text-white hover:bg-accent-dim">Ver planos</Link>
+          </div>
+        )}
 
         {/* AÇÕES */}
         <div className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
