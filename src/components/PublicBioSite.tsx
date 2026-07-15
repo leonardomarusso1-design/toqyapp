@@ -583,41 +583,46 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
         {hasCustomSections ? (
           // Modo por seção: cada grupo aparece separado com seu layout
           <div className="space-y-8">
-            {/* Correção de bug real reportado por cliente (2026-07-16): antes
-                desta correção, TODOS os itens com o mesmo "Onde aparece"
-                (destaque/carrossel/grade/lista) eram jogados numa ÚNICA
-                fileira/grade, com o título tirado só do PRIMEIRO item — 2
-                categorias diferentes marcadas como "Carrossel" apareciam
-                juntas, lado a lado, na mesma fileira, em vez de cada
-                categoria virar sua própria fileira embaixo da outra. Agora
-                cada seção agrupa por categoria primeiro (uniqueGroups),
-                igual o layout "Por categoria" já fazia. */}
-            {/* "Destaques" fica como UMA faixa só, título fixo — é uma
-                vitrine cruzada de itens marcados como destaque, não uma
-                fileira por categoria (diferente de carrossel/grade/lista
-                abaixo, onde o bug foi reportado). */}
+            {/* Correção de bug real (2026-07-16), 2 rodadas:
+                1ª rodada: itens do mesmo "Onde aparece" (destaque/carrossel/
+                grade/lista) eram jogados numa ÚNICA fileira, título tirado
+                só do primeiro item — 2 categorias diferentes marcadas como
+                "Carrossel" apareciam juntas, lado a lado. Corrigido
+                agrupando por categoria primeiro (uniqueGroups).
+                2ª rodada: a correção acima tinha ido longe demais — também
+                reduzia cada categoria a 1 foto de capa só (representative
+                ItemsByCategory), matando o efeito de slide/carrossel que
+                "Carrossel — arrasta para o lado" promete no próprio nome.
+                Diferença chave: esse dedup faz sentido pro catálogo PADRÃO
+                (ninguém marcou nada, evita lotar a página com toda foto
+                solta — ver itemsBySection.padrao abaixo), mas NÃO faz
+                sentido quando o usuário escolheu explicitamente "Carrossel/
+                Grade/Lista" pra um item — aí a escolha É pra aparecer todas
+                as fotos daquela categoria, deslizando/em grade/em lista.
+                Removido o dedup dessas 4 seções; onOpenGallery não é
+                passado aqui (nada "escondido" pra abrir, já mostra tudo). */}
             {itemsBySection.destaques.length > 0 && (
               <div>
                 <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.accent }}>Destaques</p>
-                <div className="space-y-4">{representativeItemsByCategory(itemsBySection.destaques).map(item => <CatalogCard key={item.id} site={site} item={item} stacked onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
+                <div className="space-y-4">{itemsBySection.destaques.map(item => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
               </div>
             )}
             {itemsBySection.carrossel.length > 0 && uniqueGroups(itemsBySection.carrossel).map(([group, groupItems]) => (
               <div key={`carrossel-${group}`}>
                 <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{group}</p>
-                <CatalogScroller site={site} items={representativeItemsByCategory(groupItems)} onOpenGallery={openGallery} categoryCounts={categoryCounts} />
+                <CatalogScroller site={site} items={groupItems} />
               </div>
             ))}
             {itemsBySection.grade.length > 0 && uniqueGroups(itemsBySection.grade).map(([group, groupItems]) => (
               <div key={`grade-${group}`}>
                 <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{group}</p>
-                <div className="grid grid-cols-2 gap-3">{representativeItemsByCategory(groupItems).map(item => <CatalogCard key={item.id} site={site} item={item} compact onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
+                <div className="grid grid-cols-2 gap-3">{groupItems.map(item => <CatalogCard key={item.id} site={site} item={item} compact />)}</div>
               </div>
             ))}
             {itemsBySection.lista.length > 0 && uniqueGroups(itemsBySection.lista).map(([group, groupItems]) => (
               <div key={`lista-${group}`}>
                 <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{group}</p>
-                <div className="space-y-4">{representativeItemsByCategory(groupItems).map(item => <CatalogCard key={item.id} site={site} item={item} stacked onOpenGallery={openGallery} categoryCount={categoryCounts.get(item.category?.trim() || "Destaques") ?? 1} />)}</div>
+                <div className="space-y-4">{groupItems.map(item => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
               </div>
             ))}
             {itemsBySection.padrao.length > 0 && (
