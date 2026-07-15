@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LandingHeader } from "@/components/LandingHeader";
 import { LandingBioSiteCard } from "@/components/LandingBioSiteCard";
+import { ReferralCapture } from "@/components/ReferralCapture";
 import { APP_VERSION, BUILD_ID } from "@/lib/appInfo";
 import { getShowcaseSummaries } from "@/lib/realTemplates";
 import {
@@ -57,11 +58,21 @@ const features = [
 // existia antes de a "Comunidade" sair do funil — confirmar com o
 // Leonardo que o produto continua ativo no painel da Kiwify antes de
 // considerar isso testado ponta a ponta.
+//
+// Destaque movido de Freelancer pra Essencial (2026-07-16) — pedido
+// explícito do Leonardo (ele quer recorrência, não pagamento único).
+// Padrão de mercado usado (pesquisa Linktree/Beacons): destacar o plano
+// onde a restrição "dolorida" do grátis desaparece com o MENOR investimento
+// inicial, não o mais caro — Essencial libera exatamente as mesmas 20
+// bio sites/catálogo/Pix/Wi-Fi/QR que o Freelancer, por quase metade do
+// preço de entrada (R$29,90 vs R$59,90), com o adicional de poder
+// cancelar quando quiser. `tag` = badge curto que aparece embaixo do
+// preço, pensado pra ficar "chamativo"/comparável rápido entre os planos.
 const plans = [
-  { name: "Gratuito", price: "R$0", period: "", description: "Para conhecer a plataforma e gerar seus primeiros leads.", highlight: false, cta: "Começar grátis", items: ["1 bio site", "Domínio toqy.app/seunome", "QR Code básico", "Preview em tempo real", "Marca TOQY na página"] },
-  { name: "Essencial", price: "R$29,90", period: "/mês", description: "Para quem cria bio sites para clientes com um custo mensal baixo.", highlight: false, cta: "Assinar", items: ["Até 20 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "QR personalizado", "Suporte por email"] },
-  { name: "Freelancer", price: "R$59,90", period: "", description: "Para profissionais que criam bio sites para clientes. Pagamento único.", highlight: true, cta: "Comprar acesso", items: ["Até 20 bio sites", "QR personalizado", "Pix e Wi-Fi", "Catálogo completo", "Suporte prioritário"] },
-  { name: "Agência", price: "R$149,90", period: "", description: "Para equipes e agências em escala. Pagamento único.", highlight: false, cta: "Comprar acesso", items: ["Até 100 bio sites", "White label parcial", "Domínio próprio", "Gestão de equipe", "Tudo do Freelancer"] },
+  { name: "Gratuito", price: "R$0", period: "", tag: "Pra testar", description: "Para conhecer a plataforma e gerar seus primeiros leads.", highlight: false, cta: "Começar grátis", items: ["1 bio site", "Domínio toqy.app/seunome", "QR Code básico", "Preview em tempo real", "Marca TOQY na página"] },
+  { name: "Essencial", price: "R$29,90", period: "/mês", tag: "Menor investimento pra começar", description: "As mesmas 20 bio sites do Freelancer, por quase metade do preço de entrada — mensal, cancele quando quiser.", highlight: true, cta: "Assinar agora", items: ["Até 20 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "QR personalizado", "Suporte por email", "Cancele quando quiser"] },
+  { name: "Freelancer", price: "R$59,90", period: "", tag: "Pague uma vez, use pra sempre", description: "Para quem já validou o uso e prefere não ter cobrança recorrente. Pagamento único.", highlight: false, cta: "Comprar acesso", items: ["Até 20 bio sites", "QR personalizado", "Pix e Wi-Fi", "Catálogo completo", "Suporte prioritário"] },
+  { name: "Agência", price: "R$149,90", period: "", tag: "Pra escalar em equipe", description: "Para equipes e agências em escala. Pagamento único.", highlight: false, cta: "Comprar acesso", items: ["Até 100 bio sites", "White label parcial", "Domínio próprio", "Gestão de equipe", "Tudo do Freelancer"] },
 ] as const;
 
 const featureShowcase = [
@@ -116,6 +127,7 @@ export default async function LandingPage() {
 
   return (
     <main className="min-h-screen bg-bg text-ink">
+      <ReferralCapture />
       {/* Barra de anúncio (estática) */}
       <div className="bg-ink text-white">
         <div className="flex items-center justify-center px-4 py-2.5 text-center">
@@ -459,10 +471,11 @@ export default async function LandingPage() {
         <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {plans.map((plan) => (
             <article key={plan.name} className={`relative flex flex-col rounded-2xl border bg-card p-7 shadow-sm ${plan.highlight ? "border-accent shadow-xl shadow-accent/10 glow-pulse" : "border-border card-glow"}`}>
-              {plan.highlight ? <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent px-5 py-2 text-xs font-extrabold text-white uppercase tracking-wider">Mais popular</span> : null}
+              {plan.highlight ? <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent px-5 py-2 text-xs font-extrabold text-white uppercase tracking-wider">Recomendado</span> : null}
               <h3 className="text-2xl font-bold text-ink">{plan.name}</h3>
               <p className="mt-2 min-h-[4rem] text-sm text-muted">{plan.description}</p>
               <p className="mt-4 text-4xl font-extrabold text-ink">{plan.price}<span className="text-base font-bold text-muted">{plan.period}</span></p>
+              <span className={`mt-3 inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-extrabold ${plan.highlight ? "bg-accent/15 text-accent" : "bg-surface text-muted"}`}>{plan.tag}</span>
               <div className="mt-6 grid gap-3 flex-1">
                 {plan.items.map((item) => (
                   <p key={item} className="flex items-center gap-3 text-sm font-semibold text-ink/80">
@@ -476,6 +489,11 @@ export default async function LandingPage() {
               </a>
             </article>
           ))}
+        </div>
+        <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-accent/20 bg-accent/5 p-6 text-center">
+          <p className="text-sm font-bold text-ink">
+            💡 <strong>Mensal ou pagamento único?</strong> No Essencial você entra pagando quase metade do Freelancer, testa com clientes reais e só continua pagando enquanto estiver usando — sem compromisso longo. Se depois preferir pagar uma vez e não pensar mais nisso, o Freelancer libera exatamente as mesmas 20 bio sites, pra sempre.
+          </p>
         </div>
       </section>
 

@@ -407,12 +407,19 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
 
           <footer className="mt-8 pb-6 text-center text-xs font-bold leading-relaxed" style={{ color: site.theme.muted }}>
             <p style={{ color: site.theme.muted }}>© {new Date().getFullYear()} {site.profile.name}. Todos os direitos reservados.</p>
-            <p className="mt-1" style={{ color: site.theme.muted }}>
-              Criado com{" "}
-              <a href="https://toqy.com.br" target="_blank" rel="noreferrer" className="font-black underline-offset-4 hover:underline" style={{ color: site.theme.primary }}>
-                TOQY
-              </a>
-            </p>
+            {/* Selo "Criado com TOQY" — antes aparecia em TODO bio site,
+                mesmo pra quem paga Agência (que promete "White label
+                parcial" desde sempre, mas nada aqui checava isso). Primeira
+                entrega real de white-label (2026-07-16): esconde o selo
+                pra quem tem hasWhiteLabel. */}
+            {!plan.hasWhiteLabel ? (
+              <p className="mt-1" style={{ color: site.theme.muted }}>
+                Criado com{" "}
+                <a href="https://toqy.com.br" target="_blank" rel="noreferrer" className="font-black underline-offset-4 hover:underline" style={{ color: site.theme.primary }}>
+                  TOQY
+                </a>
+              </p>
+            ) : null}
           </footer>
         </main>
       </div>

@@ -92,6 +92,36 @@ export async function POST(request: Request) {
         updated_at: new Date().toISOString(),
       }, { onConflict: "id", ignoreDuplicates: false });
 
+      // Programa de indicação (2026-07-16) — se este usuário foi indicado
+      // por alguém E essa indicação ainda não foi recompensada, quem
+      // indicou ganha +3 bio sites agora, no PRIMEIRO pagamento aprovado
+      // do indicado (nunca de novo em renovações — checa toqy_referrals
+      // .rewarded antes, update só acontece uma vez por causa da condição
+      // .eq("rewarded", false) no update abaixo).
+      const { data: referral } = await supabase
+        .from("toqy_referrals")
+        .select("id, referrer_profile_id, rewarded")
+        .eq("referred_profile_id", userId)
+        .maybeSingle();
+
+      if (referral && !referral.rewarded) {
+        const { data: updatedReferral } = await supabase
+          .from("toqy_referrals")
+          .update({ converted_at: new Date().toISOString(), rewarded: true })
+          .eq("id", referral.id)
+          .eq("rewarded", false)
+          .select()
+          .maybeSingle();
+
+        if (updatedReferral) {
+          const { data: referrerProfile } = await supabase
+            .from("profiles").select("referral_bonus_biosites").eq("id", referral.referrer_profile_id).maybeSingle();
+          await supabase.from("profiles")
+            .update({ referral_bonus_biosites: (referrerProfile?.referral_bonus_biosites ?? 0) + 3 })
+            .eq("id", referral.referrer_profile_id);
+        }
+      }
+
       return Response.json({ ok: true, plan: planInfo.plan, applied: "immediate" });
     } else {
       // Usuário ainda não criou conta → grava plano pendente

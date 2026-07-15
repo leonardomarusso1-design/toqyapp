@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Lock, Mail, ShieldCheck, Sparkles, User, Phone, IdCard } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
+import { captureReferralFromUrl, clearStoredReferralCode, getStoredReferralCode } from '@/lib/referral';
 
 type AuthMode = 'login' | 'signup';
 
@@ -33,6 +34,11 @@ export default function LoginPage() {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
+    // Programa de indicação (2026-07-16) — captura ?ref= também aqui, caso
+    // alguém receba um link de indicação já apontando direto pro /login
+    // (não só pra landing).
+    captureReferralFromUrl();
+
     // Verifica sessão existente
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) router.push('/app');
@@ -92,6 +98,9 @@ export default function LoginPage() {
             full_name: form.fullName,
             phone: form.phone,
             cpf: form.cpf,
+            // Programa de indicação — o trigger handle_new_user() lê isso
+            // de raw_user_meta_data e grava em profiles.referred_by_code.
+            referred_by_code: getStoredReferralCode() || undefined,
           },
         },
       });
@@ -101,6 +110,7 @@ export default function LoginPage() {
         return;
       }
 
+      clearStoredReferralCode();
       setIsSuccess(true);
       setMessage('Conta criada! Verifique seu e-mail para confirmar o cadastro.');
       // NÃO redirecionar — usuário precisa confirmar o email primeiro

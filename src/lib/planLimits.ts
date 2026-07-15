@@ -94,13 +94,15 @@ export async function checkBiositeLimit(userId: string): Promise<BiositeLimitChe
   // Buscar plano do usuario
   const { data: profile } = await supabase
     .from("profiles")
-    .select("plan_toqy, plan_tier, biosites_limit")
+    .select("plan_toqy, plan_tier, biosites_limit, referral_bonus_biosites")
     .eq("id", userId)
     .maybeSingle();
 
   // plan_toqy é o campo atualizado pelo Kiwify, plan_tier é legado
   const planTier = profile?.plan_toqy || profile?.plan_tier || "free";
-  const limit = profile?.biosites_limit || getPlanLimit(planTier);
+  // Bônus do programa de indicação (2026-07-16) — sempre somado por cima
+  // do limite do plano, nunca expira, independe de troca de plano.
+  const limit = (profile?.biosites_limit || getPlanLimit(planTier)) + (profile?.referral_bonus_biosites ?? 0);
 
   // Contar bio sites do usuario na tabela correta
   const { count } = await supabase

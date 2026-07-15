@@ -7,6 +7,7 @@ import { LogOut, Camera, CheckCircle2, ChevronRight } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { PLAN_BIOSITE_LIMITS } from "@/lib/planLimits";
 import { supabase } from "@/lib/supabaseClient";
+import { getOrCreateReferralCode } from "@/lib/referral";
 
 type PlanTier = keyof typeof PLAN_BIOSITE_LIMITS;
 type Profile = {
@@ -14,6 +15,7 @@ type Profile = {
   plan_tier: PlanTier | null; plan_toqy?: PlanTier | null;
   biosites_limit?: number; biosites_count?: number;
   subscription_status?: string; avatar_url?: string;
+  referral_code?: string | null; referral_bonus_biosites?: number;
 };
 
 const PLAN_LABELS: Record<string, string> = {
@@ -39,6 +41,11 @@ export default function ConfiguracoesPage() {
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
 
+  // Programa de indicação (2026-07-16)
+  const [referralCode, setReferralCode] = useState("");
+  const [referralCount, setReferralCount] = useState(0);
+  const [copiedReferral, setCopiedReferral] = useState(false);
+
   useEffect(() => {
     let active = true;
     async function load() {
@@ -51,10 +58,27 @@ export default function ConfiguracoesPage() {
         setName(data.full_name || "");
       }
       setLoading(false);
+
+      const [code, { count }] = await Promise.all([
+        getOrCreateReferralCode(session.user.id, supabase),
+        supabase.from("toqy_referrals").select("id", { count: "exact", head: true }).eq("referrer_profile_id", session.user.id).eq("rewarded", true),
+      ]);
+      if (!active) return;
+      setReferralCode(code);
+      setReferralCount(count ?? 0);
     }
     load();
     return () => { active = false; };
   }, [router]);
+
+  const referralLink = typeof window !== "undefined" && referralCode ? `${window.location.origin}/?ref=${referralCode}` : "";
+
+  async function copyReferralLink() {
+    if (!referralLink) return;
+    await navigator.clipboard.writeText(referralLink);
+    setCopiedReferral(true);
+    setTimeout(() => setCopiedReferral(false), 1500);
+  }
 
   async function saveName() {
     if (!profile) return;
@@ -212,6 +236,29 @@ export default function ConfiguracoesPage() {
             </div>
             <ChevronRight className="h-5 w-5 text-white/70" />
           </a>
+
+          {/* Programa de indicação (2026-07-16) */}
+          <div className="mt-4 rounded-2xl border border-accent/20 bg-accent/5 p-4">
+            <p className="font-black text-ink">Indique e ganhe bio sites extras</p>
+            <p className="mt-1 text-sm text-muted">
+              Compartilhe seu link. Quando alguém se cadastra por ele e assina qualquer plano do Toqy, você ganha <strong className="text-ink">+3 bio sites</strong> no seu painel — pra sempre.
+            </p>
+            {referralLink ? (
+              <>
+                <div className="mt-3 flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5">
+                  <span className="flex-1 truncate text-sm font-bold text-ink">{referralLink}</span>
+                  <button type="button" onClick={copyReferralLink} className="shrink-0 rounded-lg bg-accent px-3 py-1.5 text-xs font-black text-white hover:bg-accent-dim">
+                    {copiedReferral ? "Copiado!" : "Copiar"}
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-muted">
+                  {referralCount > 0
+                    ? `${referralCount} indicação${referralCount > 1 ? "ões" : ""} já convertida${referralCount > 1 ? "s" : ""} · +${(profile?.referral_bonus_biosites ?? 0)} bio sites de bônus`
+                    : "Ainda sem indicações convertidas."}
+                </p>
+              </>
+            ) : null}
+          </div>
 
           {/* Upgrade para free */}
           {planTier === "free" && (
