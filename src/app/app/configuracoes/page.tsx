@@ -32,10 +32,13 @@ const PLAN_COLORS: Record<string, string> = {
 // (achado real: SubscriptionPlansDisplay.tsx tinha links diferentes destes
 // pros mesmos planos). Mantido como const local só pra não reescrever as
 // referências abaixo (`PLAN_KIWIFY.xxx`), mas os valores vêm todos de KIWIFY_LINKS.
+// agency removido (2026-07-15) — não tem mais checkout Kiwify, virou
+// gratuita (revenue-share, ver src/lib/subscriptions.ts). Confirmado por
+// grep antes desta mudança: PLAN_KIWIFY.agency não era referenciado em
+// nenhum outro lugar deste arquivo.
 const PLAN_KIWIFY: Record<string, string> = {
   community: KIWIFY_LINKS.community,
   freelancer: KIWIFY_LINKS.freelancer,
-  agency: KIWIFY_LINKS.agency,
 };
 
 export default function ConfiguracoesPage() {

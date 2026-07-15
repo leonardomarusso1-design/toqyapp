@@ -39,11 +39,14 @@ vez dela, não todas de uma vez — mesmo princípio do GSD (`/gsd:plan-phase N`
 **Depends on**: Phase 1 (mesma revisão de contrato/cobrança)
 **Requirements**: PLAN-06, PLAN-07, PLAN-08, PLAN-09
 **Success Criteria**:
-  1. Está definido e documentado o mecanismo técnico de split de pagamento (Kiwify coprodução, gateway com split, ou reporte manual — com trade-offs explícitos de cada um)
-  2. Está definido precisamente o que conta como "uma venda" pra fins de comissão
-  3. Quem já comprou Agência como pagamento único tem um caminho claro (migra ou fica grandfathered)
-  4. O revendedor consegue ver, no próprio painel, quanto vendeu e quanto deve/já foi descontado de comissão
-**Plans**: TBD
+  1. ✓ Mecanismo técnico definido e implementado: afiliados Kiwify (não coprodução — coprodução exige produto dedicado por revendedor, sem API de criação). Ver `supabase/migrations/2026-07-16_agency_revenue_share.sql` linhas 8-20.
+  2. ✓ "Uma venda" = assinatura do cliente final via revendedor, rastreada por `kiwify_order_id` único no ledger.
+  3. ✓ Quem já comprou Agência pagamento único: grandfathered (`legacy_lifetime_access`) + backfillado como revendedor `pending_invite` automaticamente.
+  4. ✓ Revendedor vê comissão/clientes no próprio painel (`/app/revenda`).
+**Plans**:
+  - ✓ Sub-estágio A (backend) — commit `6e42618` (2026-07-15): schema (`toqy_resellers`/`toqy_managed_clients`/`toqy_commission_ledger` + RLS), webhook grava comissão com lógica de atribuição testada, backfill de revendedor legado, trigger de signup pronto pra vincular cliente↔revendedor
+  - ✓ Sub-estágio B (frontend/API) — 2026-07-15: Agência virou gratuita (sem checkout Kiwify, `src/lib/subscriptions.ts`), `POST /api/resellers/join` (virar revendedor com 1 clique) e `POST /api/resellers/clients` (convidar cliente), `reseller_code` (`src/lib/reseller.ts`, espelha `referral.ts`), captura de `?revenda=`/`managed_by_reseller_code` no signup (`login/page.tsx`), painel `/app/revenda` (nav em `DashboardShell`), landing/contrato-assinatura atualizados (sem R$149,90/checkout antigo)
+  - Pendente (manual, fora de código): Leonardo cadastra o revendedor `pending_invite` existente (e cada revendedor futuro) como afiliado na Kiwify e preenche `kiwify_affiliate_id` — sem isso a comissão não é atribuída automaticamente. Link de afiliado Kiwify (o que o revendedor passa pro cliente) também não tem campo no banco ainda — repassado manualmente por enquanto (ver comentário em `/app/revenda/page.tsx`)
 
 ### Phase 3: Landing Page
 **Goal**: A landing page para de vender "planos de bio site" e passa a vender "nível de negócio que você consegue rodar", com os planos, preços e modelo de comissão da Agência já corretos (pós Phase 1 e 2).
@@ -120,7 +123,7 @@ si, só dependem de 1), 9 por último.
 | Phase | Plans Complete | Status | Completed |
 |-------|-----------------|--------|-----------|
 | 1. Planos e Preços | 1/1 | Complete | 2026-07-15 |
-| 2. Revenue Share — Agência | 0/TBD | Not started | - |
+| 2. Revenue Share — Agência | 2/2 (A+B) | Complete* | 2026-07-15 |
 | 3. Landing Page | 0/TBD | Not started | - |
 | 4. Google Meu Negócio | 0/TBD | Not started | - |
 | 5. Cardápio Digital | 0/TBD | Not started | - |
@@ -128,6 +131,11 @@ si, só dependem de 1), 9 por último.
 | 7. QR Codes | 0/TBD | Not started | - |
 | 8. Geração de arte | 0/TBD | Not started | - |
 | 9. Conteúdo | 0/TBD | Not started | - |
+
+\* Fase 2: código 100% completo (backend + frontend). Resta 1 passo manual
+fora de código, por revendedor: Leonardo cadastra o afiliado na Kiwify e
+preenche `kiwify_affiliate_id` — sem isso a comissão daquele revendedor não
+é atribuída automaticamente. Ver Phase Details acima.
 
 ---
 *Roadmap criado: 2026-07-16*

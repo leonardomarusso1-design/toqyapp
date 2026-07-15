@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Lock, Mail, ShieldCheck, Sparkles, User, Phone, IdCard } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { captureReferralFromUrl, clearStoredReferralCode, getStoredReferralCode } from '@/lib/referral';
+import { captureRevendaFromUrl, clearStoredRevendaCode, getStoredRevendaCode } from '@/lib/reseller';
 
 type AuthMode = 'login' | 'signup';
 
@@ -38,6 +39,11 @@ export default function LoginPage() {
     // alguém receba um link de indicação já apontando direto pro /login
     // (não só pra landing).
     captureReferralFromUrl();
+
+    // Revenue Share — Agência (Fase 2 do roadmap, 2026-07-15) — mesma
+    // lógica, captura ?revenda=CODIGO pro trigger handle_new_user() vincular
+    // o cadastro a um cliente gerenciado do revendedor.
+    captureRevendaFromUrl();
 
     // Verifica sessão existente
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -101,6 +107,10 @@ export default function LoginPage() {
             // Programa de indicação — o trigger handle_new_user() lê isso
             // de raw_user_meta_data e grava em profiles.referred_by_code.
             referred_by_code: getStoredReferralCode() || undefined,
+            // Revenue Share — Agência (Fase 2 do roadmap, 2026-07-15) — o
+            // mesmo trigger handle_new_user() já lê isso e vincula o
+            // cadastro a um toqy_managed_clients do revendedor.
+            managed_by_reseller_code: getStoredRevendaCode() || undefined,
           },
         },
       });
@@ -111,6 +121,7 @@ export default function LoginPage() {
       }
 
       clearStoredReferralCode();
+      clearStoredRevendaCode();
       setIsSuccess(true);
       setMessage('Conta criada! Verifique seu e-mail para confirmar o cadastro.');
       // NÃO redirecionar — usuário precisa confirmar o email primeiro

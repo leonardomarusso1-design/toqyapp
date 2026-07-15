@@ -158,16 +158,22 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     supportLevel: "priority",
   },
 
-  // Continua pagamento único nesta fase — migra pra "gratuito + 30% de
-  // comissão sobre venda do revendedor" na Fase 2 do roadmap (Revenue
-  // Share), não nesta. Ver .planning/VISION.md seção E.1.
+  // Virou gratuita (Fase 2 do roadmap, 2026-07-15) — Agência deixou de ser
+  // vendida por preço e passou a ser "acesso gratuito à plataforma
+  // white-label + 30% de comissão pro Toqy sobre cada venda que o
+  // revendedor fizer pros próprios clientes (70% fica com ele)", paga
+  // automaticamente pela Kiwify via programa de Afiliados. Mecanismo e
+  // schema (toqy_resellers/toqy_managed_clients/toqy_commission_ledger)
+  // já implementados desde o commit 6e42618 — só a entrada gratuita
+  // (sem checkout Kiwify) e o painel do revendedor faltavam. Ver
+  // src/app/api/resellers/join/route.ts e .planning/VISION.md seção E.1.
   agency: {
     id: "agency",
     name: "Agência",
     description: "Para equipes e agências em escala.",
-    billingType: "one_time",
-    priceMonthly: 149.9,
-    priceAnnual: 1499,
+    billingType: "recurring",
+    priceMonthly: 0,
+    priceAnnual: null,
     features: [
       "Até 100 bio sites",
       "QR personalizado editável",
@@ -215,10 +221,14 @@ export const SELLABLE_PLANS: PlanType[] = ["free", "community", "freelancer", "a
 // criado na Kiwify em 2026-07-16 — substitui o link antigo de pagamento
 // único (gTIhv6I). Lembrar de desativar o produto antigo na Kiwify pra
 // ninguém comprar o modelo de pagamento único por engano.
-export const KIWIFY_LINKS: Record<Exclude<PlanType, "free">, string> = {
+//
+// agency: removido daqui (2026-07-15) — Agência não tem mais checkout
+// Kiwify, é gratuita (ver comentário em SUBSCRIPTION_PLANS.agency acima).
+// TODO Leonardo: desativar o produto antigo de pagamento único
+// ("xFdnxvE") na Kiwify pra ninguém comprar por engano.
+export const KIWIFY_LINKS: Record<Exclude<PlanType, "free" | "agency">, string> = {
   community: "https://pay.kiwify.com.br/12uYE0c",
   freelancer: "https://pay.kiwify.com.br/jSvUXd5",
-  agency: "https://pay.kiwify.com.br/xFdnxvE",
 };
 
 // Resolve um valor de plano vindo do banco (profiles.plan_toqy) pra um

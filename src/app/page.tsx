@@ -77,7 +77,7 @@ const plans = [
   { name: "Gratuito", price: "R$0", period: "", tag: "Pra testar", description: "Para conhecer a plataforma e gerar seus primeiros leads.", highlight: false, cta: "Começar grátis", items: ["1 bio site", "Domínio toqy.app/seunome", "QR Code básico", "Preview em tempo real", "Marca TOQY na página"] },
   { name: "Essencial", price: "R$29,90", period: "/mês", tag: "Menor investimento pra começar", description: "As mesmas 20 bio sites do Freelancer, mensal, cancele quando quiser.", highlight: true, cta: "Assinar agora", items: ["Até 20 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "★ QR personalizado editável", "★ Gerador de arte com IA (5 créditos)", "Suporte por email", "Cancele quando quiser"] },
   { name: "Freelancer", price: "R$39,90", period: "/mês", tag: "Mais recursos, suporte prioritário", description: "Para quem cria pra clientes com mais frequência — mais créditos de arte e suporte prioritário. Mensal, cancele quando quiser.", highlight: false, cta: "Assinar agora", items: ["Até 20 bio sites", "Pix e Wi-Fi", "Catálogo completo", "★ QR personalizado editável", "★ Gerador de arte com IA (10 créditos)", "Suporte prioritário", "Cancele quando quiser"] },
-  { name: "Agência", price: "R$149,90", period: "", tag: "Pra escalar em equipe", description: "Para equipes e agências em escala. Pagamento único.", highlight: false, cta: "Comprar acesso", items: ["Até 100 bio sites", "★ QR personalizado editável", "★ Gerador de arte com IA", "White label parcial", "Domínio próprio", "Gestão de equipe"] },
+  { name: "Agência", price: "Grátis", period: "", tag: "Revenda com comissão", description: "Acesso gratuito à plataforma white-label + 30% de comissão pro Toqy sobre cada venda sua (70% fica com você).", highlight: false, cta: "Criar conta grátis", items: ["Até 100 bio sites", "★ QR personalizado editável", "★ Gerador de arte com IA", "White label parcial", "Domínio próprio", "Gestão de equipe"] },
 ] as const;
 
 const featureShowcase = [
@@ -498,7 +498,11 @@ export default async function LandingPage() {
                   );
                 })}
               </div>
-              <a href={plan.name === "Essencial" ? KIWIFY_LINKS.community : plan.name === "Freelancer" ? KIWIFY_LINKS.freelancer : plan.name === "Agência" ? KIWIFY_LINKS.agency : "/login"} target={plan.name === "Gratuito" ? undefined : "_blank"} rel={plan.name === "Gratuito" ? undefined : "noreferrer noopener"} className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}>
+              {/* Agência (2026-07-15): sem checkout Kiwify — vira gratuita
+                  (revenue-share, ver src/lib/subscriptions.ts), então o CTA
+                  aponta pro /login como Gratuito, navegação interna, não
+                  nova aba. */}
+              <a href={plan.name === "Essencial" ? KIWIFY_LINKS.community : plan.name === "Freelancer" ? KIWIFY_LINKS.freelancer : "/login"} target={plan.name === "Gratuito" || plan.name === "Agência" ? undefined : "_blank"} rel={plan.name === "Gratuito" || plan.name === "Agência" ? undefined : "noreferrer noopener"} className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}>
                 {plan.cta}
               </a>
             </article>
@@ -511,7 +515,7 @@ export default async function LandingPage() {
             </p>
           </div>
           <p className="flex items-center justify-center gap-1.5 text-xs font-bold text-muted">
-            <Star className="h-3.5 w-3.5 fill-accent text-accent" /> QR Code personalizado editável e gerador de arte com IA são exclusivos dos planos pagos (Essencial, Freelancer e Agência).
+            <Star className="h-3.5 w-3.5 fill-accent text-accent" /> QR Code personalizado editável e gerador de arte com IA são exclusivos dos planos Essencial, Freelancer e Agência.
           </p>
         </div>
       </section>
@@ -632,7 +636,7 @@ export default async function LandingPage() {
                 <li><Link href="/login" className="hover:text-accent">Gratuito</Link></li>
                 <li><a href={KIWIFY_LINKS.community} target="_blank" rel="noopener noreferrer" className="hover:text-accent">Essencial — R$29,90/mês</a></li>
                 <li><a href={KIWIFY_LINKS.freelancer} target="_blank" rel="noopener noreferrer" className="hover:text-accent">Freelancer — R$39,90/mês</a></li>
-                <li><a href={KIWIFY_LINKS.agency} target="_blank" rel="noopener noreferrer" className="hover:text-accent">Agência — R$149,90</a></li>
+                <li><Link href="/login" className="hover:text-accent">Agência — Grátis (comissão sobre vendas)</Link></li>
               </ul>
             </div>
             <div>

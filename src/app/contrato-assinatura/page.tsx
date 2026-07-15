@@ -19,14 +19,17 @@ export default function ContratoAssinaturaPage() {
           <tr><td>Gratuito</td><td>R$0</td><td>—</td><td>1</td></tr>
           <tr><td>Essencial</td><td>R$29,90/mês</td><td>Recorrente mensal</td><td>20 (site extra: R$5,00)</td></tr>
           <tr><td>Freelancer</td><td>R$39,90/mês</td><td>Recorrente mensal</td><td>20</td></tr>
-          <tr><td>Agência</td><td>R$149,90</td><td>Pagamento único</td><td>100</td></tr>
+          <tr><td>Agência</td><td>Grátis</td><td>Comissão sobre vendas (30% Toqy / 70% revendedor)</td><td>100</td></tr>
         </tbody>
       </table>
       <p>
         <strong>Atenção:</strong> os planos Essencial e Freelancer são assinaturas com cobrança recorrente
-        mensal. Apenas o plano Agência continua sendo pagamento único, com acesso liberado indefinidamente
-        aos recursos do plano contratado — as seções 3, 5, 6 e 8 abaixo (cobrança recorrente, cancelamento
-        de renovação, reajuste, inadimplência) se aplicam aos planos Essencial e Freelancer.
+        mensal — as seções 3, 5, 6 e 8 abaixo (cobrança recorrente, cancelamento de renovação, reajuste,
+        inadimplência) se aplicam a eles. O plano Agência não tem cobrança nenhuma — o acesso é gratuito,
+        e o Toqy recebe 30% de comissão sobre as vendas que o próprio revendedor fizer para os clientes
+        dele (pagos automaticamente via programa de Afiliados da Kiwify), não do revendedor para o Toqy.
+        As disposições de cobrança, cancelamento, reajuste e reembolso deste contrato não se aplicam ao
+        plano Agência, por não haver pagamento do revendedor ao Toqy.
       </p>
       <p>
         <strong>Acesso vitalício de quem já era assinante Freelancer:</strong> se você contratou o plano
@@ -52,11 +55,11 @@ export default function ContratoAssinaturaPage() {
       <p>
         Conforme o art. 49 do Código de Defesa do Consumidor, você tem o direito de <strong>desistir da
         contratação em até 7 (sete) dias corridos</strong> a partir da data de adesão a qualquer plano pago
-        (Essencial, Freelancer ou Agência), com <strong>reembolso integral</strong> do valor pago, sem
+        (Essencial ou Freelancer), com <strong>reembolso integral</strong> do valor pago, sem
         necessidade de justificativa. Para exercer esse direito, entre em contato em
-        leonardomarusso1@gmail.com dentro desse prazo.
+        leonardomarusso1@gmail.com dentro desse prazo. O plano Agência é gratuito — não há valor pago pelo
+        revendedor ao Toqy, logo nenhuma hipótese de reembolso se aplica a ele.
       </p>
-      <p>Após esse prazo, o plano de pagamento único (Agência) não tem reembolso.</p>
 
       <h2>5. Cancelamento (planos Essencial e Freelancer)</h2>
       <p>
