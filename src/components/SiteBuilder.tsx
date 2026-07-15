@@ -176,14 +176,22 @@ function BulkCatalogPhotoAdd({ slug, catalog, onAdd }: { slug: string; catalog: 
   const inputRef = useRef<HTMLInputElement>(null);
   const [category, setCategory] = useState(existingCategories[0] ?? "");
   const [isNewCategory, setIsNewCategory] = useState(existingCategories.length === 0);
+  const [subcategory, setSubcategory] = useState("");
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [error, setError] = useState("");
+
+  // Se a categoria escolhida já está em modo "Subcategorias", mostra o
+  // campo de subcategoria (2026-07-16) — sem isso, upload em lote nessa
+  // categoria caía sem subcategoria, virando "capa" solta em vez de entrar
+  // na subcategoria certa (ex: "Cadeiras" dentro de "Home Office").
+  const isSubcategoryMode = categoryCommonDisplaySection(catalog, category) === "subcategorias";
 
   async function handleFiles(fileList: FileList | null) {
     const files = Array.from(fileList ?? []);
     if (!files.length) return;
     if (!category.trim()) { setError("Escolha ou digite o nome da categoria primeiro."); return; }
+    if (isSubcategoryMode && !subcategory.trim()) { setError("Digite a subcategoria (ex: Cadeiras) primeiro."); return; }
     setError("");
     setUploading(true);
     setProgress({ done: 0, total: files.length });
@@ -210,6 +218,7 @@ function BulkCatalogPhotoAdd({ slug, catalog, onAdd }: { slug: string; catalog: 
           actionLabel: "",
           actionUrl: "",
           ...(displaySection ? { displaySection } : {}),
+          ...(isSubcategoryMode && subcategory.trim() ? { subcategory: subcategory.trim() } : {}),
         });
       } catch {
         // Uma foto falhando no upload não derruba as outras — segue o lote.
@@ -252,7 +261,7 @@ function BulkCatalogPhotoAdd({ slug, catalog, onAdd }: { slug: string; catalog: 
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          disabled={uploading || !category.trim()}
+          disabled={uploading || !category.trim() || (isSubcategoryMode && !subcategory.trim())}
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-accent px-4 py-2.5 text-sm font-black text-accent-dim transition hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Images className="h-4 w-4" />}
@@ -260,6 +269,14 @@ function BulkCatalogPhotoAdd({ slug, catalog, onAdd }: { slug: string; catalog: 
         </button>
         <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
       </div>
+      {isSubcategoryMode ? (
+        <input
+          className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm font-black text-ink outline-none focus:border-accent"
+          placeholder="Subcategoria (ex: Cadeiras, Mesas, Estantes)"
+          value={subcategory}
+          onChange={(e) => setSubcategory(e.target.value)}
+        />
+      ) : null}
       {isNewCategory && existingCategories.length > 0 ? (
         <button type="button" onClick={() => { setIsNewCategory(false); setCategory(existingCategories[0]); }} className="mt-2 text-xs font-bold text-accent-dim underline">Usar categoria existente</button>
       ) : null}
