@@ -116,15 +116,64 @@ Copiar o ângulo que já vende no Brasil (Consultor GMN), não inventar um novo:
   convertidas), com link pro contato da pessoa — vira prova social pra ela E gera
   mais um motivo pra usar o link de indicação que já existe.
 
-### E) Pergunta em aberto pro Leonardo (decisão de negócio, não técnica)
+### E.1) DECISÃO CONFIRMADA (2026-07-16): Agência vira revenue-share, não mensalidade
 
-A pesquisa é unânime: em TODO exemplo estudado, a receita real é 100% recorrente
-— nenhuma dessas plataformas de referência vende "pagamento único" como produto
-principal. O Toqy hoje tem Freelancer e Agência como pagamento único. Vale
-considerar, a médio prazo, migrar (ou pelo menos oferecer como alternativa) esses
-dois pra recorrência também — não é uma mudança técnica pequena (Kiwify,
-contrato de assinatura, comunicação pros clientes que já compraram), por isso
-fica registrado aqui como decisão a amadurecer, não algo a implementar agora.
+Correção sobre a decisão E abaixo — o Leonardo refinou: pra Agência (o tier
+white-label) especificamente, em vez de assinatura mensal, o modelo vira
+**acesso gratuito à plataforma white-label + 30% de comissão pro Toqy sobre
+cada venda que o revendedor fizer pros próprios clientes (70% fica com o
+revendedor)**. Essencial continua assinatura mensal fixa (R$29,90); é só
+Agência que muda de "pagamento pela ferramenta" pra "comissão sobre o
+resultado" — modelo de marketplace, não de SaaS fee fixo.
+
+**Por que isso é uma mudança grande, não só de preço** (registrado aqui pra
+não ser subestimado quando a fase de Planos/Preços for planejada de verdade):
+- Hoje, quem compra Agência é o próprio revendedor pagando o Toqy — os
+  CLIENTES FINAIS do revendedor nunca pagam nada direto pro Toqy. Pra ter 30%
+  de comissão de verdade (não "confiar na palavra"), o pagamento do cliente
+  final precisa passar pelo checkout do Toqy de algum jeito — reabre a
+  pergunta técnica real: como o dinheiro entra?
+  - Opção A: Kiwify tem "coprodução" (split de receita nativo entre produtor
+    principal e coprodutor) — precisa confirmar se dá pra configurar 70/30
+    dinâmico por revendedor, ou se é fixo por produto cadastrado manualmente
+  - Opção B: gateway próprio com split automático (Pagar.me, Asaas com
+    sub-contas, Stripe Connect) — mais controle, mais trabalho de integração
+  - Opção C: o revendedor cobra o cliente dele por fora (Pix direto, etc.) e
+    reporta/paga os 30% pro Toqy manualmente — mais simples de construir,
+    mas depende de confiança/honestidade, sem trava técnica real
+- Precisa definir exatamente **o que conta como "um serviço vendido"** —
+  é quando o cliente final assina um plano Toqy através do revendedor? É
+  quando o revendedor vende uma plaquinha física? Os dois? Isso muda o
+  desenho de dados e de onde o tracking de venda acontece.
+
+**Fica registrado como decisão de produto CONFIRMADA, mas com desenho técnico
+ainda em aberto** — vira sua própria fase no ROADMAP.md (fase de Revenue
+Share), não é uma mudança de 1 linha de preço.
+
+### E) DECISÃO CONFIRMADA (2026-07-16): todos os planos pagos viram assinatura mensal
+
+Era pergunta em aberto nesta mesma nota — o Leonardo confirmou: "todos depois
+tem que ser assinatura mensal". Bate exatamente com o padrão de mercado
+pesquisado (em TODO exemplo estudado — GoHighLevel, Vendasta — a receita real é
+100% recorrente, nenhuma delas vende pagamento único como produto principal).
+
+Freelancer e Agência (hoje pagamento único via Kiwify) precisam virar assinatura
+mensal. Implicações técnicas reais, não só de preço:
+- Novos produtos recorrentes na Kiwify pra Freelancer e Agência (os produtos
+  atuais são pagamento único — não dá pra só mudar o preço do mesmo produto)
+- `contrato-assinatura/page.tsx` reescrito — hoje o texto é explícito que só
+  Essencial é recorrente ("apenas o plano Essencial é uma assinatura... os
+  planos Freelancer e Agência são pagamento único")
+- Quem JÁ comprou Freelancer/Agência como pagamento único precisa continuar
+  com acesso vitalício (não pode virar cobrança recorrente pra quem não
+  assinou isso) — precisa de um flag tipo `legacy_one_time_purchase` no
+  profile pra não confundir com quem entrar depois já na assinatura
+- `kiwify/webhook/route.ts` (`resolvePlan`) precisa reconhecer os novos
+  produtos recorrentes
+- Preço pode (deve?) ser recalculado pra fazer sentido como mensal — R$59,90
+  e R$149,90 como preço de assinatura mensal provavelmente precisam ser bem
+  mais baixos que o preço de pagamento único atual (decisão de preço, não só
+  de mecanismo de cobrança — fica pra planejamento da Fase de Planos/Preços).
 
 ## Próximos passos sugeridos (em ordem de esforço crescente)
 
