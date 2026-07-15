@@ -107,6 +107,49 @@ function updateCatalogItem(items: CatalogItem[], index: number, patch: Partial<C
   return items.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item);
 }
 
+// Exibição por categoria, não por item (2026-07-16) — correção de bug real
+// reportado por cliente: existia um seletor "Onde aparece no bio site"
+// DENTRO de cada produto (repetido foto por foto), que além de redundante
+// (a intenção é a MESMA foto por foto de uma mesma categoria) também
+// disparava uma mudança silenciosa em TODO o catálogo (ver
+// hasCustomSections em PublicBioSite.tsx) assim que qualquer item ganhava
+// um valor diferente de "padrão" — confuso e imprevisível. Agora a escolha
+// é feita UMA VEZ por categoria aqui, e aplica a todos os itens dela de
+// uma vez (exceto os marcados individualmente como "Destaque" — esse
+// continua sendo uma exceção por item, não por categoria).
+function categoryCommonDisplaySection(catalog: CatalogItem[], category: string): string {
+  const sibling = catalog.find((i) => i.category?.trim() === category.trim() && i.displaySection !== "destaque");
+  return sibling?.displaySection ?? "padrao";
+}
+
+function CatalogCategoryDisplayControl({ catalog, onChangeCategory }: { catalog: CatalogItem[]; onChangeCategory: (category: string, mode: string) => void }) {
+  const categories = Array.from(new Set(catalog.map((i) => i.category?.trim()).filter((c): c is string => Boolean(c))));
+  if (categories.length === 0) return null;
+  return (
+    <div className="mt-4 rounded-3xl border border-border bg-surface p-4">
+      <p className="text-sm font-black text-ink">Exibição por categoria</p>
+      <p className="mt-1 text-xs text-muted">Escolha como cada categoria aparece — vale pra todas as fotos dela de uma vez, não precisa configurar foto por foto.</p>
+      <div className="mt-3 grid gap-2">
+        {categories.map((cat) => (
+          <div key={cat} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2.5">
+            <span className="text-sm font-black text-ink">{cat}</span>
+            <select
+              className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs font-black text-ink outline-none focus:border-accent"
+              value={categoryCommonDisplaySection(catalog, cat)}
+              onChange={(e) => onChangeCategory(cat, e.target.value)}
+            >
+              <option value="padrao">Capa + clique abre galeria</option>
+              <option value="carrossel">Carrossel — desliza todas as fotos</option>
+              <option value="grade">Grade — todas, 2 por linha</option>
+              <option value="lista">Lista — todas, uma embaixo da outra</option>
+            </select>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Adicionar várias fotos de uma vez numa categoria (2026-07-16) — pedido
 // real de cliente: categoria com várias fotos (ex: "Diretoria") não deveria
 // exigir repetir "Adicionar item" + preencher nome/descrição pra cada foto.
@@ -791,6 +834,17 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             ) : null}
           </div>
 
+          <CatalogCategoryDisplayControl
+            catalog={site.catalog}
+            onChangeCategory={(cat, mode) => update((s) => ({
+              ...s,
+              catalog: s.catalog.map((i) => i.category?.trim() === cat && i.displaySection !== "destaque"
+                ? { ...i, displaySection: mode === "padrao" ? undefined : mode }
+                : i
+              ),
+            }))}
+          />
+
           <div className="mt-5 grid gap-4">
             {site.catalog.map((item, index) => (
               <article key={item.id} className="rounded-3xl border border-border bg-card p-4 shadow-sm">
@@ -800,10 +854,27 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                     <button type="button" disabled={index === 0} onClick={() => update((s) => { const c = [...s.catalog]; [c[index-1],c[index]] = [c[index],c[index-1]]; return {...s,catalog:c}; })} className="rounded-lg border border-border p-1.5 text-muted hover:text-ink disabled:opacity-30"><ArrowUp className="h-3.5 w-3.5" /></button>
                     <button type="button" disabled={index === site.catalog.length-1} onClick={() => update((s) => { const c = [...s.catalog]; [c[index],c[index+1]] = [c[index+1],c[index]]; return {...s,catalog:c}; })} className="rounded-lg border border-border p-1.5 text-muted hover:text-ink disabled:opacity-30"><ArrowDown className="h-3.5 w-3.5" /></button>
                     <span className="text-xs font-bold text-muted">#{index + 1}</span>
-                    {item.featured ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-black text-amber-700">Destaque</span> : null}
+                    {item.displaySection === "destaque" ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-black text-amber-700">Destaque</span> : null}
                   </div>
                   <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-1.5 text-xs font-black text-ink"><input type="checkbox" checked={item.featured ?? false} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { featured: e.target.checked }) }))} />Destaque</label>
+                    <label className="flex items-center gap-1.5 text-xs font-black text-ink">
+                      <input
+                        type="checkbox"
+                        checked={item.displaySection === "destaque"}
+                        onChange={(e) => update((s) => ({
+                          ...s,
+                          catalog: updateCatalogItem(s.catalog, index, {
+                            displaySection: e.target.checked
+                              ? "destaque"
+                              : (() => {
+                                  const mode = categoryCommonDisplaySection(s.catalog, item.category ?? "");
+                                  return mode === "padrao" ? undefined : mode;
+                                })(),
+                          }),
+                        }))}
+                      />
+                      Destaque
+                    </label>
                     <label className="flex items-center gap-1.5 text-xs font-black text-ink"><input type="checkbox" checked={item.enabled} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { enabled: e.target.checked }) }))} />Ativo</label>
                     <button type="button" onClick={() => update((s) => ({ ...s, catalog: s.catalog.filter((_, i) => i !== index) }))} className="rounded-xl border border-red-100 bg-red-50 px-2.5 py-1.5 text-red-500 hover:bg-red-100"><Trash2 className="h-3.5 w-3.5" /></button>
                   </div>
@@ -811,17 +882,10 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 <div className="grid gap-3 md:grid-cols-2">
                   <label><span className={label}>Nome (opcional — deixe vazio pra só foto)</span><input className={field} placeholder="Ex: Corte degradê" value={item.name} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { name: e.target.value }) }))} /></label>
                   <label><span className={label}>Categoria</span><input className={field} placeholder="Ex: Cortes social" value={item.category ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { category: e.target.value }) }))} /></label>
-                  <label>
-                    <span className={label}>Onde aparece no bio site</span>
-                    <select className={field} value={item.displaySection ?? "padrao"} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { displaySection: e.target.value }) }))}>
-                      <option value="padrao">Seguir layout geral (padrão)</option>
-                      <option value="carrossel">Carrossel — arrasta para o lado</option>
-                      <option value="grade">Grade — dois por linha</option>
-                      <option value="lista">Lista — um embaixo do outro</option>
-                      <option value="destaque">Destaque — aparece primeiro, maior</option>
-                    </select>
-                    <p className="mt-1 text-xs text-muted">Este item vai aparecer neste formato específico, independente dos outros.</p>
-                  </label>
+                  {/* "Onde aparece no bio site" por item foi removido (2026-07-16)
+                      — virou "Exibição por categoria" acima, uma escolha só
+                      pra categoria inteira. O checkbox "Destaque" (no header
+                      do item) continua sendo a única exceção por item. */}
                   {/* Preço com R$ automático */}
                   <label>
                     <span className={label}>Preço</span>

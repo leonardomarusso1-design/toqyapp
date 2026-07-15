@@ -67,7 +67,6 @@ export type CatalogItem = {
   enabled: boolean;
   actionLabel?: string;
   actionUrl?: string;
-  featured?: boolean;
   highlight?: string;
   order?: number;
   displaySection?: string;
