@@ -45,7 +45,8 @@ export async function POST(request: Request) {
   // falha o insert da segunda (constraint), sem quebrar o fluxo: a leitura
   // de reseller_code abaixo mira por profile_id, não pelo retorno do insert.
   if (!existing) {
-    await supabase.from("toqy_resellers").insert({ profile_id: userId, commission_pct: RESELLER_TIERS[tier].commissionPct });
+    const { error: insertErr } = await supabase.from("toqy_resellers").insert({ profile_id: userId, commission_pct: RESELLER_TIERS[tier].commissionPct });
+    if (insertErr) console.error("[resellers/ensure] insert failed:", insertErr);
   } else {
     // Mantém commission_pct em dia se o plano mudou de tier desde a última
     // chamada (ex: Freelancer virou Agência) — só o número aqui, o valor
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
         .update({ reseller_code: code, updated_at: new Date().toISOString() })
         .eq("profile_id", userId);
       if (!error) { resellerCode = code; break; }
+      console.error("[resellers/ensure] reseller_code update attempt failed:", error);
     }
     if (!resellerCode) return Response.json({ error: "Não foi possível gerar um código de indicação." }, { status: 500 });
   }
