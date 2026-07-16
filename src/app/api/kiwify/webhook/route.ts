@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer";
 import { getKiwifySale } from "@/lib/kiwifyApi";
 import { resolvePlan, shouldDowngradeOnCancel, resolveAttributionStatus } from "./webhookLogic";
+import { RESELLER_TIERS, resolveResellerTier } from "@/lib/resellerTiers";
 
 // Verificação leve de autenticidade — OPCIONAL, só entra em vigor se
 // KIWIFY_WEBHOOK_TOKEN estiver configurada (sem isso, comportamento
@@ -116,10 +117,13 @@ export async function POST(request: Request) {
         }
       }
 
-      // Comissão de revenda (Fase 2 do roadmap, 2026-07-16) — só relevante
-      // se o comprador for um cliente gerenciado por um revendedor Agência.
-      // Nunca deixa falha aqui quebrar o webhook (plano já foi concedido
-      // acima) — qualquer erro só é logado pra reconciliação manual.
+      // Programa de indicação com comissão (2026-07-15, substitui o desenho
+      // "Agência grátis + revenda 30/70" — ver histórico em
+      // subscriptions.ts) — relevante se o comprador for um cliente
+      // gerenciado por um revendedor Freelancer ou Agência (não mais
+      // restrito a Agência). Nunca deixa falha aqui quebrar o webhook
+      // (plano já foi concedido acima) — qualquer erro só é logado pra
+      // reconciliação manual.
       try {
         const { data: managedClient } = await supabase
           .from("toqy_managed_clients")
@@ -142,6 +146,18 @@ export async function POST(request: Request) {
               saleDetail.affiliate_commission.id
             );
 
+            // Bônus de bio site (2026-07-15) — só na PRIMEIRA venda
+            // registrada pra este cliente gerenciado (não em renovações
+            // mensais) — checa ANTES do upsert pra não contar a própria
+            // linha que estamos prestes a gravar. Tamanho do bônus (+1
+            // Freelancer / +2 Agência) vem do plano ATUAL do revendedor no
+            // momento da venda, não de quando ele entrou no programa.
+            const { count: existingSalesCount } = await supabase
+              .from("toqy_commission_ledger")
+              .select("id", { count: "exact", head: true })
+              .eq("managed_client_id", managedClient.id);
+            const isFirstSaleForClient = (existingSalesCount ?? 0) === 0;
+
             await supabase.from("toqy_commission_ledger").upsert({
               managed_client_id: managedClient.id,
               reseller_profile_id: managedClient.reseller_profile_id,
@@ -156,6 +172,28 @@ export async function POST(request: Request) {
               raw_sale_detail: saleDetail,
               occurred_at: new Date().toISOString(),
             }, { onConflict: "kiwify_order_id" });
+
+            if (isFirstSaleForClient) {
+              // Soma em referral_bonus_biosites (mesma coluna do programa
+              // geral de indicação, +3 fixo) — NÃO em biosites_limit
+              // diretamente, que é sobrescrito (não somado) toda vez que o
+              // plano do próprio revendedor renova (ver bloco isApproved
+              // acima). planLimits.ts já soma biosites_limit +
+              // referral_bonus_biosites pro limite real — reusar a mesma
+              // coluna evita apagar o bônus na próxima renovação.
+              const { data: resellerProfile } = await supabase
+                .from("profiles")
+                .select("plan_toqy, referral_bonus_biosites")
+                .eq("id", managedClient.reseller_profile_id)
+                .maybeSingle();
+              const resellerTier = resolveResellerTier(resellerProfile?.plan_toqy);
+              if (resellerTier) {
+                const bonus = RESELLER_TIERS[resellerTier].bonusSites;
+                await supabase.from("profiles")
+                  .update({ referral_bonus_biosites: (resellerProfile?.referral_bonus_biosites ?? 0) + bonus })
+                  .eq("id", managedClient.reseller_profile_id);
+              }
+            }
           }
         }
       } catch (err) {

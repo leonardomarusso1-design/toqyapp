@@ -77,12 +77,14 @@ const plans = [
   { name: "Gratuito", price: "R$0", period: "", tag: "Pra testar", description: "Para conhecer a plataforma e gerar seus primeiros leads.", highlight: false, cta: "Começar grátis", items: ["1 bio site", "Domínio toqy.app/seunome", "QR Code básico", "Preview em tempo real", "Marca TOQY na página"] },
   { name: "Essencial", price: "R$29,90", period: "/mês", tag: "Menor investimento pra começar", description: "As mesmas 20 bio sites do Freelancer, mensal, cancele quando quiser.", highlight: true, cta: "Assinar agora", items: ["Até 20 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "★ QR personalizado editável", "★ Gerador de arte com IA (5 créditos)", "Suporte por email", "Cancele quando quiser"] },
   { name: "Freelancer", price: "R$39,90", period: "/mês", tag: "Mais recursos, suporte prioritário", description: "Para quem cria pra clientes com mais frequência — mais créditos de arte e suporte prioritário. Mensal, cancele quando quiser.", highlight: false, cta: "Assinar agora", items: ["Até 20 bio sites", "Pix e Wi-Fi", "Catálogo completo", "★ QR personalizado editável", "★ Gerador de arte com IA (10 créditos)", "Suporte prioritário", "Cancele quando quiser"] },
-  // price/period (2026-07-15): "70% pra você" em vez de "Grátis" — com
-  // "Gratuito" logo ali do lado mostrando "R$0", dois cards com preço
-  // grande escrito "grátis" liam como a mesma oferta duas vezes. 70% (o que
-  // o revendedor fica) comunica o modelo de comissão na mesma hierarquia
-  // visual de um preço, sem precisar redesenhar a seção (isso é Fase 3).
-  { name: "Agência", price: "70%", period: " pra você", tag: "Revenda com comissão", description: "Acesso gratuito à plataforma white-label + 30% de comissão pro Toqy sobre cada venda sua (70% fica com você).", highlight: false, cta: "Virar revendedor", items: ["Até 100 bio sites", "★ QR personalizado editável", "★ Gerador de arte com IA", "White label parcial", "Domínio próprio", "Gestão de equipe"] },
+  // Voltou a ser paga (2026-07-15, mesmo dia) — o desenho "Agência grátis +
+  // revenda 30/70" tinha um furo real: qualquer assinante pagante viraria
+  // revendedor de graça sem nunca precisar revender nada. Ver histórico
+  // completo em src/lib/subscriptions.ts (comentário de SUBSCRIPTION_PLANS
+  // .agency). O programa de indicação com comissão continua existindo,
+  // agora como benefício de quem já é Freelancer/Agência pagante — não
+  // mais como a própria razão de existir do plano.
+  { name: "Agência", price: "R$99,90", period: "/mês", tag: "Pra escalar em equipe", description: "Para equipes e agências em escala. 100 bio sites, 50 créditos de arte, tudo do Freelancer e mais.", highlight: false, cta: "Assinar agora", items: ["Até 100 bio sites", "★ QR personalizado editável", "★ Gerador de arte com IA (50 créditos)", "White label parcial", "Domínio próprio", "Gestão de equipe", "Indique e ganhe 30% de comissão"] },
 ] as const;
 
 const featureShowcase = [
@@ -503,11 +505,10 @@ export default async function LandingPage() {
                   );
                 })}
               </div>
-              {/* Agência (2026-07-15): sem checkout Kiwify — vira gratuita
-                  (revenue-share, ver src/lib/subscriptions.ts), então o CTA
-                  aponta pro /login como Gratuito, navegação interna, não
-                  nova aba. */}
-              <a href={plan.name === "Essencial" ? KIWIFY_LINKS.community : plan.name === "Freelancer" ? KIWIFY_LINKS.freelancer : "/login"} target={plan.name === "Gratuito" || plan.name === "Agência" ? undefined : "_blank"} rel={plan.name === "Gratuito" || plan.name === "Agência" ? undefined : "noreferrer noopener"} className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}>
+              {/* Agência volta a ter checkout Kiwify (2026-07-15, ver
+                  comentário no array `plans` acima) — mesmo tratamento dos
+                  outros planos pagos, nova aba pro checkout. */}
+              <a href={plan.name === "Essencial" ? KIWIFY_LINKS.community : plan.name === "Freelancer" ? KIWIFY_LINKS.freelancer : plan.name === "Agência" ? KIWIFY_LINKS.agency : "/login"} target={plan.name === "Gratuito" ? undefined : "_blank"} rel={plan.name === "Gratuito" ? undefined : "noreferrer noopener"} className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}>
                 {plan.cta}
               </a>
             </article>
@@ -641,7 +642,7 @@ export default async function LandingPage() {
                 <li><Link href="/login" className="hover:text-accent">Gratuito</Link></li>
                 <li><a href={KIWIFY_LINKS.community} target="_blank" rel="noopener noreferrer" className="hover:text-accent">Essencial — R$29,90/mês</a></li>
                 <li><a href={KIWIFY_LINKS.freelancer} target="_blank" rel="noopener noreferrer" className="hover:text-accent">Freelancer — R$39,90/mês</a></li>
-                <li><Link href="/login" className="hover:text-accent">Agência — Grátis (comissão sobre vendas)</Link></li>
+                <li><a href={KIWIFY_LINKS.agency} target="_blank" rel="noopener noreferrer" className="hover:text-accent">Agência — R$99,90/mês</a></li>
               </ul>
             </div>
             <div>

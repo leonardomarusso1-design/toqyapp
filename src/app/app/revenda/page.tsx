@@ -1,17 +1,23 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Copy, Handshake, Loader2, Mail, Users, Wallet } from "lucide-react";
+import { Copy, Handshake, Loader2, Mail, RefreshCw, Users, Wallet } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { supabase } from "@/lib/supabaseClient";
 import { formatPrice } from "@/lib/subscriptions";
+import type { ResellerTier, ResellerTierConfig } from "@/lib/resellerTiers";
 
-type Reseller = {
-  reseller_code: string | null;
-  status: "pending_invite" | "active" | "suspended";
-  kiwify_affiliate_id: string | null;
-  commission_pct: number;
-};
+type EnsureResponse =
+  | { eligible: false }
+  | {
+      eligible: true;
+      tier: ResellerTier;
+      reseller_code: string;
+      status: "pending_invite" | "active" | "suspended";
+      kiwify_affiliate_id: string | null;
+      tierConfig: ResellerTierConfig;
+    };
 
 type ManagedClient = {
   id: string;
@@ -29,25 +35,26 @@ type CommissionRow = {
   occurred_at: string | null;
 };
 
-// Revenue Share — Agência (Fase 2 do roadmap, 2026-07-15) — painel do
-// revendedor. Segue o mesmo padrão de src/app/app/clientes/page.tsx
-// (sessão client-side, queries direto no Supabase). Leitura das 3 tabelas
-// novas funciona sob as RLS policies de owner-read já existentes (ver
-// supabase/migrations/2026-07-16_agency_revenue_share.sql) — sem precisar
-// de service role.
+// Programa de indicação com comissão (2026-07-15) — painel do revendedor.
+// Substitui o desenho anterior "vire revendedor grátis" (ver histórico em
+// subscriptions.ts): agora é um benefício automático de quem JÁ é
+// Freelancer ou Agência pagante, não uma ação de upgrade. Elegibilidade e
+// código são resolvidos por POST /api/resellers/ensure (idempotente,
+// chamado sempre que a página carrega).
 export default function RevendaPage() {
   const [loading, setLoading] = useState(true);
   const [accessToken, setAccessToken] = useState("");
   const [origin, setOrigin] = useState("");
-  const [isAgency, setIsAgency] = useState(false);
-  const [joining, setJoining] = useState(false);
-  const [reseller, setReseller] = useState<Reseller | null>(null);
+  const [ensureData, setEnsureData] = useState<EnsureResponse | null>(null);
+  const [bonusSitesEarned, setBonusSitesEarned] = useState(0);
   const [managedClients, setManagedClients] = useState<ManagedClient[]>([]);
   const [commissions, setCommissions] = useState<CommissionRow[]>([]);
   const [copied, setCopied] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
   const [inviteMessage, setInviteMessage] = useState("");
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState("");
 
   async function loadAll() {
     setOrigin(window.location.origin);
@@ -55,17 +62,17 @@ export default function RevendaPage() {
     if (!session) { setLoading(false); return; }
     setAccessToken(session.access_token);
 
-    const { data: profile } = await supabase.from("profiles").select("plan_toqy").eq("id", session.user.id).maybeSingle();
-    const agency = profile?.plan_toqy === "agency";
-    setIsAgency(agency);
+    const ensureRes = await fetch("/api/resellers/ensure", { method: "POST", headers: { Authorization: `Bearer ${session.access_token}` } });
+    const ensure = (await ensureRes.json().catch(() => ({ eligible: false }))) as EnsureResponse;
+    setEnsureData(ensure);
 
-    if (agency) {
-      const [{ data: resellerRow }, { data: clients }, { data: ledger }] = await Promise.all([
-        supabase.from("toqy_resellers").select("reseller_code, status, kiwify_affiliate_id, commission_pct").eq("profile_id", session.user.id).maybeSingle(),
+    if (ensure.eligible) {
+      const [{ data: profile }, { data: clients }, { data: ledger }] = await Promise.all([
+        supabase.from("profiles").select("referral_bonus_biosites").eq("id", session.user.id).maybeSingle(),
         supabase.from("toqy_managed_clients").select("id, invite_email, status, created_at").eq("reseller_profile_id", session.user.id).order("created_at", { ascending: false }),
         supabase.from("toqy_commission_ledger").select("id, product_name, sale_amount_cents, commission_amount_cents, attribution_status, occurred_at").eq("reseller_profile_id", session.user.id).order("occurred_at", { ascending: false }),
       ]);
-      setReseller(resellerRow ?? null);
+      setBonusSitesEarned(profile?.referral_bonus_biosites ?? 0);
       setManagedClients(clients ?? []);
       setCommissions(ledger ?? []);
     }
@@ -74,28 +81,35 @@ export default function RevendaPage() {
 
   useEffect(() => { loadAll(); }, []);
 
-  async function joinAsReseller() {
-    setJoining(true);
-    try {
-      const res = await fetch("/api/resellers/join", { method: "POST", headers: { Authorization: `Bearer ${accessToken}` } });
-      if (res.ok) await loadAll();
-    } finally {
-      setJoining(false);
-    }
-  }
-
   async function copyLink() {
-    if (!reseller?.reseller_code) return;
-    const link = `${origin}/login?revenda=${reseller.reseller_code}`;
+    if (!ensureData?.eligible) return;
+    const link = `${origin}/login?revenda=${ensureData.reseller_code}`;
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // navigator.clipboard pode recusar silenciosamente (contexto sem
-      // permissão, iframe, navegador antigo) — fallback: seleciona o texto
-      // pra copiar manual, já que window.prompt não é bloqueado por permissão.
+      // permissão, iframe, navegador antigo) — fallback: window.prompt não
+      // é bloqueado por permissão, dá pra copiar manual.
       window.prompt("Copie o link:", link);
+    }
+  }
+
+  async function syncAffiliate() {
+    setSyncing(true);
+    setSyncMessage("");
+    try {
+      const res = await fetch("/api/resellers/sync-affiliate", { method: "POST", headers: { Authorization: `Bearer ${accessToken}` } });
+      const body = await res.json().catch(() => ({}));
+      if (body.synced) {
+        setSyncMessage("Comissão sincronizada com sucesso!");
+        await loadAll();
+      } else {
+        setSyncMessage(body.message || body.error || "Não foi possível sincronizar agora.");
+      }
+    } finally {
+      setSyncing(false);
     }
   }
 
@@ -141,69 +155,67 @@ export default function RevendaPage() {
   return (
     <DashboardShell>
       <div>
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-accent">Revenda</p>
-        <h1 className="mt-1 text-4xl font-black text-ink">Programa de revenda Agência</h1>
-        <p className="mt-1 text-sm text-muted">Acesso gratuito à plataforma white-label + 30% de comissão pro Toqy sobre cada venda que você fizer — 70% fica com você.</p>
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-accent">Indicação</p>
+        <h1 className="mt-1 text-4xl font-black text-ink">Ganhe indicando o Toqy</h1>
+        <p className="mt-1 text-sm text-muted">Benefício de quem assina Freelancer ou Agência — comissão automática, desconto pra quem você indicar, e bio sites de bônus a cada venda.</p>
       </div>
 
-      {!isAgency ? (
-        <div className="mt-6 rounded-[2rem] border-2 border-accent bg-gradient-to-br from-accent/10 via-card to-card p-6 shadow-xl shadow-accent/10">
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-accent px-3 py-1 text-xs font-black uppercase tracking-wider text-white">Grátis</span>
-          </div>
-          <h2 className="mt-3 flex items-center gap-2 text-2xl font-black text-ink"><Handshake className="h-6 w-6 text-accent" />Torne-se um revendedor Agência</h2>
-          <p className="mt-2 text-sm text-muted">Ganhe acesso gratuito à plataforma white-label (até 100 bio sites, domínio próprio) e 30% de comissão sobre cada venda que seus clientes fizerem — a Kiwify paga automaticamente pelo seu link de afiliado.</p>
-          <button type="button" onClick={joinAsReseller} disabled={joining} className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-accent px-5 py-3 text-sm font-black text-white transition hover:bg-accent-dim disabled:opacity-50">
-            {joining ? "Ativando..." : "Virar revendedor agora"}
-          </button>
+      {!ensureData?.eligible ? (
+        <div className="mt-6 rounded-[2rem] border border-dashed border-border bg-surface p-6 text-center">
+          <Handshake className="mx-auto h-8 w-8 text-muted" />
+          <p className="mt-2 font-black text-ink">Disponível a partir do plano Freelancer</p>
+          <p className="mt-1 text-sm text-muted">Assine Freelancer (20% de comissão) ou Agência (30%) pra ganhar seu link de indicação.</p>
+          <Link href="/#planos" className="mt-4 inline-flex rounded-2xl bg-accent px-5 py-2.5 text-sm font-black text-white hover:bg-accent-dim">Ver planos</Link>
         </div>
       ) : (
         <>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
             <div className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
               <p className="flex items-center gap-2 text-sm font-black text-ink"><Wallet className="h-4 w-4 text-accent" />Total ganho</p>
               <p className="mt-2 text-3xl font-black text-ink">{formatPrice(totalEarnedCents / 100)}</p>
-              <p className="mt-1 text-xs text-muted">Comissões confirmadas ({reseller?.commission_pct ?? 70}% sobre venda dos seus clientes)</p>
+              <p className="mt-1 text-xs text-muted">{ensureData.tierConfig.commissionPct}% sobre venda dos seus indicados</p>
             </div>
             <div className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
-              <p className="flex items-center gap-2 text-sm font-black text-ink"><Users className="h-4 w-4 text-accent" />Clientes gerenciados</p>
+              <p className="flex items-center gap-2 text-sm font-black text-ink"><Users className="h-4 w-4 text-accent" />Indicados</p>
               <p className="mt-2 text-3xl font-black text-ink">{managedClients.length}</p>
               <p className="mt-1 text-xs text-muted">{managedClients.filter((c) => c.status === "active").length} ativo{managedClients.filter((c) => c.status === "active").length !== 1 ? "s" : ""}</p>
             </div>
+            <div className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
+              <p className="text-sm font-black text-ink">Bio sites de bônus</p>
+              <p className="mt-2 text-3xl font-black text-ink">+{bonusSitesEarned}</p>
+              <p className="mt-1 text-xs text-muted">+{ensureData.tierConfig.bonusSites} a cada venda confirmada</p>
+            </div>
           </div>
 
-          {reseller?.kiwify_affiliate_id ? null : (
-            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
-              ⏳ Aguardando cadastro como afiliado na Kiwify — fale com o suporte pra ativar o recebimento automático de comissão.
+          {ensureData.kiwify_affiliate_id ? (
+            <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
+              ✓ Comissão ativa na Kiwify ({ensureData.tierConfig.commissionPct}%)
+            </div>
+          ) : (
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-sm font-black text-amber-800">⏳ Falta 1 passo pra sua comissão funcionar de verdade</p>
+              <p className="mt-1 text-xs text-amber-800">Candidate-se como afiliado no link de afiliados do produto Toqy na própria Kiwify (aprovação automática) — depois volte aqui e clique em sincronizar.</p>
+              <button type="button" onClick={syncAffiliate} disabled={syncing} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-amber-800 px-4 py-2 text-xs font-black text-white disabled:opacity-50">
+                <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />{syncing ? "Sincronizando..." : "Já me candidatei, sincronizar"}
+              </button>
+              {syncMessage ? <p className="mt-2 text-xs font-bold text-amber-800">{syncMessage}</p> : null}
             </div>
           )}
 
           <div className="mt-4 rounded-[2rem] border border-border bg-card p-6 shadow-sm">
-            <p className="text-sm font-black text-ink">Seu link de revenda</p>
-            <p className="mt-1 text-xs text-muted">Compartilhe — quem se cadastrar por ele vira seu cliente gerenciado automaticamente.</p>
-            {reseller?.reseller_code ? (
-              <div className="mt-3 flex items-center gap-2 rounded-2xl border border-accent/30 bg-surface px-4 py-3">
-                <span className="flex-1 truncate text-sm font-black text-ink">{origin}/login?revenda={reseller.reseller_code}</span>
-                <button type="button" onClick={copyLink} className="shrink-0 inline-flex items-center gap-1 rounded-xl bg-accent px-4 py-2 text-xs font-black text-white hover:bg-accent-dim">
-                  <Copy className="h-3.5 w-3.5" />{copied ? "Copiado!" : "Copiar"}
-                </button>
-              </div>
-            ) : (
-              // Bug real corrigido (2026-07-15): quem já era plan_toqy='agency'
-              // ANTES de existir a rota /api/resellers/join (ex: backfill da
-              // Fase 2A) nunca tinha reseller_code gerado, e só via o botão
-              // de gerar em Estado A (plan_toqy !== 'agency') — que essas
-              // contas nunca atingem. Sem isso, o link ficava mostrando "..."
-              // pra sempre, com o botão de copiar sem nada útil pra copiar.
-              <button type="button" onClick={joinAsReseller} disabled={joining} className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-accent px-4 py-2.5 text-sm font-black text-white hover:bg-accent-dim disabled:opacity-50">
-                {joining ? "Gerando..." : "Gerar meu link de revenda"}
+            <p className="text-sm font-black text-ink">Seu link de indicação</p>
+            <p className="mt-1 text-xs text-muted">Quem se cadastrar por ele ganha {ensureData.tierConfig.buyerDiscountPct}% de desconto em qualquer plano — e vira seu indicado automaticamente.</p>
+            <div className="mt-3 flex items-center gap-2 rounded-2xl border border-accent/30 bg-surface px-4 py-3">
+              <span className="flex-1 truncate text-sm font-black text-ink">{origin}/login?revenda={ensureData.reseller_code}</span>
+              <button type="button" onClick={copyLink} className="shrink-0 inline-flex items-center gap-1 rounded-xl bg-accent px-4 py-2 text-xs font-black text-white hover:bg-accent-dim">
+                <Copy className="h-3.5 w-3.5" />{copied ? "Copiado!" : "Copiar"}
               </button>
-            )}
+            </div>
 
             <form onSubmit={inviteClient} className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
               <div className="relative flex-1 min-w-[220px]">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-                <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="E-mail do cliente" className="w-full rounded-xl border border-border bg-surface py-2 pl-9 pr-4 text-sm outline-none focus:border-accent" />
+                <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="E-mail de quem você quer indicar" className="w-full rounded-xl border border-border bg-surface py-2 pl-9 pr-4 text-sm outline-none focus:border-accent" />
               </div>
               <button type="submit" disabled={inviting} className="rounded-xl bg-ink px-4 py-2 text-xs font-black text-white disabled:opacity-50">
                 {inviting ? "Enviando..." : "Convidar"}
@@ -213,9 +225,9 @@ export default function RevendaPage() {
           </div>
 
           <div className="mt-4 rounded-[2rem] border border-border bg-card shadow-sm">
-            <p className="border-b border-border p-4 text-sm font-black text-ink">Clientes gerenciados</p>
+            <p className="border-b border-border p-4 text-sm font-black text-ink">Pessoas indicadas</p>
             {managedClients.length === 0 ? (
-              <p className="p-6 text-center text-sm text-muted">Nenhum cliente ainda — compartilhe seu link ou convide por e-mail.</p>
+              <p className="p-6 text-center text-sm text-muted">Ninguém ainda — compartilhe seu link ou convide por e-mail.</p>
             ) : (
               <div className="divide-y divide-border">
                 {managedClients.map((c) => (

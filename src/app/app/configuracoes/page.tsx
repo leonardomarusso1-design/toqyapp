@@ -9,6 +9,7 @@ import { PLAN_BIOSITE_LIMITS } from "@/lib/planLimits";
 import { KIWIFY_LINKS } from "@/lib/subscriptions";
 import { supabase } from "@/lib/supabaseClient";
 import { getOrCreateReferralCode } from "@/lib/referral";
+import { applyCoupon } from "@/lib/resellerTiers";
 
 type PlanTier = keyof typeof PLAN_BIOSITE_LIMITS;
 type Profile = {
@@ -55,6 +56,7 @@ export default function ConfiguracoesPage() {
   const [referralCode, setReferralCode] = useState("");
   const [referralCount, setReferralCount] = useState(0);
   const [copiedReferral, setCopiedReferral] = useState(false);
+  const [couponCode, setCouponCode] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -69,13 +71,18 @@ export default function ConfiguracoesPage() {
       }
       setLoading(false);
 
-      const [code, { count }] = await Promise.all([
+      const [code, { count }, couponRes] = await Promise.all([
         getOrCreateReferralCode(session.user.id, supabase),
         supabase.from("toqy_referrals").select("id", { count: "exact", head: true }).eq("referrer_profile_id", session.user.id).eq("rewarded", true),
+        // Programa de indicação com comissão (2026-07-15) — se este
+        // usuário foi indicado por um revendedor Freelancer/Agência, o
+        // cupom dele aplica desconto em qualquer plano pago que escolher.
+        fetch("/api/resellers/my-coupon", { headers: { Authorization: `Bearer ${session.access_token}` } }).then((r) => r.json()).catch(() => ({ couponCode: null })),
       ]);
       if (!active) return;
       setReferralCode(code);
       setReferralCount(count ?? 0);
+      setCouponCode(couponRes?.couponCode ?? null);
     }
     load();
     return () => { active = false; };
@@ -254,8 +261,15 @@ export default function ConfiguracoesPage() {
             <div className="mt-4 rounded-2xl border border-violet/20 bg-violet/10 p-4">
               <p className="font-black text-ink">Faça upgrade para criar mais bio sites</p>
               <p className="mt-1 text-sm text-muted">Acesse recursos avançados e crie até 20 bio sites.</p>
+              {/* Programa de indicação com comissão (2026-07-15): se esta
+                  conta foi indicada por um revendedor Freelancer/Agência,
+                  o desconto (10%/15%) já vai embutido no link via cupom
+                  Kiwify (?coupon=), aplicado automaticamente no checkout. */}
+              {couponCode ? (
+                <p className="mt-1 text-xs font-black text-emerald-600">🎉 Você tem {couponCode === "REVENDA15" ? "15%" : "10%"} de desconto aplicado automaticamente</p>
+              ) : null}
               <div className="mt-3 flex gap-2 flex-wrap">
-                <a href={PLAN_KIWIFY.community} target="_blank" className="rounded-2xl bg-violet px-4 py-2.5 text-sm font-black text-white hover:opacity-90">Essencial R$29,90</a>
+                <a href={applyCoupon(PLAN_KIWIFY.community, couponCode)} target="_blank" className="rounded-2xl bg-violet px-4 py-2.5 text-sm font-black text-white hover:opacity-90">Essencial R$29,90</a>
                 <Link href="/#planos" className="rounded-2xl border border-violet/30 px-4 py-2.5 text-sm font-black text-violet hover:bg-violet/10">Ver planos</Link>
               </div>
             </div>

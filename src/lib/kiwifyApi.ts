@@ -85,3 +85,67 @@ export async function getKiwifySale(orderId: string): Promise<KiwifySaleDetail |
 
   return res.json();
 }
+
+export type KiwifyAffiliate = {
+  affiliate_id: string;
+  name?: string;
+  email?: string;
+  commission?: number;
+  status?: string;
+  product_id?: string;
+  [key: string]: unknown;
+};
+
+// Programa de indicação com comissão (2026-07-15) — Kiwify NÃO tem endpoint
+// pra CRIAR afiliado por API (só GET /affiliates, GET /affiliates/{id} e
+// PUT /affiliates/{id} — confirmado na documentação oficial em
+// docs.kiwify.com.br/api-reference/affiliates, 2026-07-15). O revendedor
+// precisa se candidatar 1 vez no link público de afiliados do produto na
+// própria Kiwify (aprovação automática configurada por Leonardo lá, fora
+// deste código) — só DEPOIS disso essa busca por e-mail encontra o
+// affiliate_id, usado em setKiwifyAffiliateCommission() abaixo. Ver
+// POST /api/resellers/sync-affiliate.
+export async function findKiwifyAffiliateByEmail(email: string): Promise<KiwifyAffiliate | null> {
+  if (!email) return null;
+
+  const token = await getKiwifyToken();
+  if (!token) return null;
+
+  const res = await fetch(
+    `${KIWIFY_API_BASE}/affiliates?search=${encodeURIComponent(email)}`,
+    { headers: { Authorization: `Bearer ${token}`, "x-kiwify-account-id": process.env.KIWIFY_ACCOUNT_ID! } }
+  );
+  if (!res.ok) return null;
+
+  const data = await res.json();
+  const affiliates: KiwifyAffiliate[] = data?.data ?? data?.affiliates ?? (Array.isArray(data) ? data : []);
+  return affiliates.find((a) => a.email?.toLowerCase() === email.toLowerCase()) ?? affiliates[0] ?? null;
+}
+
+// Ajusta a comissão de um afiliado já existente pro valor do tier dele
+// (20% Freelancer / 30% Agência, ver src/lib/resellerTiers.ts).
+//
+// ATENÇÃO — formato do campo "commission" não confirmado com uma chamada
+// real (sem credenciais Kiwify configuradas neste ambiente pra testar, ver
+// .env.local): o exemplo da documentação mostra `{ "commission": 4600 }`
+// pra uma comissão de 46%, o que sugere percentual × 100 (2 casas
+// decimais fixas) — é a interpretação usada aqui. Testar contra a conta
+// real antes de confiar cegamente nisso; se o formato for outro, só este
+// cálculo precisa mudar.
+export async function setKiwifyAffiliateCommission(affiliateId: string, commissionPct: number): Promise<boolean> {
+  if (!affiliateId) return false;
+
+  const token = await getKiwifyToken();
+  if (!token) return false;
+
+  const res = await fetch(`${KIWIFY_API_BASE}/affiliates/${encodeURIComponent(affiliateId)}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "x-kiwify-account-id": process.env.KIWIFY_ACCOUNT_ID!,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ commission: Math.round(commissionPct * 100), status: "active" }),
+  });
+  return res.ok;
+}

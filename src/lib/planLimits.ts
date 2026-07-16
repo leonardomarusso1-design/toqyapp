@@ -28,7 +28,7 @@ export const PLAN_AI_ART_CREDITS = {
   free: 0,
   community: 5,
   freelancer: 10,
-  agency: 30,
+  agency: 50,
 } as const;
 
 type PlanTier = keyof typeof PLAN_BIOSITE_LIMITS;

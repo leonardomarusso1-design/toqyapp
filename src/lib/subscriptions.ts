@@ -158,26 +158,29 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     supportLevel: "priority",
   },
 
-  // Virou gratuita (Fase 2 do roadmap, 2026-07-15) — Agência deixou de ser
-  // vendida por preço e passou a ser "acesso gratuito à plataforma
-  // white-label + 30% de comissão pro Toqy sobre cada venda que o
-  // revendedor fizer pros próprios clientes (70% fica com ele)", paga
-  // automaticamente pela Kiwify via programa de Afiliados. Mecanismo e
-  // schema (toqy_resellers/toqy_managed_clients/toqy_commission_ledger)
-  // já implementados desde o commit 6e42618 — só a entrada gratuita
-  // (sem checkout Kiwify) e o painel do revendedor faltavam. Ver
-  // src/app/api/resellers/join/route.ts e .planning/VISION.md seção E.1.
+  // Revertido de volta pra pago (2026-07-15, mesmo dia — Leonardo percebeu
+  // um furo real no desenho "grátis + revenda": qualquer assinante
+  // Essencial/Freelancer pagante clicaria "virar revendedor" e ganharia 100
+  // bio sites + todos os recursos de graça, pra sempre, sem nunca precisar
+  // revender nada — cancelava a recorrência da Fase 1 sem gerar receita
+  // nenhuma em troca. Agência volta a ser assinatura mensal paga (preço
+  // calculado como ~67% do antigo pagamento único de R$149,90 — mesma
+  // proporção usada quando o Freelancer virou mensal, R$59,90 único →
+  // R$39,90/mês). O programa de revenda/comissão NÃO desapareceu — virou
+  // um benefício de quem já é Freelancer OU Agência pagante (não mais
+  // "torne-se Agência de graça pra revender"), ver src/lib/resellerTiers.ts
+  // e .planning/VISION.md seção E.1 (histórico da decisão anterior).
   agency: {
     id: "agency",
     name: "Agência",
     description: "Para equipes e agências em escala.",
     billingType: "recurring",
-    priceMonthly: 0,
-    priceAnnual: null,
+    priceMonthly: 99.9,
+    priceAnnual: 999,
     features: [
       "Até 100 bio sites",
       "QR personalizado editável",
-      "Gerador de arte com IA",
+      "Gerador de arte com IA (50 créditos)",
       "White label parcial",
       "Domínio próprio",
       "Gestão de equipe completa",
@@ -222,13 +225,18 @@ export const SELLABLE_PLANS: PlanType[] = ["free", "community", "freelancer", "a
 // único (gTIhv6I). Lembrar de desativar o produto antigo na Kiwify pra
 // ninguém comprar o modelo de pagamento único por engano.
 //
-// agency: removido daqui (2026-07-15) — Agência não tem mais checkout
-// Kiwify, é gratuita (ver comentário em SUBSCRIPTION_PLANS.agency acima).
-// TODO Leonardo: desativar o produto antigo de pagamento único
-// ("xFdnxvE") na Kiwify pra ninguém comprar por engano.
-export const KIWIFY_LINKS: Record<Exclude<PlanType, "free" | "agency">, string> = {
+// agency: PLACEHOLDER (2026-07-15) — Agência voltou a ser paga (R$99,90/mês,
+// ver comentário em SUBSCRIPTION_PLANS.agency), mas o produto RECORRENTE
+// ainda não existe na Kiwify (o antigo, "xFdnxvE", era pagamento único —
+// mesma situação que o Freelancer teve na Fase 1: precisa de um produto
+// novo, não dá pra só mudar o preço do existente). TODO Leonardo: criar
+// "TOQY Agência" recorrente na Kiwify e substituir o link abaixo antes de
+// publicar — enquanto isso, o CTA do card Agência na landing aponta pra
+// este placeholder e NÃO deve ir ao ar assim.
+export const KIWIFY_LINKS: Record<Exclude<PlanType, "free">, string> = {
   community: "https://pay.kiwify.com.br/12uYE0c",
   freelancer: "https://pay.kiwify.com.br/jSvUXd5",
+  agency: "https://pay.kiwify.com.br/TODO-CRIAR-PRODUTO-RECORRENTE",
 };
 
 // Resolve um valor de plano vindo do banco (profiles.plan_toqy) pra um

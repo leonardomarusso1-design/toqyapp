@@ -12,7 +12,7 @@ vez dela, não todas de uma vez — mesmo princípio do GSD (`/gsd:plan-phase N`
 ## Phases
 
 - [x] **Phase 1: Planos e Preços — recorrência total** - Freelancer migra pra assinatura mensal, novo preço, migração de quem já comprou, produtos Kiwify novos
-- [ ] **Phase 2: Revenue Share — Agência** - Agência vira gratuita + comissão 30/70, mecanismo de pagamento com split, definição do que conta como venda
+- [x] **Phase 2: Programa de Indicação com Comissão** - Freelancer/Agência ganham link de indicação (desconto pro indicado, comissão + bônus de bio site pro indicador via Kiwify Afiliados)
 - [ ] **Phase 3: Landing Page** - Reposicionamento completo em torno de "plano de negócio", nova seção de renda, cards de plano refletindo a nova estrutura
 - [ ] **Phase 4: Subsistema Google Meu Negócio** - Modo QR de avaliação dedicado + o que mais falta pra vender isso como serviço
 - [ ] **Phase 5: Subsistema Cardápio Digital** - Reposicionar catálogo existente + melhorias específicas de cardápio
@@ -34,19 +34,20 @@ vez dela, não todas de uma vez — mesmo princípio do GSD (`/gsd:plan-phase N`
   4. `contrato-assinatura/page.tsx` reflete a estrutura real (sem mencionar "pagamento único" pro Freelancer)
 **Plans**: TBD
 
-### Phase 2: Revenue Share — Agência
-**Goal**: Agência vira acesso gratuito à plataforma white-label, com 30% de comissão pro Toqy sobre cada venda do revendedor (70% fica com ele), com um mecanismo real de cobrar essa comissão (não só combinado de boca).
+### Phase 2: Programa de Indicação com Comissão (Freelancer + Agência)
+**Goal**: ~~Agência vira acesso gratuito à plataforma white-label, com 30% de comissão pro Toqy sobre cada venda do revendedor~~ — **desenho abandonado no mesmo dia** (2026-07-15): permitia qualquer assinante Essencial/Freelancer virar Agência de graça (100 bio sites, todos os recursos) sem nunca revender nada, cancelando a recorrência da Fase 1. Substituído por: Agência volta a ser assinatura paga (R$99,90/mês); quem JÁ assina Freelancer ou Agência ganha um link de indicação — indicado recebe desconto (10%/15%) em qualquer plano, indicador recebe comissão (20%/30%, via Kiwify Afiliados) + bio sites de bônus (+1/+2) por venda confirmada.
 **Depends on**: Phase 1 (mesma revisão de contrato/cobrança)
-**Requirements**: PLAN-06, PLAN-07, PLAN-08, PLAN-09
+**Requirements**: PLAN-06 a PLAN-09 (redefinidos pra refletir o novo desenho — não são mais sobre "Agência grátis")
 **Success Criteria**:
-  1. ✓ Mecanismo técnico definido e implementado: afiliados Kiwify (não coprodução — coprodução exige produto dedicado por revendedor, sem API de criação). Ver `supabase/migrations/2026-07-16_agency_revenue_share.sql` linhas 8-20.
-  2. ✓ "Uma venda" = assinatura do cliente final via revendedor, rastreada por `kiwify_order_id` único no ledger.
-  3. ✓ Quem já comprou Agência pagamento único: grandfathered (`legacy_lifetime_access`) + backfillado como revendedor `pending_invite` automaticamente.
-  4. ✓ Revendedor vê comissão/clientes no próprio painel (`/app/revenda`).
+  1. ✓ Mecanismo técnico: cupom Kiwify (`?coupon=CODIGO`) pro desconto do indicado; comissão por afiliado ajustada via API (`PUT /affiliates/{id}`) — confirmado que a Kiwify não tem endpoint de CRIAR afiliado, só listar/editar (docs.kiwify.com.br/api-reference/affiliates), então o indicador precisa se candidatar 1 vez no link público de afiliados do produto (aprovação automática configurada por Leonardo, sem trabalho manual por pessoa).
+  2. ✓ "Uma venda" = qualquer plano pago que o indicado comprar, rastreado por `kiwify_order_id` único no ledger.
+  3. ✓ Quem já comprou Agência pagamento único: continua grandfathered (`legacy_lifetime_access`).
+  4. ✓ Indicador vê comissão/indicados/bônus no próprio painel (`/app/revenda`, auto-visível pra Freelancer/Agência, sem ação de "virar revendedor").
 **Plans**:
-  - ✓ Sub-estágio A (backend) — commit `6e42618` (2026-07-15): schema (`toqy_resellers`/`toqy_managed_clients`/`toqy_commission_ledger` + RLS), webhook grava comissão com lógica de atribuição testada, backfill de revendedor legado, trigger de signup pronto pra vincular cliente↔revendedor
-  - ✓ Sub-estágio B (frontend/API) — 2026-07-15: Agência virou gratuita (sem checkout Kiwify, `src/lib/subscriptions.ts`), `POST /api/resellers/join` (virar revendedor com 1 clique) e `POST /api/resellers/clients` (convidar cliente), `reseller_code` (`src/lib/reseller.ts`, espelha `referral.ts`), captura de `?revenda=`/`managed_by_reseller_code` no signup (`login/page.tsx`), painel `/app/revenda` (nav em `DashboardShell`), landing/contrato-assinatura atualizados (sem R$149,90/checkout antigo)
-  - Pendente (manual, fora de código): Leonardo cadastra o revendedor `pending_invite` existente (e cada revendedor futuro) como afiliado na Kiwify e preenche `kiwify_affiliate_id` — sem isso a comissão não é atribuída automaticamente. Link de afiliado Kiwify (o que o revendedor passa pro cliente) também não tem campo no banco ainda — repassado manualmente por enquanto (ver comentário em `/app/revenda/page.tsx`)
+  - ✓ Sub-estágio A (backend, commit `6e42618`, 2026-07-15): schema (`toqy_resellers`/`toqy_managed_clients`/`toqy_commission_ledger` + RLS), webhook grava comissão, trigger de signup vincula cliente↔indicador
+  - ✓ Sub-estágio B v1 (Agência grátis + revenda 30/70) — **revertido no mesmo dia**, ver Goal acima
+  - ✓ Sub-estágio B v2 (desenho final, mesmo dia): `src/lib/resellerTiers.ts` (config única dos tiers), `POST /api/resellers/ensure` (auto-provisiona código pra quem já é Freelancer/Agência, sem upgrade), `POST /api/resellers/sync-affiliate` (ajusta comissão via API Kiwify), `POST /api/resellers/my-coupon` (desconto do indicado), bônus de bio site tiered no webhook (soma em `referral_bonus_biosites`, não sobrescreve `biosites_limit`), `/app/revenda` reescrito, landing/contrato-assinatura com Agência paga de novo
+  - Pendente (manual, fora de código): (a) Leonardo cria o produto recorrente "TOQY Agência" na Kiwify — `KIWIFY_LINKS.agency` está com placeholder; (b) cria os cupons `REVENDA10`/`REVENDA15` nos produtos pagos; (c) habilita aprovação automática de afiliados nos produtos; (d) `setKiwifyAffiliateCommission()` em `kiwifyApi.ts` nunca foi testado contra a API real (sem credenciais configuradas em `.env.local`) — formato exato do campo `commission` (percentual×100 vs outro) não confirmado, testar antes de confiar
 
 ### Phase 3: Landing Page
 **Goal**: A landing page para de vender "planos de bio site" e passa a vender "nível de negócio que você consegue rodar", com os planos, preços e modelo de comissão da Agência já corretos (pós Phase 1 e 2).
@@ -123,7 +124,7 @@ si, só dependem de 1), 9 por último.
 | Phase | Plans Complete | Status | Completed |
 |-------|-----------------|--------|-----------|
 | 1. Planos e Preços | 1/1 | Complete | 2026-07-15 |
-| 2. Revenue Share — Agência | 2/2 (A+B) | Complete* | 2026-07-15 |
+| 2. Programa de Indicação | 3/3 (A, B v1 revertido, B v2) | Complete* | 2026-07-15 |
 | 3. Landing Page | 0/TBD | Not started | - |
 | 4. Google Meu Negócio | 0/TBD | Not started | - |
 | 5. Cardápio Digital | 0/TBD | Not started | - |
