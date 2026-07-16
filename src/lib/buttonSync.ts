@@ -54,6 +54,7 @@ export function defaultLabelForType(type: ToqyLinkType): string {
 export const buttonTypeOptions: Array<{ type: ToqyLinkType; label: string; description: string }> = [
   { type: "whatsapp", label: "WhatsApp", description: "Abre conversa com mensagem pronta." },
   { type: "instagram", label: "Instagram", description: "Abre o perfil do Instagram." },
+  { type: "linkedin", label: "LinkedIn", description: "Abre o perfil ou página do LinkedIn." },
   { type: "phone", label: "Telefone", description: "Liga para o estabelecimento." },
   { type: "maps", label: "Como chegar", description: "Abre o Google Maps." },
   { type: "wifi", label: "Wi-Fi", description: "Mostra rede, senha e QR Code." },
@@ -67,6 +68,7 @@ export const buttonTypeOptions: Array<{ type: ToqyLinkType; label: string; descr
   { type: "youtube", label: "YouTube", description: "Abre canal ou vídeo." },
   { type: "tiktok", label: "TikTok", description: "Abre perfil ou vídeo." },
   { type: "telegram", label: "Telegram", description: "Abre conversa/canal." },
+  { type: "spotify", label: "Spotify", description: "Abre playlist, perfil ou episódio." },
   { type: "pdf", label: "PDF", description: "Abre arquivo PDF." },
   { type: "drive", label: "Drive", description: "Abre pasta/arquivo." },
   { type: "image", label: "Imagem", description: "Abre uma imagem externa." },

@@ -80,6 +80,41 @@ const PixIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// Ícones de marca reais (2026-07-16, pedido do Leonardo: "preciso dos
+// ícones originais") — path data oficial da Simple Icons (simple-icons.org,
+// licença CC0/MIT, livre pra usar logos de marca), mesmo padrão de
+// currentColor do TikTokIcon/PixIcon acima — herdam a cor do contexto
+// (branco no círculo social, cor do texto do botão grande).
+const LinkedInIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+  </svg>
+);
+
+const YouTubeIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+  </svg>
+);
+
+const TelegramIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+  </svg>
+);
+
+const SpotifyIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+  </svg>
+);
+
+const DriveIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12.01 1.485c-2.082 0-3.754.02-3.743.047.01.02 1.708 3.001 3.774 6.62l3.76 6.574h3.76c2.081 0 3.753-.02 3.742-.047-.005-.02-1.708-3.001-3.775-6.62l-3.76-6.574zm-4.76 1.73a789.828 789.861 0 0 0-3.63 6.319L0 15.868l1.89 3.298 1.885 3.297 3.62-6.335 3.618-6.33-1.88-3.287C8.1 4.704 7.255 3.22 7.25 3.214zm2.259 12.653-.203.348c-.114.198-.96 1.672-1.88 3.287a423.93 423.948 0 0 1-1.698 2.97c-.01.026 3.24.042 7.222.042h7.244l1.796-3.157c.992-1.734 1.85-3.23 1.906-3.323l.104-.167h-7.249z"/>
+  </svg>
+);
+
 const iconByType: Partial<Record<ToqyLinkType, React.ComponentType<{ className?: string }>>> = {
   whatsapp: WhatsAppIcon,
   instagram: InstagramIcon,
@@ -97,12 +132,13 @@ const iconByType: Partial<Record<ToqyLinkType, React.ComponentType<{ className?:
   email: Mail,
   menu: FileText,
   pdf: FileText,
-  drive: FileText,
+  drive: DriveIcon,
   image: ImageIcon,
   custom: LinkIcon,
-  linkedin: Globe2,
-  youtube: Globe2,
-  telegram: MessageCircle,
+  linkedin: LinkedInIcon,
+  youtube: YouTubeIcon,
+  telegram: TelegramIcon,
+  spotify: SpotifyIcon,
 };
 
 // Tipos cujo ícone é uma imagem própria já colorida (2026-07-16) — usados
@@ -174,6 +210,29 @@ function backgroundImageUrl(site: ToqySite): string | undefined {
   const plaque = site.plaqueTheme?.useSameBackground && site.plaqueTheme.backgroundImageUrl;
   const image = plaque ? site.plaqueTheme?.backgroundImageUrl : site.profile.backgroundImageUrl;
   return (site.theme.backgroundType === "image" || plaque) && image ? image : undefined;
+}
+
+// Bug real corrigido (2026-07-16): botão de link personalizado ("Link
+// personalizado"/tipo custom, sem cor de marca) caía no círculo
+// site.theme.primary + ícone site.theme.text — se os dois fossem
+// parecidos/escuros no tema daquele site (aconteceu de verdade: fundo
+// escuro + texto escuro), o ícone genérico (LinkIcon) ficava invisível,
+// virando um círculo sólido sem nada dentro. Em vez de confiar cegamente
+// em theme.text, calcula a cor de maior contraste (branco ou quase-preto)
+// contra o fundo real do círculo — garante que sempre dá pra ver alguma
+// coisa, seja qual for a combinação de cores do tema.
+function readableIconColor(bgColor: string, fallback: string): string {
+  const match = /^#?([0-9a-f]{6}|[0-9a-f]{3})$/i.exec(bgColor.trim());
+  if (!match) return fallback;
+  const hex = match[1].length === 3 ? match[1].split("").map((c) => c + c).join("") : match[1];
+  const int = parseInt(hex, 16);
+  const [r, g, b] = [(int >> 16) & 255, (int >> 8) & 255, int & 255];
+  const [rl, gl, bl] = [r, g, b].map((c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  const luminance = 0.2126 * rl + 0.7152 * gl + 0.0722 * bl;
+  return luminance > 0.45 ? "#111318" : "#ffffff";
 }
 
 function backgroundOverlayGradient(site: ToqySite): string {
@@ -508,6 +567,7 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
                 const brandColor: Record<string, string> = {
                   whatsapp: "#25D366", instagram: "#E1306C", facebook: "#1877F2",
                   tiktok: "#010101", linkedin: "#0A66C2", youtube: "#FF0000", email: "#EA4335",
+                  telegram: "#26A5E4", spotify: "#1DB954",
                 };
                 const useGlass = site.theme.socialIconStyle === "glass";
                 const isBrandType = button.type in brandColor;
@@ -538,10 +598,19 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
                 // sem cor de marca, ex: mapa/localização) E o usuário definia
                 // "Cor dos botões" como branco — branco no branco, invisível.
                 // Marcas (whatsapp/instagram/...) sempre têm fundo saturado o
-                // suficiente pra branco ficar legível; pro fallback, usa
+                // suficiente pra branco ficar legível; pro fallback, usava
                 // theme.text (a mesma cor que o usuário já ajusta pra
-                // legibilidade geral do site).
-                const iconColor = useGlass || !isBrandType ? site.theme.text : "#fff";
+                // legibilidade geral do site) — MAS theme.text podia coincidir
+                // com theme.primary no mesmo tema (caso real: link
+                // personalizado sem cor de marca virou círculo preto sem
+                // NENHUM ícone visível dentro, "AppSalão" da Studio Jessica).
+                // Agora calcula contraste de verdade contra o fundo do
+                // círculo em vez de confiar cegamente em theme.text.
+                const iconColor = useGlass
+                  ? site.theme.text
+                  : isBrandType
+                    ? "#fff"
+                    : readableIconColor(bg, site.theme.text);
                 return (
                   <button key={button.id} type="button" onClick={() => handleButton(button)} aria-label={button.label}
                     className="flex h-12 w-12 items-center justify-center rounded-full shadow-md transition active:scale-90 hover:scale-105 backdrop-blur-sm"
