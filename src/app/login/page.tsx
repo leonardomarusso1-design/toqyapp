@@ -26,6 +26,8 @@ const initialFormState: FormState = {
   cpf: '',
 };
 
+const CONSENT_ERROR = 'Você precisa aceitar os Termos de Uso e a Política de Privacidade para criar sua conta.';
+
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>('login');
@@ -33,6 +35,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   useEffect(() => {
     // Programa de indicação (2026-07-16) — captura ?ref= também aqui, caso
@@ -74,9 +77,15 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setMessage('');
     setIsSuccess(false);
+
+    if (mode === 'signup' && !acceptedTerms) {
+      setMessage(CONSENT_ERROR);
+      return;
+    }
+
+    setLoading(true);
 
     try {
       if (mode === 'login') {
@@ -323,9 +332,33 @@ export default function LoginPage() {
               </>
             )}
 
+            {isSignup && (
+              <label htmlFor="acceptedTerms" className="flex cursor-pointer items-start gap-3 text-sm font-medium text-muted">
+                <input
+                  id="acceptedTerms"
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  disabled={loading}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-border text-accent focus:ring-2 focus:ring-accent/30"
+                />
+                <span>
+                  Li e aceito os{' '}
+                  <Link href="/termos" target="_blank" className="font-bold text-ink underline underline-offset-2 hover:text-accent">
+                    Termos de Uso
+                  </Link>{' '}
+                  e a{' '}
+                  <Link href="/privacidade" target="_blank" className="font-bold text-ink underline underline-offset-2 hover:text-accent">
+                    Política de Privacidade
+                  </Link>
+                  .
+                </span>
+              </label>
+            )}
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (isSignup && !acceptedTerms)}
               className="relative flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-2xl bg-accent px-5 py-4 text-sm font-black text-white shadow-lg shadow-accent/20 transition duration-200 hover:-translate-y-0.5 hover:bg-accent-dim disabled:pointer-events-none disabled:opacity-60"
             >
               {loading ? (
