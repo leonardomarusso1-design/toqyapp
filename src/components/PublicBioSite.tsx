@@ -116,6 +116,13 @@ const SOCIAL_ICON_SIZE_CLASS: Record<"sm" | "md" | "lg", string> = {
   lg: "h-16 w-16",
 };
 
+// Tamanho do h1 (nome do negócio), 2026-07-16 — "md" é o text-2xl de sempre.
+const NAME_FONT_SIZE_CLASS: Record<"sm" | "md" | "lg", string> = {
+  sm: "text-lg",
+  md: "text-2xl",
+  lg: "text-3xl",
+};
+
 type Modal = "wifi" | "pix" | null;
 
 function radiusClass(site: ToqySite) {
@@ -431,18 +438,20 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
                 <span className="text-4xl font-black text-white">{getInitials(site.profile.name)}</span>
               )}
             </div>
-          <h1 className="mt-5 text-2xl font-black leading-tight drop-shadow-sm" style={{ color: col("name", site.theme.text), textShadow: site.theme.mode === "light" ? "none" : "0 0 10px rgba(0,0,0,0.5)" }}>{site.profile.name}</h1>
+          <h1 className={`mt-5 ${NAME_FONT_SIZE_CLASS[site.theme.nameFontSize ?? "md"]} font-black leading-tight drop-shadow-sm`} style={{ color: col("name", site.theme.text), textShadow: site.theme.mode === "light" ? "none" : "0 0 10px rgba(0,0,0,0.5)" }}>{site.profile.name}</h1>
             {site.profile.title ? <p className="mt-1 text-base font-medium" style={{ color: col("title", site.theme.muted) }}>{site.profile.title}</p> : null}
             {site.profile.location ? (
               <div className="mt-2 flex flex-col items-center gap-0.5">
               <div className="flex items-start justify-center gap-1">
                 <svg className="mt-0.5 h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" style={{ color: col("location", site.theme.muted) }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                {/* text-left (2026-07-15): com text-center, um endereço que
-                    quebra em 2 linhas fica com a 2ª linha (mais curta)
-                    centralizada sob a 1ª — visualmente longe do ícone, que só
-                    alinha com a 1ª linha. Com as linhas coladas à esquerda,
-                    ambas ficam rente ao ícone. */}
-                <p className="text-left text-sm font-semibold leading-snug" style={{ color: col("location", site.theme.muted) }}>{site.profile.location}</p>
+                {/* text-left (2026-07-15) é o padrão: com text-center, um
+                    endereço que quebra em 2 linhas fica com a 2ª linha (mais
+                    curta) centralizada sob a 1ª — visualmente longe do
+                    ícone, que só alinha com a 1ª linha. Com as linhas
+                    coladas à esquerda, ambas ficam rente ao ícone.
+                    locationAlign="center" (2026-07-16) é opt-in pra quem
+                    prefere centralizado mesmo com esse trade-off. */}
+                <p className={`${site.theme.locationAlign === "center" ? "text-center" : "text-left"} text-sm font-semibold leading-snug`} style={{ color: col("location", site.theme.muted) }}>{site.profile.location}</p>
               </div>
             </div>
             ) : null}

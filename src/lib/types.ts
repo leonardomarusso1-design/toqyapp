@@ -117,6 +117,15 @@ export type ToqySite = {
     // Facebook/localização, 2026-07-16) — só afeta esses 4 tipos, que
     // renderizam sem círculo de fundo (ver PublicBioSite.tsx IMAGE_ICON_TYPES).
     socialIconSize?: "sm" | "md" | "lg";
+    // Tamanho do nome/título principal (h1), 2026-07-16 — padrão "md" mantém
+    // o tamanho de sempre (text-2xl).
+    nameFontSize?: "sm" | "md" | "lg";
+    // Alinhamento do texto de localização, 2026-07-16 — padrão "left" mantém
+    // o comportamento de sempre (endereço de 2 linhas alinhado à esquerda,
+    // rente ao ícone — ver comentário original em PublicBioSite.tsx sobre por
+    // que "center" quebrava visualmente endereços longos). "center" é opt-in
+    // pra quem prefere o endereço centralizado mesmo com esse trade-off.
+    locationAlign?: "left" | "center";
     useBackgroundOverlay: boolean;
     // Cores granulares — opcionais, usam os valores acima como fallback
     colors?: {
