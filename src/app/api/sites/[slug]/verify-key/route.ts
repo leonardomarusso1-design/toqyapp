@@ -1,94 +1,49 @@
-import { validateClientKey, getBiositeBySlug } from "@/lib/dataProvider";
+import { getSupabaseAdmin } from "@/lib/supabaseServer";
 
 type VerifyBody = { edit_key?: string };
-type VerifyResponse = { 
-  ok: boolean; 
-  message?: string;
-  source: string;
-};
 
-/**
- * POST /api/sites/[slug]/verify-key
- * 
- * Verify client access key for editing a biosite.
- * 
- * Request: { edit_key: string }
- * Response: { ok: boolean, message?: string }
- * 
- * Security Features:
- * - Validates key format
- * - Rate limiting recommended at reverse proxy level
- * - Logs verification attempts (TODO: Phase 7)
- * - Returns 401 for security (no hints about valid keys)
- */
+// Fix de segurança real (2026-07-17, auditoria): esta rota usava
+// getBiositeBySlug()/validateClientKey() de @/lib/dataProvider, que
+// reexporta do localProvider (baseado em window.localStorage) — rodando
+// server-side, isso sempre retornava lista vazia, então a rota NUNCA
+// validava um bio site real (sempre 404). Nesse meio tempo, /me e
+// /editar/[slug] contornavam isso fazendo a checagem de chave DIRETO no
+// navegador, via supabase.from("toqy_biosites").select("...edit_key_hash"),
+// o que expunha a chave de edição (que nem é hash — texto puro, ver
+// src/lib/security.ts) pra qualquer um antes mesmo da comparação acontecer.
+// Pior: em /me, se o campo de usuário ficasse vazio, a busca rodava sem
+// filtro de slug — vazava edit_key_hash de TODOS os bio sites ativos de
+// uma vez, via RLS pública (que restringe linha, não coluna).
+//
+// Esta rota agora é a ÚNICA forma de verificar a chave: roda no servidor
+// com o client admin (service role), exige slug (elimina a busca "sem
+// filtro"), e a resposta NUNCA inclui edit_key_hash — só o site_data
+// necessário pra carregar o editor depois de validado.
 export async function POST(
-  request: Request, 
+  request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<Response> {
-  try {
-    const { slug } = await params;
-    const body = (await request.json().catch(() => ({}))) as VerifyBody;
-    const editKey = body.edit_key?.trim();
+  const { slug } = await params;
+  const body = (await request.json().catch(() => ({}))) as VerifyBody;
+  const editKey = body.edit_key?.trim();
 
-    // Validate input
-    if (!editKey || editKey.length === 0) {
-      const response: VerifyResponse = { 
-        ok: false, 
-        message: "Access key is required",
-        source: "verify-key:local"
-      };
-      return Response.json(response, { status: 401 });
-    }
+  if (!slug) return Response.json({ ok: false, message: "Usuário obrigatório" }, { status: 400 });
+  if (!editKey) return Response.json({ ok: false, message: "Chave obrigatória" }, { status: 401 });
 
-    // Validate key format (XXXX-XXXX-XXXX — 3º grupo adicionado em 2026-07-07, ver src/lib/security.ts)
-    if (!/^\d{4}-\d{4}-\d{4}$/.test(editKey)) {
-      const response: VerifyResponse = { 
-        ok: false,
-        message: "Invalid key format",
-        source: "verify-key:local"
-      };
-      return Response.json(response, { status: 401 });
-    }
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return Response.json({ ok: false, message: "Servidor não configurado" }, { status: 500 });
 
-    // Check biosite exists
-    const site = getBiositeBySlug(slug);
-    if (!site) {
-      const response: VerifyResponse = { 
-        ok: false,
-        message: "Biosite not found",
-        source: "verify-key:local"
-      };
-      return Response.json(response, { status: 404 });
-    }
+  const { data: site } = await supabase
+    .from("toqy_biosites")
+    .select("site_data, slug, status, edit_key_hash")
+    .eq("slug", slug)
+    .maybeSingle();
 
-    // Validate key
-    const isValid = Boolean(validateClientKey(editKey, slug));
-    
-    if (!isValid) {
-      const response: VerifyResponse = { 
-        ok: false,
-        message: "Invalid access key",
-        source: "verify-key:local"
-      };
-      // TODO: Log failed attempt for analytics (Phase 7)
-      return Response.json(response, { status: 401 });
-    }
-
-    const response: VerifyResponse = { 
-      ok: true,
-      source: "verify-key:local"
-    };
-    // TODO: Log successful validation (Phase 7)
-    // TODO: Issue session JWT token (Phase 5 - production)
-    return Response.json(response, { status: 200 });
-
-  } catch (error) {
-    // error logged server-side
-    const response: VerifyResponse = { 
-      ok: false,
-      message: "Server error",
-      source: "verify-key:error"
-    };
-    return Response.json(response, { status: 500 });
+  // Mensagem genérica tanto pra "não existe" quanto pra "chave errada" —
+  // não dar dica de qual dos dois é o motivo real.
+  if (!site || site.edit_key_hash !== editKey) {
+    return Response.json({ ok: false, message: "Usuário ou chave incorretos. Confira os dados que o criador enviou para você." }, { status: 401 });
   }
+
+  return Response.json({ ok: true, site: { ...(site.site_data as Record<string, unknown>), slug: site.slug, status: site.status } });
 }

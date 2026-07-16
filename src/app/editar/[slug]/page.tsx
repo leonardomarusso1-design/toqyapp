@@ -18,25 +18,46 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Fix de segurança real (2026-07-17, auditoria): o carregamento inicial
+  // buscava site_data E edit_key_hash juntos, direto do navegador — a
+  // chave de edição (texto puro, não é hash de verdade) chegava ao
+  // cliente ANTES de qualquer verificação, só pra desenhar a tela de
+  // "digite sua chave". Agora o load inicial busca só site_data (mesma
+  // informação já pública na página pública do bio site, sem
+  // edit_key_hash) e a verificação de chave — manual ou via ?key= na URL —
+  // roda no servidor (POST /api/sites/[slug]/verify-key, service role).
+  async function tryUnlock(slugValue: string, keyValue: string): Promise<boolean> {
+    const res = await fetch(`/api/sites/${encodeURIComponent(slugValue)}/verify-key`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ edit_key: keyValue }),
+    });
+    const body = await res.json().catch(() => null);
+    if (res.ok && body?.ok) {
+      setSite(body.site as ToqySite);
+      setUnlocked(true);
+      return true;
+    }
+    return false;
+  }
+
   useEffect(() => {
     params.then(async ({ slug }) => {
-      // Busca site_data E edit_key_hash juntos
       const { data } = await supabase
         .from("toqy_biosites")
-        .select("site_data, edit_key_hash")
+        .select("site_data, slug, status")
         .eq("slug", slug)
         .maybeSingle();
 
       if (!data) { setLoading(false); return; }
 
-      const found = { ...(data.site_data as ToqySite), editKey: data.edit_key_hash };
-      setSite(found);
+      setSite({ ...(data.site_data as ToqySite), slug: data.slug, status: data.status });
 
       // Auto-unlock com chave da URL
       const keyFromUrl = (searchParams.get("key") ?? "").trim();
-      if (keyFromUrl && data.edit_key_hash && keyFromUrl === data.edit_key_hash.trim()) {
-        setKey(keyFromUrl);
-        setUnlocked(true);
+      if (keyFromUrl) {
+        const ok = await tryUnlock(slug, keyFromUrl);
+        if (ok) setKey(keyFromUrl);
       }
 
       setLoading(false);
@@ -45,14 +66,7 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
 
   async function verifyKey() {
     if (!site) return;
-    const { data } = await supabase
-      .from("toqy_biosites")
-      .select("edit_key_hash")
-      .eq("slug", site.slug)
-      .maybeSingle();
-    const validKey = data?.edit_key_hash ?? site.editKey;
-    const valid = key.trim() === validKey?.trim();
-    setUnlocked(valid);
+    const valid = await tryUnlock(site.slug, key.trim());
     setError(valid ? "" : "Chave inválida. Confira a chave que você recebeu.");
   }
 

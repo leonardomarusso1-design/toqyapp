@@ -7,7 +7,6 @@ import { Copy, Edit3, ExternalLink, LockKeyhole } from "lucide-react";
 import { ClientShell } from "@/components/ClientShell";
 import type { ToqySite } from "@/lib/types";
 import { createEditUrl, createPublicUrl } from "@/lib/dataProvider";
-import { supabase } from "@/lib/supabaseClient";
 import { generateSlug } from "@/lib/security";
 
 export default function MePage() {
@@ -19,30 +18,38 @@ export default function MePage() {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Fix de segurança real (2026-07-17, auditoria): esta função consultava o
+  // Supabase DIRETO do navegador (client anônimo) pedindo edit_key_hash —
+  // se o campo de usuário ficasse em branco, a busca rodava SEM filtro de
+  // slug e devolvia a chave de edição (que nem é hash, é texto puro) de
+  // TODOS os bio sites ativos da plataforma de uma vez, via RLS pública
+  // (que restringe linha, não coluna). Agora a verificação roda no
+  // servidor (POST /api/sites/[slug]/verify-key, service role) — o
+  // navegador nunca recebe edit_key_hash, e slug em branco nem chega a
+  // fazer a chamada.
   async function enter() {
     const cleanUser = username.trim().replace(/^https?:\/\/[^/]+/i, "").replace(/^\/b\//, "").replace(/^\//, "");
+    if (!cleanUser) { setError("Digite o seu usuário."); return; }
     if (!key.trim()) { setError("Digite a sua chave de acesso."); return; }
 
     setLoading(true);
     setError("");
     try {
-      // Busca o bio site no Supabase pela chave + slug
-      const slug = cleanUser ? generateSlug(cleanUser) : null;
-      let query = supabase.from("toqy_biosites").select("site_data, slug, status, edit_key_hash");
-      if (slug) query = query.eq("slug", slug);
+      const slug = generateSlug(cleanUser);
+      const res = await fetch(`/api/sites/${encodeURIComponent(slug)}/verify-key`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ edit_key: key.trim() }),
+      });
+      const body = await res.json().catch(() => null);
 
-      const { data, error: dbError } = await query;
-      if (dbError) throw dbError;
-
-      const match = (data ?? []).find(row => row.edit_key_hash === key.trim());
-      if (!match) {
-        setError("Usuário ou chave incorretos. Confira os dados que o criador enviou para você.");
+      if (!res.ok || !body?.ok) {
+        setError(body?.message || "Usuário ou chave incorretos. Confira os dados que o criador enviou para você.");
         setSite(null);
         return;
       }
 
-      const found = { ...match.site_data, slug: match.slug, status: match.status } as ToqySite;
-      setSite(found);
+      setSite(body.site as ToqySite);
       setUnlockedKey(key.trim());
     } catch {
       setError("Erro ao verificar acesso. Tente novamente.");
