@@ -42,6 +42,28 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
     return false;
   }
 
+  // Fix de bug real (2026-07-16): o dono logado clicando "Editar" no
+  // dashboard não devia depender de digitar/receber a chave de novo — ele
+  // já provou quem é via sessão. Confere posse do bio site no servidor
+  // (POST /api/sites/[slug]/verify-owner, service role) e destrava direto,
+  // sem chave nenhuma passando pelo navegador.
+  async function tryUnlockBySession(slugValue: string): Promise<boolean> {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return false;
+
+    const res = await fetch(`/api/sites/${encodeURIComponent(slugValue)}/verify-owner`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    const body = await res.json().catch(() => null);
+    if (res.ok && body?.ok) {
+      setSite(body.site as ToqySite);
+      setUnlocked(true);
+      return true;
+    }
+    return false;
+  }
+
   useEffect(() => {
     params.then(async ({ slug }) => {
       const { data } = await supabase
@@ -56,9 +78,10 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
 
       // Auto-unlock com chave da URL
       const keyFromUrl = (searchParams.get("key") ?? "").trim();
+      let unlockedNow = false;
       if (keyFromUrl) {
-        const ok = await tryUnlock(slug, keyFromUrl);
-        if (ok) {
+        unlockedNow = await tryUnlock(slug, keyFromUrl);
+        if (unlockedNow) {
           setKey(keyFromUrl);
           // Fix de segurança (item 3, baixa severidade): a chave em texto
           // puro na query string fica salva no histórico do navegador
@@ -67,6 +90,12 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
           // vez que é aberto, mas não fica gravado no history.
           router.replace(`/editar/${slug}`);
         }
+      }
+
+      // Sem chave na URL (ou chave invalida) — se o dono estiver logado,
+      // destrava por sessao em vez de pedir chave de novo.
+      if (!unlockedNow) {
+        await tryUnlockBySession(slug);
       }
 
       setLoading(false);

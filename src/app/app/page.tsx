@@ -14,7 +14,6 @@ type BioSiteRow = {
   id: string;
   slug: string;
   status: string;
-  edit_key_hash?: string;
   name?: string;
 };
 
@@ -67,7 +66,7 @@ export default function ConfiguracoesPage() {
 
       const [{ data: profileData, error: profileError }, { data: biositesData, error: biositesError }] = await Promise.all([
         supabase.from("profiles").select("id, email, full_name, plan_tier, plan_toqy, biosites_limit, biosites_count, subscription_status").eq("id", session.user.id).single(),
-        supabase.from("toqy_biosites").select("id, slug, status, edit_key_hash, name").eq("owner_profile_id", session.user.id).order("created_at", { ascending: false }),
+        supabase.from("toqy_biosites").select("id, slug, status, name").eq("owner_profile_id", session.user.id).order("created_at", { ascending: false }),
       
       ]);
 
@@ -188,18 +187,23 @@ export default function ConfiguracoesPage() {
             <div className="space-y-3">
               {biosites.map(site => {
                 const name = site.name || site.slug;
-                const editKey = site.edit_key_hash || "—";
                 return (
                   <div key={site.id} className="rounded-2xl border border-border bg-surface p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="font-black text-ink truncate">{name}</p>
                         <p className="mt-0.5 text-xs font-mono text-muted">toqy.com.br/b/<strong>{site.slug}</strong></p>
-                        <p className="mt-0.5 text-xs text-muted">Chave: <span className="font-mono font-black text-ink">{editKey}</span></p>
                       </div>
                       <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
                         <Link href={`/b/${site.slug}`} target="_blank" className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-black text-ink hover:border-accent">Ver</Link>
-                        <Link href={`/editar/${site.slug}?key=${editKey}`} className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-black text-ink hover:border-accent">Editar</Link>
+                        {/* Fix de bug real (2026-07-16): antes montava
+                            /editar/${slug}?key=${edit_key_hash} — desde que
+                            edit_key_hash virou bcrypt de verdade (item 2 da
+                            auditoria), isso nunca mais batia no
+                            verify_biosite_key(). O dono logado agora entra
+                            direto via sessao (ver tryUnlockBySession em
+                            /editar/[slug]), sem precisar de chave nenhuma. */}
+                        <Link href={`/editar/${site.slug}`} className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-black text-ink hover:border-accent">Editar</Link>
                         {confirmDelete === site.id ? (
                           <div className="flex gap-1">
                             <button onClick={async () => {
