@@ -80,7 +80,7 @@ export async function checkAiArtCredits(userId: string, client: SupabaseClient =
 
   const { data: profile } = await client
     .from("profiles")
-    .select("email, plan_toqy, plan_tier, ai_art_credits_used")
+    .select("email, plan_toqy, plan_tier, ai_art_credits_used, overage_ai_art_credits")
     .eq("id", userId)
     .maybeSingle();
 
@@ -91,7 +91,10 @@ export async function checkAiArtCredits(userId: string, client: SupabaseClient =
     return { allowed: true, used, limit: Infinity, planTier };
   }
 
-  const limit = getAiArtCreditLimit(planTier);
+  // Top-up avulso (2026-07-17, R$5,99/un via Kiwify) — somado por cima do
+  // limite do plano, mesmo padrão vitalício de ai_art_credits_used (nunca
+  // reseta). Ver resolveOverageProduct() em webhookLogic.ts.
+  const limit = getAiArtCreditLimit(planTier) + (profile?.overage_ai_art_credits ?? 0);
   return { allowed: used < limit, used, limit, planTier };
 }
 
@@ -103,15 +106,16 @@ export async function checkBiositeLimit(userId: string): Promise<BiositeLimitChe
   // Buscar plano do usuario
   const { data: profile } = await supabase
     .from("profiles")
-    .select("plan_toqy, plan_tier, biosites_limit, referral_bonus_biosites")
+    .select("plan_toqy, plan_tier, biosites_limit, referral_bonus_biosites, overage_biosites")
     .eq("id", userId)
     .maybeSingle();
 
   // plan_toqy é o campo atualizado pelo Kiwify, plan_tier é legado
   const planTier = profile?.plan_toqy || profile?.plan_tier || "free";
-  // Bônus do programa de indicação (2026-07-16) — sempre somado por cima
-  // do limite do plano, nunca expira, independe de troca de plano.
-  const limit = (profile?.biosites_limit || getPlanLimit(planTier)) + (profile?.referral_bonus_biosites ?? 0);
+  // Bônus do programa de indicação (2026-07-16) + top-up avulso (2026-07-17,
+  // R$2,99/un via Kiwify, só Freelancer) — ambos sempre somados por cima do
+  // limite do plano, nunca expiram, independem de troca/renovação de plano.
+  const limit = (profile?.biosites_limit || getPlanLimit(planTier)) + (profile?.referral_bonus_biosites ?? 0) + (profile?.overage_biosites ?? 0);
 
   // Contar bio sites do usuario na tabela correta
   const { count } = await supabase

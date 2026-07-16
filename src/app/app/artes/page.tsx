@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Download, ImagePlus, Loader2, Lock, Sparkles, X } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
-import { resolvePlanTier } from "@/lib/subscriptions";
+import { resolvePlanTier, OVERAGE_LINKS } from "@/lib/subscriptions";
 import { PLAN_AI_ART_CREDITS, UNLIMITED_AI_ART_EMAILS } from "@/lib/planLimits";
 import { supabase } from "@/lib/supabaseClient";
 import type { PlaqueSize, PlaqueType } from "@/lib/plaqueGenerator";
@@ -25,6 +25,7 @@ const SIZES: { value: PlaqueSize; label: string }[] = [
 export default function ArtesPage() {
   const [planTier, setPlanTier] = useState<string | null>(null);
   const [creditsUsed, setCreditsUsed] = useState(0);
+  const [overageCredits, setOverageCredits] = useState(0);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [unlimited, setUnlimited] = useState(false);
 
@@ -51,16 +52,20 @@ export default function ArtesPage() {
       setAccessToken(session.access_token);
       const { data: profile } = await supabase
         .from("profiles")
-        .select("plan_toqy, plan_tier, ai_art_credits_used")
+        .select("plan_toqy, plan_tier, ai_art_credits_used, overage_ai_art_credits")
         .eq("id", session.user.id)
         .maybeSingle();
       setPlanTier(profile?.plan_toqy || profile?.plan_tier || "free");
       setCreditsUsed(profile?.ai_art_credits_used ?? 0);
+      setOverageCredits(profile?.overage_ai_art_credits ?? 0);
       setUnlimited(Boolean(session.user.email && UNLIMITED_AI_ART_EMAILS.includes(session.user.email.toLowerCase())));
     });
   }, []);
 
-  const creditsLimit = unlimited ? Infinity : PLAN_AI_ART_CREDITS[resolvePlanTier(planTier)];
+  // Top-up avulso (2026-07-17, R$5,99/un via Kiwify) somado por cima do
+  // limite do plano — mesmo padrão vitalício de ai_art_credits_used, nunca
+  // reseta. Ver OVERAGE_LINKS em subscriptions.ts.
+  const creditsLimit = unlimited ? Infinity : PLAN_AI_ART_CREDITS[resolvePlanTier(planTier)] + overageCredits;
   const hasCredits = unlimited || creditsUsed < creditsLimit;
 
   function handleLogoFile(file?: File) {
@@ -130,7 +135,15 @@ export default function ArtesPage() {
         <div className="mt-7 rounded-[2rem] border border-dashed border-amber-400/50 bg-amber-50 p-8 text-center">
           <Lock className="mx-auto h-8 w-8 text-amber-600" />
           <p className="mt-3 text-lg font-black text-ink">Créditos esgotados</p>
-          <p className="mt-1 text-sm text-muted">Você já usou os {creditsLimit} créditos de geração incluídos no seu plano. Fale com o suporte pra saber sobre pacotes extras.</p>
+          <p className="mt-1 text-sm text-muted">Você já usou os {creditsLimit} créditos de geração incluídos no seu plano{overageCredits > 0 ? " (incluindo os avulsos comprados)" : ""}.</p>
+          {resolvePlanTier(planTier) === "freelancer" || resolvePlanTier(planTier) === "agency" ? (
+            // Cobrança de excedente (2026-07-17) — Freelancer e Agência têm
+            // crédito de arte pago (diferente do bio site, que é só
+            // Freelancer), então ambos recebem a opção de comprar avulso.
+            <a href={OVERAGE_LINKS.aiArtCredit} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center justify-center rounded-2xl bg-amber-500 px-5 py-3 text-sm font-black text-white transition hover:bg-amber-600">Comprar mais 1 crédito por R$5,99</a>
+          ) : (
+            <p className="mt-1 text-sm text-muted">Faça upgrade de plano pra ganhar mais créditos incluídos.</p>
+          )}
         </div>
       ) : (
         <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">

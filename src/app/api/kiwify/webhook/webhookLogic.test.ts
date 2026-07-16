@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { resolvePlan, shouldDowngradeOnCancel, resolveAttributionStatus } from "./webhookLogic";
+import { resolvePlan, resolveOverageProduct, shouldDowngradeOnCancel, resolveAttributionStatus } from "./webhookLogic";
 
 // Primeira suíte de teste do projeto (Fase 1 do roadmap, 2026-07-16 —
 // ver .planning/ROADMAP.md). Escopo deliberadamente pequeno: só a lógica
@@ -28,6 +28,32 @@ describe("resolvePlan", () => {
 
   it("retorna null pra produto desconhecido (não é plano TOQY)", () => {
     expect(resolvePlan("Produto qualquer sem relação")).toBeNull();
+  });
+});
+
+describe("resolveOverageProduct", () => {
+  it("reconhece o produto de bio site extra", () => {
+    expect(resolveOverageProduct("TOQY - Bio Site Extra")).toBe("biosite");
+  });
+
+  it("reconhece o produto de crédito de arte extra (com e sem acento)", () => {
+    expect(resolveOverageProduct("TOQY - Crédito de Arte Extra")).toBe("ai_art_credit");
+    expect(resolveOverageProduct("TOQY - Credito de Arte Extra")).toBe("ai_art_credit");
+  });
+
+  it("retorna null pra produto desconhecido", () => {
+    expect(resolveOverageProduct("Produto qualquer sem relação")).toBeNull();
+  });
+
+  it("NUNCA classifica um produto de plano normal como overage (regressão)", () => {
+    expect(resolveOverageProduct("TOQY Freelancer Mensal")).toBeNull();
+    expect(resolveOverageProduct("TOQY Agência")).toBeNull();
+    expect(resolveOverageProduct("TOQY Comunidade Mensal")).toBeNull();
+  });
+
+  it("resolvePlan nunca classifica um produto de overage como plano (regressão)", () => {
+    expect(resolvePlan("TOQY - Bio Site Extra")).toBeNull();
+    expect(resolvePlan("TOQY - Crédito de Arte Extra")).toBeNull();
   });
 });
 

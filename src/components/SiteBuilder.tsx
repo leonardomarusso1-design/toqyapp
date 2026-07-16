@@ -9,6 +9,7 @@ import { createEditUrl, createPublicUrl, generateSlug } from "@/lib/dataProvider
 import { RealTemplateGallery } from "./RealTemplateGallery";
 import { syncBiositeToSupabase } from "@/lib/biositeSync";
 import { checkBiositeLimit } from "@/lib/planLimits";
+import { OVERAGE_LINKS } from "@/lib/subscriptions";
 import { supabase } from "@/lib/supabaseClient";
 import { validateSite } from "@/lib/validation";
 import { ImageGuidelineHint } from "./ImageGuidelineHint";
@@ -969,7 +970,13 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
         <h2 className="text-2xl font-black text-ink">{mode === "create" ? "Publicar" : "Salvar alterações"}</h2>
         <p className="mt-1 text-sm text-muted">Confira, salve e entregue o link junto com a chave de acesso.</p>
         {errors.length ? <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">{errors.map((err) => <p key={err}>{err}</p>)}</div> : null}
-        {limitState ? <div className="mt-4 rounded-[1.75rem] border border-violet/20 bg-gradient-to-br from-violet/10 via-card to-surface p-5 shadow-sm"><p className="text-lg font-black text-ink">Você atingiu o limite do plano gratuito. Faça upgrade!</p><p className="mt-2 text-sm font-medium leading-relaxed text-muted">Seu plano <span className="font-black text-violet">{limitState.planTier}</span> permite até <span className="font-black text-ink">{limitState.limit}</span> biosites e você já possui <span className="font-black text-ink">{limitState.current}</span>.</p><div className="mt-4 flex flex-wrap gap-3"><Link href="/#planos" className="inline-flex items-center justify-center rounded-2xl bg-violet px-5 py-3 text-sm font-black text-white transition hover:opacity-90">Ver planos e fazer upgrade</Link><Link href="/app" className="inline-flex items-center justify-center rounded-2xl border border-border bg-card px-5 py-3 text-sm font-black text-ink transition hover:border-violet/30 hover:text-violet">Voltar para meus biosites</Link></div></div> : null}
+        {limitState ? <div className="mt-4 rounded-[1.75rem] border border-violet/20 bg-gradient-to-br from-violet/10 via-card to-surface p-5 shadow-sm"><p className="text-lg font-black text-ink">Você atingiu o limite do plano gratuito. Faça upgrade!</p><p className="mt-2 text-sm font-medium leading-relaxed text-muted">Seu plano <span className="font-black text-violet">{limitState.planTier}</span> permite até <span className="font-black text-ink">{limitState.limit}</span> biosites e você já possui <span className="font-black text-ink">{limitState.current}</span>.</p><div className="mt-4 flex flex-wrap gap-3">
+          {limitState.planTier === "freelancer" ? (
+            // Cobrança de excedente (2026-07-17) — só Freelancer, Agência já
+            // tem limite generoso (100 sites). Ver OVERAGE_LINKS em subscriptions.ts.
+            <a href={OVERAGE_LINKS.biosite} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-3 text-sm font-black text-emerald-600 transition hover:bg-emerald-500/20">Comprar mais 1 por R$2,99</a>
+          ) : null}
+          <Link href="/#planos" className="inline-flex items-center justify-center rounded-2xl bg-violet px-5 py-3 text-sm font-black text-white transition hover:opacity-90">Ver planos e fazer upgrade</Link><Link href="/app" className="inline-flex items-center justify-center rounded-2xl border border-border bg-card px-5 py-3 text-sm font-black text-ink transition hover:border-violet/30 hover:text-violet">Voltar para meus biosites</Link></div></div> : null}
         <button type="button" onClick={save} disabled={isSaving} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-accent px-5 py-4 font-black text-white disabled:cursor-not-allowed disabled:opacity-60"><Save className="h-5 w-5" />{isSaving ? "Salvando..." : "Salvar e publicar"}</button>
         {saved ? (
           <div className="mt-6 overflow-hidden rounded-3xl border border-emerald-200 bg-card shadow-lg">

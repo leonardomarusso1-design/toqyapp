@@ -233,6 +233,22 @@ export const KIWIFY_LINKS: Record<Exclude<PlanType, "free">, string> = {
   agency: "https://pay.kiwify.com.br/DHPZf2c",
 };
 
+// Links de checkout pros dois produtos avulsos (top-up, não plano) — pendência
+// da Fase 2 do roadmap (cobrança de excedente, 2026-07-17). Deliberadamente
+// FORA de KIWIFY_LINKS: aquele é um link por PlanType (assinatura), estes são
+// compra avulsa pontual e nunca tocam profiles.plan_toqy/biosites_limit (ver
+// resolveOverageProduct() em src/app/api/kiwify/webhook/webhookLogic.ts).
+//
+// TODO(Leonardo): criar os 2 produtos como pagamento único na Kiwify com
+// nomes que contenham exatamente estes termos (resolveOverageProduct() casa
+// por substring): "TOQY - Bio Site Extra" (R$2,99) e "TOQY - Crédito de Arte
+// Extra" (R$5,99). Depois, colar os 2 links de checkout reais aqui — até lá,
+// os botões de compra apontam pra um placeholder.
+export const OVERAGE_LINKS = {
+  biosite: "https://pay.kiwify.com.br/REPLACE_ME_BIOSITE",
+  aiArtCredit: "https://pay.kiwify.com.br/REPLACE_ME_AI_ART_CREDIT",
+} as const;
+
 // Resolve um valor de plano vindo do banco (profiles.plan_toqy) pra um
 // PlanType válido, com fallback seguro pra "free" — protege getPlan() de
 // receber string desconhecida (ex: valor legado, typo, plano descontinuado

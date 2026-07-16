@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer";
 import { getKiwifySale } from "@/lib/kiwifyApi";
-import { resolvePlan, shouldDowngradeOnCancel, resolveAttributionStatus } from "./webhookLogic";
+import { resolvePlan, resolveOverageProduct, shouldDowngradeOnCancel, resolveAttributionStatus } from "./webhookLogic";
 import { RESELLER_TIERS, resolveResellerTier } from "@/lib/resellerTiers";
 
 // Verificação leve de autenticidade — OPCIONAL, só entra em vigor se
@@ -45,12 +45,63 @@ export async function POST(request: Request) {
     customer_email: email, order_id: orderId, raw_payload: body,
   });
 
+  const isApproved = eventType === "order_approved" || body.order_status === "paid";
+  const isCanceled = eventType === "order_refunded" || eventType === "subscription_canceled";
+
+  // Cobrança de excedente avulsa (2026-07-17, pendência da Fase 2 do
+  // roadmap) — roda ANTES de resolvePlan() de propósito: os nomes dos 2
+  // produtos de overage nunca colidem com as substrings que resolvePlan()
+  // reconhece (ver resolveOverageProduct() em webhookLogic.ts), mas checar
+  // aqui primeiro deixa a intenção explícita e evita qualquer ambiguidade
+  // futura se um nome de produto novo acabar batendo nos dois.
+  const overageType = resolveOverageProduct(productName);
+  if (overageType) {
+    if (!isApproved) {
+      // Reembolso/cancelamento de compra avulsa (R$2,99/R$5,99): não
+      // decrementa automaticamente — valor baixo demais pra justificar essa
+      // lógica extra; já fica no log de auditoria acima (linha 43-46) pro
+      // raro caso precisar de tratamento manual.
+      return Response.json({ ok: true, skipped: "overage_non_approved_event" });
+    }
+    if (!email) return Response.json({ error: "No email" }, { status: 400 });
+
+    const { data: overageProfile } = await supabase
+      .from("profiles")
+      .select("id, overage_biosites, overage_ai_art_credits")
+      .eq("email", email)
+      .maybeSingle();
+
+    // Sem fallback pra auth.admin.listUsers() nem toqy_pending_plans de
+    // propósito: compra avulsa só faz sentido pra quem já está logado E já
+    // bateu num limite real (já tem bio site ou já gerou arte) — ou seja,
+    // já tem profiles row. "Não encontrado" aqui é edge case (e-mail
+    // digitado errado no checkout), fica só logado pra reconciliação
+    // manual, não vale construir infra de pending pra 1 coluna de inteiro.
+    if (!overageProfile?.id) {
+      await supabase.from("toqy_kiwify_events").insert({
+        event_type: "overage_user_not_found",
+        product_name: productName, customer_email: email, order_id: orderId,
+        raw_payload: { note: "Compra avulsa aprovada sem profile correspondente ao e-mail — resolver manualmente." },
+      });
+      return Response.json({ ok: true, skipped: "overage_user_not_found" });
+    }
+
+    const column = overageType === "biosite" ? "overage_biosites" : "overage_ai_art_credits";
+    const current = overageType === "biosite" ? (overageProfile.overage_biosites ?? 0) : (overageProfile.overage_ai_art_credits ?? 0);
+
+    // Incrementa, nunca sobrescreve — mesmo padrão de referral_bonus_biosites
+    // (ver bloco de comissão abaixo). NÃO toca em
+    // plan_toqy/subscription_status/biosites_limit.
+    await supabase.from("profiles")
+      .update({ [column]: current + 1, updated_at: new Date().toISOString() })
+      .eq("id", overageProfile.id);
+
+    return Response.json({ ok: true, overage: overageType, applied: "immediate" });
+  }
+
   const planInfo = resolvePlan(productName);
   if (!planInfo) return Response.json({ ok: true, skipped: "not_toqy_plan" });
   if (!email) return Response.json({ error: "No email" }, { status: 400 });
-
-  const isApproved = eventType === "order_approved" || body.order_status === "paid";
-  const isCanceled = eventType === "order_refunded" || eventType === "subscription_canceled";
 
   if (isApproved) {
     // Busca o usuário — tenta profiles primeiro, depois auth.users como fallback

@@ -11,6 +11,22 @@ export function resolvePlan(productName: string): { plan: string; limit: number 
   return null;
 }
 
+export type OverageType = "biosite" | "ai_art_credit";
+
+// Produtos de top-up avulso (2026-07-17, cobrança de excedente — ver
+// .planning/ROADMAP.md Phase 2 "Pendente") — não são planos, não passam por
+// resolvePlan(). Nomes propostos ("TOQY - Bio Site Extra" / "TOQY - Crédito
+// de Arte Extra") evitam de propósito as substrings que resolvePlan() já usa
+// ("freelancer", "comunidade", "agencia"/"agência") pra nunca colidir e virar
+// upgrade de plano por engano — ver route.ts, este check roda ANTES de
+// resolvePlan().
+export function resolveOverageProduct(productName: string): OverageType | null {
+  const n = productName.toLowerCase();
+  if (n.includes("bio site") && n.includes("extra")) return "biosite";
+  if (n.includes("extra") && (n.includes("arte") || n.includes("credito") || n.includes("crédito"))) return "ai_art_credit";
+  return null;
+}
+
 export type ProfileForDowngradeCheck = {
   legacy_lifetime_access?: boolean | null;
 } | null | undefined;
