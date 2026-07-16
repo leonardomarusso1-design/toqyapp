@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { getSupabaseAdmin, hasSupabaseEnv } from "@/lib/supabaseServer";
+import { resolvePlanTier, getPlan } from "@/lib/subscriptions";
 
 // Persiste um QR Code avulso (Pix ou link personalizado) e devolve um slug
 // público curto (2026-07-14, pedido do Leonardo) — o /app/qr antigo só
@@ -33,6 +34,16 @@ export async function POST(request: Request) {
 
   const userId = await getAuthenticatedUserId(request, supabase);
   if (!userId) return Response.json({ error: "Não autenticado" }, { status: 401 });
+
+  // Fix de segurança (2026-07-17, auditoria): QR Code personalizado é
+  // recurso pago (hasCustomQr) — a UI já travava a aba pra plano
+  // gratuito, mas essa rota nunca checava, então uma conta grátis
+  // conseguia criar QR ilimitado chamando a API direto.
+  const { data: profile } = await supabase.from("profiles").select("plan_toqy").eq("id", userId).maybeSingle();
+  const plan = getPlan(resolvePlanTier(profile?.plan_toqy));
+  if (!plan.hasCustomQr) {
+    return Response.json({ error: "QR Code personalizado é um recurso pago. Faça upgrade de plano." }, { status: 403 });
+  }
 
   const body = (await request.json().catch(() => null)) as CreateBody | null;
   if (!body?.mode || (body.mode !== "pix" && body.mode !== "link")) {
