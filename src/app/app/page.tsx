@@ -105,24 +105,6 @@ export default function ConfiguracoesPage() {
     router.push("/");
   }
 
-  function exportData() {
-    const data = window.localStorage.getItem("toqy_sites_v4") ?? "[]";
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = "toqy-backup.json";
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function clearLocalData() {
-    if (!window.confirm("Isso vai apagar os bio sites criados neste navegador (modo demonstração). Continuar?")) return;
-    window.localStorage.removeItem("toqy_sites_v4");
-    window.localStorage.removeItem("toqy_deleted_mock_sites_v1");
-    window.location.reload();
-  }
-
   const planTier = (profile?.plan_toqy || profile?.plan_tier || "free") as PlanTier;
   const planLabel = PLAN_LABELS[planTier] ?? PLAN_LABELS.free;
   const subscriptionLabel = SUBSCRIPTION_LABELS[profile?.subscription_status ?? "active"] ?? "Ativa";
