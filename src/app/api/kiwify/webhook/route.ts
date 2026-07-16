@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   const overageType = resolveOverageProduct(productName);
   if (overageType) {
     if (!isApproved) {
-      // Reembolso/cancelamento de compra avulsa (R$2,99/R$5,99): não
+      // Reembolso/cancelamento de compra avulsa (R$5,99/R$8,99): não
       // decrementa automaticamente — valor baixo demais pra justificar essa
       // lógica extra; já fica no log de auditoria acima (linha 43-46) pro
       // raro caso precisar de tratamento manual.

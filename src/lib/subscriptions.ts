@@ -239,14 +239,11 @@ export const KIWIFY_LINKS: Record<Exclude<PlanType, "free">, string> = {
 // compra avulsa pontual e nunca tocam profiles.plan_toqy/biosites_limit (ver
 // resolveOverageProduct() em src/app/api/kiwify/webhook/webhookLogic.ts).
 //
-// TODO(Leonardo): criar os 2 produtos como pagamento único na Kiwify com
-// nomes que contenham exatamente estes termos (resolveOverageProduct() casa
-// por substring): "TOQY - Bio Site Extra" (R$2,99) e "TOQY - Crédito de Arte
-// Extra" (R$5,99). Depois, colar os 2 links de checkout reais aqui — até lá,
-// os botões de compra apontam pra um placeholder.
+// Preços ajustados de R$2,99/R$5,99 (proposta inicial) pra R$5,99/R$8,99
+// (2026-07-16) — a Kiwify não permite produto com preço abaixo de R$5,99.
 export const OVERAGE_LINKS = {
-  biosite: "https://pay.kiwify.com.br/REPLACE_ME_BIOSITE",
-  aiArtCredit: "https://pay.kiwify.com.br/REPLACE_ME_AI_ART_CREDIT",
+  biosite: "https://pay.kiwify.com.br/KOreqg7",
+  aiArtCredit: "https://pay.kiwify.com.br/LsDkNHu",
 } as const;
 
 // Resolve um valor de plano vindo do banco (profiles.plan_toqy) pra um

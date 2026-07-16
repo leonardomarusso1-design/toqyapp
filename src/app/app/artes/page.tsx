@@ -62,7 +62,7 @@ export default function ArtesPage() {
     });
   }, []);
 
-  // Top-up avulso (2026-07-17, R$5,99/un via Kiwify) somado por cima do
+  // Top-up avulso (2026-07-17, R$8,99/un via Kiwify) somado por cima do
   // limite do plano — mesmo padrão vitalício de ai_art_credits_used, nunca
   // reseta. Ver OVERAGE_LINKS em subscriptions.ts.
   const creditsLimit = unlimited ? Infinity : PLAN_AI_ART_CREDITS[resolvePlanTier(planTier)] + overageCredits;
@@ -140,7 +140,7 @@ export default function ArtesPage() {
             // Cobrança de excedente (2026-07-17) — Freelancer e Agência têm
             // crédito de arte pago (diferente do bio site, que é só
             // Freelancer), então ambos recebem a opção de comprar avulso.
-            <a href={OVERAGE_LINKS.aiArtCredit} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center justify-center rounded-2xl bg-amber-500 px-5 py-3 text-sm font-black text-white transition hover:bg-amber-600">Comprar mais 1 crédito por R$5,99</a>
+            <a href={OVERAGE_LINKS.aiArtCredit} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center justify-center rounded-2xl bg-amber-500 px-5 py-3 text-sm font-black text-white transition hover:bg-amber-600">Comprar mais 1 crédito por R$8,99</a>
           ) : (
             <p className="mt-1 text-sm text-muted">Faça upgrade de plano pra ganhar mais créditos incluídos.</p>
           )}

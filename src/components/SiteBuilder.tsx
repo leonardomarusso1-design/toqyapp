@@ -981,7 +981,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
           {limitState.planTier === "freelancer" ? (
             // Cobrança de excedente (2026-07-17) — só Freelancer, Agência já
             // tem limite generoso (100 sites). Ver OVERAGE_LINKS em subscriptions.ts.
-            <a href={OVERAGE_LINKS.biosite} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-3 text-sm font-black text-emerald-600 transition hover:bg-emerald-500/20">Comprar mais 1 por R$2,99</a>
+            <a href={OVERAGE_LINKS.biosite} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-3 text-sm font-black text-emerald-600 transition hover:bg-emerald-500/20">Comprar mais 1 por R$5,99</a>
           ) : null}
           <Link href="/#planos" className="inline-flex items-center justify-center rounded-2xl bg-violet px-5 py-3 text-sm font-black text-white transition hover:opacity-90">Ver planos e fazer upgrade</Link><Link href="/app" className="inline-flex items-center justify-center rounded-2xl border border-border bg-card px-5 py-3 text-sm font-black text-ink transition hover:border-violet/30 hover:text-violet">Voltar para meus biosites</Link></div></div> : null}
         <button type="button" onClick={save} disabled={isSaving} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-accent px-5 py-4 font-black text-white disabled:cursor-not-allowed disabled:opacity-60"><Save className="h-5 w-5" />{isSaving ? "Salvando..." : "Salvar e publicar"}</button>
