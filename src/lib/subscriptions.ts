@@ -225,18 +225,12 @@ export const SELLABLE_PLANS: PlanType[] = ["free", "community", "freelancer", "a
 // único (gTIhv6I). Lembrar de desativar o produto antigo na Kiwify pra
 // ninguém comprar o modelo de pagamento único por engano.
 //
-// agency: PLACEHOLDER (2026-07-15) — Agência voltou a ser paga (R$99,90/mês,
-// ver comentário em SUBSCRIPTION_PLANS.agency), mas o produto RECORRENTE
-// ainda não existe na Kiwify (o antigo, "xFdnxvE", era pagamento único —
-// mesma situação que o Freelancer teve na Fase 1: precisa de um produto
-// novo, não dá pra só mudar o preço do existente). TODO Leonardo: criar
-// "TOQY Agência" recorrente na Kiwify e substituir o link abaixo antes de
-// publicar — enquanto isso, o CTA do card Agência na landing aponta pra
-// este placeholder e NÃO deve ir ao ar assim.
+// agency: produto recorrente "TOQY Agência" (R$99,90/mês) criado na Kiwify
+// em 2026-07-15, substitui o antigo pagamento único ("xFdnxvE").
 export const KIWIFY_LINKS: Record<Exclude<PlanType, "free">, string> = {
   community: "https://pay.kiwify.com.br/12uYE0c",
   freelancer: "https://pay.kiwify.com.br/jSvUXd5",
-  agency: "https://pay.kiwify.com.br/TODO-CRIAR-PRODUTO-RECORRENTE",
+  agency: "https://pay.kiwify.com.br/DHPZf2c",
 };
 
 // Resolve um valor de plano vindo do banco (profiles.plan_toqy) pra um

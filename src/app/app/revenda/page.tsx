@@ -194,10 +194,15 @@ export default function RevendaPage() {
           ) : (
             <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
               <p className="text-sm font-black text-amber-800">⏳ Falta 1 passo pra sua comissão funcionar de verdade</p>
-              <p className="mt-1 text-xs text-amber-800">Candidate-se como afiliado no link de afiliados do produto Toqy na própria Kiwify (aprovação automática) — depois volte aqui e clique em sincronizar.</p>
-              <button type="button" onClick={syncAffiliate} disabled={syncing} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-amber-800 px-4 py-2 text-xs font-black text-white disabled:opacity-50">
-                <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />{syncing ? "Sincronizando..." : "Já me candidatei, sincronizar"}
-              </button>
+              <p className="mt-1 text-xs text-amber-800">Candidate-se como afiliado (aprovação automática, 1 clique) — depois volte aqui e clique em sincronizar.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <a href={ensureData.tierConfig.kiwifyAffiliateApplyUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-amber-800 px-4 py-2 text-xs font-black text-amber-800 hover:bg-amber-100">
+                  Candidatar-se como afiliado
+                </a>
+                <button type="button" onClick={syncAffiliate} disabled={syncing} className="inline-flex items-center gap-2 rounded-xl bg-amber-800 px-4 py-2 text-xs font-black text-white disabled:opacity-50">
+                  <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />{syncing ? "Sincronizando..." : "Já me candidatei, sincronizar"}
+                </button>
+              </div>
               {syncMessage ? <p className="mt-2 text-xs font-bold text-amber-800">{syncMessage}</p> : null}
             </div>
           )}

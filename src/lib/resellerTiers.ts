@@ -33,11 +33,24 @@ export type ResellerTierConfig = {
   // Cupom que precisa existir na Kiwify (criado manualmente por Leonardo,
   // uma vez, em cada produto pago) pra este tier funcionar.
   kiwifyCouponCode: string;
+  // Link público de candidatura a afiliado na Kiwify (aprovação automática
+  // configurada por Leonardo) — é aqui que o revendedor clica ANTES de
+  // conseguir usar "Sincronizar comissão" no painel (ver
+  // POST /api/resellers/sync-affiliate).
+  kiwifyAffiliateApplyUrl: string;
 };
 
+// Links de afiliado (2026-07-15): REVENDA10 criado no produto Freelancer,
+// REVENDA15 no produto Agência — CUPOM É POR PRODUTO na Kiwify, não
+// compartilhado entre produtos (confirmado na documentação). Ou seja, hoje
+// o desconto só é garantido se o indicado comprar O MESMO produto onde o
+// cupom foi criado; pra "qualquer plano" funcionar de verdade, o mesmo
+// cupom precisa ser replicado nos outros produtos pagos também (TODO
+// Leonardo). Essencial/comunidade: afiliado desligado de propósito, sem
+// cupom — fora do programa (decisão confirmada).
 export const RESELLER_TIERS: Record<ResellerTier, ResellerTierConfig> = {
-  freelancer: { commissionPct: 20, buyerDiscountPct: 10, bonusSites: 1, kiwifyCouponCode: "REVENDA10" },
-  agency: { commissionPct: 30, buyerDiscountPct: 15, bonusSites: 2, kiwifyCouponCode: "REVENDA15" },
+  freelancer: { commissionPct: 20, buyerDiscountPct: 10, bonusSites: 1, kiwifyCouponCode: "REVENDA10", kiwifyAffiliateApplyUrl: "https://dashboard.kiwify.com/join/affiliate/s6bt0Cf9" },
+  agency: { commissionPct: 30, buyerDiscountPct: 15, bonusSites: 2, kiwifyCouponCode: "REVENDA15", kiwifyAffiliateApplyUrl: "https://dashboard.kiwify.com/join/affiliate/QhN8g8jN" },
 };
 
 // Essencial e Gratuito ficam de fora (decisão explícita — confirmado com
