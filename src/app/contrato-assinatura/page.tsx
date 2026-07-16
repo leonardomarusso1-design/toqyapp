@@ -17,8 +17,8 @@ export default function ContratoAssinaturaPage() {
         <thead><tr><th>Plano</th><th>Preço</th><th>Cobrança</th><th>Limite de bio sites</th></tr></thead>
         <tbody>
           <tr><td>Gratuito</td><td>R$0</td><td>—</td><td>1</td></tr>
-          <tr><td>Essencial</td><td>R$29,90/mês</td><td>Recorrente mensal</td><td>20 (site extra: R$5,00)</td></tr>
-          <tr><td>Freelancer</td><td>R$39,90/mês</td><td>Recorrente mensal</td><td>20</td></tr>
+          <tr><td>Essencial</td><td>R$29,90/mês</td><td>Recorrente mensal</td><td>10</td></tr>
+          <tr><td>Freelancer</td><td>R$39,90/mês</td><td>Recorrente mensal</td><td>20 (site extra: R$5,99 · arte extra: R$8,99)</td></tr>
           <tr><td>Agência</td><td>R$99,90/mês</td><td>Recorrente mensal</td><td>100</td></tr>
         </tbody>
       </table>

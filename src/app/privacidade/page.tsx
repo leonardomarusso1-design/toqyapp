@@ -23,6 +23,7 @@ export default function PrivacidadePage() {
       <h3>Dados da sua conta</h3>
       <ul>
         <li>Nome, e-mail e senha (ou login social) para acesso ao painel;</li>
+        <li>Telefone e CPF, coletados no cadastro para fins de identificação e faturamento;</li>
         <li>Dados de plano e assinatura (via Kiwify).</li>
       </ul>
       <h3>Dados do(s) bio site(s) que você cria</h3>

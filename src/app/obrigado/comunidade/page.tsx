@@ -63,7 +63,7 @@ export default function ObrigadoComunidade() {
       <h1 className="mt-8 text-4xl font-black tracking-tight md:text-5xl">Compra confirmada! 🎉</h1>
       <p className="mt-4 max-w-lg text-lg leading-relaxed text-muted">
         Seu plano <span className="font-black text-accent">Essencial</span> está ativo.
-        Você tem acesso a <strong className="text-ink">20 bio sites</strong>, catálogo, Pix, Wi-Fi e QR Code personalizado.
+        Você tem acesso a <strong className="text-ink">10 bio sites</strong>, catálogo, Pix, Wi-Fi e QR Code personalizado.
       </p>
       <div className="mt-10 w-full max-w-md rounded-[2rem] bg-violet p-8 shadow-sm">
         <div className="flex items-center justify-center gap-3">

@@ -30,9 +30,9 @@ export default function TermosPage() {
       <h2>3. Planos, limites e pagamento</h2>
       <p>
         O serviço é oferecido nos planos Gratuito, Essencial, Freelancer e Agência, cada um com limite de
-        número de bio sites e recursos específicos (detalhados na página de planos do site). O plano
-        Essencial é cobrado de forma recorrente mensal; os planos Freelancer e Agência são de pagamento
-        único. Ver <a href="/contrato-assinatura">Contrato de Assinatura</a> para detalhes de cobrança,
+        número de bio sites e recursos específicos (detalhados na página de planos do site). Os planos
+        Essencial, Freelancer e Agência são cobrados de forma recorrente mensal. Ver{" "}
+        <a href="/contrato-assinatura">Contrato de Assinatura</a> para detalhes de cobrança,
         cancelamento e reembolso.
       </p>
 
