@@ -14,7 +14,6 @@ import {
   Globe,
   MapPin,
   MessageCircle,
-  PlayCircle,
   Plus,
   QrCode,
   ShieldCheck,
@@ -105,13 +104,6 @@ const featureShowcase = [
   { title: "Catálogo flexível", text: "Mostre produtos e serviços em carrossel, grid, categorias ou lista vertical.", image: "/images/landing-feature-catalogo.png", alt: "Catálogo de produtos e serviços no TOQY" },
 ] as const;
 
-const testimonials = [
-  { name: "Marina", text: "Usei o Toqy para vender biosites como serviço e fechei meus primeiros clientes em uma semana.", image: "" },
-  { name: "Caio", text: "O visual ficou mais profissional e meu catálogo começou a converter melhor no WhatsApp.", image: "" },
-  { name: "Lívia", text: "Agora consigo mostrar valor antes mesmo do cliente pedir orçamento.", image: "" },
-  { name: "André", text: "Entrego biosites prontos no mesmo dia. Minha agência ganhou um produto novo.", image: "" },
-] as const;
-
 const businessUseCases = [
   { title: "Empresas e serviços", icon: Building2, text: "Institucional, orçamento, atendimento e links estratégicos." },
   { title: "Lojas e restaurantes", icon: Store, text: "Catálogo, promoções, localização e pedido rápido." },
@@ -165,7 +157,6 @@ export default async function LandingPage() {
             <img src="/brand/logo-toqy-horizontal-dark.png" alt="TOQY" className="h-14 w-auto object-contain md:h-16" />
           </Link>
           <nav className="hidden items-center gap-9 text-sm font-semibold text-muted md:flex">
-            <a className="transition hover:text-accent" href="#video">Vídeo</a>
             <a className="transition hover:text-accent" href="#verdade">Por que importa</a>
             <a className="transition hover:text-accent" href="#recursos">Recursos</a>
             <a className="transition hover:text-accent" href="#exemplos">Exemplos</a>
@@ -184,58 +175,31 @@ export default async function LandingPage() {
         <div className="blob float-slow bottom-0 left-1/3 h-72 w-72 bg-[#ffc850]/30" style={{ animationDelay: "2s" }} />
 
         <div className="relative mx-auto max-w-7xl px-5 py-16 lg:py-20">
-          <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
-            <div>
-              <span className="pill inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-bold text-accent-dim shadow-sm fade-up">
-                <Sparkles className="h-4 w-4 text-accent" /> Biosites premium para empresas, lojas e renda extra
-              </span>
-              <h1 className="fade-up mt-6 text-3xl font-extrabold leading-[1.1] tracking-tight text-ink md:text-4xl lg:text-5xl" style={{ animationDelay: "0.05s" }}>
-                Biosites que <span className="gradient-text">vendem mais</span> e ficam prontos em minutos.
-              </h1>
-              <p className="fade-up mt-5 max-w-xl text-base leading-relaxed text-muted md:text-lg" style={{ animationDelay: "0.1s" }}>
-                Crie páginas profissionais com WhatsApp, Pix, Wi-Fi, catálogo, localização e avaliações. Para empresas, lojas, profissionais ou para vender como renda extra.
-              </p>
-              <div className="fade-up mt-7 flex flex-col gap-3 sm:flex-row" style={{ animationDelay: "0.15s" }}>
-                <Link href="/login" className="btn-glow inline-flex items-center justify-center gap-2 rounded-full px-7 py-3 text-sm font-bold text-white">
-                  Quero criar meu Toqy <ArrowRight className="h-4 w-4" />
-                </Link>
-                <a href="#video" className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-white px-7 py-3 text-sm font-bold text-ink shadow-sm transition hover:-translate-y-0.5 hover:border-accent">
-                  <PlayCircle className="h-4 w-4 text-accent" /> Assistir vídeo
-                </a>
-              </div>
-              <div className="fade-up mt-6 flex flex-wrap gap-3 text-xs font-semibold text-muted" style={{ animationDelay: "0.2s" }}>
-                {[
-                  ["Grátis para começar", Check],
-                  ["Sem código", Zap],
-                  ["Publica em minutos", Clock3],
-                ].map(([t, Icon]) => (
-                  <span key={t as string} className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5">
-                    <Icon className="h-3.5 w-3.5 text-accent" /> {t as string}
-                  </span>
-                ))}
-              </div>
+          <div className="mx-auto max-w-3xl text-center">
+            <span className="pill inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-bold text-accent-dim shadow-sm fade-up">
+              <Sparkles className="h-4 w-4 text-accent" /> Biosites premium para empresas, lojas e renda extra
+            </span>
+            <h1 className="fade-up mt-6 text-3xl font-extrabold leading-[1.1] tracking-tight text-ink md:text-4xl lg:text-5xl" style={{ animationDelay: "0.05s" }}>
+              Biosites que <span className="gradient-text">vendem mais</span> e ficam prontos em minutos.
+            </h1>
+            <p className="fade-up mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted md:text-lg" style={{ animationDelay: "0.1s" }}>
+              Crie páginas profissionais com WhatsApp, Pix, Wi-Fi, catálogo, localização e avaliações. Para empresas, lojas, profissionais ou para vender como renda extra.
+            </p>
+            <div className="fade-up mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center" style={{ animationDelay: "0.15s" }}>
+              <Link href="/login" className="btn-glow inline-flex items-center justify-center gap-2 rounded-full px-7 py-3 text-sm font-bold text-white">
+                Quero criar meu Toqy <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
-
-            {/* VÍDEO ao lado do título */}
-            <div id="video" className="fade-up relative" style={{ animationDelay: "0.25s" }}>
-              <div className="gradient-border p-2 shadow-2xl">
-                <div className="aspect-video overflow-hidden rounded-[1.25rem] bg-[linear-gradient(135deg,#fff,#fbe9ee)]">
-                  <div className="relative flex h-full items-center justify-center">
-                    <div className="absolute inset-0 opacity-50 [background-image:radial-gradient(circle_at_1px_1px,rgba(255,77,109,0.18)_1px,transparent_0)] [background-size:22px_22px]" />
-                    <div className="relative text-center">
-                      <button className="group relative mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent text-white shadow-xl transition hover:scale-105">
-                        <PlayCircle className="h-8 w-8" />
-                        <span className="absolute inset-0 rounded-full bg-accent/40 pulse-soft" />
-                      </button>
-                      <p className="mt-4 text-base font-extrabold text-ink">Vídeo de apresentação do Toqy</p>
-                      <p className="mt-1 text-xs text-muted">Coloque aqui um vídeo curto explicando o produto.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <p className="mt-3 text-center text-xs font-semibold text-muted">
-                Demonstração completa · Usuário real em ação
-              </p>
+            <div className="fade-up mt-6 flex flex-wrap justify-center gap-3 text-xs font-semibold text-muted" style={{ animationDelay: "0.2s" }}>
+              {[
+                ["Grátis para começar", Check],
+                ["Sem código", Zap],
+                ["Publica em minutos", Clock3],
+              ].map(([t, Icon]) => (
+                <span key={t as string} className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5">
+                  <Icon className="h-3.5 w-3.5 text-accent" /> {t as string}
+                </span>
+              ))}
             </div>
           </div>
 
@@ -435,50 +399,6 @@ export default async function LandingPage() {
                   <p className="mt-2 text-sm leading-relaxed text-muted">{item.text}</p>
                 </div>
               </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* DEPOIMENTOS */}
-      <section className="py-20">
-        <div className="mx-auto flex max-w-7xl items-end justify-between gap-4 px-5">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Depoimentos</p>
-            <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-ink md:text-5xl">Quem usa sente a diferença</h2>
-          </div>
-          <div className="hidden items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-muted md:flex">
-            <Star className="h-4 w-4 text-accent" /> prova social e percepção premium
-          </div>
-        </div>
-        <div className="marquee-group relative mt-10 overflow-hidden py-2">
-          <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-24 bg-gradient-to-r from-[#f7f5f1] to-transparent" />
-          <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-24 bg-gradient-to-l from-[#f7f5f1] to-transparent" />
-          <div className="marquee marquee-left gap-6">
-            {[...Array(2)].map((_, dup) => (
-              <div key={dup} className="flex shrink-0 items-center gap-6">
-                {testimonials.map((t) => (
-                  <article key={`${dup}-${t.name}`} className="card-glow w-64 shrink-0 rounded-2xl border border-border bg-white p-4 shadow-sm">
-                    {t.image ? (
-                      <img src={t.image} alt={`Depoimento de ${t.name}`} className="aspect-[3/4] w-full rounded-xl object-cover" />
-                    ) : (
-                      <div className="flex aspect-[3/4] w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border bg-surface p-4 text-center">
-                        <div className="flex items-center gap-1 text-accent">
-                          {[0, 1, 2, 3, 4].map((star) => <Star key={star} className="h-3.5 w-3.5 fill-current" />)}
-                        </div>
-                        <p className="text-xs leading-relaxed text-muted">{t.text}</p>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted/70">Espaço para print real</p>
-                      </div>
-                    )}
-                    <div className="mt-3 flex items-center gap-3">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-[#ff4d6d] via-[#ff8a5b] to-[#ffc850] text-xs font-bold text-white">
-                        {t.name.charAt(0)}
-                      </span>
-                      <p className="text-sm font-bold text-ink">{t.name}</p>
-                    </div>
-                  </article>
-                ))}
-              </div>
             ))}
           </div>
         </div>
@@ -691,7 +611,6 @@ export default async function LandingPage() {
               <p className="text-sm font-black text-ink">Produto</p>
               <ul className="mt-3 space-y-2 text-sm text-muted">
                 <li><a href="#recursos" className="hover:text-accent">Recursos</a></li>
-                <li><a href="#video" className="hover:text-accent">Vídeo</a></li>
                 <li><a href="#planos" className="hover:text-accent">Planos</a></li>
                 <li><a href="#exemplos" className="hover:text-accent">Exemplos</a></li>
                 <li><a href="#faq" className="hover:text-accent">FAQ</a></li>
