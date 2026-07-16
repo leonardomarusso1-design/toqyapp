@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { LockKeyhole } from "lucide-react";
 import { ClientShell } from "@/components/ClientShell";
 import { SiteBuilder } from "@/components/SiteBuilder";
@@ -10,6 +10,7 @@ import type { ToqySite } from "@/lib/types";
 import { supabase } from "@/lib/supabaseClient";
 
 function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [site, setSite] = useState<ToqySite | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,7 +58,15 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
       const keyFromUrl = (searchParams.get("key") ?? "").trim();
       if (keyFromUrl) {
         const ok = await tryUnlock(slug, keyFromUrl);
-        if (ok) setKey(keyFromUrl);
+        if (ok) {
+          setKey(keyFromUrl);
+          // Fix de segurança (item 3, baixa severidade): a chave em texto
+          // puro na query string fica salva no histórico do navegador
+          // indefinidamente. Depois de consumida pro auto-unlock, remove
+          // da URL — o link original continua funcionando na primeira
+          // vez que é aberto, mas não fica gravado no history.
+          router.replace(`/editar/${slug}`);
+        }
       }
 
       setLoading(false);
