@@ -55,15 +55,28 @@ export default function RevendaPage() {
   const [inviteMessage, setInviteMessage] = useState("");
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
 
   async function loadAll() {
     setOrigin(window.location.origin);
+    setLoadError("");
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { setLoading(false); return; }
     setAccessToken(session.access_token);
 
+    // Bug real corrigido (2026-07-15): se /api/resellers/ensure falhar (500,
+    // env não configurada, etc.), o corpo do erro NÃO tem `eligible: true` —
+    // sem checar res.ok, isso caía direto na tela de "assine pra participar"
+    // como se a pessoa genuinamente não fosse elegível, escondendo o erro
+    // real (relatado pelo Leonardo: conta Agência aparecendo como "assinar").
     const ensureRes = await fetch("/api/resellers/ensure", { method: "POST", headers: { Authorization: `Bearer ${session.access_token}` } });
-    const ensure = (await ensureRes.json().catch(() => ({ eligible: false }))) as EnsureResponse;
+    const body = await ensureRes.json().catch(() => null);
+    if (!ensureRes.ok || !body) {
+      setLoadError((body && "error" in body && body.error) || `Erro ao carregar (HTTP ${ensureRes.status})`);
+      setLoading(false);
+      return;
+    }
+    const ensure = body as EnsureResponse;
     setEnsureData(ensure);
 
     if (ensure.eligible) {
@@ -148,6 +161,17 @@ export default function RevendaPage() {
     return (
       <DashboardShell>
         <div className="flex h-64 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted" /></div>
+      </DashboardShell>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <DashboardShell>
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+          Não deu pra carregar a página de indicação: {loadError}
+          <button type="button" onClick={loadAll} className="ml-2 underline">Tentar de novo</button>
+        </div>
       </DashboardShell>
     );
   }
