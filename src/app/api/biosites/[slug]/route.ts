@@ -32,8 +32,11 @@ export async function PATCH(request: Request, { params }: Params) {
   const { site, edit_key } = body as { site: Record<string, unknown>; edit_key?: string };
   if (!hasSupabaseEnv()) return Response.json({ ok: true, source: "mock" });
   const supabase = getSupabaseAdmin()!;
-  const { data: existing } = await supabase.from("toqy_biosites").select("edit_key_hash").eq("slug", slug).single();
-  if (existing && edit_key && existing.edit_key_hash !== edit_key) return Response.json({ error: "Chave invalida" }, { status: 401 });
+  // Comparação via RPC (2026-07-17) — edit_key_hash é bcrypt de verdade.
+  if (edit_key) {
+    const { data: keyValid } = await supabase.rpc("verify_biosite_key", { p_slug: slug, p_key: edit_key });
+    if (!keyValid) return Response.json({ error: "Chave invalida" }, { status: 401 });
+  }
   const { error } = await supabase.from("toqy_biosites").update({ site_data: site, status: (site?.status as string) ?? "active", updated_at: new Date().toISOString() }).eq("slug", slug);
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ ok: true, source: "supabase" });

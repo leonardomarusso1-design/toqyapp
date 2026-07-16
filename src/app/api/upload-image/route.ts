@@ -72,13 +72,10 @@ async function isAuthorized(
   }
 
   // Sem sessão válida — só resta a chave de edição (cliente externo).
+  // Comparação via RPC (2026-07-17) — edit_key_hash é bcrypt de verdade.
   if (editKey) {
-    const { data: existing } = await supabase!
-      .from("toqy_biosites")
-      .select("edit_key_hash")
-      .eq("slug", slug)
-      .maybeSingle();
-    return Boolean(existing && existing.edit_key_hash === editKey.trim());
+    const { data: keyValid } = await supabase!.rpc("verify_biosite_key", { p_slug: slug, p_key: editKey.trim() });
+    return Boolean(keyValid);
   }
 
   return false;

@@ -16,12 +16,15 @@ export async function POST(request: Request) {
     // Verificar chave de acesso
     const { data: existing } = await supabase
       .from("toqy_biosites")
-      .select("id, edit_key_hash, owner_profile_id")
+      .select("id, owner_profile_id")
       .eq("slug", site.slug)
       .maybeSingle();
 
     if (!existing) return Response.json({ error: "Bio site não encontrado" }, { status: 404 });
-    if (existing.edit_key_hash !== editKey.trim()) return Response.json({ error: "Chave inválida" }, { status: 403 });
+    // Comparação via RPC (2026-07-17) — edit_key_hash agora é bcrypt de
+    // verdade, verify_biosite_key() compara sem trazer o hash pro código.
+    const { data: keyValid } = await supabase.rpc("verify_biosite_key", { p_slug: site.slug, p_key: editKey.trim() });
+    if (!keyValid) return Response.json({ error: "Chave inválida" }, { status: 403 });
 
     // Buscar plano do dono
     const { data: profile } = await supabase

@@ -33,17 +33,22 @@ export async function POST(
   const supabase = getSupabaseAdmin();
   if (!supabase) return Response.json({ ok: false, message: "Servidor não configurado" }, { status: 500 });
 
-  const { data: site } = await supabase
-    .from("toqy_biosites")
-    .select("site_data, slug, status, edit_key_hash")
-    .eq("slug", slug)
-    .maybeSingle();
+  // Comparação via RPC (2026-07-17) — edit_key_hash é bcrypt de verdade,
+  // verify_biosite_key() compara no Postgres sem o hash passar pelo código.
+  const { data: keyValid } = await supabase.rpc("verify_biosite_key", { p_slug: slug, p_key: editKey });
 
   // Mensagem genérica tanto pra "não existe" quanto pra "chave errada" —
   // não dar dica de qual dos dois é o motivo real.
-  if (!site || site.edit_key_hash !== editKey) {
+  if (!keyValid) {
     return Response.json({ ok: false, message: "Usuário ou chave incorretos. Confira os dados que o criador enviou para você." }, { status: 401 });
   }
+
+  const { data: site } = await supabase
+    .from("toqy_biosites")
+    .select("site_data, slug, status")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (!site) return Response.json({ ok: false, message: "Usuário ou chave incorretos. Confira os dados que o criador enviou para você." }, { status: 401 });
 
   return Response.json({ ok: true, site: { ...(site.site_data as Record<string, unknown>), slug: site.slug, status: site.status } });
 }
