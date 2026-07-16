@@ -10,7 +10,7 @@ import { resolvePlan, resolveOverageProduct, shouldDowngradeOnCancel, resolveAtt
 
 describe("resolvePlan", () => {
   it("reconhece Essencial pelo nome do produto (comunidade)", () => {
-    expect(resolvePlan("TOQY Comunidade Mensal")).toEqual({ plan: "community", limit: 20 });
+    expect(resolvePlan("TOQY Comunidade Mensal")).toEqual({ plan: "community", limit: 10 });
   });
 
   it("reconhece Freelancer pelo nome do produto", () => {

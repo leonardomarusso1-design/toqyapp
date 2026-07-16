@@ -3,11 +3,21 @@
 // simular um Request/Supabase inteiro. route.ts importa e usa estas
 // funções; os testes em webhookLogic.test.ts cobrem só isto.
 
+import { PLAN_BIOSITE_LIMITS } from "@/lib/planLimits";
+
+// Bug real corrigido (2026-07-16, achado investigando um scenario do Make):
+// o limite do plano "comunidade" (Essencial) estava HARDCODED em 20 aqui,
+// duplicado e divergente da fonte única de verdade (PLAN_BIOSITE_LIMITS em
+// planLimits.ts, que diz 10 pra community) — toda compra real do Essencial
+// via Kiwify gravava biosites_limit=20, o dobro do prometido. Confirmado
+// no banco: contas "community" tinham 10 OU 20 inconsistentemente,
+// dependendo de quando assinaram. Agora lê do mesmo lugar que o resto do
+// sistema usa (PLAN_BIOSITE_LIMITS), nunca mais duplica o número.
 export function resolvePlan(productName: string): { plan: string; limit: number } | null {
   const n = productName.toLowerCase();
-  if (n.includes("comunidade")) return { plan: "community", limit: 20 };
-  if (n.includes("freelancer")) return { plan: "freelancer", limit: 20 };
-  if (n.includes("agencia") || n.includes("agência")) return { plan: "agency", limit: 100 };
+  if (n.includes("comunidade")) return { plan: "community", limit: PLAN_BIOSITE_LIMITS.community };
+  if (n.includes("freelancer")) return { plan: "freelancer", limit: PLAN_BIOSITE_LIMITS.freelancer };
+  if (n.includes("agencia") || n.includes("agência")) return { plan: "agency", limit: PLAN_BIOSITE_LIMITS.agency };
   return null;
 }
 
