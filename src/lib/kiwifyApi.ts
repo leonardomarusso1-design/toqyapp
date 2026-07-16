@@ -105,6 +105,25 @@ export type KiwifyAffiliate = {
 // deste código) — só DEPOIS disso essa busca por e-mail encontra o
 // affiliate_id, usado em setKiwifyAffiliateCommission() abaixo. Ver
 // POST /api/resellers/sync-affiliate.
+//
+// Bugs reais corrigidos (2026-07-16, primeiro teste de verdade contra a API
+// — Leonardo se candidatou com uma conta separada, apareceu "ativo" na
+// Kiwify, mas sincronizar disse "não encontramos você"): confirmei o
+// contrato real contra o openapi.json oficial (docs.kiwify.com.br/
+// api-reference/openapi.json — a página HTML de doc é renderizada por JS,
+// não dá pra confiar em fetch simples dela). Dois problemas:
+// 1. O parâmetro `search` não é documentado como "busca por e-mail" — pode
+//    filtrar por nome/empresa e não achar nada por e-mail. Sem page_size
+//    explícito, o comportamento de paginação padrão também é incerto. Agora
+//    pede page_size alto (100) além do search, pra não depender só dele.
+// 2. `?? affiliates[0]` era um bug de verdade: se `search` retornasse
+//    afiliados SEM bater o e-mail exato (nome parecido, etc.), o código
+//    pegava o primeiro da lista mesmo assim — poderia setar a comissão de
+//    30% na conta de OUTRO revendedor por engano. Removido: só retorna em
+//    match exato de e-mail, ou null.
+// Também loga status+corpo em erro (`!res.ok`), que antes desaparecia em
+// silêncio — sem isso não dá pra saber se a causa foi erro de API ou
+// simplesmente "nenhum resultado" sem acesso aos logs da Vercel.
 export async function findKiwifyAffiliateByEmail(email: string): Promise<KiwifyAffiliate | null> {
   if (!email) return null;
 
@@ -112,26 +131,29 @@ export async function findKiwifyAffiliateByEmail(email: string): Promise<KiwifyA
   if (!token) return null;
 
   const res = await fetch(
-    `${KIWIFY_API_BASE}/affiliates?search=${encodeURIComponent(email)}`,
+    `${KIWIFY_API_BASE}/affiliates?search=${encodeURIComponent(email)}&page_size=100`,
     { headers: { Authorization: `Bearer ${token}`, "x-kiwify-account-id": process.env.KIWIFY_ACCOUNT_ID! } }
   );
-  if (!res.ok) return null;
+  if (!res.ok) {
+    console.error("[kiwifyApi] findKiwifyAffiliateByEmail falhou:", res.status, await res.text().catch(() => "(sem corpo)"));
+    return null;
+  }
 
   const data = await res.json();
-  const affiliates: KiwifyAffiliate[] = data?.data ?? data?.affiliates ?? (Array.isArray(data) ? data : []);
-  return affiliates.find((a) => a.email?.toLowerCase() === email.toLowerCase()) ?? affiliates[0] ?? null;
+  const affiliates: KiwifyAffiliate[] = data?.data ?? (Array.isArray(data) ? data : []);
+  return affiliates.find((a) => a.email?.toLowerCase() === email.toLowerCase()) ?? null;
 }
 
 // Ajusta a comissão de um afiliado já existente pro valor do tier dele
 // (20% Freelancer / 30% Agência, ver src/lib/resellerTiers.ts).
 //
-// ATENÇÃO — formato do campo "commission" não confirmado com uma chamada
-// real (sem credenciais Kiwify configuradas neste ambiente pra testar, ver
-// .env.local): o exemplo da documentação mostra `{ "commission": 4600 }`
-// pra uma comissão de 46%, o que sugere percentual × 100 (2 casas
-// decimais fixas) — é a interpretação usada aqui. Testar contra a conta
-// real antes de confiar cegamente nisso; se o formato for outro, só este
-// cálculo precisa mudar.
+// Formato confirmado 2026-07-16 contra o openapi.json oficial
+// (docs.kiwify.com.br/api-reference/openapi.json, schema AffiliateRequest):
+// `commission` é number (exemplo 4600 pra 46% — percentual × 100, 2 casas
+// decimais fixas, é a interpretação usada aqui) e `status` é enum
+// "active" | "blocked" | "refused". Nenhum campo é obrigatório no schema,
+// mas mandamos os dois de propósito (reativa o afiliado se estivesse
+// bloqueado/recusado, além de ajustar a comissão).
 export async function setKiwifyAffiliateCommission(affiliateId: string, commissionPct: number): Promise<boolean> {
   if (!affiliateId) return false;
 
@@ -147,5 +169,8 @@ export async function setKiwifyAffiliateCommission(affiliateId: string, commissi
     },
     body: JSON.stringify({ commission: Math.round(commissionPct * 100), status: "active" }),
   });
+  if (!res.ok) {
+    console.error("[kiwifyApi] setKiwifyAffiliateCommission falhou:", res.status, await res.text().catch(() => "(sem corpo)"));
+  }
   return res.ok;
 }
