@@ -117,9 +117,17 @@ export default function ConfiguracoesPage() {
       // site_data dos biosites (ver src/lib/imageStorage.ts) — avatar_url
       // ia direto como base64 pro banco. Sobe pro Storage e salva só o link.
       try {
+        // Fix de segurança (2026-07-17): /api/upload-image agora exige
+        // sessão — sem o Authorization aqui, o upload do avatar seria
+        // rejeitado com 401 pela mesma checagem que fecha o gap de upload
+        // anônimo (ver route.ts).
+        const { data: { session } } = await supabase.auth.getSession();
         const res = await fetch("/api/upload-image", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
           body: JSON.stringify({ dataUrl, slug: profile.id, fieldId: "avatar" }),
         });
         const data: { url?: string } = await res.json();

@@ -172,7 +172,7 @@ function CatalogCategoryDisplayControl({ catalog, onChangeCategory }: { catalog:
 // de entrar na mesma fileira de carrossel. Agora escolhe de uma lista das
 // categorias que já existem no catálogo e herda o displaySection do
 // primeiro item encontrado daquela categoria.
-function BulkCatalogPhotoAdd({ slug, catalog, onAdd }: { slug: string; catalog: CatalogItem[]; onAdd: (items: CatalogItem[]) => void }) {
+function BulkCatalogPhotoAdd({ slug, catalog, onAdd, editKey }: { slug: string; catalog: CatalogItem[]; onAdd: (items: CatalogItem[]) => void; editKey?: string }) {
   const existingCategories = Array.from(new Set(catalog.map((i) => i.category?.trim()).filter((c): c is string => Boolean(c))));
   const inputRef = useRef<HTMLInputElement>(null);
   const [category, setCategory] = useState(existingCategories[0] ?? "");
@@ -206,7 +206,7 @@ function BulkCatalogPhotoAdd({ slug, catalog, onAdd }: { slug: string; catalog: 
     const newItems: CatalogItem[] = [];
     for (const file of files) {
       try {
-        const imageUrl = await uploadImageFile(file, slug, `catalog-bulk-${generateId("img")}`);
+        const imageUrl = await uploadImageFile(file, slug, `catalog-bulk-${generateId("img")}`, editKey);
         newItems.push({
           id: generateId("prd"),
           name: "",
@@ -452,6 +452,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 onChange={(url) => setProfile({ logoUrl: url })}
                 slug={site.slug}
                 fieldId="logo"
+                editKey={site.editKey}
               />
               <ImageGuidelineHint type="logo" />
               <p className="mt-1 text-xs text-muted">Use PNG com fundo transparente para melhor resultado.</p>
@@ -490,6 +491,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 placeholder="URL da imagem de assinatura"
                 slug={site.slug}
                 fieldId="logo-signature"
+                editKey={site.editKey}
               />
             </div>
             <label><span className={label}>Título/subtítulo</span><input className={field} value={site.profile.title ?? ""} onChange={(e) => setProfile({ title: e.target.value })} /></label>
@@ -542,7 +544,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
               <div className="mb-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
                 <strong>💡 Dica para melhor resultado:</strong> Use imagem <strong>1080×1920px</strong> (formato celular). A imagem fica fixa e o conteúdo rola por cima — ela não vai esticar.
               </div>
-              <ImageUploadField label="" value={site.profile.backgroundImageUrl} onChange={(url) => setProfile({ backgroundImageUrl: url })} placeholder="URL da imagem de fundo" slug={site.slug} fieldId="background" />
+              <ImageUploadField label="" value={site.profile.backgroundImageUrl} onChange={(url) => setProfile({ backgroundImageUrl: url })} placeholder="URL da imagem de fundo" slug={site.slug} fieldId="background" editKey={site.editKey} />
               <ImageGuidelineHint type="background" />
               <label className="mt-2 flex items-center gap-1.5 text-xs font-black text-ink">
                 <input type="checkbox" checked={site.theme.useBackgroundOverlay} onChange={(e) => setTheme({ useBackgroundOverlay: e.target.checked })} />
@@ -778,7 +780,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
           </div>
 
           <div className="mt-4">
-            <BulkCatalogPhotoAdd slug={site.slug} catalog={site.catalog} onAdd={(items) => update((s) => ({ ...s, catalog: [...s.catalog, ...items] }))} />
+            <BulkCatalogPhotoAdd slug={site.slug} catalog={site.catalog} onAdd={(items) => update((s) => ({ ...s, catalog: [...s.catalog, ...items] }))} editKey={site.editKey} />
           </div>
 
           {/* Card promo editavel */}
@@ -931,7 +933,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                   <label><span className={label}>Badge / Destaque</span><input className={field} placeholder='Ex: "Mais vendido", "Novidade"' value={item.highlight ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { highlight: e.target.value }) }))} /></label>
                   <label className="md:col-span-2"><span className={label}>Descrição (opcional)</span><textarea className={field} rows={2} placeholder="Deixe vazio pra mostrar só a foto, sem texto" value={item.description} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { description: e.target.value }) }))} /></label>
                 </div>
-                <div className="mt-3"><ImageUploadField label="Imagem do item" value={item.imageUrl} onChange={(url) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageUrl: url }) }))} slug={site.slug} fieldId={`catalog-${item.id}`} /><ImageGuidelineHint type={item.imageLayout === "square" ? "productSquare" : "productHorizontal"} /></div>
+                <div className="mt-3"><ImageUploadField label="Imagem do item" value={item.imageUrl} onChange={(url) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageUrl: url }) }))} slug={site.slug} fieldId={`catalog-${item.id}`} editKey={site.editKey} /><ImageGuidelineHint type={item.imageLayout === "square" ? "productSquare" : "productHorizontal"} /></div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <input className={field} placeholder="Texto do botão (ex: Agendar)" value={item.actionLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionLabel: e.target.value }) }))} />
                   <input className={field} placeholder="Link do botão (opcional)" value={item.actionUrl ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionUrl: e.target.value }) }))} />

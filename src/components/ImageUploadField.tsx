@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { ImagePlus, Link2, Loader2, X } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
 const MAX_DIMENSION = 800; // reduzido de 1280 — suficiente para bio site mobile
 const MAX_BYTES = 5 * 1024 * 1024; // reduzido de 8MB para 5MB
@@ -36,17 +37,28 @@ export function resizeImage(file: File): Promise<string> {
 // upload em lote de fotos do catálogo (adicionar várias fotos de uma vez
 // numa categoria, sem precisar repetir "Adicionar item" pra cada uma).
 // Mesma validação/resize/destino (Supabase Storage) do upload individual.
-export async function uploadImageFile(file: File, slug?: string, fieldId?: string): Promise<string> {
+//
+// editKey (2026-07-17, fix de segurança — /api/upload-image não exigia
+// autenticação nenhuma antes disso): o SiteBuilder passa site.editKey aqui
+// pra clientes externos sem conta (editando via /editar/[slug]?key=...)
+// continuarem conseguindo subir imagem. Sessão logada (se houver) é pega
+// aqui mesmo, via supabase.auth.getSession() — a API aceita OU sessão do
+// dono OU editKey batendo com o slug.
+export async function uploadImageFile(file: File, slug?: string, fieldId?: string, editKey?: string): Promise<string> {
   if (!file.type.startsWith("image/")) throw new Error("Selecione um arquivo de imagem.");
   if (file.size > MAX_BYTES) throw new Error("Imagem muito grande (máx. 5MB).");
 
   const dataUrl = await resizeImage(file);
   if (!slug || !fieldId) return dataUrl;
 
+  const { data: { session } } = await supabase.auth.getSession();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+
   const res = await fetch("/api/upload-image", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ dataUrl, slug, fieldId }),
+    headers,
+    body: JSON.stringify({ dataUrl, slug, fieldId, editKey }),
   });
   const data: { url?: string; error?: string } = await res.json();
   if (!res.ok || !data.url) throw new Error(data.error || "Upload falhou");
@@ -63,6 +75,7 @@ export function ImageUploadField({
   onPositionChange,
   slug,
   fieldId,
+  editKey,
 }: {
   label: string;
   value?: string;
@@ -78,6 +91,7 @@ export function ImageUploadField({
   // público entra no site. slug/fieldId identificam onde salvar o arquivo.
   slug?: string;
   fieldId?: string;
+  editKey?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
@@ -89,7 +103,7 @@ export function ImageUploadField({
     setError("");
     setLoading(true);
     try {
-      const url = await uploadImageFile(file, slug, fieldId);
+      const url = await uploadImageFile(file, slug, fieldId, editKey);
       onChange(url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível enviar a imagem.");
