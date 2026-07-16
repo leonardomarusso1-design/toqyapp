@@ -5,6 +5,7 @@ import { ReferralCapture } from "@/components/ReferralCapture";
 import { APP_VERSION, BUILD_ID } from "@/lib/appInfo";
 import { getShowcaseSummaries } from "@/lib/realTemplates";
 import { KIWIFY_LINKS } from "@/lib/subscriptions";
+import { RESELLER_TIERS } from "@/lib/resellerTiers";
 import {
   ArrowRight,
   Building2,
@@ -30,6 +31,9 @@ import {
   Clock3,
   HelpCircle,
   Heart,
+  Handshake,
+  Wallet,
+  Gift,
 } from "lucide-react";
 
 const features = [
@@ -75,8 +79,8 @@ const features = [
 // (ícone/cor diferente, chama mais atenção que os itens normais).
 const plans = [
   { name: "Gratuito", price: "R$0", period: "", tag: "Pra testar", description: "Para conhecer a plataforma e gerar seus primeiros leads.", highlight: false, cta: "Começar grátis", items: ["1 bio site", "Domínio toqy.app/seunome", "QR Code básico", "Preview em tempo real", "Marca TOQY na página"] },
-  { name: "Essencial", price: "R$29,90", period: "/mês", tag: "Menor investimento pra começar", description: "Pra começar a criar bio sites pra clientes, mensal, cancele quando quiser.", highlight: true, cta: "Assinar agora", items: ["Até 10 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "★ QR personalizado editável", "★ Gerador de arte com IA (5 créditos)", "Suporte por email", "Cancele quando quiser"] },
-  { name: "Freelancer", price: "R$39,90", period: "/mês", tag: "Mais recursos, suporte prioritário", description: "Para quem cria pra clientes com mais frequência — mais créditos de arte e suporte prioritário. Mensal, cancele quando quiser.", highlight: false, cta: "Assinar agora", items: ["Até 20 bio sites", "Pix e Wi-Fi", "Catálogo completo", "★ QR personalizado editável", "★ Gerador de arte com IA (10 créditos)", "Suporte prioritário", "Cancele quando quiser"] },
+  { name: "Essencial", price: "R$29,90", period: "/mês", tag: "Comece a vender bio site pra comércio local", description: "Pra começar a criar bio sites pra clientes, mensal, cancele quando quiser.", highlight: true, cta: "Assinar agora", items: ["Até 10 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "★ QR personalizado editável", "★ Gerador de arte com IA (5 créditos)", "Suporte por email", "Cancele quando quiser"] },
+  { name: "Freelancer", price: "R$39,90", period: "/mês", tag: "Atenda mais clientes, ganhe indicando", description: "Para quem cria pra clientes com mais frequência — mais créditos de arte e suporte prioritário. Mensal, cancele quando quiser.", highlight: false, cta: "Assinar agora", items: ["Até 20 bio sites", "Pix e Wi-Fi", "Catálogo completo", "★ QR personalizado editável", "★ Gerador de arte com IA (10 créditos)", "Suporte prioritário", "Cancele quando quiser", "Indique e ganhe 20% de comissão"] },
   // Voltou a ser paga (2026-07-15, mesmo dia) — o desenho "Agência grátis +
   // revenda 30/70" tinha um furo real: qualquer assinante pagante viraria
   // revendedor de graça sem nunca precisar revender nada. Ver histórico
@@ -84,7 +88,13 @@ const plans = [
   // .agency). O programa de indicação com comissão continua existindo,
   // agora como benefício de quem já é Freelancer/Agência pagante — não
   // mais como a própria razão de existir do plano.
-  { name: "Agência", price: "R$99,90", period: "/mês", tag: "Pra escalar em equipe", description: "Para equipes e agências em escala. 100 bio sites, 50 créditos de arte, tudo do Freelancer e mais.", highlight: false, cta: "Assinar agora", items: ["Até 100 bio sites", "★ QR personalizado editável", "★ Gerador de arte com IA (50 créditos)", "White label parcial", "Domínio próprio", "Gestão de equipe", "Indique e ganhe 30% de comissão"] },
+  { name: "Agência", price: "R$99,90", period: "/mês", tag: "Monte uma operação, gerencie equipe", description: "Para equipes e agências em escala. 100 bio sites, 50 créditos de arte, tudo do Freelancer e mais.", highlight: false, cta: "Assinar agora", items: ["Até 100 bio sites", "★ QR personalizado editável", "★ Gerador de arte com IA (50 créditos)", "White label parcial", "Domínio próprio", "Gestão de equipe", "Indique e ganhe 30% de comissão"] },
+  // Nota (pendência da Fase 2 quitada aqui, 2026-07-15): antes só a Agência
+  // mostrava o benefício de indicação — Freelancer também ganha (20%) e
+  // nunca aparecia. Uma seção dedicada explicando comissão+desconto+bônus
+  // de bio site em detalhe fica pra Fase 3 (Landing Page), que já tem isso
+  // como critério de sucesso explícito no roadmap — aqui é só a paridade
+  // pontual entre os dois cards.
 ] as const;
 
 const featureShowcase = [
@@ -523,6 +533,57 @@ export default async function LandingPage() {
           <p className="flex items-center justify-center gap-1.5 text-xs font-bold text-muted">
             <Star className="h-3.5 w-3.5 fill-accent text-accent" /> QR Code personalizado editável e gerador de arte com IA são exclusivos dos planos Essencial, Freelancer e Agência.
           </p>
+        </div>
+      </section>
+
+      {/* GANHE DINHEIRO — Fase 3 do roadmap (2026-07-17), critério de sucesso
+          #2: seção explícita sobre o programa de indicação. Antes disso só
+          existia um bullet solto em cada card de plano + a linha genérica
+          "renda extra" na seção "Usos do Toqy" — nenhum lugar explicava os
+          números reais. Fonte única dos números: RESELLER_TIERS
+          (src/lib/resellerTiers.ts) — nada aqui é inventado. */}
+      <section id="ganhe-dinheiro" className="border-t border-border bg-gradient-to-br from-ink to-ink/95 py-20 text-white">
+        <div className="mx-auto max-w-6xl px-5">
+          <div className="text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Programa de indicação</p>
+            <h2 className="mt-3 text-4xl font-extrabold tracking-tight md:text-5xl">Ganhe dinheiro indicando o Toqy</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-base text-white/70">
+              Quem já assina Freelancer ou Agência ganha automaticamente um link de indicação — sem precisar &quot;virar revendedor&quot;, é um benefício de quem já paga.
+            </p>
+          </div>
+          <div className="mt-12 grid gap-6 md:grid-cols-2">
+            {(["freelancer", "agency"] as const).map((tier) => {
+              const config = RESELLER_TIERS[tier];
+              const label = tier === "freelancer" ? "Freelancer" : "Agência";
+              return (
+                <div key={tier} className="rounded-[1.75rem] border border-white/10 bg-white/5 p-8">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Plano {label}</p>
+                  <div className="mt-6 grid gap-5 sm:grid-cols-3">
+                    <div>
+                      <Wallet className="h-6 w-6 text-accent" />
+                      <p className="mt-3 text-3xl font-black">{config.commissionPct}%</p>
+                      <p className="mt-1 text-sm text-white/70">de comissão por venda</p>
+                    </div>
+                    <div>
+                      <Handshake className="h-6 w-6 text-accent" />
+                      <p className="mt-3 text-3xl font-black">{config.buyerDiscountPct}%</p>
+                      <p className="mt-1 text-sm text-white/70">de desconto pra quem você indicar</p>
+                    </div>
+                    <div>
+                      <Gift className="h-6 w-6 text-accent" />
+                      <p className="mt-3 text-3xl font-black">+{config.bonusSites}</p>
+                      <p className="mt-1 text-sm text-white/70">bio site{config.bonusSites > 1 ? "s" : ""} de bônus por venda</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-8 flex justify-center">
+            <a href="#planos" className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 btn-glow">
+              <ArrowRight className="h-4 w-4" /> Assinar e começar a indicar
+            </a>
+          </div>
         </div>
       </section>
 

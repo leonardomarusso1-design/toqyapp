@@ -56,8 +56,8 @@ vez dela, não todas de uma vez — mesmo princípio do GSD (`/gsd:plan-phase N`
 **Success Criteria**:
   1. Cada card de plano comunica claramente o que a pessoa CONSEGUE FAZER/VENDER com ele, não só a lista de features técnicas
   2. Existe uma seção explícita sobre ganhar dinheiro com o Toqy (renda extra, revenda)
-  3. O card da Agência comunica corretamente o modelo gratuito + comissão (não "R$149,90")
-**Plans**: TBD
+  3. ~~O card da Agência comunica corretamente o modelo gratuito + comissão (não "R$149,90")~~ — **critério desatualizado, corrigido 2026-07-17**: descrevia o desenho v1 "Agência grátis + revenda 30/70", revertido no mesmo dia em que foi criado (2026-07-15, ver Phase 2 acima) por ter um furo real. A Agência hoje é assinatura paga (R$99,90/mês) DE PROPÓSITO — o card já comunica isso corretamente. Critério substituído por: o card da Agência (e do Freelancer) comunica corretamente o benefício de indicação (comissão %) como um EXTRA de quem já paga, não como a razão de ser do plano.
+**Plans**: Sub-estágio A (copy dos cards + seção "Ganhe dinheiro com o Toqy", 2026-07-17)
 
 ### Phase 4: Subsistema Google Meu Negócio
 **Goal**: Alguém consegue vender "melhorar a avaliação no Google" como serviço usando ferramentas do Toqy de ponta a ponta, não só um QR genérico.
@@ -125,7 +125,7 @@ si, só dependem de 1), 9 por último.
 |-------|-----------------|--------|-----------|
 | 1. Planos e Preços | 1/1 | Complete | 2026-07-15 |
 | 2. Programa de Indicação | 3/3 (A, B v1 revertido, B v2) | Complete* | 2026-07-15 |
-| 3. Landing Page | 0/TBD | Not started | - |
+| 3. Landing Page | 1/1 | Complete | 2026-07-17 |
 | 4. Google Meu Negócio | 0/TBD | Not started | - |
 | 5. Cardápio Digital | 0/TBD | Not started | - |
 | 6. Bio Site | 0/TBD | Not started | - |
