@@ -544,6 +544,10 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
               </div>
               <ImageUploadField label="" value={site.profile.backgroundImageUrl} onChange={(url) => setProfile({ backgroundImageUrl: url })} placeholder="URL da imagem de fundo" slug={site.slug} fieldId="background" />
               <ImageGuidelineHint type="background" />
+              <label className="mt-2 flex items-center gap-1.5 text-xs font-black text-ink">
+                <input type="checkbox" checked={site.theme.useBackgroundOverlay} onChange={(e) => setTheme({ useBackgroundOverlay: e.target.checked })} />
+                Escurecer levemente a imagem (ajuda a ler o texto por cima, mas pode deixar a cor original mais acinzentada)
+              </label>
             </label>
           </div>
 

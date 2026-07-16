@@ -402,7 +402,17 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
           <div
             className="absolute inset-0 mx-auto w-full max-w-[430px]"
             style={{
-              backgroundImage: `${backgroundOverlayGradient(site)}, url(${bgImage})`,
+              // Bug real corrigido (2026-07-16): o gradiente de escurecimento
+              // era aplicado SEMPRE que havia imagem de fundo, ignorando
+              // site.theme.useBackgroundOverlay por completo (o campo existe
+              // no tipo e é setado por templates/onboarding, mas nunca era
+              // lido aqui) — mesmo em modo claro o gradiente termina em
+              // rgba(0,0,0,0.30) embaixo, então um fundo branco escolhido de
+              // propósito sempre saía acinzentado/escurecido na base, sem
+              // controle nenhum do usuário pra desligar isso.
+              backgroundImage: site.theme.useBackgroundOverlay
+                ? `${backgroundOverlayGradient(site)}, url(${bgImage})`
+                : `url(${bgImage})`,
               backgroundSize: "cover",
               backgroundPosition: "center top",
               backgroundRepeat: "no-repeat",
