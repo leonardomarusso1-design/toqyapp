@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import type { ToqySite } from "@/lib/types";
 import { fetchShowcaseSite } from "@/lib/showcaseSiteCache";
@@ -20,6 +20,39 @@ const PHONE_BORDER = 10; // ver PhoneMockup.tsx: border-[10px]
 const DESIGN_WIDTH = 390; // largura real que o PublicBioSite espera (~iPhone)
 const VISIBLE_WIDTH = CARD_WIDTH - PHONE_BORDER * 2;
 const PREVIEW_SCALE = VISIBLE_WIDTH / DESIGN_WIDTH;
+
+// Bug real corrigido (2026-07-16): a 1ª versão deste fix usava
+// overflow-hidden pra recortar o preview na altura do card — funcionava
+// visualmente, mas tirava o scroll (rodar o mouse sobre o preview passou a
+// rolar a PÁGINA inteira, não o "celular"). PhoneMockup já tem
+// overflow-y-auto embutido; o que faltava era o wrapper ter a ALTURA
+// escalada certa (senão, com o filho em position:absolute, o pai fica
+// height:0 e não há o que rolar). Mede a altura real do conteúdo
+// (scrollHeight, que ignora transform) via ResizeObserver e aplica a
+// mesma escala — o navegador então tem uma área real pra rolar dentro do
+// mockup, exatamente como um celular de verdade.
+function ScaledSitePreview({ site, publicUrl, instanceId }: { site: ToqySite; publicUrl: string; instanceId: string }) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [scaledHeight, setScaledHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const update = () => setScaledHeight(el.scrollHeight * PREVIEW_SCALE);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div className="relative w-full" style={{ height: scaledHeight ?? undefined }}>
+      <div ref={contentRef} className="absolute left-0 top-0 origin-top-left" style={{ width: DESIGN_WIDTH, transform: `scale(${PREVIEW_SCALE})` }}>
+        <PublicBioSite site={site} publicUrl={publicUrl} instanceId={instanceId} />
+      </div>
+    </div>
+  );
+}
 
 // Cada card busca o próprio conteúdo (com fotos) no navegador, depois da
 // página carregar — evita embutir os 12 site_data completos (imagens em
@@ -43,14 +76,7 @@ export function LandingBioSiteCard({ slug, publicUrl }: { slug: string; publicUr
     <a href={publicUrl} target="_blank" rel="noreferrer" className="group block w-[190px] shrink-0 snap-start">
       <PhoneMockup className="mx-auto h-[380px] w-full transition duration-300 group-hover:-translate-y-1">
         {site ? (
-          <div className="relative h-full w-full overflow-hidden">
-            <div
-              className="absolute left-0 top-0 origin-top-left"
-              style={{ width: DESIGN_WIDTH, transform: `scale(${PREVIEW_SCALE})` }}
-            >
-              <PublicBioSite site={site} publicUrl={publicUrl} instanceId={slug} />
-            </div>
-          </div>
+          <ScaledSitePreview site={site} publicUrl={publicUrl} instanceId={slug} />
         ) : (
           <div className="flex h-full items-center justify-center bg-ink/40 px-4 text-center">
             {failed ? (
