@@ -821,7 +821,7 @@ function CatalogCard({ site, item, compact = false, stacked = false, onOpenGalle
         role={canOpenGallery ? "button" : undefined}
         aria-label={canOpenGallery ? `Ver mais itens de ${item.subcategory?.trim() || item.category?.trim() || "Destaques"}` : undefined}
       >
-        {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><FileText className="h-10 w-10 opacity-60" /></div>}
+        {item.imageUrl ? <img src={item.imageUrl} alt={item.name} loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><FileText className="h-10 w-10 opacity-60" /></div>}
         {canOpenGallery ? (
           <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-black text-white backdrop-blur-sm">
             <Images className="h-3 w-3" />+{categoryCount - 1}
@@ -866,7 +866,7 @@ function CategoryGalleryModal({ site, category, items, onClose }: { site: ToqySi
         {items.map((item) => (
           <div key={item.id} className="overflow-hidden rounded-[1.2rem] border" style={{ background: site.theme.colors?.catalogItemBg ?? site.theme.card, borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.14)" }}>
             <div className="h-28" style={{ background: `linear-gradient(135deg, ${site.theme.primary}33, ${site.theme.secondary}44)` }}>
-              {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><FileText className="h-8 w-8 opacity-60" /></div>}
+              {item.imageUrl ? <img src={item.imageUrl} alt={item.name} loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><FileText className="h-8 w-8 opacity-60" /></div>}
             </div>
             {/* Item "só foto" (2026-07-16): sem nome/preço/link próprio, não
                 mostra rodapé nenhum (nome vazio + botão "Ver" abrindo o
