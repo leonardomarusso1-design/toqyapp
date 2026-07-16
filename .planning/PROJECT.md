@@ -45,16 +45,17 @@ marca própria. Todos os planos pagos são assinatura mensal (decisão confirmad
      "detalhe por detalhe, função por função, botão por botão" — cada fase do
      ROADMAP.md vai aprofundar o subconjunto relevante quando for planejada. -->
 
-**PLAN — Planos, preços e cobrança**
-- [ ] PLAN-01: Freelancer migra de pagamento único pra assinatura mensal (Essencial já é mensal)
-- [ ] PLAN-02: Novo preço mensal justo pro Freelancer (hoje R$59,90 único — não dá pra copiar o número direto pro mensal)
-- [ ] PLAN-03: Migração de quem já comprou pagamento único (Freelancer OU Agência) — acesso vitalício preservado, sem virar cobrança nova
-- [ ] PLAN-04: Novos produtos recorrentes na Kiwify pro Freelancer + `resolvePlan()` do webhook atualizado
-- [ ] PLAN-05: `contrato-assinatura/page.tsx` reescrito pra refletir a nova estrutura (Essencial + Freelancer mensal, Agência revenue-share — ver PLAN-06 a 09)
-- [ ] PLAN-06: Agência vira GRATUITA + 30% de comissão pro Toqy sobre venda do revendedor (70% fica com ele) — decisão confirmada, desenho técnico em aberto (ver VISION.md seção E.1)
-- [ ] PLAN-07: Definir o mecanismo de pagamento que viabiliza o split 70/30 de verdade (Kiwify coprodução vs gateway com split vs reporte manual — ver opções A/B/C em VISION.md)
-- [ ] PLAN-08: Definir precisamente "o que conta como uma venda" pro cálculo da comissão (assinatura de plano pelo cliente final? plaquinha física? os dois?)
-- [ ] PLAN-09: Quem já comprou Agência como pagamento único — como migra pro modelo de comissão (ou fica de fora, grandfathered do jeito que está)?
+**PLAN — Planos, preços e cobrança** (Fase 1, completa 2026-07-15)
+- [x] PLAN-01: Freelancer migra de pagamento único pra assinatura mensal (Essencial já é mensal)
+- [x] PLAN-02: Novo preço mensal justo pro Freelancer (hoje R$59,90 único — não dá pra copiar o número direto pro mensal)
+- [x] PLAN-03: Migração de quem já comprou pagamento único (Freelancer OU Agência) — acesso vitalício preservado, sem virar cobrança nova
+- [x] PLAN-04: Novos produtos recorrentes na Kiwify pro Freelancer + `resolvePlan()` do webhook atualizado
+- [x] PLAN-05: `contrato-assinatura/page.tsx` reescrito pra refletir a nova estrutura (Essencial + Freelancer mensal, Agência revenue-share — ver PLAN-06 a 09)
+(Fase 2, completa 2026-07-15)
+- [x] PLAN-06: ~~Agência vira GRATUITA + 30% de comissão pro Toqy~~ — **desenho abandonado no mesmo dia** (2026-07-15, ver `ROADMAP.md` Phase 2): permitia qualquer assinante virar Agência de graça sem nunca revender nada. Desenho final: Agência continua assinatura paga (R$99,90/mês); quem já paga Freelancer/Agência ganha link de indicação (comissão 20%/30% pro indicador, desconto 10%/15% pro indicado, via Kiwify Afiliados)
+- [x] PLAN-07: Mecanismo de pagamento definido: cupom Kiwify (`?coupon=CODIGO`, aplicado em `resellerTiers.applyCoupon()`) pro desconto do indicado + comissão de afiliado ajustada via API Kiwify (`PUT /affiliates/{id}`, `setKiwifyAffiliateCommission()` em `kiwifyApi.ts`) — não existe endpoint de CRIAR afiliado, o indicador se candidata 1x no link público (aprovação automática configurada por Leonardo)
+- [x] PLAN-08: "Uma venda" = qualquer plano pago que o indicado comprar, rastreado por `kiwify_order_id` único em `toqy_commission_ledger`
+- [x] PLAN-09: Quem já comprou Agência como pagamento único fica grandfathered (`legacy_lifetime_access`), fora do modelo de comissão
 
 **GMB — Sistema de avaliação Google (Google Meu Negócio)**
 - [ ] GMB-01: Modo "Avaliação Google" dedicado em `/app/qr` (hoje só dá pra fazer via "Link personalizado" manual)
@@ -73,9 +74,9 @@ marca própria. Todos os planos pagos são assinatura mensal (decisão confirmad
 **ART — Geração de arte pra plaquinhas**
 - [ ] ART-01: (a definir na fase) — auditoria pós-troca pra gpt-image-2, qualidade validada pelo Leonardo?
 
-**SITE — Landing page**
-- [ ] SITE-01: Reposicionar em torno de "plano de negócio", não "plano de bio site"
-- [ ] SITE-02: Nova seção "Ganhe dinheiro com o Toqy" (ou similar)
+**SITE — Landing page** (Fase 3, completa 2026-07-17)
+- [x] SITE-01: Reposicionar em torno de "plano de negócio", não "plano de bio site"
+- [x] SITE-02: Nova seção "Ganhe dinheiro com o Toqy" (ou similar)
 
 **CONT — Conteúdo (blog, ebooks, diretório)**
 - [ ] CONT-01: Primeiro ebook isca + página de captura
