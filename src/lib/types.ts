@@ -113,6 +113,10 @@ export type ToqySite = {
     buttonStyle: ButtonStyle;
     buttonRadius: "soft" | "rounded" | "pill";
     socialIconStyle?: "brand" | "glass";
+    // Tamanho dos ícones sociais com imagem própria (WhatsApp/Instagram/
+    // Facebook/localização, 2026-07-16) — só afeta esses 4 tipos, que
+    // renderizam sem círculo de fundo (ver PublicBioSite.tsx IMAGE_ICON_TYPES).
+    socialIconSize?: "sm" | "md" | "lg";
     useBackgroundOverlay: boolean;
     // Cores granulares — opcionais, usam os valores acima como fallback
     colors?: {

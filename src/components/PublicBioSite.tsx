@@ -105,6 +105,17 @@ const iconByType: Partial<Record<ToqyLinkType, React.ComponentType<{ className?:
   telegram: MessageCircle,
 };
 
+// Tipos cujo ícone é uma imagem própria já colorida (2026-07-16) — usados
+// pra pular o círculo de fundo no quick-row de ícones sociais (ver
+// socialButtons.map abaixo) e pro controle de tamanho pequeno/médio/grande.
+const IMAGE_ICON_TYPES: ToqyLinkType[] = ["whatsapp", "instagram", "facebook", "maps"];
+
+const SOCIAL_ICON_SIZE_CLASS: Record<"sm" | "md" | "lg", string> = {
+  sm: "h-9 w-9",
+  md: "h-12 w-12",
+  lg: "h-16 w-16",
+};
+
 type Modal = "wifi" | "pix" | null;
 
 function radiusClass(site: ToqySite) {
@@ -360,9 +371,9 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
     if (href) window.open(href, "_blank", "noopener,noreferrer");
   }
 
-  const ButtonIcon = ({ type, color }: { type: ToqyLinkType; color?: string }) => {
+  const ButtonIcon = ({ type, color, className }: { type: ToqyLinkType; color?: string; className?: string }) => {
     const Icon = iconByType[type] ?? LinkIcon;
-    return <Icon className="h-5 w-5 shrink-0" style={color ? { color } : undefined} />;
+    return <Icon className={className ?? "h-5 w-5 shrink-0"} style={color ? { color } : undefined} />;
   };
 
   const SOCIAL_TYPES = ["whatsapp", "instagram", "facebook", "tiktok", "linkedin", "youtube", "email"];
@@ -481,6 +492,25 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
                 };
                 const useGlass = site.theme.socialIconStyle === "glass";
                 const isBrandType = button.type in brandColor;
+
+                // Ícones com imagem própria (2026-07-16, pedido do Leonardo:
+                // "tira esse contorno, deixa só os ícones com as cores
+                // deles") — whatsapp/instagram/facebook/maps agora são PNGs
+                // já coloridos (ver WhatsAppIcon/InstagramIcon/FacebookIcon/
+                // MapPinIcon2 acima), então o círculo de fundo + tint de cor
+                // do padrão antigo só duplicava contorno em cima do ícone.
+                // Renderiza sem bg/sombra, só o ícone maior, tamanho
+                // controlável em socialIconSize (padrão "md").
+                if (IMAGE_ICON_TYPES.includes(button.type)) {
+                  const sizeClass = SOCIAL_ICON_SIZE_CLASS[site.theme.socialIconSize ?? "md"];
+                  return (
+                    <button key={button.id} type="button" onClick={() => handleButton(button)} aria-label={button.label}
+                      className="flex items-center justify-center p-1 transition active:scale-90 hover:scale-105">
+                      <ButtonIcon type={button.type} className={sizeClass} />
+                    </button>
+                  );
+                }
+
                 const bg = useGlass
                   ? (site.theme.mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)")
                   : (brandColor[button.type] ?? site.theme.primary);
