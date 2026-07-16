@@ -3,7 +3,7 @@ import { supabase } from "./supabaseClient";
 
 export const PLAN_BIOSITE_LIMITS = {
   free: 1,
-  community: 20,
+  community: 10,
   freelancer: 20,
   agency: 100,
 } as const;

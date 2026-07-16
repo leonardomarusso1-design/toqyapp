@@ -95,7 +95,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     priceMonthly: 29.9,
     priceAnnual: 299,
     features: [
-      "Até 20 bio sites",
+      "Até 10 bio sites",
       "Sem taxa por bio site",
       "Catálogo, Pix e Wi-Fi",
       "QR personalizado editável",
@@ -103,7 +103,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
       "Analytics básico",
       "Suporte por email",
     ],
-    maxSites: 20,
+    maxSites: 10,
     maxTeamMembers: 2,
     hasAnalytics: true,
     hasWhiteLabel: false,
