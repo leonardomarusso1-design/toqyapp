@@ -4,7 +4,7 @@
 // afiliado (revendedor) recebeu comissão — ver .planning/ROADMAP.md Phase 2.
 //
 // Auth: OAuth2 client-credentials (POST /oauth/token com client_id +
-// client_secret, criados em Apps > API no painel Kiwify). Token válido 96h.
+// client_secret, criados em Apps > API no painel Kiwify).
 //
 // Nota sobre o cache do token em ambiente serverless (Vercel): a variável de
 // módulo abaixo só persiste enquanto a instância da função fica "quente" —
@@ -16,9 +16,6 @@
 
 const KIWIFY_API_BASE = "https://public-api.kiwify.com/v1";
 
-// Margem de segurança sobre as 96h reais de validade do token.
-const TOKEN_TTL_MS = 95 * 60 * 60 * 1000;
-
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
 export function hasKiwifyApiEnv() {
@@ -29,24 +26,48 @@ export function hasKiwifyApiEnv() {
   );
 }
 
+// Bugs reais corrigidos (2026-07-16, primeiro teste contra a API real, com
+// credenciais de produção — testado via curl direto, fora do Next.js, pra
+// isolar a causa do "Sincronizar comissão" falhando mesmo com afiliado
+// ativo na Kiwify):
+// 1. Content-Type errado — a Kiwify EXIGE
+//    application/x-www-form-urlencoded neste endpoint (confirmado no
+//    openapi.json oficial, requestBody.content só lista esse tipo).
+//    Mandar JSON retornava 400 "content must be application/x-www-form-
+//    urlencoded" — ou seja, getKiwifyToken() NUNCA tinha conseguido um
+//    token de verdade, então toda função que depende dele (busca de
+//    afiliado, ajuste de comissão, busca de venda) falhava em silêncio
+//    desde sempre, não só agora.
+// 2. TTL do cache errado — comentário antigo dizia "token válido 96h",
+//    mas a resposta real tem `expires_in: 86400` (24h). O cache guardava
+//    por até 95h, quase 4x mais que a validade real — qualquer reuso de
+//    instância serverless "quente" nesse intervalo usaria um token já
+//    expirado. Agora usa o `expires_in` da própria resposta.
 async function getKiwifyToken(): Promise<string | null> {
   if (!hasKiwifyApiEnv()) return null;
   if (cachedToken && cachedToken.expiresAt > Date.now()) return cachedToken.token;
 
+  const body = new URLSearchParams({
+    client_id: process.env.KIWIFY_CLIENT_ID!,
+    client_secret: process.env.KIWIFY_CLIENT_SECRET!,
+  });
   const res = await fetch(`${KIWIFY_API_BASE}/oauth/token`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      client_id: process.env.KIWIFY_CLIENT_ID,
-      client_secret: process.env.KIWIFY_CLIENT_SECRET,
-    }),
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString(),
   });
-  if (!res.ok) return null;
+  if (!res.ok) {
+    console.error("[kiwifyApi] getKiwifyToken falhou:", res.status, await res.text().catch(() => "(sem corpo)"));
+    return null;
+  }
 
   const data = await res.json();
   if (!data.access_token) return null;
 
-  cachedToken = { token: data.access_token, expiresAt: Date.now() + TOKEN_TTL_MS };
+  // Margem de segurança de 5min sobre o expires_in real (evita usar um
+  // token que expira nos milissegundos entre a checagem e o uso real).
+  const ttlMs = Math.max((data.expires_in ?? 86400) - 300, 60) * 1000;
+  cachedToken = { token: data.access_token, expiresAt: Date.now() + ttlMs };
   return cachedToken.token;
 }
 
