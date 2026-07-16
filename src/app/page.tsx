@@ -77,7 +77,12 @@ const plans = [
   { name: "Gratuito", price: "R$0", period: "", tag: "Pra testar", description: "Para conhecer a plataforma e gerar seus primeiros leads.", highlight: false, cta: "Começar grátis", items: ["1 bio site", "Domínio toqy.app/seunome", "QR Code básico", "Preview em tempo real", "Marca TOQY na página"] },
   { name: "Essencial", price: "R$29,90", period: "/mês", tag: "Menor investimento pra começar", description: "As mesmas 20 bio sites do Freelancer, mensal, cancele quando quiser.", highlight: true, cta: "Assinar agora", items: ["Até 20 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "★ QR personalizado editável", "★ Gerador de arte com IA (5 créditos)", "Suporte por email", "Cancele quando quiser"] },
   { name: "Freelancer", price: "R$39,90", period: "/mês", tag: "Mais recursos, suporte prioritário", description: "Para quem cria pra clientes com mais frequência — mais créditos de arte e suporte prioritário. Mensal, cancele quando quiser.", highlight: false, cta: "Assinar agora", items: ["Até 20 bio sites", "Pix e Wi-Fi", "Catálogo completo", "★ QR personalizado editável", "★ Gerador de arte com IA (10 créditos)", "Suporte prioritário", "Cancele quando quiser"] },
-  { name: "Agência", price: "Grátis", period: "", tag: "Revenda com comissão", description: "Acesso gratuito à plataforma white-label + 30% de comissão pro Toqy sobre cada venda sua (70% fica com você).", highlight: false, cta: "Criar conta grátis", items: ["Até 100 bio sites", "★ QR personalizado editável", "★ Gerador de arte com IA", "White label parcial", "Domínio próprio", "Gestão de equipe"] },
+  // price/period (2026-07-15): "70% pra você" em vez de "Grátis" — com
+  // "Gratuito" logo ali do lado mostrando "R$0", dois cards com preço
+  // grande escrito "grátis" liam como a mesma oferta duas vezes. 70% (o que
+  // o revendedor fica) comunica o modelo de comissão na mesma hierarquia
+  // visual de um preço, sem precisar redesenhar a seção (isso é Fase 3).
+  { name: "Agência", price: "70%", period: " pra você", tag: "Revenda com comissão", description: "Acesso gratuito à plataforma white-label + 30% de comissão pro Toqy sobre cada venda sua (70% fica com você).", highlight: false, cta: "Virar revendedor", items: ["Até 100 bio sites", "★ QR personalizado editável", "★ Gerador de arte com IA", "White label parcial", "Domínio próprio", "Gestão de equipe"] },
 ] as const;
 
 const featureShowcase = [

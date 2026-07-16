@@ -86,9 +86,17 @@ export default function RevendaPage() {
 
   async function copyLink() {
     if (!reseller?.reseller_code) return;
-    await navigator.clipboard.writeText(`${origin}/login?revenda=${reseller.reseller_code}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const link = `${origin}/login?revenda=${reseller.reseller_code}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // navigator.clipboard pode recusar silenciosamente (contexto sem
+      // permissão, iframe, navegador antigo) — fallback: seleciona o texto
+      // pra copiar manual, já que window.prompt não é bloqueado por permissão.
+      window.prompt("Copie o link:", link);
+    }
   }
 
   async function inviteClient(e: React.FormEvent) {
@@ -173,12 +181,24 @@ export default function RevendaPage() {
           <div className="mt-4 rounded-[2rem] border border-border bg-card p-6 shadow-sm">
             <p className="text-sm font-black text-ink">Seu link de revenda</p>
             <p className="mt-1 text-xs text-muted">Compartilhe — quem se cadastrar por ele vira seu cliente gerenciado automaticamente.</p>
-            <div className="mt-3 flex items-center gap-2 rounded-2xl border border-accent/30 bg-surface px-4 py-3">
-              <span className="flex-1 truncate text-sm font-black text-ink">{origin}/login?revenda={reseller?.reseller_code ?? "..."}</span>
-              <button type="button" onClick={copyLink} className="shrink-0 inline-flex items-center gap-1 rounded-xl bg-accent px-4 py-2 text-xs font-black text-white hover:bg-accent-dim">
-                <Copy className="h-3.5 w-3.5" />{copied ? "Copiado!" : "Copiar"}
+            {reseller?.reseller_code ? (
+              <div className="mt-3 flex items-center gap-2 rounded-2xl border border-accent/30 bg-surface px-4 py-3">
+                <span className="flex-1 truncate text-sm font-black text-ink">{origin}/login?revenda={reseller.reseller_code}</span>
+                <button type="button" onClick={copyLink} className="shrink-0 inline-flex items-center gap-1 rounded-xl bg-accent px-4 py-2 text-xs font-black text-white hover:bg-accent-dim">
+                  <Copy className="h-3.5 w-3.5" />{copied ? "Copiado!" : "Copiar"}
+                </button>
+              </div>
+            ) : (
+              // Bug real corrigido (2026-07-15): quem já era plan_toqy='agency'
+              // ANTES de existir a rota /api/resellers/join (ex: backfill da
+              // Fase 2A) nunca tinha reseller_code gerado, e só via o botão
+              // de gerar em Estado A (plan_toqy !== 'agency') — que essas
+              // contas nunca atingem. Sem isso, o link ficava mostrando "..."
+              // pra sempre, com o botão de copiar sem nada útil pra copiar.
+              <button type="button" onClick={joinAsReseller} disabled={joining} className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-accent px-4 py-2.5 text-sm font-black text-white hover:bg-accent-dim disabled:opacity-50">
+                {joining ? "Gerando..." : "Gerar meu link de revenda"}
               </button>
-            </div>
+            )}
 
             <form onSubmit={inviteClient} className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
               <div className="relative flex-1 min-w-[220px]">
