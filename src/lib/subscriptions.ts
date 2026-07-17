@@ -255,8 +255,14 @@ export function resolvePlanTier(rawPlan?: string | null): PlanType {
   return normalized in SUBSCRIPTION_PLANS ? (normalized as PlanType) : "free";
 }
 
+// Não renderizado em lugar nenhum hoje (confirmado por grep, 2026-07-16) —
+// nenhum outro arquivo importa PLAN_FEATURES_COMPARISON. Corrigido de
+// qualquer forma pra não ficar com o mesmo número errado (community era
+// "20", igual ao bug real de resolvePlan() corrigido no commit 46ecc71 —
+// ver PLAN_BIOSITE_LIMITS.community em planLimits.ts = 10) caso algo passe
+// a usar esta constante no futuro.
 export const PLAN_FEATURES_COMPARISON = [
-  { feature: "Bio sites", free: "1", community: "20", freelancer: "20", agency: "100" },
+  { feature: "Bio sites", free: "1", community: "10", freelancer: "20", agency: "100" },
   { feature: "QR Code", free: "Básico", community: "Personalizado", freelancer: "Personalizado", agency: "Personalizado" },
   { feature: "Pix & Wi-Fi", free: "Não", community: "Sim", freelancer: "Sim", agency: "Sim" },
   { feature: "Catálogo", free: "Não", community: "Básico", freelancer: "Completo", agency: "Completo" },
