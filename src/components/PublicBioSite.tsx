@@ -717,15 +717,49 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
     ? { background: site.theme.primary, color: site.theme.mode === "light" ? "#fff" : "#06111F", borderColor: "transparent" }
     : { background: site.theme.mode === "light" ? "rgba(255,255,255,0.66)" : "rgba(255,255,255,0.10)", color: site.theme.text, borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.10)" : "rgba(255,255,255,0.16)" };
 
-  // Agrupa itens por displaySection — itens com seção específica aparecem separados
+  // Agrupa itens por displaySection — itens com seção específica aparecem separados.
+  // Bug real corrigido (2026-07-16): antes, cada modo (carrossel/grade/lista/
+  // subcategorias) era um BLOCO FIXO, sempre renderizado nessa mesma ordem —
+  // uma categoria em "Carrossel" aparecia SEMPRE antes de qualquer categoria
+  // em "Lista", não importa a posição escolhida pelo cliente em "Exibição por
+  // categoria" no editor (relatado com print: categoria configurada por
+  // ÚLTIMO na lista aparecia PRIMEIRO no site publicado). Agora a ordem das
+  // seções segue a ordem real das categorias no catálogo (mesma ordem
+  // reordenável no editor, ver reorderCategory em SiteBuilder.tsx) — cada
+  // categoria vira sua própria seção, na posição certa. Categorias sem
+  // exibição específica ("padrão") continuam agrupadas numa seção só
+  // (necessário pro Estilo padrão do catálogo combinar capas de várias
+  // categorias numa grade/carrossel único), posicionada onde a primeira
+  // categoria "padrão" apareceria.
   const itemsBySection = useMemo(() => {
     const destaques = filteredItems.filter(i => i.displaySection === "destaque");
-    const carrossel = filteredItems.filter(i => i.displaySection === "carrossel");
-    const grade = filteredItems.filter(i => i.displaySection === "grade");
-    const lista = filteredItems.filter(i => i.displaySection === "lista");
-    const subcategorias = filteredItems.filter(i => i.displaySection === "subcategorias");
-    const padrao = filteredItems.filter(i => !i.displaySection || i.displaySection === "padrao");
-    return { destaques, carrossel, grade, lista, subcategorias, padrao };
+    const rest = filteredItems.filter(i => i.displaySection !== "destaque");
+    const categoryOrder = Array.from(new Set(rest.map(i => i.category?.trim()).filter((c): c is string => Boolean(c))));
+    const modeOf = (category: string) => rest.find(i => i.category?.trim() === category)?.displaySection;
+    const padraoCategories = new Set(categoryOrder.filter((cat) => {
+      const mode = modeOf(cat);
+      return mode !== "carrossel" && mode !== "grade" && mode !== "lista" && mode !== "subcategorias";
+    }));
+    const padraoItems = rest.filter(i => padraoCategories.has(i.category?.trim() ?? ""));
+
+    type Section =
+      | { kind: "padrao"; items: CatalogItem[] }
+      | { kind: "category"; mode: "carrossel" | "grade" | "lista" | "subcategorias"; category: string; items: CatalogItem[] };
+    const sections: Section[] = [];
+    let padraoInserted = false;
+    categoryOrder.forEach((category) => {
+      if (padraoCategories.has(category)) {
+        if (!padraoInserted) { sections.push({ kind: "padrao", items: padraoItems }); padraoInserted = true; }
+        return;
+      }
+      sections.push({
+        kind: "category",
+        mode: modeOf(category) as "carrossel" | "grade" | "lista" | "subcategorias",
+        category,
+        items: rest.filter(i => i.category?.trim() === category),
+      });
+    });
+    return { destaques, sections };
   }, [filteredItems]);
 
   const hasCustomSections = filteredItems.some(i => i.displaySection && i.displaySection !== "padrao");
@@ -766,74 +800,61 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
 
       <div className="mt-5">
         {hasCustomSections ? (
-          // Modo por seção: cada grupo aparece separado com seu layout
+          // Modo por seção: cada categoria aparece separada, na ORDEM em que
+          // aparece no catálogo (ver comentário de itemsBySection acima —
+          // onOpenGallery não é passado nas seções carrossel/grade/lista
+          // porque nada fica "escondido" pra abrir, já mostram tudo).
           <div className="space-y-8">
-            {/* Correção de bug real (2026-07-16), 2 rodadas:
-                1ª rodada: itens do mesmo "Onde aparece" (destaque/carrossel/
-                grade/lista) eram jogados numa ÚNICA fileira, título tirado
-                só do primeiro item — 2 categorias diferentes marcadas como
-                "Carrossel" apareciam juntas, lado a lado. Corrigido
-                agrupando por categoria primeiro (uniqueGroups).
-                2ª rodada: a correção acima tinha ido longe demais — também
-                reduzia cada categoria a 1 foto de capa só (representative
-                ItemsByCategory), matando o efeito de slide/carrossel que
-                "Carrossel — arrasta para o lado" promete no próprio nome.
-                Diferença chave: esse dedup faz sentido pro catálogo PADRÃO
-                (ninguém marcou nada, evita lotar a página com toda foto
-                solta — ver itemsBySection.padrao abaixo), mas NÃO faz
-                sentido quando o usuário escolheu explicitamente "Carrossel/
-                Grade/Lista" pra um item — aí a escolha É pra aparecer todas
-                as fotos daquela categoria, deslizando/em grade/em lista.
-                Removido o dedup dessas 4 seções; onOpenGallery não é
-                passado aqui (nada "escondido" pra abrir, já mostra tudo). */}
             {itemsBySection.destaques.length > 0 && (
               <div>
                 <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.accent }}>Destaques</p>
                 <div className="space-y-4">{itemsBySection.destaques.map(item => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
               </div>
             )}
-            {itemsBySection.carrossel.length > 0 && uniqueGroups(itemsBySection.carrossel).map(([group, groupItems]) => (
-              <div key={`carrossel-${group}`}>
-                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{group}</p>
-                <CatalogScroller site={site} items={groupItems} />
-              </div>
-            ))}
-            {itemsBySection.grade.length > 0 && uniqueGroups(itemsBySection.grade).map(([group, groupItems]) => (
-              <div key={`grade-${group}`}>
-                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{group}</p>
-                <div className="grid grid-cols-2 gap-3">{groupItems.map(item => <CatalogCard key={item.id} site={site} item={item} compact />)}</div>
-              </div>
-            ))}
-            {itemsBySection.lista.length > 0 && uniqueGroups(itemsBySection.lista).map(([group, groupItems]) => (
-              <div key={`lista-${group}`}>
-                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{group}</p>
-                <div className="space-y-4">{groupItems.map(item => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
-              </div>
-            ))}
-            {/* Subcategorias (2026-07-16): categoria vira um cabeçalho
-                (ex: "Home Office"), e dentro dela 1 capa por subcategoria
-                (ex: Cadeiras, Mesas, Estantes) lado a lado — cada capa abre
-                a galeria só das fotos daquela subcategoria (groupKey já
-                separa por categoria+subcategoria nesse modo). */}
-            {itemsBySection.subcategorias.length > 0 && uniqueGroups(itemsBySection.subcategorias).map(([group, groupItems]) => (
-              <div key={`subcat-${group}`}>
-                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{group}</p>
-                <CatalogScroller site={site} items={representativeItemsByCategory(groupItems)} onOpenGallery={openGallery} categoryCounts={categoryCounts} />
-              </div>
-            ))}
-            {/* Categorias "padrão" (sem exibição específica escolhida em
-                "Exibição por categoria") respeitam o Estilo padrão do
-                catálogo (renderLayout), igual ao modo sem seções
-                customizadas — antes ficava travado num carrossel fixo,
-                ignorando o estilo escolhido, assim que QUALQUER outra
-                categoria ganhava uma exibição específica (ex: Diretoria em
-                Carrossel fazia até categorias sem nada configurado, tipo
-                "Bolsas de couro", pararem de respeitar o Estilo padrão). */}
-            {itemsBySection.padrao.length > 0 && (
-              <div>
-                {renderLayout(layout, itemsBySection.padrao)}
-              </div>
-            )}
+            {itemsBySection.sections.map((section) => {
+              if (section.kind === "padrao") {
+                // Categorias "padrão" (sem exibição específica escolhida em
+                // "Exibição por categoria") respeitam o Estilo padrão do
+                // catálogo (renderLayout), agrupadas numa seção só.
+                return <div key="padrao">{renderLayout(layout, section.items)}</div>;
+              }
+              const { category, mode, items } = section;
+              if (mode === "carrossel") {
+                return (
+                  <div key={`carrossel-${category}`}>
+                    <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{category}</p>
+                    <CatalogScroller site={site} items={items} />
+                  </div>
+                );
+              }
+              if (mode === "grade") {
+                return (
+                  <div key={`grade-${category}`}>
+                    <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{category}</p>
+                    <div className="grid grid-cols-2 gap-3">{items.map(item => <CatalogCard key={item.id} site={site} item={item} compact />)}</div>
+                  </div>
+                );
+              }
+              if (mode === "lista") {
+                return (
+                  <div key={`lista-${category}`}>
+                    <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{category}</p>
+                    <div className="space-y-4">{items.map(item => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
+                  </div>
+                );
+              }
+              // Subcategorias: categoria vira um cabeçalho (ex: "Home
+              // Office"), e dentro dela 1 capa por subcategoria (ex:
+              // Cadeiras, Mesas, Estantes) lado a lado — cada capa abre a
+              // galeria só das fotos daquela subcategoria (groupKey separa
+              // por categoria+subcategoria nesse modo).
+              return (
+                <div key={`subcat-${category}`}>
+                  <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.muted }}>{category}</p>
+                  <CatalogScroller site={site} items={representativeItemsByCategory(items)} onOpenGallery={openGallery} categoryCounts={categoryCounts} />
+                </div>
+              );
+            })}
           </div>
         ) : (
           // Modo sem seções customizadas — nenhuma categoria tem exibição

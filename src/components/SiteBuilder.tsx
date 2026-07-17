@@ -123,17 +123,48 @@ function categoryCommonDisplaySection(catalog: CatalogItem[], category: string):
   return sibling?.displaySection ?? "padrao";
 }
 
-function CatalogCategoryDisplayControl({ catalog, onChangeCategory }: { catalog: CatalogItem[]; onChangeCategory: (category: string, mode: string) => void }) {
+// Reordena um bloco de categoria inteiro pra cima/baixo dentro do catálogo
+// (2026-07-16, bug real reportado com print: a categoria configurada por
+// ÚLTIMO aqui em "Exibição por categoria" aparecia PRIMEIRO no bio site
+// publicado — a ordem de exibição no site segue a ordem das categorias no
+// catálogo, ver itemsBySection em PublicBioSite.tsx, e não existia nenhum
+// jeito de mudar essa ordem). Move TODOS os itens da categoria (mantendo a
+// ordem interna deles) pra antes/depois do bloco da categoria vizinha.
+// Itens sem categoria (não deveria acontecer — "Adicionar item" sempre usa
+// "Destaques" como padrão) ficam no início, sem entrar na reordenação.
+function reorderCategory(catalog: CatalogItem[], category: string, direction: "up" | "down"): CatalogItem[] {
+  const categories = Array.from(new Set(catalog.map((i) => i.category?.trim()).filter((c): c is string => Boolean(c))));
+  const idx = categories.indexOf(category);
+  const swapWith = direction === "up" ? idx - 1 : idx + 1;
+  if (idx === -1 || swapWith < 0 || swapWith >= categories.length) return catalog;
+  const newOrder = [...categories];
+  [newOrder[idx], newOrder[swapWith]] = [newOrder[swapWith], newOrder[idx]];
+
+  const grouped = new Map<string, CatalogItem[]>();
+  const uncategorized: CatalogItem[] = [];
+  catalog.forEach((item) => {
+    const c = item.category?.trim();
+    if (c) grouped.set(c, [...(grouped.get(c) ?? []), item]);
+    else uncategorized.push(item);
+  });
+  return [...uncategorized, ...newOrder.flatMap((cat) => grouped.get(cat) ?? [])];
+}
+
+function CatalogCategoryDisplayControl({ catalog, onChangeCategory, onReorderCategory }: { catalog: CatalogItem[]; onChangeCategory: (category: string, mode: string) => void; onReorderCategory: (category: string, direction: "up" | "down") => void }) {
   const categories = Array.from(new Set(catalog.map((i) => i.category?.trim()).filter((c): c is string => Boolean(c))));
   if (categories.length === 0) return null;
   return (
     <div className="mt-4 rounded-3xl border border-border bg-surface p-4">
       <p className="text-sm font-black text-ink">Exibição por categoria</p>
-      <p className="mt-1 text-xs text-muted">Escolha como cada categoria aparece — vale pra todas as fotos dela de uma vez, não precisa configurar foto por foto.</p>
+      <p className="mt-1 text-xs text-muted">Escolha como cada categoria aparece e a ORDEM dela no bio site (setas) — vale pra todas as fotos dela de uma vez, não precisa configurar foto por foto.</p>
       <div className="mt-3 grid gap-2">
-        {categories.map((cat) => (
+        {categories.map((cat, index) => (
           <div key={cat} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2.5">
-            <span className="text-sm font-black text-ink">{cat}</span>
+            <div className="flex items-center gap-2">
+              <button type="button" disabled={index === 0} onClick={() => onReorderCategory(cat, "up")} className="rounded-lg border border-border p-1.5 text-muted hover:text-ink disabled:opacity-30" aria-label={`Mover ${cat} para cima`}><ArrowUp className="h-3.5 w-3.5" /></button>
+              <button type="button" disabled={index === categories.length - 1} onClick={() => onReorderCategory(cat, "down")} className="rounded-lg border border-border p-1.5 text-muted hover:text-ink disabled:opacity-30" aria-label={`Mover ${cat} para baixo`}><ArrowDown className="h-3.5 w-3.5" /></button>
+              <span className="text-sm font-black text-ink">{cat}</span>
+            </div>
             <select
               className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs font-black text-ink outline-none focus:border-accent"
               value={categoryCommonDisplaySection(catalog, cat)}
@@ -873,6 +904,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 : i
               ),
             }))}
+            onReorderCategory={(cat, direction) => update((s) => ({ ...s, catalog: reorderCategory(s.catalog, cat, direction) }))}
           />
 
           <div className="mt-5 grid gap-4">
