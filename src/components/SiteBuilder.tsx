@@ -20,6 +20,7 @@ import { ThemePresetPicker } from "./ThemePresetPicker";
 import { ButtonEditor } from "./ButtonEditor";
 import { generateId } from "@/lib/security";
 import { syncModulesFromButtons } from "@/lib/buttonSync";
+import { DragHandle, DragReorderList } from "./DragReorderList";
 
 type Props = { mode: "create" | "edit"; initialSite: ToqySite; onSave: (site: ToqySite) => unknown | Promise<unknown> };
 
@@ -132,14 +133,10 @@ function categoryCommonDisplaySection(catalog: CatalogItem[], category: string):
 // ordem interna deles) pra antes/depois do bloco da categoria vizinha.
 // Itens sem categoria (não deveria acontecer — "Adicionar item" sempre usa
 // "Destaques" como padrão) ficam no início, sem entrar na reordenação.
-function reorderCategory(catalog: CatalogItem[], category: string, direction: "up" | "down"): CatalogItem[] {
-  const categories = Array.from(new Set(catalog.map((i) => i.category?.trim()).filter((c): c is string => Boolean(c))));
-  const idx = categories.indexOf(category);
-  const swapWith = direction === "up" ? idx - 1 : idx + 1;
-  if (idx === -1 || swapWith < 0 || swapWith >= categories.length) return catalog;
-  const newOrder = [...categories];
-  [newOrder[idx], newOrder[swapWith]] = [newOrder[swapWith], newOrder[idx]];
-
+// Reconstrói o catálogo aplicando uma ordem de categorias já pronta (ex:
+// resultado de um drag) — mesma regra de reorderCategory abaixo, mas
+// recebendo a ordem final direto em vez de calcular um swap de vizinhos.
+function applyCategoryOrder(catalog: CatalogItem[], newOrder: string[]): CatalogItem[] {
   const grouped = new Map<string, CatalogItem[]>();
   const uncategorized: CatalogItem[] = [];
   catalog.forEach((item) => {
@@ -150,34 +147,47 @@ function reorderCategory(catalog: CatalogItem[], category: string, direction: "u
   return [...uncategorized, ...newOrder.flatMap((cat) => grouped.get(cat) ?? [])];
 }
 
-function CatalogCategoryDisplayControl({ catalog, onChangeCategory, onReorderCategory }: { catalog: CatalogItem[]; onChangeCategory: (category: string, mode: string) => void; onReorderCategory: (category: string, direction: "up" | "down") => void }) {
+function reorderCategory(catalog: CatalogItem[], category: string, direction: "up" | "down"): CatalogItem[] {
+  const categories = Array.from(new Set(catalog.map((i) => i.category?.trim()).filter((c): c is string => Boolean(c))));
+  const idx = categories.indexOf(category);
+  const swapWith = direction === "up" ? idx - 1 : idx + 1;
+  if (idx === -1 || swapWith < 0 || swapWith >= categories.length) return catalog;
+  const newOrder = [...categories];
+  [newOrder[idx], newOrder[swapWith]] = [newOrder[swapWith], newOrder[idx]];
+  return applyCategoryOrder(catalog, newOrder);
+}
+
+function CatalogCategoryDisplayControl({ catalog, onChangeCategory, onReorderCategory, onReorderCategories }: { catalog: CatalogItem[]; onChangeCategory: (category: string, mode: string) => void; onReorderCategory: (category: string, direction: "up" | "down") => void; onReorderCategories: (newOrder: string[]) => void }) {
   const categories = Array.from(new Set(catalog.map((i) => i.category?.trim()).filter((c): c is string => Boolean(c))));
   if (categories.length === 0) return null;
   return (
     <div className="mt-4 rounded-3xl border border-border bg-surface p-4">
       <p className="text-sm font-black text-ink">Exibição por categoria</p>
-      <p className="mt-1 text-xs text-muted">Escolha como cada categoria aparece e a ORDEM dela no bio site (setas) — vale pra todas as fotos dela de uma vez, não precisa configurar foto por foto.</p>
+      <p className="mt-1 text-xs text-muted">Escolha como cada categoria aparece e a ORDEM dela no bio site (arraste ou use as setas) — vale pra todas as fotos dela de uma vez, não precisa configurar foto por foto.</p>
       <div className="mt-3 grid gap-2">
-        {categories.map((cat, index) => (
-          <div key={cat} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2.5">
-            <div className="flex items-center gap-2">
-              <button type="button" disabled={index === 0} onClick={() => onReorderCategory(cat, "up")} className="rounded-lg border border-border p-1.5 text-muted hover:text-ink disabled:opacity-30" aria-label={`Mover ${cat} para cima`}><ArrowUp className="h-3.5 w-3.5" /></button>
-              <button type="button" disabled={index === categories.length - 1} onClick={() => onReorderCategory(cat, "down")} className="rounded-lg border border-border p-1.5 text-muted hover:text-ink disabled:opacity-30" aria-label={`Mover ${cat} para baixo`}><ArrowDown className="h-3.5 w-3.5" /></button>
-              <span className="text-sm font-black text-ink">{cat}</span>
+        <DragReorderList items={categories} itemKey={(cat) => cat} onReorder={onReorderCategories}>
+          {(cat, index, drag) => (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2.5">
+              <div className="flex items-center gap-2">
+                <DragHandle {...drag} />
+                <button type="button" disabled={index === 0} onClick={() => onReorderCategory(cat, "up")} className="rounded-lg border border-border p-1.5 text-muted hover:text-ink disabled:opacity-30" aria-label={`Mover ${cat} para cima`}><ArrowUp className="h-3.5 w-3.5" /></button>
+                <button type="button" disabled={index === categories.length - 1} onClick={() => onReorderCategory(cat, "down")} className="rounded-lg border border-border p-1.5 text-muted hover:text-ink disabled:opacity-30" aria-label={`Mover ${cat} para baixo`}><ArrowDown className="h-3.5 w-3.5" /></button>
+                <span className="text-sm font-black text-ink">{cat}</span>
+              </div>
+              <select
+                className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs font-black text-ink outline-none focus:border-accent"
+                value={categoryCommonDisplaySection(catalog, cat)}
+                onChange={(e) => onChangeCategory(cat, e.target.value)}
+              >
+                <option value="padrao">Capa + clique abre galeria</option>
+                <option value="carrossel">Carrossel — desliza todas as fotos</option>
+                <option value="grade">Grade — todas, 2 por linha</option>
+                <option value="lista">Lista — todas, uma embaixo da outra</option>
+                <option value="subcategorias">Subcategorias — 1 capa por subcategoria</option>
+              </select>
             </div>
-            <select
-              className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs font-black text-ink outline-none focus:border-accent"
-              value={categoryCommonDisplaySection(catalog, cat)}
-              onChange={(e) => onChangeCategory(cat, e.target.value)}
-            >
-              <option value="padrao">Capa + clique abre galeria</option>
-              <option value="carrossel">Carrossel — desliza todas as fotos</option>
-              <option value="grade">Grade — todas, 2 por linha</option>
-              <option value="lista">Lista — todas, uma embaixo da outra</option>
-              <option value="subcategorias">Subcategorias — 1 capa por subcategoria</option>
-            </select>
-          </div>
-        ))}
+          )}
+        </DragReorderList>
       </div>
       {categories.some((cat) => categoryCommonDisplaySection(catalog, cat) === "subcategorias") ? (
         <p className="mt-3 text-xs text-muted">
@@ -905,14 +915,17 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
               ),
             }))}
             onReorderCategory={(cat, direction) => update((s) => ({ ...s, catalog: reorderCategory(s.catalog, cat, direction) }))}
+            onReorderCategories={(newOrder) => update((s) => ({ ...s, catalog: applyCategoryOrder(s.catalog, newOrder) }))}
           />
 
           <div className="mt-5 grid gap-4">
-            {site.catalog.map((item, index) => (
-              <article key={item.id} className="rounded-3xl border border-border bg-card p-4 shadow-sm">
+            <DragReorderList items={site.catalog} itemKey={(item) => item.id} onReorder={(next) => update((s) => ({ ...s, catalog: next }))}>
+              {(item, index, drag) => (
+              <article className="rounded-3xl border border-border bg-card p-4 shadow-sm">
                 {/* Header do item com reordenação */}
                 <div className="mb-3 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
+                    <DragHandle {...drag} />
                     <button type="button" disabled={index === 0} onClick={() => update((s) => { const c = [...s.catalog]; [c[index-1],c[index]] = [c[index],c[index-1]]; return {...s,catalog:c}; })} className="rounded-lg border border-border p-1.5 text-muted hover:text-ink disabled:opacity-30"><ArrowUp className="h-3.5 w-3.5" /></button>
                     <button type="button" disabled={index === site.catalog.length-1} onClick={() => update((s) => { const c = [...s.catalog]; [c[index],c[index+1]] = [c[index+1],c[index]]; return {...s,catalog:c}; })} className="rounded-lg border border-border p-1.5 text-muted hover:text-ink disabled:opacity-30"><ArrowDown className="h-3.5 w-3.5" /></button>
                     <span className="text-xs font-bold text-muted">#{index + 1}</span>
@@ -971,7 +984,8 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                   <input className={field} placeholder="Link do botão (opcional)" value={item.actionUrl ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionUrl: e.target.value }) }))} />
                 </div>
               </article>
-            ))}
+              )}
+            </DragReorderList>
           </div>
 
           {/* Rodapé do catálogo - "Não encontrou?" */}
