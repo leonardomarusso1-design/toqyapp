@@ -70,3 +70,23 @@ export function applyCoupon(checkoutUrl: string, couponCode: string | null): str
   const separator = checkoutUrl.includes("?") ? "&" : "?";
   return `${checkoutUrl}${separator}coupon=${encodeURIComponent(couponCode)}`;
 }
+
+// Fecha o furo real (2026-07-17): até aqui, o cupom (?coupon=) garantia o
+// desconto pro comprador, mas a Kiwify não tinha NENHUM jeito de saber que
+// a venda veio de um revendedor específico — "Sincronizar comissão"
+// ajustava a % certa na conta do afiliado, mas nenhuma venda de cliente
+// indicado (toqy_managed_clients) era de fato ATRIBUÍDA a ele, então a
+// comissão nunca caía. Formato de atribuição confirmado em
+// ajuda.kiwify.com.br/pt-br/article/como-passar-parametros-de-rastreamento-
+// na-url-do-checkout-src-utm-tags-entre-outros-1spiptc/ (exemplo oficial:
+// https://pay.kiwify.com.br/apt5cIv?afid=2ksYVDe8&src=instagram) — `afid` é
+// o MESMO valor já salvo em toqy_resellers.kiwify_affiliate_id assim que o
+// revendedor roda "Sincronizar comissão" pela primeira vez (ver
+// POST /api/resellers/sync-affiliate); antes disso ainda não existe afid
+// pra usar, então o link cai de volta pro comportamento de só cupom.
+export function applyResellerAttribution(checkoutUrl: string, couponCode: string | null, kiwifyAffiliateId: string | null): string {
+  const withCoupon = applyCoupon(checkoutUrl, couponCode);
+  if (!kiwifyAffiliateId) return withCoupon;
+  const separator = withCoupon.includes("?") ? "&" : "?";
+  return `${withCoupon}${separator}afid=${encodeURIComponent(kiwifyAffiliateId)}`;
+}

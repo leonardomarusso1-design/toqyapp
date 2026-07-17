@@ -15,12 +15,14 @@ async function getAuthenticatedUserId(request: Request, supabaseAdmin: ReturnTyp
   return data.user.id;
 }
 
+const EMPTY = { couponCode: null, kiwifyAffiliateId: null };
+
 export async function GET(request: Request) {
-  if (!hasSupabaseEnv()) return Response.json({ couponCode: null });
+  if (!hasSupabaseEnv()) return Response.json(EMPTY);
   const supabase = getSupabaseAdmin()!;
 
   const userId = await getAuthenticatedUserId(request, supabase);
-  if (!userId) return Response.json({ couponCode: null });
+  if (!userId) return Response.json(EMPTY);
 
   const { data: managedClient } = await supabase
     .from("toqy_managed_clients")
@@ -29,14 +31,22 @@ export async function GET(request: Request) {
     .eq("status", "active")
     .maybeSingle();
 
-  if (!managedClient) return Response.json({ couponCode: null });
+  if (!managedClient) return Response.json(EMPTY);
 
-  const { data: resellerProfile } = await supabase
-    .from("profiles")
-    .select("plan_toqy")
-    .eq("id", managedClient.reseller_profile_id)
-    .maybeSingle();
+  const [{ data: resellerProfile }, { data: reseller }] = await Promise.all([
+    supabase.from("profiles").select("plan_toqy").eq("id", managedClient.reseller_profile_id).maybeSingle(),
+    // Comissão de afiliado de verdade (2026-07-17, ver applyResellerAttribution
+    // em resellerTiers.ts) — só existe kiwify_affiliate_id aqui DEPOIS que o
+    // revendedor rodou "Sincronizar comissão" pelo menos uma vez (status
+    // "active" em toqy_resellers). Se ainda não sincronizou, devolve null e o
+    // link cai de volta pro comportamento de antes (só cupom, sem afid) — a
+    // Kiwify não aceitaria um afid de afiliado que não existe/não está ativo.
+    supabase.from("toqy_resellers").select("kiwify_affiliate_id, status").eq("profile_id", managedClient.reseller_profile_id).maybeSingle(),
+  ]);
 
   const tier = resolveResellerTier(resellerProfile?.plan_toqy);
-  return Response.json({ couponCode: tier ? RESELLER_TIERS[tier].kiwifyCouponCode : null });
+  return Response.json({
+    couponCode: tier ? RESELLER_TIERS[tier].kiwifyCouponCode : null,
+    kiwifyAffiliateId: reseller?.status === "active" ? (reseller.kiwify_affiliate_id ?? null) : null,
+  });
 }
