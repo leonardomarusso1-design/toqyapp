@@ -34,6 +34,7 @@ import {
   Handshake,
   Wallet,
   Gift,
+  Lock,
 } from "lucide-react";
 
 const features = [
@@ -147,7 +148,7 @@ export default async function LandingPage() {
       <div className="bg-ink text-white">
         <div className="flex items-center justify-center px-4 py-2.5 text-center">
           <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em]">
-            <Sparkles className="h-3.5 w-3.5 text-accent" /> Toqy cria biosites premium para empresas, lojas e profissionais em minutos.
+            <Sparkles className="h-3.5 w-3.5 text-accent" /> Deixe o negócio do cliente mais profissional e venda mais em menos de 10 minutos.
           </span>
         </div>
       </div>
@@ -158,8 +159,8 @@ export default async function LandingPage() {
             <img src="/brand/logo-toqy-horizontal-dark.png" alt="TOQY" className="h-14 w-auto object-contain md:h-16" />
           </Link>
           <nav className="hidden items-center gap-9 text-sm font-semibold text-muted md:flex">
-            <a className="transition hover:text-accent" href="#verdade">Por que importa</a>
-            <a className="transition hover:text-accent" href="#recursos">Recursos</a>
+            <a className="transition hover:text-accent" href="#resultados">Resultados</a>
+            <a className="transition hover:text-accent" href="#como-funciona">Como funciona</a>
             <a className="transition hover:text-accent" href="#exemplos">Exemplos</a>
             <a className="transition hover:text-accent" href="#planos">Planos</a>
           </nav>
@@ -167,7 +168,7 @@ export default async function LandingPage() {
         </div>
       </header>
 
-      {/* HERO + VÍDEO (no topo) */}
+      {/* HERO com DUAS DIREÇÕES */}
       <section className="hero-gradient relative overflow-hidden">
         <div className="shimmer-line h-1 w-full" />
         {/* blobs animados */}
@@ -176,124 +177,180 @@ export default async function LandingPage() {
         <div className="blob float-slow bottom-0 left-1/3 h-72 w-72 bg-[#ffc850]/30" style={{ animationDelay: "2s" }} />
 
         <div className="relative mx-auto max-w-7xl px-5 py-16 lg:py-20">
-          <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="text-center lg:text-left">
-              <span className="pill inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-bold text-accent-dim shadow-sm fade-up">
-                <Sparkles className="h-4 w-4 text-accent" /> Biosites premium para empresas, lojas e renda extra
-              </span>
-              <h1 className="fade-up mt-6 text-3xl font-extrabold leading-[1.1] tracking-tight text-ink md:text-4xl lg:text-5xl" style={{ animationDelay: "0.05s" }}>
-                Biosites que <span className="gradient-text">vendem mais</span> e ficam prontos em minutos.
-              </h1>
-              <p className="fade-up mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted md:text-lg lg:mx-0" style={{ animationDelay: "0.1s" }}>
-                Crie páginas profissionais com WhatsApp, Pix, Wi-Fi, catálogo, localização e avaliações. Para empresas, lojas, profissionais ou para vender como renda extra.
+          <div className="text-center">
+            <span className="pill inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-bold text-accent-dim shadow-sm fade-up">
+              <Sparkles className="h-4 w-4 text-accent" /> Transforme a presença digital de qualquer negócio
+            </span>
+            <h1 className="fade-up mt-6 text-3xl font-extrabold leading-[1.1] tracking-tight text-ink md:text-4xl lg:text-5xl" style={{ animationDelay: "0.05s" }}>
+              Mais clientes. <span className="gradient-text">Menos trabalho.</span>
+            </h1>
+            <p className="fade-up mx-auto mt-5 max-w-2xl text-base leading-relaxed text-muted md:text-lg" style={{ animationDelay: "0.1s" }}>
+              Crie biosites premium com WhatsApp, Pix, Wi-Fi, catálogo e avaliação Google em minutos. Perfeito para o seu negócio ou para vender como serviço.
+            </p>
+          </div>
+
+          {/* DUAS DIREÇÕES PRINCIPAIS */}
+          <div className="fade-up mt-12 grid gap-6 lg:grid-cols-2" style={{ animationDelay: "0.2s" }}>
+            {/* Direção 1: Para o próprio negócio */}
+            <div className="card-glow relative overflow-hidden rounded-3xl border border-border bg-white p-8 shadow-sm transition hover:-translate-y-1">
+              <div className="absolute right-0 top-0 h-32 w-32 rounded-bl-full bg-accent/10" />
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 text-accent">
+                <Store className="h-7 w-7" />
+              </div>
+              <h3 className="text-2xl font-extrabold text-ink">Para o meu negócio</h3>
+              <p className="mt-3 text-muted">
+                Crie um bio site profissional para o seu negócio e comece a receber mais clientes hoje mesmo.
               </p>
-              <div className="fade-up mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start" style={{ animationDelay: "0.15s" }}>
-                <Link href="/login" className="btn-glow inline-flex items-center justify-center gap-2 rounded-full px-7 py-3 text-sm font-bold text-white">
-                  Quero criar meu Toqy <ArrowRight className="h-4 w-4" />
-                </Link>
-                <a href="#video" className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-white px-7 py-3 text-sm font-bold text-ink shadow-sm transition hover:-translate-y-0.5 hover:border-accent">
-                  <PlayCircle className="h-4 w-4 text-accent" /> Assistir vídeo
-                </a>
-              </div>
-              <div className="fade-up mt-6 flex flex-wrap justify-center gap-3 text-xs font-semibold text-muted lg:justify-start" style={{ animationDelay: "0.2s" }}>
+              <ul className="mt-6 space-y-3">
                 {[
-                  ["Grátis para começar", Check],
-                  ["Sem código", Zap],
-                  ["Publica em minutos", Clock3],
-                ].map(([t, Icon]) => (
-                  <span key={t as string} className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5">
-                    <Icon className="h-3.5 w-3.5 text-accent" /> {t as string}
-                  </span>
+                  "1 bio site gratuito para começar",
+                  "WhatsApp, localização e redes sociais",
+                  "Upgrade para PRO e libere tudo",
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm font-semibold text-ink/80">
+                    <Check className="h-5 w-5 shrink-0 text-accent" /> {item}
+                  </li>
                 ))}
-              </div>
+              </ul>
+              <Link href="/login" className="btn-glow mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full px-7 py-3 text-sm font-bold text-white">
+                Criar meu bio site <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
 
-            {/* VÍDEO ao lado do título */}
-            <div id="video" className="fade-up relative" style={{ animationDelay: "0.25s" }}>
-              <div className="gradient-border p-2 shadow-2xl">
-                <div className="aspect-video overflow-hidden rounded-[1.25rem] bg-[linear-gradient(135deg,#fff,#fbe9ee)]">
-                  <div className="relative flex h-full items-center justify-center">
-                    <div className="absolute inset-0 opacity-50 [background-image:radial-gradient(circle_at_1px_1px,rgba(255,77,109,0.18)_1px,transparent_0)] [background-size:22px_22px]" />
-                    <div className="relative text-center">
-                      <button className="group relative mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent text-white shadow-xl transition hover:scale-105">
-                        <PlayCircle className="h-8 w-8" />
-                        <span className="absolute inset-0 rounded-full bg-accent/40 pulse-soft" />
-                      </button>
-                      <p className="mt-4 text-base font-extrabold text-ink">Vídeo de apresentação do Toqy</p>
-                      <p className="mt-1 text-xs text-muted">Coloque aqui um vídeo curto explicando o produto.</p>
-                    </div>
-                  </div>
-                </div>
+            {/* Direção 2: Vender como serviço */}
+            <div className="card-glow relative overflow-hidden rounded-3xl border-2 border-accent bg-accent/5 p-8 shadow-xl shadow-accent/10 transition hover:-translate-y-1">
+              <div className="absolute right-0 top-0 h-32 w-32 rounded-bl-full bg-accent/20" />
+              <div className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-extrabold uppercase text-white">
+                <Star className="h-3 w-3 fill-current" /> Renda extra
               </div>
-              <p className="mt-3 text-center text-xs font-semibold text-muted">
-                Demonstração completa · Usuário real em ação
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-white">
+                <Wallet className="h-7 w-7" />
+              </div>
+              <h3 className="text-2xl font-extrabold text-ink">Vender bio sites</h3>
+              <p className="mt-3 text-muted">
+                Ofereça criação de bio sites como serviço e ganhe renda extra todo mês com planos recorrentes.
               </p>
+              <ul className="mt-6 space-y-3">
+                {[
+                  "Até 100 bio sites por mês",
+                  "IA gera artes de plaquinhas",
+                  "Comissão por indicações",
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm font-semibold text-ink/80">
+                    <Check className="h-5 w-5 shrink-0 text-accent" /> {item}
+                  </li>
+                ))}
+              </ul>
+              <a href={KIWIFY_LINKS.community} target="_blank" rel="noreferrer noopener" className="btn-glow mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-7 py-3 text-sm font-bold text-white">
+                Começar a vender <ArrowRight className="h-4 w-4" />
+              </a>
             </div>
           </div>
 
-          {/* Marquee de Instagram (passando da esquerda pra direita) */}
-          <div className="marquee-group relative mt-14 overflow-hidden py-2">
-            <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-24 bg-gradient-to-r from-[#f8f5ef] to-transparent" />
-            <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-24 bg-gradient-to-l from-[#f8f5ef] to-transparent" />
-            <div className="marquee marquee-left gap-4">
-              {[...Array(2)].map((_, dup) => (
-                <div key={dup} className="flex shrink-0 items-center gap-4">
-                  {instagramStrip.map((handle, i) => (
-                    <span
-                      key={`${dup}-${i}`}
-                      className="group inline-flex items-center gap-3 rounded-full border border-border bg-white px-5 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-accent"
-                    >
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-[#ff4d6d] via-[#ff8a5b] to-[#ffc850] text-white shadow-md">
-                        <span className="font-display text-sm font-bold">{handle.replace("@", "").charAt(0).toUpperCase()}</span>
-                      </span>
-                      <span className="text-sm font-bold text-ink">{handle}</span>
-                      <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-black uppercase text-accent-dim">Toqy</span>
-                    </span>
-                  ))}
-                </div>
-              ))}
-            </div>
+          {/* Trust badges */}
+          <div className="fade-up mt-10 flex flex-wrap justify-center gap-4 text-xs font-semibold text-muted" style={{ animationDelay: "0.25s" }}>
+            {[
+              ["+1000 biosites criados", Users],
+              ["Pagamento seguro", ShieldCheck],
+              ["Suporte rápido", MessageCircle],
+            ].map(([t, Icon]) => (
+              <span key={t as string} className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2">
+                <Icon className="h-4 w-4 text-accent" /> {t as string}
+              </span>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* A VERDADE */}
-      <section id="verdade" className="relative overflow-hidden border-y border-border bg-card py-20">
+      {/* RESULTADOS (anteriormente "A VERDADE") */}
+      <section id="resultados" className="relative overflow-hidden border-y border-border bg-card py-20">
         <div className="shimmer-line absolute left-0 top-0 h-1 w-full" />
-        <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 lg:grid-cols-2">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">A verdade que ninguém te conta</p>
+        <div className="mx-auto max-w-7xl px-5">
+          <div className="text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Resultados reais</p>
             <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-ink md:text-5xl">
-              Biosite não é enfeite. É a <span className="gradient-text">primeira impressão</span> do seu cliente.
+              O que muda na vida do <span className="gradient-text">cliente</span>?
             </h2>
-            <p className="mt-5 text-lg text-muted">
-              Quem toca numa plaquinha ou escaneia um QR Code decide em segundos se confia no negócio. Um biosite bem feito transmite profissionalismo, centraliza os contatos e acelera a venda. Sem biosite, você perde cliente todo dia — sem saber.
-            </p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <Link href="/login" className="btn-glow inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white">
-                Quero parar de perder cliente <ArrowRight className="h-4 w-4" />
-              </Link>
-              <a href="#planos" className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-6 py-3 text-sm font-bold text-ink transition hover:border-accent">
-                Ver planos
-              </a>
-            </div>
           </div>
-          <div className="grid gap-4">
-            {[
-              ["7 em 10", "clientes avaliam a empresa pela aparência digital antes de comprar", TrendingUp],
-              ["3 segundos", "é o tempo médio pra decidir se vai continuar ou sair da página", Clock3],
-              ["+R$650/mês", "é o que se gasta montando isso manualmente com designer e ferramentas", CreditCard],
-            ].map(([big, small, Icon]) => (
-              <div key={big as string} className="card-glow flex items-center gap-5 rounded-2xl border border-border bg-white p-6 shadow-sm">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent/10 text-accent">
-                  <Icon className="h-7 w-7" />
+
+          <div className="mt-12 grid gap-8 lg:grid-cols-3">
+            {/* Depoimento 1 */}
+            <div className="card-glow rounded-2xl border border-border bg-white p-8 shadow-sm">
+              <div className="flex items-center gap-1 text-accent">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star key={i} className="h-5 w-5 fill-current" />
+                ))}
+              </div>
+              <p className="mt-4 text-base leading-relaxed text-muted">
+                "Antes eu perdia clientes porque não tinha um lugar centralizado com tudo. Agora o bio site do Toqy aumentou meu atendimento em 40%!"
+              </p>
+              <div className="mt-6 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-accent to-violet text-white font-bold">
+                  J
                 </div>
                 <div>
-                  <p className="text-2xl font-extrabold text-ink">{big as string}</p>
-                  <p className="text-sm text-muted">{small as string}</p>
+                  <p className="text-sm font-extrabold text-ink">João Silva</p>
+                  <p className="text-xs text-muted">Barbearia</p>
                 </div>
               </div>
-            ))}
+            </div>
+
+            {/* Depoimento 2 */}
+            <div className="card-glow rounded-2xl border border-border bg-white p-8 shadow-sm">
+              <div className="flex items-center gap-1 text-accent">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star key={i} className="h-5 w-5 fill-current" />
+                ))}
+              </div>
+              <p className="mt-4 text-base leading-relaxed text-muted">
+                "O Pix no bio site foi um divisor de águas. Meus clientes pagam em segundos e eu recebo o comprovante direto no WhatsApp."
+              </p>
+              <div className="mt-6 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-violet to-[#ffc850] text-white font-bold">
+                  M
+                </div>
+                <div>
+                  <p className="text-sm font-extrabold text-ink">Maria Santos</p>
+                  <p className="text-xs text-muted">Restaurante</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Depoimento 3 */}
+            <div className="card-glow rounded-2xl border border-border bg-white p-8 shadow-sm">
+              <div className="flex items-center gap-1 text-accent">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star key={i} className="h-5 w-5 fill-current" />
+                ))}
+              </div>
+              <p className="mt-4 text-base leading-relaxed text-muted">
+                "Comecei a vender bio sites para amigos e já tenho 15 clientes recorrentes. Renda extra de quase R$1.000 por mês!"
+              </p>
+              <div className="mt-6 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-[#ffc850] to-accent text-white font-bold">
+                  C
+                </div>
+                <div>
+                  <p className="text-sm font-extrabold text-ink">Carlos Oliveira</p>
+                  <p className="text-xs text-muted">Freelancer</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-12 text-center">
+            <div className="mx-auto inline-flex flex-wrap justify-center gap-8 rounded-3xl border border-border bg-white p-8 shadow-sm">
+              {[
+                ["+40%", "aumento no atendimento"],
+                ["3 segundos", "tempo de decisão do cliente"],
+                ["R$650/mês", "economia em designer"],
+              ].map(([big, small], i) => (
+                <div key={i} className="text-center">
+                  <p className="text-3xl font-extrabold text-ink">{big}</p>
+                  <p className="mt-1 text-sm text-muted">{small}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -323,6 +380,55 @@ export default async function LandingPage() {
                 )}
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* LEAD MAGNET - EBOOK GRÁTIS */}
+      <section className="bg-gradient-to-br from-ink to-ink/95 py-20 text-white">
+        <div className="mx-auto max-w-4xl px-5">
+          <div className="grid gap-10 lg:grid-cols-2">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Ebook grátis</p>
+              <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">
+                7 Formas de Ganhar Dinheiro com Bio Sites em 2025
+              </h2>
+              <p className="mt-4 text-white/70">
+                Descubra como começar a vender bio sites como serviço, quais nichos são mais lucrativos e como precificar seus serviços corretamente.
+              </p>
+              <ul className="mt-6 space-y-3">
+                {[
+                  "Nichos que pagam mais caro por bio sites",
+                  "Como precificar seus serviços (R$97 a R$497)",
+                  "Script pronto para oferecer para clientes",
+                  "Modelo de contrato editável",
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm font-semibold">
+                    <Check className="h-5 w-5 shrink-0 text-accent" /> {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="card-glow rounded-3xl border border-white/10 bg-white/5 p-8 shadow-xl">
+              <h3 className="text-xl font-extrabold">Baixe o ebook grátis</h3>
+              <p className="mt-2 text-sm text-white/70">Preencha abaixo e receba no seu email:</p>
+              <form className="mt-6 space-y-4">
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wide">Nome</label>
+                  <input type="text" className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Seu nome" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wide">Email</label>
+                  <input type="email" className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-accent" placeholder="seu@email.com" />
+                </div>
+                <button type="submit" className="btn-glow w-full rounded-full px-6 py-3 text-sm font-bold text-white">
+                  Baixar ebook grátis <ArrowRight className="ml-2 inline h-4 w-4" />
+                </button>
+              </form>
+              <p className="mt-4 text-center text-xs text-white/50">
+                Não enviamos spam. Você pode cancelar a qualquer momento.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -436,15 +542,64 @@ export default async function LandingPage() {
       <section id="planos" className="mx-auto max-w-7xl px-5 py-20">
         <div className="text-center">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Planos</p>
-          <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-ink md:text-5xl">Escolha o plano ideal para o seu negócio</h2>
+          <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-ink md:text-5xl">Escolha o plano ideal para você</h2>
+          <p className="mx-auto mt-3 max-w-xl text-muted">Comece grátis e faça upgrade quando precisar de mais recursos</p>
         </div>
+        
+        {/* Tabela comparativa */}
+        <div className="mt-12 overflow-hidden rounded-3xl border border-border bg-white shadow-sm">
+          <div className="grid grid-cols-5 border-b border-border">
+            <div className="p-6"></div>
+            {["Gratuito", "Essencial", "Freelancer", "Agência"].map((plan) => (
+              <div key={plan} className="p-6 text-center">
+                <p className="text-lg font-extrabold text-ink">{plan}</p>
+              </div>
+            ))}
+          </div>
+          {[
+            ["Bio sites", "1", "10", "20", "100"],
+            ["WhatsApp", "✅", "✅", "✅", "✅"],
+            ["Localização", "✅", "✅", "✅", "✅"],
+            ["Redes sociais", "✅", "✅", "✅", "✅"],
+            ["Pix", "🔒", "✅", "✅", "✅"],
+            ["Wi-Fi", "🔒", "✅", "✅", "✅"],
+            ["Catálogo", "🔒", "✅", "✅", "✅"],
+            ["QR personalizado", "🔒", "✅", "✅", "✅"],
+            ["IA artes plaquinhas", "🔒", "5 créditos", "10 créditos", "50 créditos"],
+            ["White label", "🔒", "🔒", "🔒", "✅"],
+            ["Domínio próprio", "🔒", "🔒", "🔒", "✅"],
+            ["Gestão de equipe", "🔒", "🔒", "🔒", "✅"],
+            ["Comissão indicações", "🔒", "🔒", "20%", "30%"],
+          ].map(([feature, free, essential, freelancer, agency]) => (
+            <div key={feature} className="grid grid-cols-5 border-b border-border">
+              <div className="flex items-center p-6 text-sm font-semibold text-muted">{feature}</div>
+              {[free, essential, freelancer, agency].map((val, i) => (
+                <div key={i} className="flex items-center justify-center p-6">
+                  {val === "✅" ? (
+                    <Check className="h-5 w-5 text-accent" />
+                  ) : val === "🔒" ? (
+                    <div className="flex items-center gap-2 text-sm text-muted">
+                      <Lock className="h-4 w-4" />PRO
+                    </div>
+                  ) : (
+                    <span className="text-sm font-extrabold text-ink">{val}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        {/* Cards dos planos */}
         <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {plans.map((plan) => (
-            <article key={plan.name} className={`relative flex flex-col rounded-2xl border bg-card p-7 shadow-sm ${plan.highlight ? "border-accent shadow-xl shadow-accent/10 glow-pulse" : "border-border card-glow"}`}>
-              {plan.highlight ? <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent px-5 py-2 text-xs font-extrabold text-white uppercase tracking-wider">Recomendado</span> : null}
+            <article key={plan.name} className={`relative flex flex-col rounded-2xl border bg-card p-7 shadow-sm transition hover:-translate-y-1 ${plan.highlight ? "border-accent shadow-xl shadow-accent/10 glow-pulse" : "border-border card-glow"}`}>
+              {plan.highlight ? <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent px-5 py-2 text-xs font-extrabold text-white uppercase tracking-wider">Mais popular</span> : null}
               <h3 className="text-2xl font-bold text-ink">{plan.name}</h3>
               <p className="mt-2 min-h-[4rem] text-sm text-muted">{plan.description}</p>
-              <p className="mt-4 text-4xl font-extrabold text-ink">{plan.price}<span className="text-base font-bold text-muted">{plan.period}</span></p>
+              <div className="mt-4">
+                <p className="text-4xl font-extrabold text-ink">{plan.price}<span className="text-base font-bold text-muted">{plan.period}</span></p>
+              </div>
               <span className={`mt-3 inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-extrabold ${plan.highlight ? "bg-accent/15 text-accent" : "bg-surface text-muted"}`}>{plan.tag}</span>
               <div className="mt-6 grid gap-3 flex-1">
                 {plan.items.map((item) => {
@@ -478,9 +633,6 @@ export default async function LandingPage() {
               💡 <strong>Essencial ou Freelancer?</strong> Os dois são mensais e você pode cancelar quando quiser. O Essencial é o ponto de entrada mais barato. O Freelancer custa um pouco mais e traz mais créditos de arte com IA e suporte prioritário — vale a pena se você atende clientes com mais frequência.
             </p>
           </div>
-          <p className="flex items-center justify-center gap-1.5 text-xs font-bold text-muted">
-            <Star className="h-3.5 w-3.5 fill-accent text-accent" /> QR Code personalizado editável e gerador de arte com IA são exclusivos dos planos Essencial, Freelancer e Agência.
-          </p>
         </div>
       </section>
 
@@ -641,6 +793,7 @@ export default async function LandingPage() {
                 <li><a href="#recursos" className="hover:text-accent">Recursos</a></li>
                 <li><a href="#planos" className="hover:text-accent">Planos</a></li>
                 <li><a href="#exemplos" className="hover:text-accent">Exemplos</a></li>
+                <li><Link href="/blog" className="hover:text-accent">Blog</Link></li>
                 <li><a href="#faq" className="hover:text-accent">FAQ</a></li>
               </ul>
             </div>

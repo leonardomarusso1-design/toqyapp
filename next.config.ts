@@ -12,9 +12,13 @@ import { withSentryConfig } from "@sentry/nextjs";
 // worker-src 'self' blob: liberado explicitamente pq o Supabase Realtime
 // (pusherTransportTLS no localStorage do visitante) cria workers a partir
 // de blob URLs — sem isso o F12 do visitante enchia de erro CSP.
+const scriptSrc = process.env.NODE_ENV === "development"
+  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval';"
+  : "script-src 'self' 'unsafe-inline';";
+
 const cspHeader = `
   default-src 'self';
-  script-src 'self' 'unsafe-inline';
+  ${scriptSrc}
   style-src 'self' 'unsafe-inline';
   img-src 'self' blob: data: https:;
   font-src 'self' data:;

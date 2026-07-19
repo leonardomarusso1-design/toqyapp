@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getSupabaseAdmin } from "@/lib/supabaseServer";
+import { blogPosts } from "@/data/blogPosts";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_APP_URL ??
@@ -7,6 +8,7 @@ const siteUrl =
 
 const staticRoutes: MetadataRoute.Sitemap = [
   { url: siteUrl, changeFrequency: "weekly", priority: 1 },
+  { url: `${siteUrl}/blog`, changeFrequency: "weekly", priority: 0.8 },
   { url: `${siteUrl}/login`, changeFrequency: "monthly", priority: 0.5 },
   { url: `${siteUrl}/demo`, changeFrequency: "monthly", priority: 0.5 },
   { url: `${siteUrl}/termos`, changeFrequency: "yearly", priority: 0.2 },
@@ -33,5 +35,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticRoutes, ...bioSiteRoutes];
+  const blogRoutes: MetadataRoute.Sitemap = blogPosts.map((post) => ({
+    url: `${siteUrl}/blog/${post.slug}`,
+    changeFrequency: "monthly",
+    priority: 0.7,
+  }));
+
+  return [...staticRoutes, ...bioSiteRoutes, ...blogRoutes];
 }

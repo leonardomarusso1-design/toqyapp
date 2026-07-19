@@ -1,19 +1,15 @@
 @import "tailwindcss";
 
-/* Identidade visual "Signal Ledger" do ecossistema (2026-07-03) — mesma
-   paleta e tipografia definidas pro ZapFlow, aplicada aqui via @theme
-   (Tailwind v4 é CSS-first; isso gera bg-accent, text-ink, bg-surface etc.
-   como classes utilitárias novas, sem precisar de tailwind.config.ts). */
 @theme {
-  --color-bg: #f7f5f1;
-  --color-surface: #fbfaf7;
-  --color-card: #ffffff;
-  --color-border: #e7e2d8;
-  --color-ink: #17141a;
-  --color-muted: #6b6560;
-  --color-accent: #ff4d6d;
-  --color-accent-dim: #e23f5c;
-  --color-violet: #8b5cf6;
+  --color-bg: #FAF9F6;      /* Luxuoso linho/marfim suave */
+  --color-surface: #FCFCFA; /* Porcelana clara e limpa */
+  --color-card: #ffffff;    /* Branco puro */
+  --color-border: #EAE6DD;  /* Cinza-bege ultra-fino e moderno */
+  --color-ink: #0C0B0E;     /* Preto carvão profundo/obsidiana */
+  --color-muted: #6E6A75;   /* Cinza carvão levemente arroxeado */
+  --color-accent: #FF3B6B;  /* Coral neon vibrante de alta energia */
+  --color-accent-dim: #DF1F4D; /* Rosa profundo elegante */
+  --color-violet: #6366F1;  /* Índigo elétrico de alta tecnologia */
 }
 
 :root {
