@@ -45,13 +45,19 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error("[Analytics] Erro ao gravar evento:", error);
-      return Response.json({ success: false, error: "Failed to track event" }, { status: 500 });
+      // Analytics é "best-effort": nunca deve quebrar a experiência do
+      // visitante. Se a tabela/coluna ainda não existe no banco (ambiente
+      // sem migration aplicada) ou RLS bloqueou, loga no servidor e retorna
+      // 200 pro cliente — o erro 500 anterior poluía o console do F12 e
+      // atrapalhava o diagnóstico de bugs reais.
+      console.error("[Analytics] Erro ao gravar evento:", error.message, error.code);
+      return Response.json({ success: true, skipped: "analytics_unavailable" }, { status: 200 });
     }
 
     return Response.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error("[Analytics] Error tracking event:", error);
-    return Response.json({ success: false, error: "Failed to track event" }, { status: 500 });
+    // Mesma lógica: best-effort. Erro inesperado não vira 500 visível.
+    console.error("[Analytics] Error tracking event:", error instanceof Error ? error.message : String(error));
+    return Response.json({ success: true, skipped: "analytics_error" }, { status: 200 });
   }
 }

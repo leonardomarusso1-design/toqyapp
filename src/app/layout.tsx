@@ -41,7 +41,11 @@ export const metadata: Metadata = {
   },
 };
 
-import { SpeedInsights } from "@vercel/speed-insights/next";
+// SpeedInsights (@vercel/speed-insights) desativado em 2026-07-18 — o
+// componente <SpeedInsights /> injeta scripts de
+// vercel.live/_next-live/feedback/feedback.js que violam a CSP
+// (script-src 'self') e poluem o console do visitante com erros. Pra
+// reativar, reinstale o uso: import + <SpeedInsights /> no body abaixo.
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -50,7 +54,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <SentryInit />
         <AuthSync />
         {children}
-        <SpeedInsights />
       </body>
     </html>
   );

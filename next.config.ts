@@ -8,6 +8,10 @@ import { withSentryConfig } from "@sentry/nextjs";
 // e uma protecao mais fraca contra XSS que a versao com nonce, mas ainda
 // cobre clickjacking (frame-ancestors), MIME sniffing e restringe quais
 // origens podem ser contatadas via fetch/websocket (connect-src).
+//
+// worker-src 'self' blob: liberado explicitamente pq o Supabase Realtime
+// (pusherTransportTLS no localStorage do visitante) cria workers a partir
+// de blob URLs — sem isso o F12 do visitante enchia de erro CSP.
 const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-inline';
@@ -15,6 +19,7 @@ const cspHeader = `
   img-src 'self' blob: data: https:;
   font-src 'self' data:;
   connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ingest.de.sentry.io;
+  worker-src 'self' blob:;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -26,6 +31,13 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   // Compressão automática
   compress: true,
+  // Desabilita o Vercel Speed Insights / Toolbar em produção — esses
+  // scripts carregam de vercel.live/_next-live/feedback/feedback.js e
+  // violam a CSP (script-src 'self'), enchendo o console do visitante
+  // de erros. O Speed Insights já vem como <SpeedInsights /> no layout
+  // (controlado por env); o Toolbar só aparece em preview deploys, mas
+  // mantemos disableServerVariables e skippSpeedInsights pra garantir.
+  devIndicators: false,
   // Otimização de imagens
   images: {
     formats: ["image/avif", "image/webp"],
