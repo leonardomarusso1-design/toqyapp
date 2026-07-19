@@ -241,7 +241,7 @@ export default async function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <a href={KIWIFY_LINKS.community} target="_blank" rel="noreferrer noopener" className="btn-glow mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-7 py-3 text-sm font-bold text-white">
+              <a href="#planos" className="btn-glow mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-7 py-3 text-sm font-bold text-white">
                 Começar a vender <ArrowRight className="h-4 w-4" />
               </a>
             </div>
@@ -412,14 +412,37 @@ export default async function LandingPage() {
             <div className="card-glow rounded-3xl border border-white/10 bg-white/5 p-8 shadow-xl">
               <h3 className="text-xl font-extrabold">Baixe o ebook grátis</h3>
               <p className="mt-2 text-sm text-white/70">Preencha abaixo e receba no seu email:</p>
-              <form className="mt-6 space-y-4">
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const name = String(formData.get("name") || "");
+                const email = String(formData.get("email") || "");
+                
+                try {
+                  const res = await fetch("/api/lead", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, email }),
+                  });
+                  
+                  if (res.ok) {
+                    alert("Obrigado! Verifique seu email para baixar o ebook.");
+                    e.currentTarget.reset();
+                  } else {
+                    alert("Houve um erro, tente novamente.");
+                  }
+                } catch (err) {
+                  console.error(err);
+                  alert("Houve um erro, tente novamente.");
+                }
+              }} className="mt-6 space-y-4">
                 <div>
                   <label className="mb-1 block text-xs font-bold uppercase tracking-wide">Nome</label>
-                  <input type="text" className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Seu nome" />
+                  <input name="name" type="text" required className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Seu nome" />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-bold uppercase tracking-wide">Email</label>
-                  <input type="email" className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-accent" placeholder="seu@email.com" />
+                  <input name="email" type="email" required className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-accent" placeholder="seu@email.com" />
                 </div>
                 <button type="submit" className="btn-glow w-full rounded-full px-6 py-3 text-sm font-bold text-white">
                   Baixar ebook grátis <ArrowRight className="ml-2 inline h-4 w-4" />
