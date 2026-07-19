@@ -896,12 +896,18 @@ function CatalogScroller({ site, items, onOpenGallery, categoryCounts }: { site:
 
 function CatalogCard({ site, item, compact = false, stacked = false, onOpenGallery, categoryCount = 1 }: { site: ToqySite; item: CatalogItem; compact?: boolean; stacked?: boolean; onOpenGallery?: (category: string) => void; categoryCount?: number }) {
   const width = stacked ? "w-full" : compact ? "w-full" : "min-w-[275px]";
-  const imageHeight = compact ? "h-28" : item.imageLayout === "horizontal" ? "h-36" : "h-52";
+  let imageHeight = compact ? "h-28" : "h-52";
+  if (!compact) {
+    if (item.imageLayout === "horizontal") imageHeight = "h-36";
+    if (item.imageLayout === "vertical") imageHeight = "h-72";
+  }
   const whatsapp = whatsappUrl(site);
   // Vitrine por categoria: só clicável quando tem mais de 1 item na mesma
   // categoria (senão não há "mais peças" pra mostrar na galeria).
   const canOpenGallery = Boolean(onOpenGallery) && categoryCount > 1;
   const handleImageClick = canOpenGallery ? () => onOpenGallery!(groupKey(item)) : undefined;
+  const fitClass = item.imageFit === "contain" ? "object-contain bg-surface" : "object-cover";
+  const positionStyle = item.imagePosition ? { objectPosition: item.imagePosition } : undefined;
   return (
     <article className={`${width} snap-start overflow-hidden rounded-[1.6rem] border shadow-xl backdrop-blur`} style={{ background: site.theme.colors?.catalogItemBg ?? site.theme.card, borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.14)" }}>
       <div
@@ -911,7 +917,7 @@ function CatalogCard({ site, item, compact = false, stacked = false, onOpenGalle
         role={canOpenGallery ? "button" : undefined}
         aria-label={canOpenGallery ? `Ver mais itens de ${item.subcategory?.trim() || item.category?.trim() || "Destaques"}` : undefined}
       >
-        {item.imageUrl ? <img src={item.imageUrl} alt={item.name} loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><FileText className="h-10 w-10 opacity-60" /></div>}
+        {item.imageUrl ? <img src={item.imageUrl} alt={item.name} loading="lazy" decoding="async" className={`h-full w-full ${fitClass}`} style={positionStyle} /> : <div className="flex h-full items-center justify-center"><FileText className="h-10 w-10 opacity-60" /></div>}
         {canOpenGallery ? (
           <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-black text-white backdrop-blur-sm">
             <Images className="h-3 w-3" />+{categoryCount - 1}

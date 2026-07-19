@@ -62,7 +62,9 @@ export type CatalogItem = {
   price?: string;
   priceValue?: number;
   imageUrl?: string;
-  imageLayout: "square" | "horizontal";
+  imageLayout: "square" | "horizontal" | "vertical";
+  imageFit?: "cover" | "contain";
+  imagePosition?: string;
   category?: string;
   subcategory?: string;
   enabled: boolean;

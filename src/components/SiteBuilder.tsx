@@ -255,6 +255,8 @@ function BulkCatalogPhotoAdd({ slug, catalog, onAdd, editKey }: { slug: string; 
           price: "",
           imageUrl,
           imageLayout: "square",
+          imageFit: "cover",
+          imagePosition: "center",
           category: category.trim(),
           enabled: true,
           actionLabel: "",
@@ -817,7 +819,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
               <h2 className="text-2xl font-black text-ink">Catalogo</h2>
               <p className="mt-1 text-sm text-muted">Configure itens, layout e textos do catalogo.</p>
             </div>
-            <button type="button" onClick={() => update((s) => ({ ...s, catalog: [...s.catalog, { id: generateId("prd"), name: "", description: "", price: "", imageUrl: "", imageLayout: "square", category: "Destaques", enabled: true, actionLabel: "", actionUrl: "" }] }))} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-3 text-sm font-black text-white"><Plus className="h-4 w-4" />Adicionar item</button>
+            <button type="button" onClick={() => update((s) => ({ ...s, catalog: [...s.catalog, { id: generateId("prd"), name: "", description: "", price: "", imageUrl: "", imageLayout: "square", imageFit: "cover", imagePosition: "center", category: "Destaques", enabled: true, actionLabel: "", actionUrl: "" }] }))} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-3 text-sm font-black text-white"><Plus className="h-4 w-4" />Adicionar item</button>
           </div>
 
           <div className="mt-4">
@@ -974,11 +976,50 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                       <input className="h-[42px] flex-1 rounded-r-xl border border-border bg-card px-3 text-sm font-black outline-none focus:border-accent" placeholder="80,00" value={item.price?.replace(/^R\$\s?/, "") ?? ""} onChange={(e) => { const v = e.target.value.replace(/[^0-9,.]/g, ""); update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { price: v ? `R$ ${v}` : "" }) })); }} />
                     </div>
                   </label>
-                  <label><span className={label}>Formato da foto</span><select className={field} value={item.imageLayout} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageLayout: e.target.value as typeof item.imageLayout }) }))}><option value="square">Quadrada</option><option value="horizontal">Horizontal</option></select></label>
+                  <label>
+                    <span className={label}>Formato da foto</span>
+                    <select
+                      className={field}
+                      value={item.imageLayout}
+                      onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageLayout: e.target.value as typeof item.imageLayout }) }))}
+                    >
+                      <option value="square">Quadrada</option>
+                      <option value="horizontal">Horizontal</option>
+                      <option value="vertical">Vertical / Moda</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span className={label}>Exibição da imagem</span>
+                    <select
+                      className={field}
+                      value={item.imageFit ?? "cover"}
+                      onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageFit: e.target.value as "cover" | "contain" }) }))}
+                    >
+                      <option value="cover">Preencher card</option>
+                      <option value="contain">Mostrar imagem inteira</option>
+                    </select>
+                  </label>
                   <label><span className={label}>Badge / Destaque</span><input className={field} placeholder='Ex: "Mais vendido", "Novidade"' value={item.highlight ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { highlight: e.target.value }) }))} /></label>
                   <label className="md:col-span-2"><span className={label}>Descrição (opcional)</span><textarea className={field} rows={2} placeholder="Deixe vazio pra mostrar só a foto, sem texto" value={item.description} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { description: e.target.value }) }))} /></label>
                 </div>
-                <div className="mt-3"><ImageUploadField label="Imagem do item" value={item.imageUrl} onChange={(url) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageUrl: url }) }))} slug={site.slug} fieldId={`catalog-${item.id}`} editKey={site.editKey} /><ImageGuidelineHint type={item.imageLayout === "square" ? "productSquare" : "productHorizontal"} /></div>
+                <div className="mt-3">
+                  <ImageUploadField
+                    label="Imagem do item"
+                    value={item.imageUrl}
+                    onChange={(url) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageUrl: url }) }))}
+                    slug={site.slug}
+                    fieldId={`catalog-${item.id}`}
+                    editKey={site.editKey}
+                    cropAspectRatio={item.imageLayout === "square" ? "square" : item.imageLayout === "vertical" ? "4:5" : "16:9"}
+                    showPositionControl
+                    position={item.imagePosition ?? "center"}
+                    onPositionChange={(pos) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imagePosition: pos }) }))}
+                  />
+                  <ImageGuidelineHint type={item.imageLayout === "square" ? "productSquare" : item.imageLayout === "vertical" ? "productVertical" : "productHorizontal"} />
+                  <p className="mt-2 text-xs font-semibold text-muted">
+                    Agora você pode recortar a foto antes de salvar e escolher se quer preencher o card ou mostrar a imagem inteira.
+                  </p>
+                </div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <input className={field} placeholder="Texto do botão (ex: Agendar)" value={item.actionLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionLabel: e.target.value }) }))} />
                   <input className={field} placeholder="Link do botão (opcional)" value={item.actionUrl ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionUrl: e.target.value }) }))} />

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { ImagePlus, Link2, Loader2, X } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import { ImageCropper } from "./ImageCropper";
 
 const MAX_DIMENSION = 800; // reduzido de 1280 — suficiente para bio site mobile
 const MAX_BYTES = 5 * 1024 * 1024; // reduzido de 8MB para 5MB
@@ -33,6 +34,15 @@ export function resizeImage(file: File): Promise<string> {
   });
 }
 
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 // Extraído do handleFile de ImageUploadField (2026-07-16) — reusado pelo
 // upload em lote de fotos do catálogo (adicionar várias fotos de uma vez
 // numa categoria, sem precisar repetir "Adicionar item" pra cada uma).
@@ -49,6 +59,10 @@ export async function uploadImageFile(file: File, slug?: string, fieldId?: strin
   if (file.size > MAX_BYTES) throw new Error("Imagem muito grande (máx. 5MB).");
 
   const dataUrl = await resizeImage(file);
+  return uploadImageDataUrl(dataUrl, slug, fieldId, editKey);
+}
+
+export async function uploadImageDataUrl(dataUrl: string, slug?: string, fieldId?: string, editKey?: string): Promise<string> {
   if (!slug || !fieldId) return dataUrl;
 
   const { data: { session } } = await supabase.auth.getSession();
@@ -76,6 +90,7 @@ export function ImageUploadField({
   slug,
   fieldId,
   editKey,
+  cropAspectRatio,
 }: {
   label: string;
   value?: string;
@@ -92,25 +107,48 @@ export function ImageUploadField({
   slug?: string;
   fieldId?: string;
   editKey?: string;
+  cropAspectRatio?: "square" | "4:3" | "16:9" | "4:5" | "free";
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [showUrl, setShowUrl] = useState(false);
   const [error, setError] = useState("");
+  const [pendingCrop, setPendingCrop] = useState<string | null>(null);
 
-  async function handleFile(file?: File) {
-    if (!file) return;
+  async function uploadProcessedImage(processedDataUrl: string) {
     setError("");
     setLoading(true);
     try {
-      const url = await uploadImageFile(file, slug, fieldId, editKey);
+      const url = await uploadImageDataUrl(processedDataUrl, slug, fieldId, editKey);
       onChange(url);
+      setPendingCrop(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível enviar a imagem.");
     } finally {
       setLoading(false);
-      // Reseta o input para permitir selecionar o mesmo arquivo novamente
       if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  async function handleFile(file?: File) {
+    if (!file) return;
+    setError("");
+    try {
+      if (!file.type.startsWith("image/")) throw new Error("Selecione um arquivo de imagem.");
+      if (file.size > MAX_BYTES) throw new Error("Imagem muito grande (máx. 5MB).");
+
+      if (cropAspectRatio) {
+        setPendingCrop(await fileToDataUrl(file));
+      } else {
+        setLoading(true);
+        const url = await uploadImageFile(file, slug, fieldId, editKey);
+        onChange(url);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível enviar a imagem.");
+    } finally {
+      if (!cropAspectRatio) setLoading(false);
+      if (!cropAspectRatio && inputRef.current) inputRef.current.value = "";
     }
   }
 
@@ -211,6 +249,18 @@ export function ImageUploadField({
       ) : null}
 
       {error ? <p className="mt-1 text-xs font-bold text-red-600">{error}</p> : null}
+
+      {pendingCrop ? (
+        <ImageCropper
+          imageSrc={pendingCrop}
+          aspectRatio={cropAspectRatio}
+          onCancel={() => {
+            setPendingCrop(null);
+            if (inputRef.current) inputRef.current.value = "";
+          }}
+          onConfirm={uploadProcessedImage}
+        />
+      ) : null}
     </div>
   );
 }

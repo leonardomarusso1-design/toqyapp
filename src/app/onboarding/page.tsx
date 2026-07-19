@@ -251,6 +251,8 @@ export default function OnboardingPage() {
           price: s.price ? `R$ ${s.price}` : "",
           imageUrl: "",
           imageLayout: "square" as const,
+          imageFit: "cover" as const,
+          imagePosition: "center" as const,
           category: "Serviços",
           enabled: true,
           actionLabel: "Agendar",
