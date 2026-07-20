@@ -8,6 +8,7 @@ import { getShowcaseSummaries } from "@/lib/realTemplates";
 import { KIWIFY_LINKS } from "@/lib/subscriptions";
 import { RESELLER_TIERS } from "@/lib/resellerTiers";
 import {
+  ArrowRight,
   Building2,
   Check,
   CreditCard,
