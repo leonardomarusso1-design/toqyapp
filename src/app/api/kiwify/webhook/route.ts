@@ -2,6 +2,82 @@ import { getSupabaseAdmin } from "@/lib/supabaseServer";
 import { getKiwifySale } from "@/lib/kiwifyApi";
 import { resolvePlan, resolveOverageProduct, shouldDowngradeOnCancel, resolveAttributionStatus } from "./webhookLogic";
 import { RESELLER_TIERS, resolveResellerTier } from "@/lib/resellerTiers";
+import { SUBSCRIPTION_PLANS } from "@/lib/subscriptions";
+
+// Confirmação por e-mail da ativação de plano (2026-09-01) — antes disso o
+// webhook concedia o plano em silêncio, sem nunca mandar nada pro cliente.
+// Achado investigando um caso real (cliente pagou Freelancer via Pix e achou
+// que devia ter recebido um e-mail de ativação — não recebeu porque ele
+// nunca existiu, não porque caiu no spam). Falha de envio nunca deve quebrar
+// o webhook (plano já foi concedido no banco antes desta chamada) — só loga.
+async function sendPlanEmail(to: string, subject: string, html: string) {
+  if (!process.env.RESEND_API_KEY) {
+    console.error("[kiwify webhook] RESEND_API_KEY ausente — email de plano não enviado para", to);
+    return;
+  }
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({ from: "Toqy <noreply@toqy.com.br>", to: [to], subject, html }),
+    });
+    if (!res.ok) {
+      console.error("[kiwify webhook] Resend respondeu com erro:", res.status, await res.text().catch(() => "(sem corpo)"));
+    }
+  } catch (err) {
+    console.error("[kiwify webhook] falha ao chamar Resend:", err);
+  }
+}
+
+// Página de boas-vindas por plano (2026-09-01) — mesmo destino que o cenário
+// "KIT + TOQY Planos" do Make usava antes de ser removido (agora redundante:
+// o Make só repassava pra este mesmo endpoint e mandava um segundo email via
+// Gmail; este email substitui os dois). "community" é o único id interno que
+// diverge do nome da rota (plano "Essencial" na UI, rota /obrigado/comunidade).
+function obrigadoPath(planId: string) {
+  if (planId === "agency") return "agencia";
+  if (planId === "community") return "comunidade";
+  return planId; // "freelancer" bate direto
+}
+
+function planActivatedEmailHtml(planName: string, planId: string) {
+  const url = `https://toqy.com.br/obrigado/${obrigadoPath(planId)}`;
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h1 style="color: #FF4D6D;">Seu plano ${planName} já está ativo! 🎉</h1>
+      <p style="font-size: 16px; line-height: 1.6;">
+        Recebemos seu pagamento e liberamos automaticamente todos os recursos do plano ${planName} na sua conta Toqy.
+      </p>
+      <div style="margin: 30px 0;">
+        <a href="${url}" style="display: inline-block; padding: 15px 30px; background-color: #FF4D6D; color: white; text-decoration: none; border-radius: 9999px; font-weight: bold;">Acessar meu painel</a>
+      </div>
+      <p style="font-size: 14px; color: #666;">Qualquer dúvida, é só responder este email.</p>
+    </div>
+  `;
+}
+
+function planPendingEmailHtml(planName: string, email: string) {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h1 style="color: #FF4D6D;">Pagamento confirmado — falta 1 passo!</h1>
+      <p style="font-size: 16px; line-height: 1.6;">
+        Recebemos seu pagamento do plano ${planName}, mas ainda não encontramos uma conta Toqy com o e-mail
+        <strong>${email}</strong>.
+      </p>
+      <p style="font-size: 16px; line-height: 1.6;">
+        Se você ainda não tem conta: crie usando <strong>exatamente este e-mail</strong> e o plano ${planName} é aplicado na hora.
+        Se você já tem conta com este e-mail: é só entrar de novo (login) que o plano é aplicado automaticamente.
+      </p>
+      <div style="margin: 30px 0;">
+        <a href="https://toqy.com.br/app" style="display: inline-block; padding: 15px 30px; background-color: #FF4D6D; color: white; text-decoration: none; border-radius: 9999px; font-weight: bold;">Entrar / criar conta</a>
+      </div>
+      <p style="font-size: 14px; color: #666;">Se você tem conta com OUTRO e-mail, chama a gente no WhatsApp que ajustamos na mão.</p>
+    </div>
+  `;
+}
 
 // Verificação leve de autenticidade — OPCIONAL, só entra em vigor se
 // KIWIFY_WEBHOOK_TOKEN estiver configurada (sem isso, comportamento
@@ -255,6 +331,9 @@ export async function POST(request: Request) {
         });
       }
 
+      const planName = SUBSCRIPTION_PLANS[planInfo.plan as keyof typeof SUBSCRIPTION_PLANS]?.name ?? planInfo.plan;
+      await sendPlanEmail(email, `Seu plano ${planName} já está ativo`, planActivatedEmailHtml(planName, planInfo.plan));
+
       return Response.json({ ok: true, plan: planInfo.plan, applied: "immediate" });
     } else {
       // Usuário ainda não criou conta → grava plano pendente
@@ -264,6 +343,10 @@ export async function POST(request: Request) {
         biosites_limit: planInfo.limit,
         kiwify_order_id: orderId,
       }, { onConflict: "email" });
+
+      const planName = SUBSCRIPTION_PLANS[planInfo.plan as keyof typeof SUBSCRIPTION_PLANS]?.name ?? planInfo.plan;
+      await sendPlanEmail(email, "Pagamento confirmado — falta 1 passo pra ativar seu plano Toqy", planPendingEmailHtml(planName, email));
+
       return Response.json({ ok: true, plan: planInfo.plan, applied: "pending" });
     }
   }

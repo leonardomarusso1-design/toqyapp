@@ -10,6 +10,38 @@ async function ensureProfile(session: { user: { id: string; email?: string; user
     .eq("id", session.user.id)
     .maybeSingle();
 
+  if (existing) {
+    // Reconcilia plano pendente pra conta que JÁ existia antes da compra
+    // (2026-09-01 — achado investigando um caso real de cliente que pagou e
+    // continuou no Grátis). Antes desta mudança, toqy_pending_plans só era
+    // lido no bloco "!existing" abaixo — ou seja, só ajudava gente criando
+    // conta pela primeira vez DEPOIS de pagar. Quem já tinha conta (ex: veio
+    // do teste grátis) e o webhook da Kiwify não achou o profile dela na hora
+    // da compra (e-mail com diferença de maiúscula/espaço, corrida entre
+    // webhook e criação de conta, etc.) ficava com o plano pago represado em
+    // toqy_pending_plans pra sempre, sem nada rodar de novo pra aplicar.
+    // Roda em todo login — idempotente (some quando não há pendência).
+    const email = session.user.email ?? "";
+    if (email) {
+      const { data: pending } = await supabase
+        .from("toqy_pending_plans")
+        .select("plan_toqy, biosites_limit")
+        .eq("email", email)
+        .maybeSingle();
+      if (pending) {
+        await supabase.from("profiles").update({
+          plan_toqy: pending.plan_toqy,
+          biosites_limit: pending.biosites_limit,
+          plan_toqy_since: new Date().toISOString(),
+          subscription_status: "active",
+          updated_at: new Date().toISOString(),
+        }).eq("id", session.user.id);
+        await supabase.from("toqy_pending_plans").delete().eq("email", email);
+      }
+    }
+    return;
+  }
+
   if (!existing) {
     const meta = session.user.user_metadata ?? {};
     const email = session.user.email ?? "";
