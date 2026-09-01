@@ -7,6 +7,7 @@
 
 import { supabase } from "./supabaseClient";
 import { saveStoredSite } from "./siteStorage";
+import { isPremiumPlan, resolvePlanTier } from "./subscriptions";
 import type { ToqySite } from "./types";
 
 export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boolean; source: "supabase" | "local"; error?: string }> {
@@ -29,15 +30,30 @@ export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boole
     .eq("id", session.user.id)
     .maybeSingle();
 
-  const siteWithPlan = { ...site, ownerPlan: profile?.plan_toqy ?? "free" };
+  const currentPlan = profile?.plan_toqy ?? "free";
 
   try {
-    // Verifica se já existe
+    // Verifica se já existe (e busca o ownerPlan já gravado, se houver)
     const { data: existing } = await supabase
       .from("toqy_biosites")
-      .select("id")
+      .select("id, site_data")
       .eq("slug", site.slug)
       .maybeSingle();
+
+    // "Ownerplan trava-nunca-desce" (2026-09-01) — achado real: um bio site
+    // criado por um revendedor Freelancer/Agência é pra um CLIENTE FINAL dele
+    // (ex: uma barbearia), que não tem nada a ver com o revendedor atrasar o
+    // pagamento. Antes desta mudança, TODO save regravava ownerPlan com o
+    // plano ATUAL do dono — se o revendedor cancelasse e depois só corrigisse
+    // um texto num bio site antigo, aquele save apagava Pix/Wi-Fi/Catálogo da
+    // página pública do cliente final dele, sem o cliente final ter feito nada
+    // de errado. Regra nova: uma vez que o bio site foi salvo com um plano
+    // pago, ele mantém esse nível pra sempre (mesmo que o dono seja rebaixado
+    // depois) — só o plano ATUAL do dono decide se dá pra CRIAR bio site novo
+    // (ver checkBiositeLimit, que roda antes disso e é o bloqueio de verdade).
+    const previousPlan = resolvePlanTier((existing?.site_data as ToqySite | undefined)?.ownerPlan);
+    const effectivePlan = isPremiumPlan(resolvePlanTier(currentPlan)) ? currentPlan : (isPremiumPlan(previousPlan) ? previousPlan : currentPlan);
+    const siteWithPlan = { ...site, ownerPlan: effectivePlan };
 
     if (existing) {
       const { error } = await supabase
