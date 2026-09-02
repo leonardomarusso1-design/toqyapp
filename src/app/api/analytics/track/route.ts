@@ -39,10 +39,22 @@ export async function POST(request: NextRequest) {
     // bioSiteId existe — qualquer um podia poluir a tabela com IDs
     // arbitrários (custo de storage, analytics falsos). Confere existência
     // antes de gravar; segue "best-effort" (nunca 500 pro visitante real).
+    //
+    // Bug real corrigido (mesmo dia, achado ao vivo em produção): o app
+    // inteiro (PublicBioSite.tsx ao gravar, analytics/page.tsx ao ler)
+    // sempre usou site_data->>'id' (o id gerado no client, dentro do JSON)
+    // como identificador — NUNCA o id da linha (chave primária real da
+    // tabela, gerada pelo Postgres). Os dois valores são diferentes desde
+    // a criação de cada bio site (confirmado numa consulta direta). A
+    // primeira versão desta checagem comparava contra o id da linha —
+    // nunca batia com nada, e TODA visualização real ficou sendo
+    // descartada silenciosamente (skipped: unknown_bio_site) desde o
+    // deploy dessa validação. Corrigido pra checar contra o mesmo campo
+    // que o resto do app usa de verdade.
     const { data: siteExists } = await supabase
       .from("toqy_biosites")
       .select("id")
-      .eq("id", body.bioSiteId)
+      .eq("site_data->>id", body.bioSiteId)
       .maybeSingle();
     if (!siteExists) return Response.json({ success: true, skipped: "unknown_bio_site" }, { status: 200 });
 
