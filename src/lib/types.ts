@@ -126,6 +126,10 @@ export type ToqySite = {
     // undefined/true mantém o comportamento de sempre (drop-shadow-sm +
     // glow em modo escuro); false desliga os dois pra quem não quer.
     nameShadow?: boolean;
+    // Ícone + texto, ou só texto, nos botões grandes (não sociais),
+    // 2026-09-01 (pedido do Leonardo) -- undefined/"icon-text" mantém o
+    // comportamento de sempre.
+    mainButtonDisplay?: "icon-text" | "text-only";
     // Alinhamento do texto de localização, 2026-07-16 — padrão "left" mantém
     // o comportamento de sempre (endereço de 2 linhas alinhado à esquerda,
     // rente ao ícone — ver comentário original em PublicBioSite.tsx sobre por

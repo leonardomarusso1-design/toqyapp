@@ -610,11 +610,18 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
                 // estilo "glass" sobrescrevia a cor de marca de TODO ícone
                 // social baseado em SVG (youtube/tiktok/linkedin/telegram/
                 // spotify) — só whatsapp/instagram (PNG, IMAGE_ICON_TYPES)
-                // escapavam disso, porque nem passam por aqui. Ícone de
-                // marca real agora sempre mantém a cor oficial, "glass" só
-                // se aplica a ícone sem marca (ex: link personalizado).
+                // escapavam disso, porque nem passam por aqui.
+                //
+                // Segundo bug corrigido no mesmo dia (a correção acima
+                // "consertou demais"): ícone de marca virou SEMPRE cor
+                // sólida, ignorando por completo a escolha de "translúcido"
+                // — sem diferença visual nenhuma entre os dois estilos.
+                // Agora "translúcido" usa a cor de marca só como um fundo
+                // suave (baixa opacidade, efeito vidro fosco de verdade),
+                // com o ícone na cor real por cima — continua reconhecível
+                // como a marca, só não é mais o círculo sólido saturado.
                 const bg = isBrandType
-                  ? brandColor[button.type]
+                  ? (useGlass ? `${brandColor[button.type]}26` : brandColor[button.type])
                   : useGlass
                     ? (site.theme.mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)")
                     : site.theme.primary;
@@ -632,7 +639,7 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
                 // Agora calcula contraste de verdade contra o fundo do
                 // círculo em vez de confiar cegamente em theme.text.
                 const iconColor = isBrandType
-                  ? "#fff"
+                  ? (useGlass ? brandColor[button.type] : "#fff")
                   : useGlass
                     ? site.theme.text
                     : readableIconColor(bg, site.theme.text);
@@ -649,10 +656,11 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
 
           <section className={site.theme.buttonStyle === "icon" ? "mt-5 grid grid-cols-3 gap-3" : "mt-5 space-y-3"}>
             {mainButtons.map((button) => {
+              const showIcon = site.theme.mainButtonDisplay !== "text-only";
               if (site.theme.buttonStyle === "icon") {
-                return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex min-h-24 flex-col items-center justify-center gap-2 border p-3 text-center text-xs font-black shadow-lg transition active:scale-[0.98]`} style={buttonStyle(site)}><ButtonIcon type={button.type} /><span>{button.label}</span></button>;
+                return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex min-h-24 flex-col items-center justify-center gap-2 border p-3 text-center text-xs font-black shadow-lg transition active:scale-[0.98]`} style={buttonStyle(site)}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span>{button.label}</span></button>;
               }
-              return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex w-full items-center justify-center gap-2 border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98]`} style={buttonStyle(site)}><ButtonIcon type={button.type} /><span>{button.label}</span></button>;
+              return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex w-full items-center justify-center gap-2 border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98]`} style={buttonStyle(site)}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span>{button.label}</span></button>;
             })}
           </section>
 
