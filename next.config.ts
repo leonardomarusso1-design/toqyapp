@@ -12,9 +12,12 @@ import { withSentryConfig } from "@sentry/nextjs";
 // worker-src 'self' blob: liberado explicitamente pq o Supabase Realtime
 // (pusherTransportTLS no localStorage do visitante) cria workers a partir
 // de blob URLs — sem isso o F12 do visitante enchia de erro CSP.
+// Google Analytics (2026-09-01, opcional via NEXT_PUBLIC_GA_MEASUREMENT_ID,
+// só carrega depois de consentimento — ver CookieConsent.tsx) precisa de
+// script-src/connect-src liberado pros domínios do gtag.js.
 const scriptSrc = process.env.NODE_ENV === "development"
-  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval';"
-  : "script-src 'self' 'unsafe-inline';";
+  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com;"
+  : "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com;";
 
 const cspHeader = `
   default-src 'self';
@@ -22,7 +25,7 @@ const cspHeader = `
   style-src 'self' 'unsafe-inline';
   img-src 'self' blob: data: https:;
   font-src 'self' data:;
-  connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ingest.de.sentry.io;
+  connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ingest.de.sentry.io https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com;
   worker-src 'self' blob:;
   object-src 'none';
   base-uri 'self';

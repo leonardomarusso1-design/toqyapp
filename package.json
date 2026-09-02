@@ -10,7 +10,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ai-sdk/google": "^4.0.14",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -18,8 +17,6 @@
     "@supabase/supabase-js": "latest",
     "@tailwindcss/postcss": "^4.3.1",
     "@vercel/speed-insights": "^2.0.0",
-    "ai": "^7.0.26",
-    "clsx": "latest",
     "konva": "^10.3.0",
     "lucide-react": "latest",
     "motion": "^12.40.0",
@@ -29,8 +26,7 @@
     "react-dom": "latest",
     "react-easy-crop": "^6.2.2",
     "react-konva": "^19.2.5",
-    "sharp": "^0.35.3",
-    "tailwind-merge": "latest"
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "@types/node": "latest",

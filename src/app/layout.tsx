@@ -3,6 +3,7 @@ import { Unbounded, Manrope } from "next/font/google";
 import "./globals.css";
 import { AuthSync } from "@/components/AuthSync";
 import { SentryInit } from "@/components/SentryInit";
+import { CookieConsent } from "@/components/CookieConsent";
 
 // Identidade visual "Signal Ledger" do ecossistema (2026-07-03) — mesma
 // dupla de fontes usada no ZapFlow: Unbounded pro display (títulos, CTAs)
@@ -30,14 +31,27 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "TOQY - Biosites Profissionais",
   description: "Bio sites profissionais para QR Code, NFC, Pix e Wi-Fi.",
+  keywords: ["bio site", "link na bio", "QR Code", "NFC", "Pix", "cartão digital", "cardápio digital"],
   icons: {
     icon: "/favicon.png",
     apple: "/brand/favicon-toqy.png",
   },
+  alternates: {
+    canonical: siteUrl,
+  },
   openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    siteName: "TOQY",
     title: "TOQY - Biosites Profissionais",
     description: "Bio sites profissionais para QR Code, NFC e plaquinhas.",
     images: [{ url: "/images/og-image.png", width: 1200, height: 630, alt: "TOQY - Biosites profissionais" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TOQY - Biosites Profissionais",
+    description: "Bio sites profissionais para QR Code, NFC e plaquinhas.",
+    images: ["/images/og-image.png"],
   },
 };
 
@@ -54,6 +68,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <SentryInit />
         <AuthSync />
         {children}
+        <CookieConsent gaMeasurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
       </body>
     </html>
   );
