@@ -1,5 +1,6 @@
 import { getSupabaseAdmin, hasSupabaseEnv } from "@/lib/supabaseServer";
 import { uploadImageIfBase64 } from "@/lib/imageStorage";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 // Recebe uma imagem em base64 (já redimensionada no navegador pelo
 // ImageUploadField) e sobe pro Supabase Storage, devolvendo um link público
@@ -28,6 +29,9 @@ export async function POST(request: Request) {
   }
 
   const supabase = getSupabaseAdmin()!;
+
+  const allowed = await checkRateLimit(supabase, `upload-image:${getClientIp(request)}`, 30, 60);
+  if (!allowed) return Response.json({ error: "Muitas tentativas. Aguarde um minuto." }, { status: 429 });
 
   const authorized = await isAuthorized(supabase, request, slug, fieldId, editKey);
   if (!authorized) return Response.json({ error: "Não autorizado" }, { status: 401 });

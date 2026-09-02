@@ -1,8 +1,10 @@
+import { timingSafeEqual } from "node:crypto";
 import { getSupabaseAdmin } from "@/lib/supabaseServer";
 import { getKiwifySale } from "@/lib/kiwifyApi";
 import { resolvePlan, resolveOverageProduct, shouldDowngradeOnCancel, resolveAttributionStatus } from "./webhookLogic";
 import { RESELLER_TIERS, resolveResellerTier } from "@/lib/resellerTiers";
 import { SUBSCRIPTION_PLANS } from "@/lib/subscriptions";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 // Confirmação por e-mail da ativação de plano (2026-09-01) — antes disso o
 // webhook concedia o plano em silêncio, sem nunca mandar nada pro cliente.
@@ -88,9 +90,18 @@ function planPendingEmailHtml(planName: string, email: string) {
 // "?token=SEU_SEGREDO".
 const KIWIFY_WEBHOOK_TOKEN = process.env.KIWIFY_WEBHOOK_TOKEN;
 
+// Comparação em tempo constante (2026-09-01, auditoria) — "===" normal
+// vaza timing (compara char a char e para no primeiro diferente), o que em
+// teoria permite descobrir o token por medição de latência repetida. Risco
+// bem teórico aqui (rede já introduz jitter suficiente pra mascarar), mas
+// é trivial de corrigir com timingSafeEqual — sem custo real.
 function isAuthentic(request: Request) {
   if (!KIWIFY_WEBHOOK_TOKEN) return true;
-  return new URL(request.url).searchParams.get("token") === KIWIFY_WEBHOOK_TOKEN;
+  const provided = new URL(request.url).searchParams.get("token") ?? "";
+  const expected = Buffer.from(KIWIFY_WEBHOOK_TOKEN);
+  const providedBuf = Buffer.from(provided);
+  if (providedBuf.length !== expected.length) return false;
+  return timingSafeEqual(providedBuf, expected);
 }
 
 type KiwifyPayload = {
@@ -114,6 +125,13 @@ export async function POST(request: Request) {
 
   const supabase = getSupabaseAdmin();
   if (!supabase) return Response.json({ error: "Supabase not configured" }, { status: 500 });
+
+  // Defesa em profundidade (2026-09-01) — a URL fixa (sem a ofuscação do
+  // hook aleatório que existia via Make) + token protegem contra forjar
+  // evento, mas nada limitava volume de tentativas de adivinhar o token
+  // por IP. 60/min é bem acima do tráfego real esperado da Kiwify.
+  const rateAllowed = await checkRateLimit(supabase, `kiwify-webhook:${getClientIp(request)}`, 60, 60);
+  if (!rateAllowed) return Response.json({ error: "Rate limited" }, { status: 429 });
 
   // Auditoria de todos os eventos recebidos
   await supabase.from("toqy_kiwify_events").insert({

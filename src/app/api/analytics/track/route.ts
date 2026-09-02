@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getSupabaseAdmin, hasSupabaseEnv } from "@/lib/supabaseServer";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 type TrackEventBody = {
   eventType: string;
@@ -30,6 +31,20 @@ export async function POST(request: NextRequest) {
 
     if (!hasSupabaseEnv()) return Response.json({ success: false, error: "Servidor não configurado" }, { status: 500 });
     const supabase = getSupabaseAdmin()!;
+
+    const allowed = await checkRateLimit(supabase, `analytics:${getClientIp(request)}`, 120, 60);
+    if (!allowed) return Response.json({ success: true, skipped: "rate_limited" }, { status: 200 });
+
+    // Achado real (auditoria 2026-09-01): insert público sem validar que
+    // bioSiteId existe — qualquer um podia poluir a tabela com IDs
+    // arbitrários (custo de storage, analytics falsos). Confere existência
+    // antes de gravar; segue "best-effort" (nunca 500 pro visitante real).
+    const { data: siteExists } = await supabase
+      .from("toqy_biosites")
+      .select("id")
+      .eq("id", body.bioSiteId)
+      .maybeSingle();
+    if (!siteExists) return Response.json({ success: true, skipped: "unknown_bio_site" }, { status: 200 });
 
     const userAgent = body.userAgent || request.headers.get("user-agent");
     const referer = request.headers.get("referer");

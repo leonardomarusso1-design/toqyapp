@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,6 +14,9 @@ export async function POST(request: Request) {
     if (!email || !email.includes("@")) {
       return NextResponse.json({ error: "Email inválido" }, { status: 400 });
     }
+
+    const allowed = await checkRateLimit(supabaseAdmin, `lead:${getClientIp(request)}`, 5, 60);
+    if (!allowed) return NextResponse.json({ error: "Muitas tentativas. Aguarde um minuto." }, { status: 429 });
 
     // 1. Salvar lead no Supabase (criaremos uma tabela leads ou podemos usar profiles temporariamente)
     // Vamos usar uma tabela `leads` (você precisará criá-la no Supabase: id, name, email, created_at)

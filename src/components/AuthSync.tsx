@@ -3,79 +3,40 @@
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-async function ensureProfile(session: { user: { id: string; email?: string; user_metadata?: Record<string, string> }; access_token: string; expires_in: number }) {
+// Reconciliação de plano pendente (2026-09-01) — movida pra
+// /api/plans/reconcile (service role) na mesma auditoria que travou
+// plan_toqy/biosites_limit/etc em `profiles` pra escrita só via service_role
+// (ver migration protect_profile_plan_columns em supabase/). Este componente
+// não escreve mais essas colunas direto — só avisa o servidor "confere se
+// tenho algo pendente pro meu e-mail" e o servidor decide.
+async function reconcilePendingPlan(accessToken: string) {
+  try {
+    await fetch("/api/plans/reconcile", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+  } catch {
+    // Best-effort — se falhar, tenta de novo no próximo login/refresh.
+  }
+}
+
+async function ensureProfile(session: { user: { id: string }; access_token: string }) {
   const { data: existing } = await supabase
     .from("profiles")
     .select("id")
     .eq("id", session.user.id)
     .maybeSingle();
 
-  if (existing) {
-    // Reconcilia plano pendente pra conta que JÁ existia antes da compra
-    // (2026-09-01 — achado investigando um caso real de cliente que pagou e
-    // continuou no Grátis). Antes desta mudança, toqy_pending_plans só era
-    // lido no bloco "!existing" abaixo — ou seja, só ajudava gente criando
-    // conta pela primeira vez DEPOIS de pagar. Quem já tinha conta (ex: veio
-    // do teste grátis) e o webhook da Kiwify não achou o profile dela na hora
-    // da compra (e-mail com diferença de maiúscula/espaço, corrida entre
-    // webhook e criação de conta, etc.) ficava com o plano pago represado em
-    // toqy_pending_plans pra sempre, sem nada rodar de novo pra aplicar.
-    // Roda em todo login — idempotente (some quando não há pendência).
-    const email = session.user.email ?? "";
-    if (email) {
-      const { data: pending } = await supabase
-        .from("toqy_pending_plans")
-        .select("plan_toqy, biosites_limit")
-        .eq("email", email)
-        .maybeSingle();
-      if (pending) {
-        await supabase.from("profiles").update({
-          plan_toqy: pending.plan_toqy,
-          biosites_limit: pending.biosites_limit,
-          plan_toqy_since: new Date().toISOString(),
-          subscription_status: "active",
-          updated_at: new Date().toISOString(),
-        }).eq("id", session.user.id);
-        await supabase.from("toqy_pending_plans").delete().eq("email", email);
-      }
-    }
-    return;
-  }
-
+  // Perfil novo: handle_new_user() (trigger SECURITY DEFINER em auth.users,
+  // ver supabase/schema.sql) já cria a linha automaticamente no signup,
+  // aplicando plano pendente com privilégio de servidor — não é preciso
+  // inserir nada aqui. Isso só roda como rede de segurança pra uma corrida
+  // rara (client lê antes do trigger commitar); não escreve plano nenhum.
   if (!existing) {
-    const meta = session.user.user_metadata ?? {};
-    const email = session.user.email ?? "";
-
-    // Verifica plano pendente (compra feita antes de criar conta)
-    let plan = "free";
-    let limit = 1;
-    if (email) {
-      const { data: pending } = await supabase
-        .from("toqy_pending_plans")
-        .select("plan_toqy, biosites_limit")
-        .eq("email", email)
-        .maybeSingle();
-      if (pending) {
-        plan = pending.plan_toqy;
-        limit = pending.biosites_limit;
-      }
-    }
-
-    await supabase.from("profiles").insert({
-      id: session.user.id,
-      email,
-      full_name: meta.full_name || meta.name || "",
-      plan_tier: "free",
-      plan_toqy: plan,
-      biosites_limit: limit,
-      subscription_status: "active",
-    });
-
-    // Remove o plano pendente após aplicar
-    if (plan !== "free" && email) {
-      await supabase.from("toqy_pending_plans").delete().eq("email", email);
-    }
+    await supabase.from("profiles").upsert({ id: session.user.id }, { onConflict: "id", ignoreDuplicates: true });
   }
+
+  await reconcilePendingPlan(session.access_token);
 }
 
 export function AuthSync() {

@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 type VerifyBody = { edit_key?: string };
 
@@ -32,6 +33,12 @@ export async function POST(
 
   const supabase = getSupabaseAdmin();
   if (!supabase) return Response.json({ ok: false, message: "Servidor não configurado" }, { status: 500 });
+
+  // Rate limit (2026-09-01, auditoria) — mitigado antes só pela entropia
+  // do edit_key (~39 bits); isto é defesa em profundidade, não a proteção
+  // principal.
+  const allowed = await checkRateLimit(supabase, `verify-key:${slug}:${getClientIp(request)}`, 10, 60);
+  if (!allowed) return Response.json({ ok: false, message: "Muitas tentativas. Aguarde um minuto." }, { status: 429 });
 
   // Comparação via RPC (2026-07-17) — edit_key_hash é bcrypt de verdade,
   // verify_biosite_key() compara no Postgres sem o hash passar pelo código.
