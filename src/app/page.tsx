@@ -160,7 +160,7 @@ export default async function LandingPage() {
             <img src="/brand/logo-toqy-horizontal-dark.png" alt="TOQY" className="h-14 w-auto object-contain md:h-16" />
           </Link>
           <nav className="hidden items-center gap-9 text-sm font-semibold text-muted md:flex">
-            <a className="transition hover:text-accent" href="#resultados">Resultados</a>
+            <a className="transition hover:text-accent" href="#exemplos">Resultados</a>
             <a className="transition hover:text-accent" href="#como-funciona">Como funciona</a>
             <a className="transition hover:text-accent" href="#exemplos">Exemplos</a>
             <a className="transition hover:text-accent" href="#planos">Planos</a>
@@ -259,99 +259,6 @@ export default async function LandingPage() {
                 <Icon className="h-4 w-4 text-accent" /> {t as string}
               </span>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* RESULTADOS (anteriormente "A VERDADE") */}
-      <section id="resultados" className="relative overflow-hidden border-y border-border bg-card py-20">
-        <div className="shimmer-line absolute left-0 top-0 h-1 w-full" />
-        <div className="mx-auto max-w-7xl px-5">
-          <div className="text-center">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Resultados reais</p>
-            <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-ink md:text-5xl">
-              O que muda na vida do <span className="gradient-text">cliente</span>?
-            </h2>
-          </div>
-
-          <div className="mt-12 grid gap-8 lg:grid-cols-3">
-            {/* Depoimento 1 */}
-            <div className="card-glow rounded-2xl border border-border bg-white p-8 shadow-sm">
-              <div className="flex items-center gap-1 text-accent">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Star key={i} className="h-5 w-5 fill-current" />
-                ))}
-              </div>
-              <p className="mt-4 text-base leading-relaxed text-muted">
-                "Antes eu perdia clientes porque não tinha um lugar centralizado com tudo. Agora o bio site do Toqy aumentou meu atendimento em 40%!"
-              </p>
-              <div className="mt-6 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-accent to-violet text-white font-bold">
-                  J
-                </div>
-                <div>
-                  <p className="text-sm font-extrabold text-ink">João Silva</p>
-                  <p className="text-xs text-muted">Barbearia</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Depoimento 2 */}
-            <div className="card-glow rounded-2xl border border-border bg-white p-8 shadow-sm">
-              <div className="flex items-center gap-1 text-accent">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Star key={i} className="h-5 w-5 fill-current" />
-                ))}
-              </div>
-              <p className="mt-4 text-base leading-relaxed text-muted">
-                "O Pix no bio site foi um divisor de águas. Meus clientes pagam em segundos e eu recebo o comprovante direto no WhatsApp."
-              </p>
-              <div className="mt-6 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-violet to-[#ffc850] text-white font-bold">
-                  M
-                </div>
-                <div>
-                  <p className="text-sm font-extrabold text-ink">Maria Santos</p>
-                  <p className="text-xs text-muted">Restaurante</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Depoimento 3 */}
-            <div className="card-glow rounded-2xl border border-border bg-white p-8 shadow-sm">
-              <div className="flex items-center gap-1 text-accent">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Star key={i} className="h-5 w-5 fill-current" />
-                ))}
-              </div>
-              <p className="mt-4 text-base leading-relaxed text-muted">
-                "Comecei a vender bio sites para amigos e já tenho 15 clientes recorrentes. Renda extra de quase R$1.000 por mês!"
-              </p>
-              <div className="mt-6 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-tr from-[#ffc850] to-accent text-white font-bold">
-                  C
-                </div>
-                <div>
-                  <p className="text-sm font-extrabold text-ink">Carlos Oliveira</p>
-                  <p className="text-xs text-muted">Freelancer</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-12 text-center">
-            <div className="mx-auto inline-flex flex-wrap justify-center gap-8 rounded-3xl border border-border bg-white p-8 shadow-sm">
-              {[
-                ["+40%", "aumento no atendimento"],
-                ["3 segundos", "tempo de decisão do cliente"],
-                ["R$650/mês", "economia em designer"],
-              ].map(([big, small], i) => (
-                <div key={i} className="text-center">
-                  <p className="text-3xl font-extrabold text-ink">{big}</p>
-                  <p className="mt-1 text-sm text-muted">{small}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
