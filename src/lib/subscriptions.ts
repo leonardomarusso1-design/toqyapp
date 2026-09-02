@@ -26,7 +26,6 @@ export type Plan = {
   maxSites: number;
   maxTeamMembers: number;
   hasAnalytics: boolean;
-  hasWhiteLabel: boolean;
   hasCustomDomain: boolean;
   // Gating real de feature por plano (2026-07-13) — antes disso, essas 3
   // colunas existiam só na tabela comparativa (PLAN_FEATURES_COMPARISON,
@@ -65,7 +64,6 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     maxSites: 1,
     maxTeamMembers: 1,
     hasAnalytics: false,
-    hasWhiteLabel: false,
     hasCustomDomain: false,
     hasCatalog: false,
     hasPix: false,
@@ -106,7 +104,6 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     maxSites: 10,
     maxTeamMembers: 2,
     hasAnalytics: true,
-    hasWhiteLabel: false,
     hasCustomDomain: false,
     hasCatalog: true,
     hasPix: true,
@@ -149,7 +146,6 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     maxSites: 20,
     maxTeamMembers: 3,
     hasAnalytics: true,
-    hasWhiteLabel: false,
     hasCustomDomain: false,
     hasCatalog: true,
     hasPix: true,
@@ -181,7 +177,6 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
       "Até 100 bio sites",
       "QR personalizado editável",
       "Gerador de arte com IA (50 créditos)",
-      "White label parcial",
       "Domínio próprio",
       "Gestão de equipe completa",
       "Analytics avançado + API",
@@ -192,7 +187,6 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     maxSites: 100,
     maxTeamMembers: 10,
     hasAnalytics: true,
-    hasWhiteLabel: true,
     hasCustomDomain: true,
     hasCatalog: true,
     hasPix: true,
@@ -267,7 +261,6 @@ export const PLAN_FEATURES_COMPARISON = [
   { feature: "Pix & Wi-Fi", free: "Não", community: "Sim", freelancer: "Sim", agency: "Sim" },
   { feature: "Catálogo", free: "Não", community: "Básico", freelancer: "Completo", agency: "Completo" },
   { feature: "Analytics", free: "Não", community: "Básico", freelancer: "Avançado", agency: "Avançado + API" },
-  { feature: "White Label", free: "Não", community: "Não", freelancer: "Não", agency: "Sim (parcial)" },
   { feature: "Domínio próprio", free: "Não", community: "Não", freelancer: "Não", agency: "Sim" },
   { feature: "Suporte", free: "Community", community: "Email", freelancer: "Prioritário", agency: "24/7" },
 ];

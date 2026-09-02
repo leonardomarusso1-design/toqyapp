@@ -54,6 +54,7 @@ export function defaultLabelForType(type: ToqyLinkType): string {
 export const buttonTypeOptions: Array<{ type: ToqyLinkType; label: string; description: string }> = [
   { type: "whatsapp", label: "WhatsApp", description: "Abre conversa com mensagem pronta." },
   { type: "instagram", label: "Instagram", description: "Abre o perfil do Instagram." },
+  { type: "facebook", label: "Facebook", description: "Abre a página do Facebook." },
   { type: "linkedin", label: "LinkedIn", description: "Abre o perfil ou página do LinkedIn." },
   { type: "phone", label: "Telefone", description: "Liga para o estabelecimento." },
   { type: "maps", label: "Como chegar", description: "Abre o Google Maps." },

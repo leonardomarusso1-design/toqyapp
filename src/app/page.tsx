@@ -90,7 +90,7 @@ const plans = [
   // .agency). O programa de indicação com comissão continua existindo,
   // agora como benefício de quem já é Freelancer/Agência pagante — não
   // mais como a própria razão de existir do plano.
-  { name: "Agência", price: "R$99,90", period: "/mês", tag: "Monte uma operação, gerencie equipe", description: "Para equipes e agências em escala. 100 bio sites, 50 créditos de arte, tudo do Freelancer e mais.", highlight: false, cta: "Assinar agora", items: ["Até 100 bio sites", "★ QR personalizado editável", "★ Gerador de arte com IA (50 créditos)", "White label parcial", "Domínio próprio", "Gestão de equipe", "Indique e ganhe 30% de comissão"] },
+  { name: "Agência", price: "R$99,90", period: "/mês", tag: "Monte uma operação, gerencie equipe", description: "Para equipes e agências em escala. 100 bio sites, 50 créditos de arte, tudo do Freelancer e mais.", highlight: false, cta: "Assinar agora", items: ["Até 100 bio sites", "★ QR personalizado editável", "★ Gerador de arte com IA (50 créditos)", "Domínio próprio", "Gestão de equipe", "Indique e ganhe 30% de comissão"] },
   // Nota (pendência da Fase 2 quitada aqui, 2026-07-15): antes só a Agência
   // mostrava o benefício de indicação — Freelancer também ganha (20%) e
   // nunca aparecia. Uma seção dedicada explicando comissão+desconto+bônus
@@ -462,7 +462,6 @@ export default async function LandingPage() {
             ["Catálogo", "🔒", "✅", "✅", "✅"],
             ["QR personalizado", "🔒", "✅", "✅", "✅"],
             ["IA artes plaquinhas", "🔒", "5 créditos", "10 créditos", "50 créditos"],
-            ["White label", "🔒", "🔒", "🔒", "✅"],
             ["Domínio próprio", "🔒", "🔒", "🔒", "✅"],
             ["Gestão de equipe", "🔒", "🔒", "🔒", "✅"],
             ["Comissão indicações", "🔒", "🔒", "20%", "30%"],

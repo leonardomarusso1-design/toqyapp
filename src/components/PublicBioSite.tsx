@@ -605,9 +605,19 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
                   );
                 }
 
-                const bg = useGlass
-                  ? (site.theme.mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)")
-                  : (brandColor[button.type] ?? site.theme.primary);
+                // Bug real corrigido (2026-09-01, achado ao vivo: YouTube
+                // aparecendo cinza/preto em vez do vermelho oficial): o
+                // estilo "glass" sobrescrevia a cor de marca de TODO ícone
+                // social baseado em SVG (youtube/tiktok/linkedin/telegram/
+                // spotify) — só whatsapp/instagram (PNG, IMAGE_ICON_TYPES)
+                // escapavam disso, porque nem passam por aqui. Ícone de
+                // marca real agora sempre mantém a cor oficial, "glass" só
+                // se aplica a ícone sem marca (ex: link personalizado).
+                const bg = isBrandType
+                  ? brandColor[button.type]
+                  : useGlass
+                    ? (site.theme.mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)")
+                    : site.theme.primary;
                 // Bug real corrigido (2026-07-16): ícone branco fixo quebrava
                 // (sumia) quando o fundo caía no fallback theme.primary (tipo
                 // sem cor de marca, ex: mapa/localização) E o usuário definia
@@ -621,10 +631,10 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
                 // NENHUM ícone visível dentro, "AppSalão" da Studio Jessica).
                 // Agora calcula contraste de verdade contra o fundo do
                 // círculo em vez de confiar cegamente em theme.text.
-                const iconColor = useGlass
-                  ? site.theme.text
-                  : isBrandType
-                    ? "#fff"
+                const iconColor = isBrandType
+                  ? "#fff"
+                  : useGlass
+                    ? site.theme.text
                     : readableIconColor(bg, site.theme.text);
                 return (
                   <button key={button.id} type="button" onClick={() => handleButton(button)} aria-label={button.label}
@@ -658,19 +668,15 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
 
           <footer className="mt-8 pb-6 text-center text-xs font-bold leading-relaxed" style={{ color: site.theme.muted }}>
             <p style={{ color: site.theme.muted }}>© {new Date().getFullYear()} {site.profile.name}. Todos os direitos reservados.</p>
-            {/* Selo "Criado com TOQY" — antes aparecia em TODO bio site,
-                mesmo pra quem paga Agência (que promete "White label
-                parcial" desde sempre, mas nada aqui checava isso). Primeira
-                entrega real de white-label (2026-07-16): esconde o selo
-                pra quem tem hasWhiteLabel. */}
-            {!plan.hasWhiteLabel ? (
-              <p className="mt-1" style={{ color: site.theme.muted }}>
-                Criado com{" "}
-                <a href="https://toqy.com.br" target="_blank" rel="noreferrer" className="font-black underline-offset-4 hover:underline" style={{ color: site.theme.primary }}>
-                  TOQY
-                </a>
-              </p>
-            ) : null}
+            {/* Selo "Criado com TOQY" — sempre visível em todo bio site.
+                White label foi removido do produto (2026-09-01, decisão do
+                Leonardo): nenhum plano promete mais esconder este selo. */}
+            <p className="mt-1" style={{ color: site.theme.muted }}>
+              Criado com{" "}
+              <a href="https://toqy.com.br" target="_blank" rel="noreferrer" className="font-black underline-offset-4 hover:underline" style={{ color: site.theme.primary }}>
+                TOQY
+              </a>
+            </p>
           </footer>
         </main>
       </div>
