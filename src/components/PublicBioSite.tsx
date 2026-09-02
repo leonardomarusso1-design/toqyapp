@@ -91,9 +91,16 @@ const LinkedInIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// Selo completo (2026-09-01, achado ao vivo: ícone antigo era só o
+// triângulo em currentColor, então dependia de um círculo de fundo
+// externo pra ficar com cara de "YouTube" — inconsistente com
+// whatsapp/instagram/facebook, que já são o selo pronto, sem fundo
+// extra). Fundo vermelho arredondado + triângulo branco embutidos no
+// mesmo SVG, igual ícone oficial — não precisa de nenhuma cor externa.
 const YouTubeIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+  <svg className={className} viewBox="0 0 48 48">
+    <rect x="1" y="9" width="46" height="30" rx="9" fill="#FF0000" />
+    <path d="M19 16.5v15l14-7.5-14-7.5z" fill="#fff" />
   </svg>
 );
 
@@ -144,7 +151,7 @@ const iconByType: Partial<Record<ToqyLinkType, React.ComponentType<{ className?:
 // Tipos cujo ícone é uma imagem própria já colorida (2026-07-16) — usados
 // pra pular o círculo de fundo no quick-row de ícones sociais (ver
 // socialButtons.map abaixo) e pro controle de tamanho pequeno/médio/grande.
-const IMAGE_ICON_TYPES: ToqyLinkType[] = ["whatsapp", "instagram", "facebook", "maps"];
+const IMAGE_ICON_TYPES: ToqyLinkType[] = ["whatsapp", "instagram", "facebook", "maps", "youtube"];
 
 const SOCIAL_ICON_SIZE_CLASS: Record<"sm" | "md" | "lg", string> = {
   sm: "h-9 w-9",
