@@ -122,6 +122,10 @@ export type ToqySite = {
     // Tamanho do nome/título principal (h1), 2026-07-16 — padrão "md" mantém
     // o tamanho de sempre (text-2xl).
     nameFontSize?: "sm" | "md" | "lg";
+    // Sombra no nome/título principal, 2026-09-01 (pedido do Leonardo) --
+    // undefined/true mantém o comportamento de sempre (drop-shadow-sm +
+    // glow em modo escuro); false desliga os dois pra quem não quer.
+    nameShadow?: boolean;
     // Alinhamento do texto de localização, 2026-07-16 — padrão "left" mantém
     // o comportamento de sempre (endereço de 2 linhas alinhado à esquerda,
     // rente ao ícone — ver comentário original em PublicBioSite.tsx sobre por

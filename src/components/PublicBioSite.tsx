@@ -522,7 +522,7 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
                 <span className="text-4xl font-black text-white">{getInitials(site.profile.name)}</span>
               )}
             </div>
-          <h1 className={`mt-5 ${NAME_FONT_SIZE_CLASS[site.theme.nameFontSize ?? "md"]} font-black leading-tight drop-shadow-sm`} style={{ color: col("name", site.theme.text), textShadow: site.theme.mode === "light" ? "none" : "0 0 10px rgba(0,0,0,0.5)" }}>{site.profile.name}</h1>
+          <h1 className={`mt-5 ${NAME_FONT_SIZE_CLASS[site.theme.nameFontSize ?? "md"]} font-black leading-tight${site.theme.nameShadow === false ? "" : " drop-shadow-sm"}`} style={{ color: col("name", site.theme.text), textShadow: site.theme.nameShadow === false ? "none" : site.theme.mode === "light" ? "none" : "0 0 10px rgba(0,0,0,0.5)" }}>{site.profile.name}</h1>
             {site.profile.title ? <p className="mt-1 text-base font-medium" style={{ color: col("title", site.theme.muted) }}>{site.profile.title}</p> : null}
             {site.profile.location ? (
               <div className="mt-2 flex flex-col items-center gap-0.5">

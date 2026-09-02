@@ -580,7 +580,12 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             <label><span className={label}>Formato</span><select className={field} value={site.theme.buttonRadius} onChange={(e) => setTheme({ buttonRadius: e.target.value as ToqySite["theme"]["buttonRadius"] })}><option value="soft">Soft</option><option value="rounded">Arredondado</option><option value="pill">Pill/cápsula</option></select></label>
             <label><span className={label}>Ícones sociais (WhatsApp, Instagram...)</span><select className={field} value={site.theme.socialIconStyle ?? "brand"} onChange={(e) => setTheme({ socialIconStyle: e.target.value as "brand" | "glass" })}><option value="brand">Cores reais das marcas</option><option value="glass">Translúcido (igual botões)</option></select></label>
             <label><span className={label}>Tamanho dos ícones (WhatsApp, Instagram, Facebook, localização)</span><select className={field} value={site.theme.socialIconSize ?? "md"} onChange={(e) => setTheme({ socialIconSize: e.target.value as "sm" | "md" | "lg" })}><option value="sm">Pequeno</option><option value="md">Médio</option><option value="lg">Grande</option></select></label>
-            <label><span className={label}>Tamanho do título (nome do negócio)</span><select className={field} value={site.theme.nameFontSize ?? "md"} onChange={(e) => setTheme({ nameFontSize: e.target.value as "sm" | "md" | "lg" })}><option value="sm">Pequeno</option><option value="md">Médio</option><option value="lg">Grande</option></select></label>
+            <label><span className={label}>Tamanho do título (nome do negócio)</span><select className={field} value={site.theme.nameFontSize ?? "md"} onChange={(e) => setTheme({ nameFontSize: e.target.value as "sm" | "md" | "lg" })}><option value="sm">Pequeno</option><option value="md">Médio</option><option value="lg">Grande</option></select>
+              <label className="mt-2 flex items-center gap-1.5 text-xs font-black text-ink">
+                <input type="checkbox" checked={site.theme.nameShadow !== false} onChange={(e) => setTheme({ nameShadow: e.target.checked })} />
+                Sombra no título
+              </label>
+            </label>
             <label><span className={label}>Alinhamento da localização</span><select className={field} value={site.theme.locationAlign ?? "left"} onChange={(e) => setTheme({ locationAlign: e.target.value as "left" | "center" })}><option value="left">Esquerda (recomendado p/ endereços longos)</option><option value="center">Centralizado</option></select></label>
             <label className="md:col-span-2">
               <span className={label}>Imagem de fundo</span>
