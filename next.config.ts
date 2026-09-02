@@ -49,6 +49,23 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 3600,
+    // Larguras usadas por optimizedImageUrl() em PublicBioSite.tsx (avatar,
+    // assinatura, catálogo, fundo) -- o Next só aceita "w" que esteja numa
+    // destas duas listas.
+    imageSizes: [128, 256, 260, 384, 500],
+    deviceSizes: [640, 860, 1080, 1200, 1920],
+    // Achado real (auditoria de performance 2026-09-01): fotos reais que
+    // clientes sobem (logo, fundo, catálogo) ficam no Supabase Storage sem
+    // nenhum redimensionamento -- um fundo de bio site real chegou a 1,9MB
+    // em PNG puro, servido em tamanho original pra uma prévia pequena na
+    // landing (mesmo componente da página pública real, só encolhido com
+    // CSS scale -- scale não reduz o download). Isso sozinho derrubou o LCP
+    // mobile do site pra 42s no PageSpeed Insights. remotePatterns libera o
+    // otimizador de imagem do Next pra essas URLs (ver optimizedImageUrl em
+    // PublicBioSite.tsx).
+    remotePatterns: [
+      { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
+    ],
   },
   async headers() {
     return [

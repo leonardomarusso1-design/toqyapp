@@ -206,6 +206,21 @@ function logoShape(site: ToqySite) {
 // coluna central de max-w-[430px] — a mesma largura do <main> — em vez de
 // esticar pelo viewport inteiro. Fora dessa coluna (telas largas), quem
 // preenche é o mesmo gradiente do tema (themeGradient), não a foto.
+// Otimização de imagem (2026-09-01, auditoria de performance) — fotos
+// reais de cliente (Supabase Storage) chegam sem nenhum redimensionamento;
+// uma delas tinha 1,9MB pra aparecer num card de ~190px na vitrine da
+// landing. Passa pelo otimizador de imagem do próprio Next.js (rota
+// /_next/image, já embutida no framework) pedindo uma largura compatível
+// com onde a imagem realmente aparece -- funciona pra <img src> comum e
+// pra CSS background-image igual. Sem custo de infra extra (não é um
+// serviço novo, é recurso nativo do Next; precisa de `images.remotePatterns`
+// em next.config.ts liberando o domínio do Supabase Storage). Local assets
+// (`/brand/...`, `/images/...`) e URLs vazias/relativas passam direto.
+function optimizedImageUrl(url: string | undefined, width: number, quality = 75): string | undefined {
+  if (!url || !/^https?:\/\//i.test(url)) return url;
+  return `/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=${quality}`;
+}
+
 function backgroundImageUrl(site: ToqySite): string | undefined {
   const plaque = site.plaqueTheme?.useSameBackground && site.plaqueTheme.backgroundImageUrl;
   const image = plaque ? site.plaqueTheme?.backgroundImageUrl : site.profile.backgroundImageUrl;
@@ -470,8 +485,8 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
               // propósito sempre saía acinzentado/escurecido na base, sem
               // controle nenhum do usuário pra desligar isso.
               backgroundImage: site.theme.useBackgroundOverlay
-                ? `${backgroundOverlayGradient(site)}, url(${bgImage})`
-                : `url(${bgImage})`,
+                ? `${backgroundOverlayGradient(site)}, url(${optimizedImageUrl(bgImage, 860)})`
+                : `url(${optimizedImageUrl(bgImage, 860)})`,
               backgroundSize: "cover",
               backgroundPosition: "center top",
               backgroundRepeat: "no-repeat",
@@ -490,7 +505,7 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
             <div className={`${logoSize(site)} ${logoShape(site)} relative mx-auto overflow-hidden shadow-2xl`} style={{ border: (site.profile.logoUrl || site.profile.profileImageUrl) ? "none" : `2px solid ${site.theme.primary}88`, background: "transparent" }}>
               {site.profile.logoUrl || site.profile.profileImageUrl ? (
                 <img
-                  src={site.profile.logoUrl || site.profile.profileImageUrl}
+                  src={optimizedImageUrl(site.profile.logoUrl || site.profile.profileImageUrl, 256)}
                   alt={site.profile.name}
                   loading="eager"
                   fetchPriority="high"
@@ -526,7 +541,7 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
             ) : null}
             {site.profile.description ? <p className="mx-auto mt-4 max-w-[350px] text-center text-sm leading-relaxed" style={{ color: col("description", site.theme.muted) }}>{site.profile.description}</p> : null}
             {site.profile.logoSignatureUrl ? (
-              <img src={site.profile.logoSignatureUrl} alt={`${site.profile.name} assinatura`} className="mx-auto mt-4 max-h-20 max-w-[260px] object-contain drop-shadow-lg" />
+              <img src={optimizedImageUrl(site.profile.logoSignatureUrl, 260)} alt={`${site.profile.name} assinatura`} className="mx-auto mt-4 max-h-20 max-w-[260px] object-contain drop-shadow-lg" />
             ) : null}
             {site.profile.logoText ? (
               <p className="mt-3 tracking-widest drop-shadow-lg" style={{ color: site.theme.text, fontSize: "clamp(13px, 4vw, 20px)", fontFamily: site.profile.logoFont === "serif" || site.profile.logoFont === "italic" ? "Georgia, serif" : site.profile.logoFont === "mono" ? "monospace" : "inherit", fontWeight: !site.profile.logoFont || site.profile.logoFont === "bold" ? 900 : 700, fontStyle: site.profile.logoFont === "italic" ? "italic" : "normal", letterSpacing: "0.15em", textTransform: "uppercase", textShadow: site.theme.mode === "dark" ? "0 2px 12px rgba(0,0,0,0.6)" : "none" }}>{site.profile.logoText}</p>
@@ -917,7 +932,7 @@ function CatalogCard({ site, item, compact = false, stacked = false, onOpenGalle
         role={canOpenGallery ? "button" : undefined}
         aria-label={canOpenGallery ? `Ver mais itens de ${item.subcategory?.trim() || item.category?.trim() || "Destaques"}` : undefined}
       >
-        {item.imageUrl ? <img src={item.imageUrl} alt={item.name} loading="lazy" decoding="async" className={`h-full w-full ${fitClass}`} style={positionStyle} /> : <div className="flex h-full items-center justify-center"><FileText className="h-10 w-10 opacity-60" /></div>}
+        {item.imageUrl ? <img src={optimizedImageUrl(item.imageUrl, 500)} alt={item.name} loading="lazy" decoding="async" className={`h-full w-full ${fitClass}`} style={positionStyle} /> : <div className="flex h-full items-center justify-center"><FileText className="h-10 w-10 opacity-60" /></div>}
         {canOpenGallery ? (
           <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-black text-white backdrop-blur-sm">
             <Images className="h-3 w-3" />+{categoryCount - 1}
@@ -962,7 +977,7 @@ function CategoryGalleryModal({ site, category, items, onClose }: { site: ToqySi
         {items.map((item) => (
           <div key={item.id} className="overflow-hidden rounded-[1.2rem] border" style={{ background: site.theme.colors?.catalogItemBg ?? site.theme.card, borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.14)" }}>
             <div className="h-28" style={{ background: `linear-gradient(135deg, ${site.theme.primary}33, ${site.theme.secondary}44)` }}>
-              {item.imageUrl ? <img src={item.imageUrl} alt={item.name} loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><FileText className="h-8 w-8 opacity-60" /></div>}
+              {item.imageUrl ? <img src={optimizedImageUrl(item.imageUrl, 260)} alt={item.name} loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><FileText className="h-8 w-8 opacity-60" /></div>}
             </div>
             {/* Item "só foto" (2026-07-16): sem nome/preço/link próprio, não
                 mostra rodapé nenhum (nome vazio + botão "Ver" abrindo o
