@@ -30,6 +30,9 @@ export function buttonHref(site: ToqySite, button: ToqyButton): string {
     case "custom":
     case "linkedin":
     case "spotify":
+    case "twitter":
+    case "pinterest":
+    case "threads":
       return ensureUrl(button.url);
     default: return "";
   }
