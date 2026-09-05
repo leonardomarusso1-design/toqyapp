@@ -80,7 +80,7 @@ marca própria. Todos os planos pagos são assinatura mensal (decisão confirmad
 - [ ] ART-01: (a definir na fase) — auditoria pós-troca pra gpt-image-2, qualidade validada pelo Leonardo?
 
 **DOM — Domínio próprio (Agência)** (Fase 10, código completo 2026-09-05)
-- [x] DOM-01: Cliente Agência conecta um domínio próprio a um bio site específico, de verdade (API da Vercel, não só uma promessa na landing) — pendente 2 passos manuais do Leonardo (aplicar migration na conta certa do Supabase, criar token na Vercel) antes de funcionar em produção, ver ROADMAP.md Phase 10
+- [x] DOM-01: Cliente Agência conecta um domínio próprio a um bio site específico, de verdade (API da Vercel, não só uma promessa na landing) — migration já aplicada em produção (2026-09-05); falta só criar o token na Vercel (`VERCEL_API_TOKEN`/`VERCEL_PROJECT_ID`) antes de funcionar de ponta a ponta, ver ROADMAP.md Phase 10
 
 **SITE — Landing page** (Fase 3, completa 2026-07-17)
 - [x] SITE-01: Reposicionar em torno de "plano de negócio", não "plano de bio site"

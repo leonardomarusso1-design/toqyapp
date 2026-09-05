@@ -128,7 +128,7 @@ vez dela, não todas de uma vez — mesmo princípio do GSD (`/gsd:plan-phase N`
   2. O domínio é adicionado ao projeto na Vercel via API (`src/lib/vercelDomains.ts`) e o app mostra o CNAME que falta configurar
   3. Assim que o CNAME propaga, o domínio serve o bio site de verdade (`src/middleware.ts` reescreve pra `src/app/custom-domain/page.tsx`, que resolve por Host header)
   4. Reversível: botão de remover domínio tira ele do projeto na Vercel e do banco
-**Plans**: ✓ Código completo (migration `2026-09-05_custom_domains.sql`, `src/lib/vercelDomains.ts`, `src/app/api/domains/route.ts`, `src/middleware.ts`, `src/app/custom-domain/page.tsx`, `src/app/app/dominio/page.tsx`) — **pendente 2 passos manuais do Leonardo antes de funcionar em produção**: (a) aplicar a migration no Supabase certo (conta "leonardo-ecossistema" — sessão conectou na conta errada de novo, "Marusso Projetos"); (b) criar um token na Vercel (conta que hospeda o toqyapp de verdade, não a conectada nesta sessão) e preencher `VERCEL_API_TOKEN`/`VERCEL_PROJECT_ID` nas env vars do projeto (ver `.env.example`)
+**Plans**: ✓ Código completo (migration `2026-09-05_custom_domains.sql`, `src/lib/vercelDomains.ts`, `src/app/api/domains/route.ts`, `src/middleware.ts`, `src/app/custom-domain/page.tsx`, `src/app/app/dominio/page.tsx`). ✓ Migration aplicada em produção (`leonardo-ecossistema`, 2026-09-05, colunas `custom_domain`/`custom_domain_status` confirmadas em `toqy_biosites`). **Pendente 1 passo manual do Leonardo**: criar um token na Vercel (conta que hospeda o toqyapp de verdade) e preencher `VERCEL_API_TOKEN`/`VERCEL_PROJECT_ID` nas env vars do projeto (ver `.env.example`) — sem isso a rota responde erro 502 amigável, não quebra o resto do app.
 
 ## Progress
 
