@@ -161,7 +161,7 @@ export async function POST(request: Request) {
 
     const { data: overageProfile } = await supabase
       .from("profiles")
-      .select("id, overage_biosites, overage_ai_art_credits")
+      .select("id, overage_biosites, overage_ai_art_credits, custom_domain_addon")
       .eq("email", email)
       .maybeSingle();
 
@@ -180,15 +180,22 @@ export async function POST(request: Request) {
       return Response.json({ ok: true, skipped: "overage_user_not_found" });
     }
 
-    const column = overageType === "biosite" ? "overage_biosites" : "overage_ai_art_credits";
-    const current = overageType === "biosite" ? (overageProfile.overage_biosites ?? 0) : (overageProfile.overage_ai_art_credits ?? 0);
-
-    // Incrementa, nunca sobrescreve — mesmo padrão de referral_bonus_biosites
-    // (ver bloco de comissão abaixo). NÃO toca em
+    // custom_domain_addon é um flag on/off (uma compra basta pra sempre
+    // liberar), diferente dos outros 2 overages, que somam quantidade
+    // (biosite extra / crédito de arte extra) — mesmo padrão de
+    // referral_bonus_biosites (ver bloco de comissão abaixo). NÃO toca em
     // plan_toqy/subscription_status/biosites_limit.
-    await supabase.from("profiles")
-      .update({ [column]: current + 1, updated_at: new Date().toISOString() })
-      .eq("id", overageProfile.id);
+    if (overageType === "custom_domain_addon") {
+      await supabase.from("profiles")
+        .update({ custom_domain_addon: true, updated_at: new Date().toISOString() })
+        .eq("id", overageProfile.id);
+    } else {
+      const column = overageType === "biosite" ? "overage_biosites" : "overage_ai_art_credits";
+      const current = overageType === "biosite" ? (overageProfile.overage_biosites ?? 0) : (overageProfile.overage_ai_art_credits ?? 0);
+      await supabase.from("profiles")
+        .update({ [column]: current + 1, updated_at: new Date().toISOString() })
+        .eq("id", overageProfile.id);
+    }
 
     return Response.json({ ok: true, overage: overageType, applied: "immediate" });
   }

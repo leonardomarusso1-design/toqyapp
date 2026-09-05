@@ -23,10 +23,14 @@ async function getAuthenticatedUserId(request: Request, supabaseAdmin: ReturnTyp
   return data.user.id;
 }
 
-async function requireAgencyPlan(supabase: ReturnType<typeof getSupabaseAdmin>, userId: string) {
-  const { data: profile } = await supabase!.from("profiles").select("plan_toqy, plan_tier").eq("id", userId).maybeSingle();
+// Domínio próprio (2026-09-05): Agência tem incluso na assinatura; Pro
+// Pessoal precisa ter comprado o add-on avulso primeiro (custom_domain_addon,
+// setado pelo webhook — ver OVERAGE_LINKS.customDomain em subscriptions.ts).
+async function requireDomainEligible(supabase: ReturnType<typeof getSupabaseAdmin>, userId: string) {
+  const { data: profile } = await supabase!.from("profiles").select("plan_toqy, plan_tier, custom_domain_addon").eq("id", userId).maybeSingle();
   const planTier = resolvePlanTier(profile?.plan_toqy ?? profile?.plan_tier);
-  return planTier === "agency";
+  if (planTier === "agency") return true;
+  return planTier === "pro" && profile?.custom_domain_addon === true;
 }
 
 export async function GET(request: Request) {
@@ -72,8 +76,8 @@ export async function POST(request: Request) {
   const allowed = await checkRateLimit(supabase, `domains:${getClientIp(request)}`, 10, 60);
   if (!allowed) return Response.json({ error: "Muitas tentativas. Aguarde um minuto." }, { status: 429 });
 
-  const isAgency = await requireAgencyPlan(supabase, userId);
-  if (!isAgency) return Response.json({ error: "Domínio próprio é exclusivo do plano Agência." }, { status: 403 });
+  const eligible = await requireDomainEligible(supabase, userId);
+  if (!eligible) return Response.json({ error: "Domínio próprio é exclusivo do plano Agência ou do Pro Pessoal com o add-on de domínio comprado." }, { status: 403 });
 
   const body = (await request.json().catch(() => null)) as PostBody | null;
   const slug = body?.slug?.trim();

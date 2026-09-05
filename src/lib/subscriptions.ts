@@ -6,7 +6,7 @@
  * Payment integration will be added in a future phase.
  */
 
-export type PlanType = "free" | "community" | "freelancer" | "agency";
+export type PlanType = "free" | "pro" | "community" | "freelancer" | "agency";
 
 // Tipo de cobrança do plano (adicionado na Fase 1 do roadmap, 2026-07-16 —
 // ver .planning/ROADMAP.md). Antes disso essa distinção só existia em
@@ -41,6 +41,12 @@ export type Plan = {
   // Gera QR Code avulso (Pix/link, sem precisar de bio site) — feature nova
   // de 2026-07-13, mesmo nível que "QR personalizado" já prometia na tabela.
   hasCustomQr: boolean;
+  // Stickers/GIFs decorativos + player de música no bio site (2026-09-05,
+  // pedido do Leonardo após ver no Linktree) — liberado a partir do Pro
+  // Pessoal e em todos os planos de revenda, de propósito fora do
+  // Gratuito (mesma lógica dos outros 3 gates acima: incentivo real de
+  // upgrade, não só texto solto na tabela comparativa).
+  hasStickersAndMusic: boolean;
   supportLevel: "community" | "email" | "priority";
   highlight?: boolean;
 };
@@ -69,7 +75,47 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasPix: false,
     hasWifi: false,
     hasCustomQr: false,
+    hasStickersAndMusic: false,
     supportLevel: "community",
+  },
+
+  // Novo plano (2026-09-05, pedido do Leonardo) — o Toqy hoje atende dois
+  // públicos bem diferentes com o mesmo funil: quem quer 1 bio site pro
+  // PRÓPRIO negócio, e quem quer revender bio sites pra clientes (Essencial
+  // pra cima). Pro quem só quer o próprio site, pular direto pro Essencial
+  // (R$29,90/mês, até 10 sites, pensado pra quem revende) era um salto de
+  // preço sem sentido. O Pro Pessoal é a ponte: mesmo gate técnico que já
+  // existe (Pix/Wi-Fi/Catálogo/QR personalizado), 1 site só (não precisa de
+  // mais), sem crédito de arte e sem nada de revenda/indicação — preço
+  // ancorado na pesquisa de mercado (Linktree Free/Starter~US$5/Pro~US$10),
+  // R$9,90/mês fica bem abaixo do Essencial de propósito. Domínio próprio
+  // NÃO faz parte do plano — é add-on avulso (ver OVERAGE_LINKS.customDomain),
+  // decisão do Leonardo pra não inflar a mensalidade de quem só quer o básico.
+  pro: {
+    id: "pro",
+    name: "Pro",
+    description: "Para quem quer um bio site completo só pro próprio negócio.",
+    billingType: "recurring",
+    priceMonthly: 9.9,
+    priceAnnual: 99,
+    features: [
+      "1 bio site",
+      "Pix, Wi-Fi e Catálogo",
+      "QR personalizado editável",
+      "Figurinhas e música no bio site",
+      "Analytics básico",
+      "Domínio próprio (add-on avulso)",
+    ],
+    maxSites: 1,
+    maxTeamMembers: 1,
+    hasAnalytics: true,
+    hasCustomDomain: false,
+    hasCatalog: true,
+    hasPix: true,
+    hasWifi: true,
+    hasCustomQr: true,
+    hasStickersAndMusic: true,
+    supportLevel: "email",
   },
 
   // Renomeado de "Comunidade" pra "Essencial" (2026-07-16, pedido do
@@ -109,6 +155,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasPix: true,
     hasWifi: true,
     hasCustomQr: true,
+    hasStickersAndMusic: true,
     supportLevel: "email",
     highlight: true,
   },
@@ -151,6 +198,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasPix: true,
     hasWifi: true,
     hasCustomQr: true,
+    hasStickersAndMusic: true,
     supportLevel: "priority",
   },
 
@@ -192,6 +240,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasPix: true,
     hasWifi: true,
     hasCustomQr: true,
+    hasStickersAndMusic: true,
     supportLevel: "priority",
   },
 };
@@ -204,7 +253,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
 // comunidade do Discord virou acesso gratuito/aberto — isso continua
 // verdade, só que agora o plano é vendido pelas FEATURES (bio sites,
 // catálogo, Pix, Wi-Fi, QR), não mais pelo acesso à comunidade.
-export const SELLABLE_PLANS: PlanType[] = ["free", "community", "freelancer", "agency"];
+export const SELLABLE_PLANS: PlanType[] = ["free", "pro", "community", "freelancer", "agency"];
 
 // Fonte única dos links de checkout Kiwify (Fase 1 do roadmap, 2026-07-16).
 // Antes desta mudança esses links estavam hardcoded, duplicados e
@@ -221,7 +270,13 @@ export const SELLABLE_PLANS: PlanType[] = ["free", "community", "freelancer", "a
 //
 // agency: produto recorrente "TOQY Agência" (R$99,90/mês) criado na Kiwify
 // em 2026-07-15, substitui o antigo pagamento único ("xFdnxvE").
+// pro: produto novo (2026-09-05) — AINDA NÃO CRIADO na Kiwify. Link vazio
+// de propósito até o Leonardo criar o produto recorrente "TOQY Pro"
+// (R$9,90/mês) — enquanto vazio, o botão de assinar do plano Pro na
+// landing fica desabilitado (ver src/lib/landingPlans.ts) em vez de levar
+// pra um link quebrado.
 export const KIWIFY_LINKS: Record<Exclude<PlanType, "free">, string> = {
+  pro: "",
   community: "https://pay.kiwify.com.br/12uYE0c",
   freelancer: "https://pay.kiwify.com.br/jSvUXd5",
   agency: "https://pay.kiwify.com.br/DHPZf2c",
@@ -235,9 +290,17 @@ export const KIWIFY_LINKS: Record<Exclude<PlanType, "free">, string> = {
 //
 // Preços ajustados de R$2,99/R$5,99 (proposta inicial) pra R$5,99/R$8,99
 // (2026-07-16) — a Kiwify não permite produto com preço abaixo de R$5,99.
+// customDomain: produto novo (2026-09-05) — avulso ANUAL (não mensal, por
+// decisão do Leonardo), pro plano Pro Pessoal comprar domínio próprio sem
+// precisar de um plano de revenda (Agência já inclui domínio próprio na
+// assinatura). Preço sugerido R$59,90/ano (referência: Carrd cobra
+// US$19/ano só por domínio próprio) — Leonardo pode ajustar na Kiwify sem
+// mexer em código, o valor não é hardcoded em nenhuma lógica aqui. Também
+// AINDA NÃO CRIADO na Kiwify — link vazio até lá.
 export const OVERAGE_LINKS = {
   biosite: "https://pay.kiwify.com.br/KOreqg7",
   aiArtCredit: "https://pay.kiwify.com.br/LsDkNHu",
+  customDomain: "",
 } as const;
 
 // Resolve um valor de plano vindo do banco (profiles.plan_toqy) pra um

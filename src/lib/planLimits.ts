@@ -3,6 +3,9 @@ import { supabase } from "./supabaseClient";
 
 export const PLAN_BIOSITE_LIMITS = {
   free: 1,
+  // Pro Pessoal (2026-09-05): 1 site só, de propósito — é pro público que
+  // só quer o próprio bio site, não pra revender (ver subscriptions.ts).
+  pro: 1,
   community: 10,
   freelancer: 20,
   agency: 100,
@@ -26,6 +29,10 @@ export const PLAN_BIOSITE_LIMITS = {
 // ai_art_credits_used).
 export const PLAN_AI_ART_CREDITS = {
   free: 0,
+  // Pro Pessoal não inclui gerador de arte de propósito (decisão do
+  // Leonardo, 2026-09-05) — é um recurso pensado pra quem entrega bio
+  // site + plaquinha física pra CLIENTE (revenda), não pro uso pessoal.
+  pro: 0,
   community: 5,
   freelancer: 10,
   agency: 50,

@@ -29,6 +29,7 @@ type Profile = {
 
 const PLAN_LABELS: Record<PlanTier, string> = {
   free: "Gratuito",
+  pro: "Pro",
   community: "Essencial",
   freelancer: "Freelancer",
   agency: "Agência",

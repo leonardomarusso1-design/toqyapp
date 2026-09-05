@@ -15,13 +15,17 @@ import { PLAN_BIOSITE_LIMITS } from "@/lib/planLimits";
 // sistema usa (PLAN_BIOSITE_LIMITS), nunca mais duplica o número.
 export function resolvePlan(productName: string): { plan: string; limit: number } | null {
   const n = productName.toLowerCase();
+  // "TOQY Pro" (2026-09-05) — match estrito em "toqy pro" (não só "pro"
+  // solto) pra nunca colidir por engano com outro nome de produto que
+  // contenha essas 3 letras.
+  if (n.includes("toqy pro")) return { plan: "pro", limit: PLAN_BIOSITE_LIMITS.pro };
   if (n.includes("comunidade")) return { plan: "community", limit: PLAN_BIOSITE_LIMITS.community };
   if (n.includes("freelancer")) return { plan: "freelancer", limit: PLAN_BIOSITE_LIMITS.freelancer };
   if (n.includes("agencia") || n.includes("agência")) return { plan: "agency", limit: PLAN_BIOSITE_LIMITS.agency };
   return null;
 }
 
-export type OverageType = "biosite" | "ai_art_credit";
+export type OverageType = "biosite" | "ai_art_credit" | "custom_domain_addon";
 
 // Produtos de top-up avulso (2026-07-17, cobrança de excedente — ver
 // .planning/ROADMAP.md Phase 2 "Pendente") — não são planos, não passam por
@@ -34,6 +38,11 @@ export function resolveOverageProduct(productName: string): OverageType | null {
   const n = productName.toLowerCase();
   if (n.includes("bio site") && n.includes("extra")) return "biosite";
   if (n.includes("extra") && (n.includes("arte") || n.includes("credito") || n.includes("crédito"))) return "ai_art_credit";
+  // Domínio próprio avulso (2026-09-05, add-on anual do Pro Pessoal) — nome
+  // proposto "TOQY - Domínio Próprio", evita de propósito "extra" (não é
+  // "excedente" de algo que já existe, é uma feature nova on/off) pra não
+  // colidir com os outros 2 overages acima.
+  if (n.includes("dominio") || n.includes("domínio")) return "custom_domain_addon";
   return null;
 }
 

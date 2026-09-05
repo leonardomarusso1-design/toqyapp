@@ -5,16 +5,21 @@ import { useRouter } from "next/navigation";
 import { Globe, RefreshCw, ShieldCheck, ShieldAlert, Trash2 } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { supabase } from "@/lib/supabaseClient";
-import { resolvePlanTier } from "@/lib/subscriptions";
+import { OVERAGE_LINKS, resolvePlanTier } from "@/lib/subscriptions";
 
 type BioSiteRow = { id: string; slug: string; name?: string; custom_domain: string | null; custom_domain_status: string | null };
 
 type DomainApiResponse = { domain: string | null; status: string | null; error?: string; verification?: Array<{ type: string; domain: string; value: string }> | null };
 
+// Domínio próprio (2026-09-05): Agência tem incluso na assinatura; Pro
+// Pessoal precisa comprar o add-on avulso primeiro (custom_domain_addon).
+// "none" = plano não elegível (Gratuito/Essencial/Freelancer).
+type DomainAccess = "agency" | "pro_needs_addon" | "pro_ready" | "none";
+
 export default function DominioPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [isAgency, setIsAgency] = useState(false);
+  const [access, setAccess] = useState<DomainAccess>("none");
   const [sites, setSites] = useState<BioSiteRow[]>([]);
   const [selectedSlug, setSelectedSlug] = useState<string>("");
   const [domainInput, setDomainInput] = useState("");
@@ -32,13 +37,15 @@ export default function DominioPage() {
       setToken(session.access_token);
 
       const [{ data: profile }, { data: biositesData }] = await Promise.all([
-        supabase.from("profiles").select("plan_toqy, plan_tier").eq("id", session.user.id).single(),
+        supabase.from("profiles").select("plan_toqy, plan_tier, custom_domain_addon").eq("id", session.user.id).single(),
         supabase.from("toqy_biosites").select("id, slug, name, custom_domain, custom_domain_status").eq("owner_profile_id", session.user.id).order("created_at", { ascending: false }),
       ]);
       if (!active) return;
 
       const planTier = resolvePlanTier(profile?.plan_toqy ?? profile?.plan_tier);
-      setIsAgency(planTier === "agency");
+      if (planTier === "agency") setAccess("agency");
+      else if (planTier === "pro") setAccess(profile?.custom_domain_addon ? "pro_ready" : "pro_needs_addon");
+      else setAccess("none");
       const rows = (biositesData ?? []) as BioSiteRow[];
       setSites(rows);
       const withDomain = rows.find((s) => s.custom_domain);
@@ -119,16 +126,26 @@ export default function DominioPage() {
       <div>
         <p className="text-sm font-black uppercase tracking-[0.18em] text-accent">Domínio próprio</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight md:text-5xl text-ink">Seu domínio, seu bio site</h1>
-        <p className="mt-2 max-w-2xl text-muted">Aponte um domínio que já é seu (ex: meunegocio.com.br) direto pra um dos seus bio sites. Exclusivo do plano Agência.</p>
+        <p className="mt-2 max-w-2xl text-muted">Aponte um domínio que já é seu (ex: meunegocio.com.br) direto pro seu bio site. Incluso na Agência; add-on avulso no Pro Pessoal.</p>
       </div>
 
       {loading ? (
         <p className="mt-8 text-sm font-bold text-muted">Carregando...</p>
-      ) : !isAgency ? (
+      ) : access === "none" ? (
         <div className="mt-7 rounded-[2rem] border border-violet/20 bg-violet/10 p-6">
-          <p className="text-lg font-black text-ink">Disponível no plano Agência</p>
-          <p className="mt-2 text-sm font-medium text-muted">Faça upgrade pra Agência pra conectar um domínio próprio a qualquer bio site que você criar.</p>
-          <a href="/#planos" className="mt-4 inline-flex rounded-2xl bg-violet px-5 py-3 text-sm font-black text-white transition hover:opacity-90">Ver plano Agência</a>
+          <p className="text-lg font-black text-ink">Disponível no Pro Pessoal ou na Agência</p>
+          <p className="mt-2 text-sm font-medium text-muted">Faça upgrade pra conectar um domínio próprio ao seu bio site.</p>
+          <a href="/#planos" className="mt-4 inline-flex rounded-2xl bg-violet px-5 py-3 text-sm font-black text-white transition hover:opacity-90">Ver planos</a>
+        </div>
+      ) : access === "pro_needs_addon" ? (
+        <div className="mt-7 rounded-[2rem] border border-violet/20 bg-violet/10 p-6">
+          <p className="text-lg font-black text-ink">Domínio próprio é um add-on avulso no Pro Pessoal</p>
+          <p className="mt-2 text-sm font-medium text-muted">Compra única anual — depois de aprovada, seu domínio fica liberado direto aqui, sem precisar mudar de plano.</p>
+          {OVERAGE_LINKS.customDomain ? (
+            <a href={OVERAGE_LINKS.customDomain} target="_blank" className="mt-4 inline-flex rounded-2xl bg-violet px-5 py-3 text-sm font-black text-white transition hover:opacity-90">Comprar domínio próprio</a>
+          ) : (
+            <p className="mt-4 text-sm font-bold text-amber-700">Em breve — produto ainda sendo cadastrado.</p>
+          )}
         </div>
       ) : sites.length === 0 ? (
         <div className="mt-7 rounded-2xl border border-dashed border-border bg-card p-8 text-center">
