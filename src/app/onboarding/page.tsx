@@ -588,30 +588,41 @@ export default function OnboardingPage() {
           ))}
         </div>
 
-        {/* Content */}
-        <div className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
+        {/* Content — padding extra embaixo no celular (pb-24) pra nenhum campo
+            ficar escondido atrás da barra de navegação fixa abaixo. */}
+        <div className="rounded-[2rem] border border-border bg-card p-6 pb-8 shadow-sm sm:pb-6">
           <h2 className="mb-5 text-lg font-black text-ink">{steps[step]}</h2>
           {stepContent()}
         </div>
 
-        {/* Navigation */}
-        <div className="mt-5 flex justify-between">
+        {/* Navigation — fixa embaixo da tela no celular (pedido do Leonardo,
+            2026-09-05: criação tem que ser fácil pelo celular, igual
+            Linktree). Antes disso o usuário precisava rolar até o fim de
+            cada etapa pra achar "Próximo", inclusive em etapas longas
+            (Negócio, Serviços) — Voltar/Próximo agora sempre alcançável com
+            o polegar, sem precisar rolar. A partir de sm (tablet/desktop),
+            volta a ser um rodapé normal, sem fixar. */}
+        <div className="fixed inset-x-0 bottom-0 z-20 flex gap-3 border-t border-border bg-bg/95 p-4 backdrop-blur-sm [padding-bottom:max(1rem,env(safe-area-inset-bottom))] sm:static sm:z-auto sm:mt-5 sm:justify-between sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
           <button type="button" onClick={() => setStep(s => s - 1)} disabled={step === 0}
-            className="inline-flex items-center gap-2 rounded-2xl border border-border px-5 py-3 text-sm font-black text-ink disabled:opacity-40">
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-border px-5 py-3.5 text-sm font-black text-ink disabled:opacity-40 sm:flex-none sm:py-3">
             <ChevronLeft className="h-4 w-4" /> Voltar
           </button>
           {step < steps.length - 1 ? (
             <button type="button" onClick={() => setStep(s => s + 1)} disabled={!canNext()}
-              className="inline-flex items-center gap-2 rounded-2xl bg-ink px-5 py-3 text-sm font-black text-white disabled:opacity-40">
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-ink px-5 py-3.5 text-sm font-black text-white disabled:opacity-40 sm:flex-none sm:py-3">
               Próximo <ChevronRight className="h-4 w-4" />
             </button>
           ) : (
             <button type="button" onClick={submit} disabled={saving}
-              className="inline-flex items-center gap-2 rounded-2xl bg-accent px-6 py-3 text-sm font-black text-white disabled:opacity-60">
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-accent px-6 py-3.5 text-sm font-black text-white disabled:opacity-60 sm:flex-none sm:py-3">
               {saving ? "Criando..." : "Criar bio site"} <Check className="h-4 w-4" />
             </button>
           )}
         </div>
+        {/* Espaçador — some no desktop (a barra deixa de ser fixa em sm),
+            existe só no celular pra compensar a altura da barra fixa e o
+            conteúdo final da página não ficar escondido atrás dela. */}
+        <div className="h-20 sm:hidden" aria-hidden="true" />
       </div>
     </DashboardShell>
   );
