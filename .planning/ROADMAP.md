@@ -79,12 +79,16 @@ vez dela, não todas de uma vez — mesmo princípio do GSD (`/gsd:plan-phase N`
 **Plans**: TBD
 
 ### Phase 6: Bio Site — auditoria e melhorias
-**Goal**: O editor de bio site que já existe fica "muito melhor", com uma lista concreta (função por função) do que falta ou pode melhorar.
+**Goal**: O editor de bio site que já existe fica "muito melhor", com uma lista concreta (função por função) do que falta ou pode melhorar — com foco explícito em CRIAÇÃO PELO CELULAR (pedido do Leonardo, 2026-09-05: maioria dos clientes cria pelo celular, o fluxo tem que ser tão fácil quanto o Linktree) e num visual "melhor do Brasil" em todo o site (landing + dashboard + editor), seguindo as skills `premium-design-standards`/`frontend-design`/`grill-me`.
 **Depends on**: Nothing técnico, mas faz mais sentido depois do reposicionamento (Phase 3) pra saber o que realmente importa pro público novo
-**Requirements**: BIO-01
+**Requirements**: BIO-01, MOB-01, ICO-01, LNK-01, DES-01, CARD-03
 **Success Criteria**:
   1. Existe uma auditoria completa (não uma lista solta) do editor atual, função por função
   2. Cada item da auditoria tem uma decisão: melhora agora, melhora depois, ou não vale a pena
+  3. Fluxo de criação (onboarding + SiteBuilder) testado e ajustado especificamente em viewport mobile — sem ficar "encolhido", com toques/gestos fáceis
+  4. Ícones oficiais (cores reais) pesquisados/adicionados pros apps mais usados que podem entrar no Toqy, além dos já existentes
+  5. Estudo do Linktree documentado (o que ele faz hoje visualmente) com decisões concretas de o que trazer/melhorar no Toqy
+  6. Todas as páginas públicas (landing, termos, privacidade, cookies, contrato-assinatura, obrigado/*) auditadas visualmente e alinhadas ao design system
 **Plans**: TBD
 
 ### Phase 7: QR Codes — auditoria completa
@@ -115,6 +119,17 @@ vez dela, não todas de uma vez — mesmo princípio do GSD (`/gsd:plan-phase N`
   3. Diretório de Consultor Certificado no ar, mesmo que com critério simples
 **Plans**: TBD
 
+### Phase 10: Domínio próprio (Agência) — feito de verdade
+**Goal**: "Domínio próprio" deixa de ser uma linha na tabela de comparação sem nada por trás e vira uma feature que funciona: cliente Agência conecta um domínio dele (ex: meunegocio.com.br) a um bio site específico.
+**Depends on**: Nothing técnico — achado 2026-09-05 durante a auditoria geral: a feature era 100% prometida (landing, /obrigado/agencia, subscriptions.ts) e 0% implementada (mesma categoria de problema que o white label tinha, removido em 2026-09-01).
+**Requirements**: DOM-01
+**Success Criteria**:
+  1. Cliente Agência escolhe um bio site e cadastra um domínio próprio no painel (`/app/dominio`)
+  2. O domínio é adicionado ao projeto na Vercel via API (`src/lib/vercelDomains.ts`) e o app mostra o CNAME que falta configurar
+  3. Assim que o CNAME propaga, o domínio serve o bio site de verdade (`src/middleware.ts` reescreve pra `src/app/custom-domain/page.tsx`, que resolve por Host header)
+  4. Reversível: botão de remover domínio tira ele do projeto na Vercel e do banco
+**Plans**: ✓ Código completo (migration `2026-09-05_custom_domains.sql`, `src/lib/vercelDomains.ts`, `src/app/api/domains/route.ts`, `src/middleware.ts`, `src/app/custom-domain/page.tsx`, `src/app/app/dominio/page.tsx`) — **pendente 2 passos manuais do Leonardo antes de funcionar em produção**: (a) aplicar a migration no Supabase certo (conta "leonardo-ecossistema" — sessão conectou na conta errada de novo, "Marusso Projetos"); (b) criar um token na Vercel (conta que hospeda o toqyapp de verdade, não a conectada nesta sessão) e preencher `VERCEL_API_TOKEN`/`VERCEL_PROJECT_ID` nas env vars do projeto (ver `.env.example`)
+
 ## Progress
 
 **Execution Order:**
@@ -133,6 +148,7 @@ si, só dependem de 1), 9 por último.
 | 7. QR Codes | 0/TBD | Not started | - |
 | 8. Geração de arte | 0/TBD | Not started | - |
 | 9. Conteúdo | 0/TBD | Not started | - |
+| 10. Domínio próprio | 1/1 (código) | Código completo, aguardando setup manual | 2026-09-05 |
 
 \* Fase 2: código 100% completo (backend + frontend). Resta 1 passo manual
 fora de código, por revendedor: Leonardo cadastra o afiliado na Kiwify e

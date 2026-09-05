@@ -36,7 +36,7 @@ marca própria. Todos os planos pagos são assinatura mensal (decisão confirmad
 - ✓ Gerador de arte com IA pra plaquinha (gpt-image-2), exclusivo Essencial/Agência — existing
 - ✓ Programa de indicação (+3 bio sites por conversão paga) — existing
 - ✓ Analytics básico (visualizações por bio site) — existing
-- ✓ White-label mínimo (remove selo "Criado com TOQY") — existing
+- ~~White-label mínimo (remove selo "Criado com TOQY")~~ — **removido do produto em 2026-09-01** (decisão do Leonardo): nenhum plano promete mais esconder o selo "Criado com TOQY", ele é fixo em todo bio site (ver PublicBioSite.tsx). Substituído pela Fase 10 do roadmap: "domínio próprio" (Agência) construído de verdade via API da Vercel.
 
 ### Active (escopo deste pivô — QUAIS requisitos, ainda sem fase/prioridade atribuída)
 
@@ -67,12 +67,20 @@ marca própria. Todos os planos pagos são assinatura mensal (decisão confirmad
 
 **BIO — Melhorias no bio site**
 - [ ] BIO-01: (a definir na fase) — auditoria do editor atual pra listar o que falta pra ficar "muito melhor", função por função
+- [ ] MOB-01: Fluxo de criação (onboarding + SiteBuilder) auditado e ajustado pra ser mobile-first de verdade — pedido explícito 2026-09-05: "maioria dos clientes cria pelo celular... tem que ser muito fácil de criar pelo celular, igual Linktree"
+- [ ] ICO-01: Pesquisar e adicionar ícones oficiais (ou o mais parecido possível, cores reais da marca) de todos os apps mais usados que podem entrar no Toqy — hoje só WhatsApp/Instagram/Facebook/Maps/YouTube têm badge próprio sem círculo de fundo (ver IMAGE_ICON_TYPES em PublicBioSite.tsx), TikTok/LinkedIn/Telegram/Spotify ainda usam ícone genérico `currentColor`
+- [ ] LNK-01: Estudo a fundo do Linktree — o que ele faz hoje na parte visual (layouts, animações, blocos de conteúdo) — trazer/melhorar no Toqy
+- [ ] DES-01: Auditoria de design "clean e bonito" em TODAS as páginas do site (landing, dashboard, editor, páginas legais), seguindo `.claude/skills/premium-design-standards`, `frontend-design` e `grill-me` — objetivo declarado: "TEMOS QUE SER O MELHOR DO BRASIL"
+- [ ] CARD-03: Vídeo e post de Instagram embutidos no catálogo — **bloqueado em feedback real de clientes primeiro** (pedido explícito: "temos que pegar feedbacks de clientes sobre o catálogo" antes de construir)
 
 **QR — QR Codes**
 - [ ] QR-01: (a definir na fase) — auditoria completa dos modos existentes (bio site/Pix/link/futuro avaliação Google)
 
 **ART — Geração de arte pra plaquinhas**
 - [ ] ART-01: (a definir na fase) — auditoria pós-troca pra gpt-image-2, qualidade validada pelo Leonardo?
+
+**DOM — Domínio próprio (Agência)** (Fase 10, código completo 2026-09-05)
+- [x] DOM-01: Cliente Agência conecta um domínio próprio a um bio site específico, de verdade (API da Vercel, não só uma promessa na landing) — pendente 2 passos manuais do Leonardo (aplicar migration na conta certa do Supabase, criar token na Vercel) antes de funcionar em produção, ver ROADMAP.md Phase 10
 
 **SITE — Landing page** (Fase 3, completa 2026-07-17)
 - [x] SITE-01: Reposicionar em torno de "plano de negócio", não "plano de bio site"
