@@ -86,6 +86,9 @@ marca própria. Todos os planos pagos são assinatura mensal (decisão confirmad
 - [x] SITE-01: Reposicionar em torno de "plano de negócio", não "plano de bio site"
 - [x] SITE-02: Nova seção "Ganhe dinheiro com o Toqy" (ou similar)
 
+**ANL — Analytics / retenção**
+- [ ] ANL-01: Relatório mensal de cliques automático, enviado por e-mail pro cliente final de um revendedor (ex: "seu bio site teve X cliques em WhatsApp, Y no Pix este mês") — sugestão de usuário real capturada em 2026-09-05: "seria legal poder gerar um relatório mensal de cliques para os clientes, tipo um plus pra segurar os clientes na recorrência". Dados já existem (`toqy_analytics_events`), falta o job de envio + template de e-mail. Não iniciado.
+
 **CONT — Conteúdo (blog, ebooks, diretório)**
 - [ ] CONT-01: Primeiro ebook isca + página de captura
 - [ ] CONT-02: Blog com títulos específicos (SEO pro público "quero renda extra", não "quero bio site")

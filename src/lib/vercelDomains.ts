@@ -70,18 +70,26 @@ export async function checkDomainVerification(domain: string): Promise<VercelDom
   const body = await res.json().catch(() => ({}));
   if (!res.ok) return { ok: false, error: body?.error?.message || `Erro ao consultar domínio (HTTP ${res.status})` };
 
-  // A Vercel também expõe /config com `misconfigured: boolean` — mais direto
-  // que reconstruir a partir de `verified`. Usamos os dois: `verified` cobre
-  // domínios que passaram por challenge TXT; `misconfigured=false` cobre o
-  // caso comum (CNAME já aponta certo, sem challenge pendente).
+  // Bug real corrigido (2026-09-05, achado ao vivo pelo Leonardo testando
+  // com yakisabor.com.br — domínio sem NENHUM DNS configurado, dando
+  // DNS_PROBE_FINISHED_NXDOMAIN no navegador, mas o painel mostrava
+  // "Conectado e servindo o bio site"). Causa: `verified` usava OR entre
+  // `body.verified` (flag de OWNERSHIP da Vercel — uma vez confirmada,
+  // NÃO volta a false sozinha se o DNS for removido depois) e
+  // `!misconfigured` (config atual de verdade). Um domínio que já teve
+  // ownership verificado no passado (em outro projeto/deploy, às vezes
+  // anos atrás) mantinha `verified:true` pra sempre, mesmo com o CNAME
+  // removido ou o domínio nem existindo mais de verdade. Agora exige os
+  // DOIS ao mesmo tempo (AND): ownership confirmada E configuração de DNS
+  // atual batendo — só assim o bio site está de fato no ar nesse domínio.
   const configRes = await fetch(`${VERCEL_API_BASE}/v6/domains/${encodeURIComponent(domain)}/config${teamQuery()}`, {
     method: "GET",
     headers: authHeaders(),
   });
   const configBody = await configRes.json().catch(() => ({}));
-  const misconfigured = configBody?.misconfigured !== false; // undefined = trata como não confirmado ainda
+  const dnsConfigured = configBody?.misconfigured === false; // só true quando a Vercel confirma isso explicitamente
 
-  const verified = Boolean(body?.verified) || !misconfigured;
+  const verified = Boolean(body?.verified) && dnsConfigured;
 
   return { ok: true, verified, verification: body?.verification };
 }
