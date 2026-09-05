@@ -224,6 +224,58 @@ const SOCIAL_ICON_SIZE_CLASS: Record<"sm" | "md" | "lg", string> = {
   lg: "h-16 w-16",
 };
 
+// Figurinhas decorativas (2026-09-05) — posição por preset (não é canvas
+// livre) pra nunca sair do card de perfil em nenhum tema/tamanho de tela.
+const STICKER_SIZE_CLASS: Record<"sm" | "md" | "lg", string> = {
+  sm: "h-12 w-12",
+  md: "h-16 w-16",
+  lg: "h-20 w-20",
+};
+const STICKER_CORNER_CLASS: Record<"top-left" | "top-right" | "bottom-left" | "bottom-right", string> = {
+  "top-left": "-left-3 -top-3 rotate-[-8deg]",
+  "top-right": "-right-3 -top-3 rotate-[8deg]",
+  "bottom-left": "-left-3 -bottom-3 rotate-[8deg]",
+  "bottom-right": "-right-3 -bottom-3 rotate-[-8deg]",
+};
+
+// Preview de post do Instagram "em tempo real" (2026-09-05, pedido do
+// Leonardo) — embed OFICIAL da Meta (instagram.com/embed.js), sem API
+// key/login: o próprio script da Instagram monta o iframe e mantém
+// like/comentário atualizados, não é uma captura estática. Idempotente:
+// só injeta o <script> uma vez por página (várias instâncias do
+// PublicBioSite, ex: showcase da landing, não duplicam o script), e chama
+// window.instgrm.Embeds.process() sempre que a URL mudar, pra processar
+// o blockquote recém-renderizado.
+declare global {
+  interface Window {
+    instgrm?: { Embeds?: { process?: () => void } };
+  }
+}
+
+const InstagramEmbed = ({ postUrl }: { postUrl: string }) => {
+  useEffect(() => {
+    const existing = document.getElementById("instagram-embed-script");
+    if (!existing) {
+      const script = document.createElement("script");
+      script.id = "instagram-embed-script";
+      script.src = "https://www.instagram.com/embed.js";
+      script.async = true;
+      document.body.appendChild(script);
+    } else {
+      window.instgrm?.Embeds?.process?.();
+    }
+  }, [postUrl]);
+
+  return (
+    <blockquote
+      className="instagram-media"
+      data-instgrm-permalink={postUrl}
+      data-instgrm-version="14"
+      style={{ margin: "0 auto", maxWidth: 400, minWidth: 280, width: "100%" }}
+    />
+  );
+};
+
 // Tamanho do h1 (nome do negócio), 2026-07-16 — "md" é o text-2xl de sempre.
 const NAME_FONT_SIZE_CLASS: Record<"sm" | "md" | "lg", string> = {
   sm: "text-lg",
@@ -573,7 +625,17 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
             <button type="button" onClick={shareSite} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black backdrop-blur-xl" style={glassCard(site)}><Share2 className="h-4 w-4" />{copied === "share" ? "Copiado" : "Compartilhar"}</button>
           </div>
 
-          <header className="text-center">
+          <header className="relative text-center">
+            {/* Figurinhas decorativas (2026-09-05) — ver STICKER_CORNER_CLASS */}
+            {(site.stickers ?? []).map((sticker) => sticker.imageUrl ? (
+              <img
+                key={sticker.id}
+                src={sticker.imageUrl}
+                alt=""
+                aria-hidden="true"
+                className={`pointer-events-none absolute z-10 object-contain drop-shadow-lg ${STICKER_SIZE_CLASS[sticker.size]} ${STICKER_CORNER_CLASS[sticker.corner]}`}
+              />
+            ) : null)}
             <div className={`${logoSize(site)} ${logoShape(site)} relative mx-auto overflow-hidden shadow-2xl`} style={{ border: (site.profile.logoUrl || site.profile.profileImageUrl) ? "none" : `2px solid ${site.theme.primary}88`, background: "transparent" }}>
               {site.profile.logoUrl || site.profile.profileImageUrl ? (
                 <img
@@ -619,6 +681,19 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
               <p className="mt-3 tracking-widest drop-shadow-lg" style={{ color: site.theme.text, fontSize: "clamp(13px, 4vw, 20px)", fontFamily: site.profile.logoFont === "serif" || site.profile.logoFont === "italic" ? "Georgia, serif" : site.profile.logoFont === "mono" ? "monospace" : "inherit", fontWeight: !site.profile.logoFont || site.profile.logoFont === "bold" ? 900 : 700, fontStyle: site.profile.logoFont === "italic" ? "italic" : "normal", letterSpacing: "0.15em", textTransform: "uppercase", textShadow: site.theme.mode === "dark" ? "0 2px 12px rgba(0,0,0,0.6)" : "none" }}>{site.profile.logoText}</p>
             ) : null}
           </header>
+
+          {/* Música + preview de Instagram (2026-09-05) */}
+          {site.musicUrl ? (
+            <section className="mt-4 rounded-2xl border p-3 backdrop-blur-xl" style={glassCard(site)}>
+              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+              <audio controls src={site.musicUrl} className="w-full" style={{ height: 32 }} />
+            </section>
+          ) : null}
+          {site.instagramPostUrl ? (
+            <section className="mt-4 flex justify-center overflow-hidden rounded-2xl">
+              <InstagramEmbed postUrl={site.instagramPostUrl} />
+            </section>
+          ) : null}
 
           <section className="mt-4 grid grid-cols-2 gap-2">
             {site.modules?.saveContact !== false ? <button type="button" onClick={downloadVCard} className={`${radiusClass(site)} flex items-center justify-center gap-2 border px-4 py-3 text-xs font-black backdrop-blur-xl`} style={{ ...glassCard(site), color: col("saveContactText", site.theme.text) }}><Save className="h-4 w-4" />Salvar Contato</button> : null}

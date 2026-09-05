@@ -9,7 +9,7 @@ import { createEditUrl, createPublicUrl, generateSlug } from "@/lib/dataProvider
 import { RealTemplateGallery } from "./RealTemplateGallery";
 import { syncBiositeToSupabase } from "@/lib/biositeSync";
 import { checkBiositeLimit } from "@/lib/planLimits";
-import { OVERAGE_LINKS } from "@/lib/subscriptions";
+import { OVERAGE_LINKS, canUseStickersAndMusic, resolvePlanTier } from "@/lib/subscriptions";
 import { supabase } from "@/lib/supabaseClient";
 import { validateSite } from "@/lib/validation";
 import { ImageGuidelineHint } from "./ImageGuidelineHint";
@@ -697,6 +697,73 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 </div>
               </details>
             </div>
+          </div>
+
+          {/* FIGURINHAS + MÚSICA (2026-09-05, pedido do Leonardo depois de
+              ver no Linktree) — liberado a partir do Pro Pessoal e planos
+              de revenda, ver hasStickersAndMusic em subscriptions.ts. */}
+          <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
+            <p className="text-sm font-black text-ink">✨ Figurinhas e música</p>
+            <p className="mt-0.5 text-xs text-muted">Dê mais personalidade ao bio site com figurinhas decorativas e uma música tocando.</p>
+            {canUseStickersAndMusic(resolvePlanTier(limitState?.planTier)) ? (
+              <div className="mt-4 space-y-5">
+                <div>
+                  <p className={label}>Figurinhas (até 3)</p>
+                  <div className="mt-2 grid gap-3 sm:grid-cols-3">
+                    {(site.stickers ?? []).map((sticker) => (
+                      <div key={sticker.id} className="rounded-2xl border border-border bg-card p-3">
+                        <ImageUploadField
+                          label=""
+                          value={sticker.imageUrl}
+                          onChange={(url) => update((s) => ({ ...s, stickers: (s.stickers ?? []).map((st) => (st.id === sticker.id ? { ...st, imageUrl: url } : st)) }))}
+                          placeholder="URL da figurinha"
+                          slug={site.slug}
+                          fieldId={`sticker-${sticker.id}`}
+                          editKey={site.editKey}
+                        />
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                          <select className={field} value={sticker.corner} onChange={(e) => update((s) => ({ ...s, stickers: (s.stickers ?? []).map((st) => (st.id === sticker.id ? { ...st, corner: e.target.value as typeof st.corner } : st)) }))}>
+                            <option value="top-left">Canto sup. esq.</option>
+                            <option value="top-right">Canto sup. dir.</option>
+                            <option value="bottom-left">Canto inf. esq.</option>
+                            <option value="bottom-right">Canto inf. dir.</option>
+                          </select>
+                          <select className={field} value={sticker.size} onChange={(e) => update((s) => ({ ...s, stickers: (s.stickers ?? []).map((st) => (st.id === sticker.id ? { ...st, size: e.target.value as typeof st.size } : st)) }))}>
+                            <option value="sm">Pequena</option>
+                            <option value="md">Média</option>
+                            <option value="lg">Grande</option>
+                          </select>
+                        </div>
+                        <button type="button" onClick={() => update((s) => ({ ...s, stickers: (s.stickers ?? []).filter((st) => st.id !== sticker.id) }))} className="mt-2 inline-flex items-center gap-1 text-xs font-black text-red-500"><Trash2 className="h-3.5 w-3.5" /> Remover</button>
+                      </div>
+                    ))}
+                    {(site.stickers ?? []).length < 3 ? (
+                      <button
+                        type="button"
+                        onClick={() => update((s) => ({ ...s, stickers: [...(s.stickers ?? []), { id: generateId("sticker"), imageUrl: "", corner: "top-right" as const, size: "md" as const }] }))}
+                        className="flex min-h-[7rem] items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border text-sm font-black text-muted hover:border-accent hover:text-accent"
+                      >
+                        <Plus className="h-4 w-4" /> Adicionar figurinha
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+                <label>
+                  <span className={label}>Música (link direto de um arquivo de áudio)</span>
+                  <input className={field} value={site.musicUrl ?? ""} onChange={(e) => update((s) => ({ ...s, musicUrl: e.target.value }))} placeholder="https://.../musica.mp3" />
+                  <p className="mt-1 text-xs text-muted">Cole o link direto do arquivo (mp3/ogg/wav) — aparece um player logo abaixo do seu perfil.</p>
+                </label>
+                <label>
+                  <span className={label}>Preview de post do Instagram</span>
+                  <input className={field} value={site.instagramPostUrl ?? ""} onChange={(e) => update((s) => ({ ...s, instagramPostUrl: e.target.value }))} placeholder="https://www.instagram.com/p/XXXXXXX/" />
+                  <p className="mt-1 text-xs text-muted">Cole o link de um post público do Instagram — aparece embutido e ao vivo no bio site (curtidas/comentários atualizados pelo próprio Instagram).</p>
+                </label>
+              </div>
+            ) : (
+              <div className="mt-3 rounded-2xl border border-violet/20 bg-violet/10 p-4 text-sm font-bold text-violet">
+                Disponível a partir do plano Pro. <a href="/#planos" className="underline">Ver planos</a>
+              </div>
+            )}
           </div>
 
         </Section>

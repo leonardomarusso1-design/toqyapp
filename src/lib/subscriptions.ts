@@ -340,6 +340,14 @@ export function isPremiumPlan(planType: PlanType): boolean {
   return planType !== "free";
 }
 
+// Stickers/música (2026-09-05) — mesma regra de isPremiumPlan hoje (tudo
+// exceto Gratuito), mas com nome próprio: se a lista de planos elegíveis
+// mudar no futuro (ex: algum plano premium novo que não deva ter isso),
+// esta função muda sem afetar o resto do gating premium.
+export function canUseStickersAndMusic(planType: PlanType): boolean {
+  return getPlan(planType).hasStickersAndMusic;
+}
+
 export function canCreateSite(planType: PlanType, currentSiteCount: number): boolean {
   const plan = getPlan(planType);
   return currentSiteCount < plan.maxSites;

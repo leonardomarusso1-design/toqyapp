@@ -15,9 +15,17 @@ import { withSentryConfig } from "@sentry/nextjs";
 // Google Analytics (2026-09-01, opcional via NEXT_PUBLIC_GA_MEASUREMENT_ID,
 // só carrega depois de consentimento — ver CookieConsent.tsx) precisa de
 // script-src/connect-src liberado pros domínios do gtag.js.
+//
+// Embed oficial do Instagram (2026-09-05, pedido do Leonardo — "preview de
+// Instagram em tempo real" no bio site, ver PublicBioSite.tsx InstagramEmbed)
+// usa o script `//www.instagram.com/embed.js` da própria Meta, que monta um
+// iframe pra www.instagram.com por dentro — precisa de script-src E de um
+// frame-src novo (sem isso a CSP bloqueava silenciosamente, F12 cheio de
+// erro). Nenhum outro domínio do Instagram/Facebook é necessário além
+// desses 2 pro embed público funcionar (sem login, sem API key).
 const scriptSrc = process.env.NODE_ENV === "development"
-  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com;"
-  : "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com;";
+  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.instagram.com;"
+  : "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.instagram.com;";
 
 const cspHeader = `
   default-src 'self';
@@ -26,6 +34,7 @@ const cspHeader = `
   img-src 'self' blob: data: https:;
   font-src 'self' data:;
   connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ingest.de.sentry.io https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com;
+  frame-src https://www.instagram.com;
   worker-src 'self' blob:;
   object-src 'none';
   base-uri 'self';

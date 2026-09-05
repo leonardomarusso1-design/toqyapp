@@ -229,6 +229,27 @@ export type ToqySite = {
     booking: boolean;
     catalog: boolean;
   };
+  // Figurinhas/GIFs decorativos + música (2026-09-05, pedido do Leonardo
+  // depois de ver no Linktree) — liberado a partir do Pro Pessoal e nos
+  // planos de revenda (ver hasStickersAndMusic em subscriptions.ts), fora
+  // do Gratuito. Máx. 3 stickers, posição por preset (não é canvas livre,
+  // pra nunca quebrar o layout do bio site em nenhum tema).
+  stickers?: Array<{
+    id: string;
+    imageUrl: string;
+    corner: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+    size: "sm" | "md" | "lg";
+  }>;
+  // Link direto de um arquivo de áudio (mp3/ogg/wav) hospedado pelo
+  // próprio usuário — renderiza um player nativo `<audio controls>` logo
+  // abaixo do perfil. MVP sem pipeline de upload de áudio próprio.
+  musicUrl?: string;
+  // Preview de post do Instagram "em tempo real" (2026-09-05, pedido do
+  // Leonardo) — embed oficial da Meta (`instagram.com/embed.js`), sem API
+  // key/login: renderiza o post ao vivo (like/comentário atuais, puxados
+  // pelo script da própria Instagram), não é uma captura estática. Link
+  // de um post público (ex: https://www.instagram.com/p/XXXXXXX/).
+  instagramPostUrl?: string;
   buttons: ToqyButton[];
   catalog: CatalogItem[];
   editKey: string;
