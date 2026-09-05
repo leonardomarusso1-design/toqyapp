@@ -49,6 +49,7 @@ export default function ConfiguracoesPage() {
   const [biosites, setBiosites] = useState<BioSiteRow[]>([]);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -102,6 +103,23 @@ export default function ConfiguracoesPage() {
   async function handleLogout() {
     await supabase.auth.signOut();
     router.push("/");
+  }
+
+  // Botão online/offline (pedido do Leonardo, 2026-09-05): usuários que
+  // vendem o biosite pra um cliente final e cobram por assinatura/mensalidade
+  // (fora da Kiwify, combinado direto com o cliente) precisam de um jeito de
+  // tirar o site do ar se o cliente parar de pagar, sem precisar excluir.
+  // A página pública (/b/[slug]) e a RLS já só liberam leitura com
+  // status=active (ver biositeSync.ts) — só faltava esse botão. "draft"
+  // conta como offline aqui (mesmo efeito pro visitante: página fora do ar).
+  async function handleToggleStatus(site: BioSiteRow) {
+    const nextStatus = site.status === "active" ? "disabled" : "active";
+    setTogglingId(site.id);
+    const { error } = await supabase.from("toqy_biosites").update({ status: nextStatus }).eq("id", site.id);
+    if (!error) {
+      setBiosites((prev) => prev.map((s) => (s.id === site.id ? { ...s, status: nextStatus } : s)));
+    }
+    setTogglingId(null);
   }
 
   const planTier = (profile?.plan_toqy || profile?.plan_tier || "free") as PlanTier;
@@ -191,10 +209,27 @@ export default function ConfiguracoesPage() {
                   <div key={site.id} className="rounded-2xl border border-border bg-surface p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="font-black text-ink truncate">{name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-black text-ink truncate">{name}</p>
+                          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${site.status === "active" ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}`}>
+                            {site.status === "active" ? "Online" : "Offline"}
+                          </span>
+                        </div>
                         <p className="mt-0.5 text-xs font-mono text-muted">toqy.com.br/b/<strong>{site.slug}</strong></p>
                       </div>
                       <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                        <button
+                          onClick={() => handleToggleStatus(site)}
+                          disabled={togglingId === site.id}
+                          title={site.status === "active" ? "Tirar do ar (ex: cliente parou de pagar a mensalidade)" : "Colocar no ar de novo"}
+                          className={`rounded-xl border px-3 py-1.5 text-xs font-black disabled:opacity-40 ${
+                            site.status === "active"
+                              ? "border-red-200 bg-card text-red-500 hover:bg-red-50"
+                              : "border-emerald-200 bg-card text-emerald-600 hover:bg-emerald-50"
+                          }`}
+                        >
+                          {togglingId === site.id ? "..." : site.status === "active" ? "Deixar offline" : "Colocar online"}
+                        </button>
                         <Link href={`/b/${site.slug}`} target="_blank" className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-black text-ink hover:border-accent">Ver</Link>
                         {/* Fix de bug real (2026-07-16): antes montava
                             /editar/${slug}?key=${edit_key_hash} — desde que
