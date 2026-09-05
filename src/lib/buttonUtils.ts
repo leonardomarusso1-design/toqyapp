@@ -33,6 +33,11 @@ export function buttonHref(site: ToqySite, button: ToqyButton): string {
     case "twitter":
     case "pinterest":
     case "threads":
+    case "ifood":
+    case "waze":
+    case "picpay":
+    case "mercadopago":
+    case "behance":
       return ensureUrl(button.url);
     default: return "";
   }
