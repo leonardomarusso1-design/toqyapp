@@ -1143,15 +1143,31 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
         </div>
         <div className="mb-5 flex gap-2 overflow-x-auto rounded-[1.5rem] border border-border bg-card p-2 shadow-sm">{steps.map((item, index) => <button key={item} type="button" onClick={() => setStep(index)} className={`shrink-0 rounded-2xl px-4 py-2 text-sm font-black transition ${index === step ? "bg-accent text-white" : "text-muted hover:bg-surface"}`}>{index + 1}. {item}</button>)}</div>
         {body}
-        <div className="mt-5 flex flex-col gap-3 rounded-[1.5rem] border border-border bg-card p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <button type="button" disabled={step === 0} onClick={() => setStep((v) => Math.max(0, v - 1))} className="rounded-2xl border border-border bg-card px-5 py-3 text-sm font-black text-ink disabled:opacity-40">Voltar</button>
-          <div className="flex gap-3"><button type="button" onClick={save} disabled={isSaving} className="rounded-2xl border border-accent/20 bg-accent/5 px-5 py-3 text-sm font-black text-accent-dim disabled:cursor-not-allowed disabled:opacity-60">{isSaving ? "Salvando..." : "Salvar agora"}</button><button type="button" onClick={() => step < steps.length - 1 ? setStep((v) => v + 1) : save()} disabled={isSaving} className="rounded-2xl bg-accent px-5 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60">{step < steps.length - 1 ? "Continuar" : isSaving ? "Salvando..." : "Salvar e publicar"}</button></div>
+        {/* Navegação da etapa — fixa embaixo da tela no celular (pedido do
+            Leonardo, 2026-09-05: criação/edição tem que ser fácil pelo
+            celular, igual Linktree). Antes disso, em etapas longas (Links e
+            Botões, Catálogo), o usuário precisava rolar até o fim pra achar
+            "Continuar" — igual ao problema já corrigido no onboarding (ver
+            src/app/onboarding/page.tsx). O botão "Salvar agora" do meio some
+            no celular (linha 1140 já cobre a mesma ação lá em cima, sem
+            duplicar e sem deixar a barra fixa alta demais). A partir de sm,
+            volta a ser um rodapé normal com os 3 botões. */}
+        <div className="fixed inset-x-0 bottom-0 z-20 flex gap-3 border-t border-border bg-bg/95 p-3 backdrop-blur-sm [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:z-auto sm:mt-5 sm:flex-row sm:items-center sm:justify-between sm:rounded-[1.5rem] sm:border sm:bg-card sm:p-3 sm:shadow-sm sm:backdrop-blur-none">
+          <button type="button" disabled={step === 0} onClick={() => setStep((v) => Math.max(0, v - 1))} className="flex-1 rounded-2xl border border-border bg-card px-5 py-3.5 text-sm font-black text-ink disabled:opacity-40 sm:flex-none sm:py-3">Voltar</button>
+          <div className="flex flex-1 gap-3 sm:flex-none">
+            <button type="button" onClick={save} disabled={isSaving} className="hidden rounded-2xl border border-accent/20 bg-accent/5 px-5 py-3 text-sm font-black text-accent-dim disabled:cursor-not-allowed disabled:opacity-60 sm:inline-flex">{isSaving ? "Salvando..." : "Salvar agora"}</button>
+            <button type="button" onClick={() => step < steps.length - 1 ? setStep((v) => v + 1) : save()} disabled={isSaving} className="flex-1 rounded-2xl bg-accent px-5 py-3.5 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:py-3">{step < steps.length - 1 ? "Continuar" : isSaving ? "Salvando..." : "Salvar e publicar"}</button>
+          </div>
         </div>
+        {/* Espaçador — compensa a altura da barra fixa no celular, some a
+            partir de sm (a barra deixa de ser fixa). */}
+        <div className="h-20 sm:hidden" aria-hidden="true" />
       </div>
       <LiveBioSitePreview site={site} />
 
-      {/* Botão flutuante de preview no mobile */}
-      <div className="fixed bottom-6 right-6 z-50 xl:hidden">
+      {/* Botão flutuante de preview no mobile — levantado (bottom-24) pra não
+          ficar embaixo da barra fixa de navegação da etapa, acima. */}
+      <div className="fixed bottom-24 right-6 z-30 xl:hidden">
         <button
           type="button"
           onClick={() => setShowMobilePreview(true)}
