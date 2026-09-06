@@ -155,7 +155,10 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasPix: true,
     hasWifi: true,
     hasCustomQr: true,
-    hasStickersAndMusic: true,
+    // Fora do Essencial de propósito (2026-09-06, pedido do Leonardo) —
+    // figurinhas/música/Instagram ao vivo ficam só no Pro Pessoal e nos
+    // planos Freelancer/Agência, não no Essencial.
+    hasStickersAndMusic: false,
     supportLevel: "email",
     highlight: true,
   },
@@ -333,10 +336,9 @@ export function isPremiumPlan(planType: PlanType): boolean {
   return planType !== "free";
 }
 
-// Stickers/música (2026-09-05) — mesma regra de isPremiumPlan hoje (tudo
-// exceto Gratuito), mas com nome próprio: se a lista de planos elegíveis
-// mudar no futuro (ex: algum plano premium novo que não deva ter isso),
-// esta função muda sem afetar o resto do gating premium.
+// Stickers/música (2026-09-05, restrito 2026-09-06) — NÃO é a mesma regra
+// de isPremiumPlan: Essencial é pago mas fica de fora de propósito (pedido
+// do Leonardo). Só Pro Pessoal, Freelancer e Agência têm.
 export function canUseStickersAndMusic(planType: PlanType): boolean {
   return getPlan(planType).hasStickersAndMusic;
 }
