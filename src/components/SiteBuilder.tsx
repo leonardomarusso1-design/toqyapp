@@ -283,15 +283,23 @@ function CatalogCategoryDisplayControl({ catalog, onChangeCategory, onReorderCat
       <div className="mt-3 grid gap-2">
         <DragReorderList items={categories} itemKey={(cat) => cat} onReorder={onReorderCategories}>
           {(cat, index, drag) => (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2.5">
-              <div className="flex items-center gap-2">
+            /* Bug real corrigido (2026-09-06, print do Leonardo no celular:
+               a tela do editor cortava e ele tinha que arrastar de lado).
+               Medido ao vivo em 375px: este <select> tem largura INTRÍNSECA
+               de ~278px (a maior opção, "Carrossel — desliza todas as
+               fotos") e a linha era um flex-row rígido, então o conteúdo
+               empurrava a página pra 522px de largura — 147px além da tela.
+               Agora a linha empilha no celular e o select ocupa a largura
+               disponível, com min-w-0 pra poder encolher de verdade. */
+            <div className="flex flex-col gap-2 rounded-xl border border-border bg-card px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <div className="flex min-w-0 items-center gap-2">
                 <DragHandle {...drag} />
                 <button type="button" disabled={index === 0} onClick={() => onReorderCategory(cat, "up")} className="rounded-lg border border-border p-1.5 text-muted hover:text-ink disabled:opacity-30" aria-label={`Mover ${cat} para cima`}><ArrowUp className="h-3.5 w-3.5" /></button>
                 <button type="button" disabled={index === categories.length - 1} onClick={() => onReorderCategory(cat, "down")} className="rounded-lg border border-border p-1.5 text-muted hover:text-ink disabled:opacity-30" aria-label={`Mover ${cat} para baixo`}><ArrowDown className="h-3.5 w-3.5" /></button>
-                <span className="text-sm font-black text-ink">{cat}</span>
+                <span className="truncate text-sm font-black text-ink">{cat}</span>
               </div>
               <select
-                className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs font-black text-ink outline-none focus:border-accent"
+                className="w-full min-w-0 rounded-lg border border-border bg-surface px-2 py-1.5 text-xs font-black text-ink outline-none focus:border-accent sm:w-auto"
                 value={categoryCommonDisplaySection(catalog, cat)}
                 onChange={(e) => onChangeCategory(cat, e.target.value)}
               >
@@ -1564,7 +1572,12 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   return (
     <div className="mx-auto grid w-full max-w-6xl gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
       <div className="min-w-0">
-        <div className="mb-5 rounded-[2rem] border border-border bg-card p-5 shadow-sm md:p-6">
+        {/* Cabeçalho grande do builder. Dentro de um bloco no celular ele
+            some (2026-09-06, print do Leonardo): o bloco já tem o próprio
+            cabeçalho com voltar/título/Salvar, e os dois juntos deixavam
+            dois títulos empilhados ocupando meia tela antes do primeiro
+            campo. No desktop continua igual. */}
+        <div className={`mb-5 rounded-[2rem] border border-border bg-card p-5 shadow-sm md:p-6 ${mobileOpen ? "hidden sm:block" : ""}`}>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div><p className="text-sm font-black uppercase tracking-[0.18em] text-accent">TOQY Builder</p><h1 className="mt-2 text-3xl font-black text-ink md:text-5xl">{mode === "create" ? "Criar bio site" : "Editar bio site"}</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">Tudo editável com preview ao vivo. Depois entregue link, QR Code e chave para o cliente.</p></div>
             {/* Bug real corrigido (2026-09-06, reportado ao vivo: "ainda ta
@@ -1590,7 +1603,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
 
         {/* Checklist de configuração (some sozinha quando chega a 100%) */}
         {checklistPercent < 100 ? (
-          <div className="mb-5 rounded-[2rem] border border-border bg-card p-5 shadow-sm">
+          <div className={`mb-5 rounded-[2rem] border border-border bg-card p-5 shadow-sm ${mobileOpen ? "hidden sm:block" : ""}`}>
             <div className="flex items-center gap-4">
               <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full" style={{ background: `conic-gradient(var(--color-accent) ${checklistPercent}%, var(--color-border) 0)` }}>
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-card text-xs font-black text-ink">{checklistPercent}%</div>

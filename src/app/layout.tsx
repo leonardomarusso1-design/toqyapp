@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Unbounded, Manrope } from "next/font/google";
 import "./globals.css";
 import { AuthSync } from "@/components/AuthSync";
-import { SentryInit } from "@/components/SentryInit";
 import { CookieConsent } from "@/components/CookieConsent";
 
 // Identidade visual "Signal Ledger" do ecossistema (2026-07-03) — mesma
@@ -65,7 +64,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="pt-BR" className={`${unbounded.variable} ${manrope.variable}`}>
       <body className="min-h-screen font-body antialiased">
-        <SentryInit />
         <AuthSync />
         {children}
         <CookieConsent gaMeasurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
