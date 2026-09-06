@@ -862,8 +862,19 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                             post tem sua própria proporção no embed da
                             Meta mesmo com a mesma largura, então faz
                             mais sentido cada um escolher o seu. */}
+                        {/* Bug real corrigido (2026-09-06): `field` já
+                            traz "w-full" — combinado com "w-28" aqui,
+                            as 2 classes de largura competem com a MESMA
+                            especificidade CSS, e o navegador não segue
+                            a ordem em que aparecem no atributo className
+                            (só a ordem em que o Tailwind gerou as
+                            regras). Resultado ao vivo: o select tentava
+                            ocupar 100% da linha, espremendo o campo de
+                            URL ao lado até virar só uma bolinha. Agora o
+                            select tem classes próprias, sem herdar
+                            "w-full" de lugar nenhum. */}
                         <select
-                          className={`${field} mt-0 w-28 shrink-0`}
+                          className="mt-0 w-28 shrink-0 rounded-2xl border border-border bg-card px-2 py-3 text-sm text-ink outline-none transition focus:border-accent focus:ring-4 focus:ring-accent/10"
                           value={post.size ?? "md"}
                           onChange={(e) => update((s) => ({ ...s, instagramPosts: (s.instagramPosts ?? []).map((p) => (p.id === post.id ? { ...p, size: e.target.value as "sm" | "md" | "lg" } : p)) }))}
                         >

@@ -664,7 +664,7 @@ function representativeItemsByCategory(items: CatalogItem[]): CatalogItem[] {
   return result;
 }
 
-export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { site: ToqySite; publicUrl?: string; instanceId?: string; onStickerMove?: (id: string, x: number, y: number) => void }) {
+export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enableBackgroundMusic = false }: { site: ToqySite; publicUrl?: string; instanceId?: string; onStickerMove?: (id: string, x: number, y: number) => void; enableBackgroundMusic?: boolean }) {
   const [modal, setModal] = useState<Modal>(null);
   const [qrModal, setQrModal] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
@@ -782,7 +782,13 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { 
 
   return (
     <div className="relative min-h-screen w-full" style={{ ...backgroundStyle(site), color: site.theme.text }}>
-      {backgroundMusicUrl ? <BackgroundMusicPlayer url={backgroundMusicUrl} volume={site.backgroundMusicVolume ?? 40} /> : null}
+      {/* Bug real reportado ao vivo (2026-09-06): sem a flag
+          enableBackgroundMusic, a música de um bio site de exemplo tocava
+          sozinha na página INICIAL do Toqy (o card de demonstração da
+          landing renderiza este mesmo componente) — só a página pública
+          de verdade do bio site (ver PublicBioSiteServer.tsx) passa essa
+          flag como true. */}
+      {enableBackgroundMusic && backgroundMusicUrl ? <BackgroundMusicPlayer url={backgroundMusicUrl} volume={site.backgroundMusicVolume ?? 40} /> : null}
       {bgImage ? (
         <div className="fixed inset-0 -z-10" style={{ background: themeGradient(site) }}>
           <div
@@ -935,6 +941,9 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { 
                   mercadopago: "#00B1EA", behance: "#1769FF",
                 };
                 const isBrandType = button.type in brandColor;
+                // Precisa vir ANTES do bloco de IMAGE_ICON_TYPES abaixo —
+                // ver o bug real corrigido logo ali.
+                const translucent = Boolean(site.theme.socialIconTranslucent) || site.theme.socialIconStyle === "glass";
 
                 // Ícones com imagem própria (2026-07-16, pedido do Leonardo:
                 // "tira esse contorno, deixa só os ícones com as cores
@@ -944,12 +953,33 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { 
                 // do padrão antigo só duplicava contorno em cima do ícone.
                 // Renderiza sem bg/sombra, só o ícone maior, tamanho
                 // controlável em socialIconSize (padrão "md").
+                //
+                // Bug real corrigido (2026-09-06, reportado ao vivo depois
+                // do fix estrutural anterior: "translúcido ainda não
+                // funciona"): estes 5 tipos (whatsapp/instagram/facebook/
+                // maps/youtube) são justamente os mais usados, e o "sem
+                // bg" acima faz o toggle "translúcido" não ter NENHUM
+                // efeito visível neles — o círculo nem existe pra ficar
+                // translúcido. Modo translúcido agora é uma exceção: volta
+                // a mostrar um fundo suave (mesma cor de marca, alpha
+                // baixo) atrás do ícone. Sem translúcido, mantém o
+                // comportamento de 2026-07-16 (sem fundo nenhum).
                 if (IMAGE_ICON_TYPES.includes(button.type)) {
                   const sizeClass = SOCIAL_ICON_SIZE_CLASS[site.theme.socialIconSize ?? "md"];
+                  if (!translucent) {
+                    return (
+                      <button key={button.id} type="button" onClick={() => handleButton(button)} aria-label={button.label}
+                        className="flex items-center justify-center p-1 transition active:scale-90 hover:scale-105">
+                        <ButtonIcon type={button.type} className={sizeClass} />
+                      </button>
+                    );
+                  }
+                  const softBg = `${brandColor[button.type] ?? site.theme.primary}26`;
                   return (
                     <button key={button.id} type="button" onClick={() => handleButton(button)} aria-label={button.label}
-                      className="flex items-center justify-center p-1 transition active:scale-90 hover:scale-105">
-                      <ButtonIcon type={button.type} className={sizeClass} />
+                      className="flex h-12 w-12 items-center justify-center rounded-full shadow-md transition active:scale-90 hover:scale-105 backdrop-blur-sm"
+                      style={{ background: softBg }}>
+                      <ButtonIcon type={button.type} className="h-6 w-6" />
                     </button>
                   );
                 }
@@ -972,7 +1002,6 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { 
                 // como equivalente a translucent=true, pra não quebrar
                 // bio sites salvos antes desta correção.
                 const baseBg = isBrandType ? brandColor[button.type] : colorSwatch(site.theme.colors?.socialIconBg, site.theme.primary);
-                const translucent = Boolean(site.theme.socialIconTranslucent) || site.theme.socialIconStyle === "glass";
                 const bg = translucent ? `${baseBg}26` : baseBg;
                 // Bug real corrigido (2026-07-16): ícone branco fixo quebrava
                 // (sumia) quando o fundo caía no fallback theme.primary (tipo

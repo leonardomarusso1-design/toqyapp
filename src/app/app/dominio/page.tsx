@@ -129,6 +129,23 @@ export default function DominioPage() {
         <p className="mt-2 max-w-2xl text-muted">Aponte um domínio que já é seu (ex: meunegocio.com.br) direto pro seu bio site. Incluso na Agência; add-on avulso no Pro Pessoal.</p>
       </div>
 
+      {/* Mini-tutorial (2026-09-06, pedido do Leonardo: "falta o mini
+          tutorial lá em domínio, pra pessoa saber como trazer o domínio
+          dela") — mesmos 6 passos já usados no e-mail de boas-vindas do
+          primeiro teste (Guilbert), agora visível pra QUALQUER pessoa
+          direto nesta página, não só por e-mail. */}
+      <details className="mt-5 rounded-[2rem] border border-border bg-card p-5 shadow-sm">
+        <summary className="cursor-pointer text-sm font-black text-ink">📖 Como conectar seu domínio — passo a passo</summary>
+        <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-muted">
+          <li>Escolha, na lista abaixo, o bio site que vai usar o domínio.</li>
+          <li>Digite o domínio que você já possui (ex: <span className="font-mono text-ink">meunegocio.com.br</span>) e clique em <strong className="text-ink">&quot;Conectar domínio&quot;</strong>.</li>
+          <li>Vá até o painel do seu provedor de domínio (Registro.br, GoDaddy, Hostinger, etc.) e crie um registro <strong className="text-ink">CNAME</strong> apontando esse domínio para <span className="font-mono text-ink">cname.vercel-dns.com</span> — a tela abaixo mostra o registro exato a criar assim que você conectar.</li>
+          <li>Pode levar de alguns minutos a algumas horas pra propagar.</li>
+          <li>Volte aqui e clique em <strong className="text-ink">&quot;Verificar&quot;</strong> — quando aparecer <span className="text-emerald-600 font-black">&quot;Conectado e servindo o bio site&quot;</span>, está pronto.</li>
+          <li>Repita pra cada bio site/domínio diferente que quiser conectar.</li>
+        </ol>
+      </details>
+
       {loading ? (
         <p className="mt-8 text-sm font-bold text-muted">Carregando...</p>
       ) : access === "none" ? (
