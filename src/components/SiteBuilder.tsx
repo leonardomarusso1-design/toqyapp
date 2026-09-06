@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, CheckCircle2, Copy, ExternalLink, Eye, Images, Loader2, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, CheckCircle2, Copy, ExternalLink, Eye, Images, Loader2, MessageCircle, Plus, Save, Share2, Trash2, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import type { CatalogItem, CatalogLayout, ThemePreset, ToqySite } from "@/lib/types";
 import { createEditUrl, createPublicUrl, generateSlug } from "@/lib/dataProvider";
@@ -351,6 +351,12 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   const [copied, setCopied] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
+  // Compartilhar com QR direto do editor (2026-09-06, pedido do Leonardo
+  // depois de analisar o app do Linktree: lá existe um botão de
+  // compartilhar acessível em QUALQUER tela do editor, não só no fim do
+  // fluxo — o Toqy já tinha QR/link/WhatsApp na última etapa ("Salvar"),
+  // isso só adianta o acesso pra qualquer momento da edição).
+  const [showShareSheet, setShowShareSheet] = useState(false);
   const [limitState, setLimitState] = useState<{ current: number; limit: number; planTier: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const publicLink = createPublicUrl(site.slug);
@@ -806,6 +812,22 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                           onChange={(e) => update((s) => ({ ...s, instagramPosts: (s.instagramPosts ?? []).map((p) => (p.id === post.id ? { ...p, url: e.target.value } : p)) }))}
                           placeholder="https://www.instagram.com/p/XXXXXXX/"
                         />
+                        {/* Tamanho por post (2026-09-06, 2ª revisão — o
+                            Leonardo testou e reportou "estão de vários
+                            tamanhos, poderia escolher": antes era 1
+                            tamanho pra TODOS os posts do bloco; cada
+                            post tem sua própria proporção no embed da
+                            Meta mesmo com a mesma largura, então faz
+                            mais sentido cada um escolher o seu. */}
+                        <select
+                          className={`${field} mt-0 w-28 shrink-0`}
+                          value={post.size ?? "md"}
+                          onChange={(e) => update((s) => ({ ...s, instagramPosts: (s.instagramPosts ?? []).map((p) => (p.id === post.id ? { ...p, size: e.target.value as "sm" | "md" | "lg" } : p)) }))}
+                        >
+                          <option value="sm">Pequeno</option>
+                          <option value="md">Médio</option>
+                          <option value="lg">Grande</option>
+                        </select>
                         <button type="button" onClick={() => update((s) => ({ ...s, instagramPosts: (s.instagramPosts ?? []).filter((p) => p.id !== post.id) }))} className="shrink-0 text-red-500"><Trash2 className="h-4 w-4" /></button>
                       </div>
                     ))}
@@ -818,9 +840,14 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                     </button>
                   </div>
                   {(site.instagramPosts ?? []).length ? (
-                    <div className="mt-3 grid grid-cols-2 gap-3">
-                      <label><span className="text-xs font-black text-ink">Layout</span><select className={field} value={site.instagramLayout ?? "carousel"} onChange={(e) => update((s) => ({ ...s, instagramLayout: e.target.value as "carousel" | "list" }))}><option value="carousel">Carrossel (desliza sozinho)</option><option value="list">Lista (um embaixo do outro)</option></select></label>
-                      <label><span className="text-xs font-black text-ink">Tamanho</span><select className={field} value={site.instagramSize ?? "md"} onChange={(e) => update((s) => ({ ...s, instagramSize: e.target.value as "sm" | "md" | "lg" }))}><option value="sm">Pequeno</option><option value="md">Médio</option><option value="lg">Grande</option></select></label>
+                    <div className="mt-3">
+                      {/* Só "Layout" aqui — o tamanho agora é por post,
+                          escolhido junto de cada URL acima (2ª revisão,
+                          2026-09-06). "Carrossel" virou slide de verdade:
+                          1 post por vez, com bolinhas de navegação, sem
+                          rolar sozinho (era o que o Leonardo reportou
+                          como "ficou muito feio"). */}
+                      <label><span className="text-xs font-black text-ink">Layout</span><select className={field} value={site.instagramLayout ?? "carousel"} onChange={(e) => update((s) => ({ ...s, instagramLayout: e.target.value as "carousel" | "list" }))}><option value="carousel">Slide (1 por vez, com navegação)</option><option value="list">Lista (um embaixo do outro)</option></select></label>
                     </div>
                   ) : null}
                   <p className="mt-1 text-xs text-muted">Cada post aparece embutido e ao vivo (curtidas/comentários atualizados pelo próprio Instagram). Não puxa automaticamente do perfil — cole o link de cada post que quiser mostrar.</p>
@@ -1289,16 +1316,60 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
     );
   })();
 
+  // Checklist de configuração com % de progresso (2026-09-06, inspirado no
+  // "Sua lista de configuração 5/6" do app do Linktree que o Leonardo
+  // mandou) — 100% DERIVADO de campos que já existem em ToqySite, sem
+  // nenhum campo novo no banco: só reflete o que já foi preenchido.
+  const checklistItems = [
+    { label: "Nome do negócio", done: Boolean(site.profile.name && site.profile.name !== "Novo negócio") },
+    { label: "Descrição", done: Boolean(site.profile.description?.trim()) },
+    { label: "Foto de perfil ou logo", done: Boolean(site.profile.profileImageUrl || site.profile.logoUrl) },
+    { label: "Pelo menos 1 rede social", done: Boolean(site.contact.instagram || site.contact.facebook || site.contact.whatsapp) },
+    { label: "Pelo menos 1 botão ativo", done: site.buttons.some((b) => b.enabled) },
+  ];
+  const checklistDone = checklistItems.filter((i) => i.done).length;
+  const checklistPercent = Math.round((checklistDone / checklistItems.length) * 100);
+
   return (
     <div className="mx-auto grid w-full max-w-6xl gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
       <div className="min-w-0">
         <div className="mb-5 rounded-[2rem] border border-border bg-card p-5 shadow-sm md:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div><p className="text-sm font-black uppercase tracking-[0.18em] text-accent">TOQY Builder</p><h1 className="mt-2 text-3xl font-black text-ink md:text-5xl">{mode === "create" ? "Criar bio site" : "Editar bio site"}</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">Tudo editável com preview ao vivo. Depois entregue link, QR Code e chave para o cliente.</p></div>
-            <button type="button" onClick={save} disabled={isSaving} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-accent px-5 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60"><Save className="h-4 w-4" />{isSaving ? "Salvando..." : "Salvar agora"}</button>
+            <div className="flex gap-2">
+              {mode === "edit" ? (
+                <button type="button" onClick={() => setShowShareSheet(true)} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-black text-ink transition hover:border-accent" aria-label="Compartilhar">
+                  <Share2 className="h-4 w-4" /> Compartilhar
+                </button>
+              ) : null}
+              <button type="button" onClick={save} disabled={isSaving} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-accent px-5 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60"><Save className="h-4 w-4" />{isSaving ? "Salvando..." : "Salvar agora"}</button>
+            </div>
           </div>
           {saved ? <div className="mt-4 flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-800"><CheckCircle2 className="h-5 w-5" />Salvo no navegador.</div> : null}
         </div>
+
+        {/* Checklist de configuração (some sozinha quando chega a 100%) */}
+        {checklistPercent < 100 ? (
+          <div className="mb-5 rounded-[2rem] border border-border bg-card p-5 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full" style={{ background: `conic-gradient(var(--color-accent) ${checklistPercent}%, var(--color-border) 0)` }}>
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-card text-xs font-black text-ink">{checklistPercent}%</div>
+              </div>
+              <div>
+                <p className="text-sm font-black text-ink">Sua lista de configuração — {checklistDone}/{checklistItems.length}</p>
+                <p className="mt-0.5 text-xs font-semibold text-muted">Complete pra deixar o bio site pronto pra receber visitas.</p>
+              </div>
+            </div>
+            <ul className="mt-4 grid gap-1.5 sm:grid-cols-2">
+              {checklistItems.map((item) => (
+                <li key={item.label} className={`flex items-center gap-2 text-xs font-bold ${item.done ? "text-muted line-through" : "text-ink"}`}>
+                  <CheckCircle2 className={`h-4 w-4 shrink-0 ${item.done ? "text-emerald-500" : "text-border"}`} />
+                  {item.label}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         <div className="mb-5 flex gap-2 overflow-x-auto rounded-[1.5rem] border border-border bg-card p-2 shadow-sm">{steps.map((item, index) => <button key={item} type="button" onClick={() => setStep(index)} className={`shrink-0 rounded-2xl px-4 py-2 text-sm font-black transition ${index === step ? "bg-accent text-white" : "text-muted hover:bg-surface"}`}>{index + 1}. {item}</button>)}</div>
         {body}
         {/* Navegação da etapa — fixa embaixo da tela no celular (pedido do
@@ -1345,6 +1416,35 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
           </div>
           <div className="flex-1 overflow-y-auto"><PublicBioSite site={site} onStickerMove={handleStickerMove} /></div>
         </div>
+      ) : null}
+
+      {/* Bottom-sheet "Compartilhar" (2026-09-06) — QR + copiar link
+          acessíveis de qualquer etapa do editor, sem precisar chegar até
+          a etapa "Salvar" pra pegar essas informações de novo. */}
+      {showShareSheet ? (
+        <>
+          <div className="fixed inset-0 z-[70] bg-ink/40" onClick={() => setShowShareSheet(false)} />
+          <div className="fixed inset-x-0 bottom-0 z-[80] rounded-t-3xl border border-border bg-card p-6 shadow-2xl sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-96 sm:rounded-3xl">
+            <div className="flex items-center justify-between">
+              <p className="text-lg font-black text-ink">Compartilhe seu Toqy</p>
+              <button type="button" onClick={() => setShowShareSheet(false)} className="text-muted hover:text-ink" aria-label="Fechar"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="mt-4 flex flex-col items-center gap-3">
+              <div className="rounded-2xl border border-border bg-card p-3 shadow-sm">
+                <QRCodeSVG value={typeof window !== "undefined" ? `${window.location.origin}${publicLink}` : publicLink} size={160} />
+              </div>
+              <p className="break-all text-center text-sm font-bold text-ink">{typeof window !== "undefined" ? `${window.location.origin}${publicLink}` : publicLink}</p>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <button type="button" onClick={() => copy(typeof window !== "undefined" ? `${window.location.origin}${publicLink}` : publicLink, "share-link")} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-black text-ink transition hover:border-accent">
+                <Copy className="h-4 w-4" />{copied === "share-link" ? "Copiado!" : "Copiar link"}
+              </button>
+              <Link href={publicLink} target="_blank" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-3 text-sm font-black text-white transition hover:opacity-90">
+                Abrir <ExternalLink className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </>
       ) : null}
     </div>
   );

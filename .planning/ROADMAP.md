@@ -142,6 +142,20 @@ vez dela, não todas de uma vez — mesmo princípio do GSD (`/gsd:plan-phase N`
   5. ✓ `/para-mim` (Gratuito/Pro) e `/para-vender` (Essencial/Freelancer/Agência) no ar, cada uma com sua copy
 **Plans**: ✓ Código completo, ✓ produtos criados na Kiwify e links reais já ligados em `subscriptions.ts` (`KIWIFY_LINKS.pro`, `OVERAGE_LINKS.customDomain`), ✓ e-mail de confirmação + página de obrigado próprias pros 2 (`/obrigado/pro`, `/obrigado/dominio-proprio`). Fase 6 (login) do plano original desta sessão foi avaliada e não precisou de mudança — Google OAuth já funciona no código, só falta o Leonardo confirmar Client ID/Secret no painel do Supabase (não verificável via código/MCP).
 
+### Phase 12: Parity de app (inspirado no app do Linktree) — itens grandes fora desta rodada
+**Goal**: registrar os itens do app oficial do Linktree (vídeo gravado pelo Leonardo, analisado frame a frame em 2026-09-06) que são sistemas grandes de verdade, não ajuste de UX — cada um exige uma decisão de arquitetura/integração própria antes de virar código, então ficaram fora da rodada de redesign minimalista + fixes de UX (essa outra rodada: paleta recalibrada, tab bar mobile, checklist de configuração com %, compartilhar com QR no editor, Instagram virou slide de verdade com paginação e tamanho por post — tudo já entregue em 2026-09-06).
+**Depends on**: Nothing técnico — são independentes entre si, cada um pode ser priorizado isoladamente quando o Leonardo quiser.
+**Requirements**: (novo, sem IDs formais — mapeado do vídeo, decisão de escopo confirmada com o Leonardo via pergunta direta: "só o essencial de UX agora")
+**Itens mapeados do vídeo** (ver frames em `C:\Users\Leonardo\AppData\Local\Temp\claude\toqy_video_frames\sheet_0{1..4}.jpg`, não versionados no repo):
+  1. **Loja/marketplace** (aba "Ganhar" → Produtos/Pedidos do Linktree) — precisa de modelo de pagamento/inventário próprio, é um sistema de e-commerce de verdade, não uma tela.
+  2. **Resposta automática de Instagram via DM** ("Responda enquanto você dorme") — exige app registrado + OAuth com a Meta Graph API, mesma decisão já tomada antes nesta sessão pro preview de Instagram (feature real, mas trabalho de integração de plataforma externa, não só UI).
+  3. **Planejador de redes sociais** — agendamento de posts, também depende de API de terceiros (Meta/outras redes).
+  4. **Selo de verificação** — precisa de um processo de moderação/verificação por trás, não é só um badge visual.
+  5. **Captura de e-mail/WhatsApp de visitantes** (aba "Público" do Linktree: "Suas ferramentas de captura de público") — a parte de armazenar e listar contatos é viável rápido; a parte de "campanha de e-mail marketing" que o Linktree também oferece ali é maior.
+  6. **Banners de causa** (Anti-Racism, Pride, etc., com toggle e link pra ação) e **coleções sazonais de figurinhas com curadoria** ("Daisy Chain Fields Festival") — o Toqy já tem a base de figurinhas livres (emoji + formas, arrastáveis); virar "coleções com tema/prazo" é decisão de conteúdo contínuo, não só código.
+**Success Criteria**: TBD por item, quando o Leonardo priorizar algum
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
@@ -162,6 +176,7 @@ si, só dependem de 1), 9 por último.
 | 9. Conteúdo | 0/TBD | Not started | - |
 | 10. Domínio próprio | 1/1 (código) | Código completo, aguardando setup manual | 2026-09-05 |
 | 11. Segmentação de público | 1/1 (código) | Código completo, aguardando 2 produtos Kiwify | 2026-09-05 |
+| 12. Parity de app (Linktree) | 0/TBD | Mapeado, não iniciado — itens grandes, priorizar quando quiser | 2026-09-06 |
 
 \* Fase 2: código 100% completo (backend + frontend). Resta 1 passo manual
 fora de código, por revendedor: Leonardo cadastra o afiliado na Kiwify e

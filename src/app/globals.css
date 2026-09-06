@@ -1,15 +1,23 @@
 @import "tailwindcss";
 
+/* Paleta recalibrada pra minimalista/clean (2026-09-06, pedido do
+   Leonardo: "quero algo minimalista, moderno, clean, que não doa os
+   olhos" — depois de analisar o app do Linktree, que é bem mais
+   discreto que o visual anterior do Toqy). Mesmos NOMES de token
+   (zero quebra em componentes que já usam bg-accent/text-ink/etc.),
+   só os VALORES ficam mais contidos: o coral neon virou um coral
+   maduro, menos saturado; o resto segue a mesma lógica (creme + tinta
+   + um acento só, sem "gritar"). */
 @theme {
-  --color-bg: #FAF9F6;      /* Luxuoso linho/marfim suave */
-  --color-surface: #FCFCFA; /* Porcelana clara e limpa */
+  --color-bg: #FAFAF9;      /* Quase branco, leve calor (não gelado) */
+  --color-surface: #F5F4F2; /* Um degrau acima do fundo, discreto */
   --color-card: #ffffff;    /* Branco puro */
-  --color-border: #EAE6DD;  /* Cinza-bege ultra-fino e moderno */
-  --color-ink: #0C0B0E;     /* Preto carvão profundo/obsidiana */
-  --color-muted: #6E6A75;   /* Cinza carvão levemente arroxeado */
-  --color-accent: #FF3B6B;  /* Coral neon vibrante de alta energia */
-  --color-accent-dim: #DF1F4D; /* Rosa profundo elegante */
-  --color-violet: #6366F1;  /* Índigo elétrico de alta tecnologia */
+  --color-border: #E8E6E1;  /* Cinza-bege ultra-fino */
+  --color-ink: #14141A;     /* Tinta escura, não preto puro (mais suave) */
+  --color-muted: #74727C;   /* Cinza neutro */
+  --color-accent: #E8476B;  /* Coral maduro — mesma família, menos neon */
+  --color-accent-dim: #C93357; /* Coral mais escuro, pra hover/texto */
+  --color-violet: #5B5FD6;  /* Índigo, mesmo papel, um pouco mais calmo */
 }
 
 :root {
@@ -150,9 +158,19 @@ h3,
     linear-gradient(135deg, #0f172a 0%, #020617 100%);
 }
 
-/* Texto com gradiente nas cores da marca (acented + violeta), animado */
+/* Texto com gradiente (2026-09-06: sem animação por padrão — o
+   "background-position" animado era exatamente o tipo de efeito que faz
+   parecer template de IA piscando; estático já dá o efeito de marca sem
+   distrair. Usar .gradient-text-animated quando REALMENTE quiser o
+   movimento, num único destaque pontual da página, nunca em série). */
 .gradient-text {
-  background: linear-gradient(90deg, #ff4d6d 0%, #8b5cf6 50%, #ff4d6d 100%);
+  background: linear-gradient(90deg, var(--color-accent) 0%, var(--color-violet) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gradient-text-animated {
+  background: linear-gradient(90deg, var(--color-accent) 0%, var(--color-violet) 50%, var(--color-accent) 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -160,18 +178,24 @@ h3,
   animation: gradientShift 6s ease infinite;
 }
 
-/* Hero: fundo claro premium com manchas de cor suaves + grid sutil */
+/* Hero: fundo claro, manchas de cor bem mais discretas que antes
+   (opacidade reduzida à metade — era a primeira coisa que "doía os
+   olhos" ao abrir a home). */
 .hero-gradient {
   background:
-    radial-gradient(circle at 18% 18%, rgba(255, 77, 109, 0.16), transparent 30%),
-    radial-gradient(circle at 82% 22%, rgba(139, 92, 246, 0.16), transparent 28%),
-    radial-gradient(circle at 50% 90%, rgba(255, 200, 80, 0.18), transparent 32%),
-    linear-gradient(180deg, #fffefb 0%, #f8f5ef 100%);
+    radial-gradient(circle at 18% 18%, rgba(232, 71, 107, 0.08), transparent 30%),
+    radial-gradient(circle at 82% 22%, rgba(91, 95, 214, 0.08), transparent 28%),
+    linear-gradient(180deg, #fffefc 0%, #f8f7f4 100%);
 }
 
-/* Linha de brilho animada no topo de seções (estilo mypostflow) */
+/* Linha de brilho: sem animação por padrão, some do fluxo comum;
+   .shimmer-line-animated é a exceção pontual quando fizer sentido. */
 .shimmer-line {
-  background: linear-gradient(90deg, rgba(255, 77, 109, 0.0), rgba(255, 77, 109, 0.6), rgba(139, 92, 246, 0.6), rgba(255, 200, 80, 0.6), rgba(255, 77, 109, 0.0));
+  background: linear-gradient(90deg, transparent, var(--color-accent), var(--color-violet), transparent);
+  opacity: 0.5;
+}
+.shimmer-line-animated {
+  background: linear-gradient(90deg, rgba(232, 71, 107, 0), rgba(232, 71, 107, 0.5), rgba(91, 95, 214, 0.5), rgba(232, 71, 107, 0));
   background-size: 200% 100%;
   animation: shimmer 6s linear infinite;
 }
@@ -180,8 +204,8 @@ h3,
 .blob {
   position: absolute;
   border-radius: 9999px;
-  filter: blur(64px);
-  opacity: 0.55;
+  filter: blur(80px);
+  opacity: 0.25;
   pointer-events: none;
 }
 
@@ -210,8 +234,12 @@ h3,
 
 /* ---------- Efeitos de elemento ---------- */
 
+/* Glow contínuo (2026-09-06): reduzido a estático — um halo suave e fixo
+   em vez de pulsar pra sempre. Pulsar sem parar é o tipo de "vida
+   artificial" que cansa o olho quando a página fica aberta; um glow fixo
+   ainda chama atenção sem irritar. */
 .glow-pulse {
-  animation: glowPulse 3.2s ease-in-out infinite;
+  box-shadow: 0 0 0 1px rgba(232, 71, 107, 0.12), 0 0 24px rgba(232, 71, 107, 0.10);
 }
 
 .float-slow {
@@ -230,28 +258,43 @@ h3,
   animation: spinSlow 14s linear infinite;
 }
 
-/* Cartão com brilho/glow colorido */
+/* Cartão com leve elevação no hover (2026-09-06: sombra bem mais rasa —
+   60px de blur/45% de opacidade "gritava"; um hover discreto ainda avisa
+   que é clicável sem parecer neon). */
 .card-glow {
   position: relative;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .card-glow:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 24px 60px -24px rgba(255, 77, 109, 0.45);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -16px rgba(20, 20, 26, 0.25);
 }
 
-/* Botão com brilho + gradiente animado */
+/* Botão principal — cor sólida por padrão (2026-09-06: gradiente animado
+   toda hora é o item mais "IA-genérica" que existe; sólido com hover
+   simples já basta pro CTA se destacar). .btn-glow-animated é a exceção
+   pontual quando um único CTA da página realmente pedir esse destaque. */
 .btn-glow {
   position: relative;
-  background: linear-gradient(90deg, #ff4d6d 0%, #8b5cf6 50%, #ff4d6d 100%);
-  background-size: 200% auto;
-  animation: gradientShift 5s ease infinite;
-  box-shadow: 0 12px 32px -10px rgba(255, 77, 109, 0.6);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  background: var(--color-accent);
+  box-shadow: 0 8px 20px -10px rgba(232, 71, 107, 0.45);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 .btn-glow:hover {
   transform: translateY(-2px);
-  box-shadow: 0 20px 48px -12px rgba(255, 77, 109, 0.7);
+  background: var(--color-accent-dim);
+  box-shadow: 0 12px 28px -10px rgba(232, 71, 107, 0.5);
+}
+.btn-glow-animated {
+  background: linear-gradient(90deg, var(--color-accent) 0%, var(--color-violet) 50%, var(--color-accent) 100%);
+  background-size: 200% auto;
+  animation: gradientShift 5s ease infinite;
+  box-shadow: 0 12px 32px -10px rgba(232, 71, 107, 0.5);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.btn-glow-animated:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 48px -12px rgba(232, 71, 107, 0.6);
 }
 
 /* Borda com gradiente (uso: wrapper com bg-card por dentro) */

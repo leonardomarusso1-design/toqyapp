@@ -260,13 +260,27 @@ export type ToqySite = {
   // NÃO puxa automaticamente do perfil (isso exigiria a API oficial do
   // Instagram/Graph API + app registrado no Meta + OAuth por conta
   // Business, decisão consciente de deixar pra um projeto separado depois).
-  instagramPosts?: Array<{ id: string; url: string }>;
+  //
+  // `size` por post (2026-09-06, 2ª revisão — pedido do Leonardo depois de
+  // testar: "estão de vários tamanhos... poderia escolher") — antes era um
+  // `instagramSize` único pra todos os posts, mas o embed oficial da Meta
+  // já varia de altura por post (quadrado/retrato/reels têm proporções
+  // diferentes mesmo com a mesma largura), então forçar 1 tamanho global
+  // não resolvia a inconsistência visual — cada post agora escolhe o seu.
+  instagramPosts?: Array<{ id: string; url: string; size?: "sm" | "md" | "lg" }>;
   // "grid" (2 colunas lado a lado) ficou de fora de propósito — o widget
   // oficial do Instagram não encolhe abaixo de ~326px de largura, então
   // 2 posts lado a lado nunca cabem numa tela de celular (a maioria das
-  // visitas). "carousel" (um de cada vez, deslizando) e "list" (empilhado)
-  // são os 2 formatos que realmente funcionam em qualquer tamanho de tela.
+  // visitas). "carousel" virou "slide" de verdade (2026-09-06, 2ª revisão:
+  // era auto-scroll contínuo, o Leonardo reportou "ficou muito feio" — os
+  // posts têm alturas diferentes entre si e o scroll sozinho desalinhava
+  // tudo; agora é 1 post por vez, com paginação e troca manual/swipe,
+  // igual um carrossel de app de verdade) e "list" (empilhado) são os 2
+  // formatos que realmente funcionam em qualquer tamanho de tela.
   instagramLayout?: "carousel" | "list";
+  // Mantido só como fallback pra posts que ainda não têm `size` próprio
+  // (bio sites salvos antes desta revisão) — não é mais editável como
+  // valor único no SiteBuilder.
   instagramSize?: "sm" | "md" | "lg";
   // Ordem livre das seções do corpo do bio site (2026-09-06, pedido do
   // Leonardo: "o Toqy não pode prender as pessoas a uma coisa só") — cada

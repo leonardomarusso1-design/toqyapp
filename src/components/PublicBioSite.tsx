@@ -279,51 +279,80 @@ const InstagramEmbed = ({ postUrl, maxWidth = 400 }: { postUrl: string; maxWidth
 
 // Vários posts, autonomia de layout (2026-09-06, pedido do Leonardo:
 // "quero colocar como se fosse um carrossel... ou lista, embaixo do
-// outro"). "carousel" desliza sozinho bem devagar (auto-scroll suave,
-// pausa quando o visitante toca/arrasta manualmente); "list" empilha.
-const InstagramPostsBlock = ({ posts, layout, size }: { posts: Array<{ id: string; url: string }>; layout: "carousel" | "list"; size: "sm" | "md" | "lg" }) => {
+// outro"; 2ª revisão no mesmo dia depois de testar: "no carrossel ficou
+// horrível... seria legal se fosse em slide ou a pessoa escolher, estão
+// de vários tamanhos"). O auto-scroll contínuo (requestAnimationFrame)
+// foi REMOVIDO — era a causa raiz do "feio": posts com alturas diferentes
+// (o embed da Meta varia altura por formato mesmo com largura igual)
+// deslizando sozinhos ficam desalinhados e distraem. "carousel" agora é
+// um slide de verdade: 1 post por vez, troca manual (swipe ou pelas
+// bolinhas de paginação), sem nada se mexendo sozinho — como carrossel
+// de qualquer app de verdade (Instagram Stories, etc). "list" continua
+// empilhado, sem mudança.
+const InstagramPostsBlock = ({ posts, layout, defaultSize }: { posts: Array<{ id: string; url: string; size?: "sm" | "md" | "lg" }>; layout: "carousel" | "list"; defaultSize: "sm" | "md" | "lg" }) => {
   const trackRef = useRef<HTMLDivElement>(null);
-  const pausedRef = useRef(false);
+  const [active, setActive] = useState(0);
 
+  const goTo = (index: number) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const clamped = Math.max(0, Math.min(posts.length - 1, index));
+    track.scrollTo({ left: clamped * track.clientWidth, behavior: "smooth" });
+    setActive(clamped);
+  };
+
+  // Detecta o slide atual conforme o visitante arrasta manualmente (pra
+  // manter as bolinhas de paginação sincronizadas com o swipe).
   useEffect(() => {
     if (layout !== "carousel") return;
     const track = trackRef.current;
     if (!track) return;
-    let raf: number;
-    const tick = () => {
-      if (!pausedRef.current) {
-        track.scrollLeft += 0.4;
-        if (track.scrollLeft >= track.scrollWidth - track.clientWidth - 1) track.scrollLeft = 0;
-      }
-      raf = requestAnimationFrame(tick);
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        if (track.clientWidth > 0) setActive(Math.round(track.scrollLeft / track.clientWidth));
+        ticking = false;
+      });
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [layout, posts.length]);
+    track.addEventListener("scroll", onScroll, { passive: true });
+    return () => track.removeEventListener("scroll", onScroll);
+  }, [layout]);
 
   if (layout === "list") {
     return (
       <div className="space-y-4">
-        {posts.map((p) => <InstagramEmbed key={p.id} postUrl={p.url} maxWidth={IG_SIZE_MAXWIDTH[size]} />)}
+        {posts.map((p) => <InstagramEmbed key={p.id} postUrl={p.url} maxWidth={IG_SIZE_MAXWIDTH[p.size ?? defaultSize]} />)}
       </div>
     );
   }
 
   return (
-    <div
-      ref={trackRef}
-      onPointerDown={() => { pausedRef.current = true; }}
-      onPointerUp={() => { pausedRef.current = false; }}
-      onMouseEnter={() => { pausedRef.current = true; }}
-      onMouseLeave={() => { pausedRef.current = false; }}
-      className="flex gap-4 overflow-x-auto scroll-smooth pb-1"
-      style={{ scrollSnapType: "x mandatory" }}
-    >
-      {posts.map((p) => (
-        <div key={p.id} className="shrink-0" style={{ width: IG_SIZE_MAXWIDTH[size], scrollSnapAlign: "start" }}>
-          <InstagramEmbed postUrl={p.url} maxWidth={IG_SIZE_MAXWIDTH[size]} />
+    <div>
+      <div
+        ref={trackRef}
+        className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth pb-1"
+      >
+        {posts.map((p) => (
+          <div key={p.id} className="flex w-full shrink-0 snap-center justify-center">
+            <InstagramEmbed postUrl={p.url} maxWidth={IG_SIZE_MAXWIDTH[p.size ?? defaultSize]} />
+          </div>
+        ))}
+      </div>
+      {posts.length > 1 ? (
+        <div className="mt-3 flex justify-center gap-1.5">
+          {posts.map((p, i) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => goTo(i)}
+              aria-label={`Ir para o post ${i + 1}`}
+              className={`h-1.5 rounded-full transition-all ${i === active ? "w-5 bg-accent" : "w-1.5 bg-border"}`}
+            />
+          ))}
         </div>
-      ))}
+      ) : null}
     </div>
   );
 };
@@ -903,7 +932,7 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { 
             if (blockType === "instagram") {
               return (site.instagramPosts ?? []).length ? (
                 <section key="instagram" className="mt-4 overflow-hidden">
-                  <InstagramPostsBlock posts={site.instagramPosts!} layout={site.instagramLayout ?? "carousel"} size={site.instagramSize ?? "md"} />
+                  <InstagramPostsBlock posts={site.instagramPosts!} layout={site.instagramLayout ?? "carousel"} defaultSize={site.instagramSize ?? "md"} />
                 </section>
               ) : null;
             }

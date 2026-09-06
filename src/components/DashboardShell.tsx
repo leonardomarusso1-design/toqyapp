@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
-import { BarChart3, Globe, Handshake, Home, Menu, Plus, QrCode, Settings, Users, X } from "lucide-react";
+import { BarChart3, Globe, Handshake, Home, MoreHorizontal, Plus, QrCode, Settings, Users } from "lucide-react";
 import { LogoutButton } from "@/components/LogoutButton";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -24,15 +24,24 @@ const navItems = [
   { href: "/app/configuracoes", icon: Settings, label: "Configurações" },
 ];
 
+// Navegação em abas no mobile (2026-09-06, pedido do Leonardo depois de
+// analisar o app do Linktree: "pense no Toqy como um app futuro" — o
+// Linktree usa uma barra fixa de abas no rodapé, não menu-hambúrguer). O
+// desktop continua com a sidebar de sempre (não faz sentido tab bar em
+// tela grande); no mobile os 3 itens mais usados ficam fixos + "Mais"
+// abre o resto (mesmo padrão do Linktree: itens essenciais + overflow).
+const MOBILE_TAB_ITEMS = [navItems[0], navItems[2], navItems[3]]; // Painel, QR Codes, Analytics
+const MOBILE_MORE_ITEMS = [navItems[1], navItems[4], navItems[5], navItems[6]]; // Novo cliente, Domínio, Revenda, Configurações
+
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [atLimit, setAtLimit] = useState(false);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [userInitial, setUserInitial] = useState("U");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
-  // Fecha o drawer mobile automaticamente ao navegar para outra rota
-  useEffect(() => { setSidebarOpen(false); }, [pathname]);
+  // Fecha o painel "Mais" automaticamente ao navegar
+  useEffect(() => { setMoreOpen(false); }, [pathname]);
 
   useEffect(() => {
     async function checkLimit() {
@@ -57,19 +66,16 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
   return (
     <main className="min-h-screen bg-bg text-ink lg:grid lg:grid-cols-[260px_1fr]">
-      {/* Fundo escuro atrás do menu, só em telas pequenas — clicar fora fecha */}
-      {sidebarOpen ? <div className="fixed inset-0 z-40 bg-ink/50 lg:hidden" onClick={() => setSidebarOpen(false)} /> : null}
-
-      <aside className={`fixed top-0 left-0 z-50 h-screen w-[260px] bg-card border-r border-border flex flex-col p-4 transition-transform duration-200 lg:static lg:h-auto lg:min-h-screen lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      {/* Sidebar — só desktop agora (2026-09-06: o mobile trocou o menu-
+          hambúrguer por uma barra de abas fixa no rodapé, ver mais abaixo
+          — mesmo padrão do app do Linktree que o Leonardo mandou). */}
+      <aside className="hidden lg:flex lg:h-auto lg:min-h-screen w-[260px] bg-card border-r border-border flex-col p-4">
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between px-2 py-4">
             <Link href="/" className="flex items-center gap-3">
               <img src="/brand/favicon-toqy.png" alt="TOQY" className="h-8 w-8 rounded-lg" />
               <span className="text-xl font-bold tracking-tight text-ink">Toqy</span>
             </Link>
-            <button type="button" onClick={() => setSidebarOpen(false)} className="text-muted hover:text-ink lg:hidden" aria-label="Fechar menu">
-              <X className="h-5 w-5" />
-            </button>
           </div>
 
           {atLimit ? (
@@ -107,10 +113,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
       <div className="flex flex-col min-w-0">
         <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 lg:px-8 shadow-sm z-10">
-          <div className="flex items-center gap-3 text-sm font-medium">
-            <button type="button" onClick={() => setSidebarOpen(true)} className="text-ink p-1 -ml-1 lg:hidden" aria-label="Abrir menu">
-              <Menu className="h-5 w-5" />
-            </button>
+          <div className="flex items-center gap-2">
+            <img src="/brand/favicon-toqy.png" alt="TOQY" className="h-7 w-7 rounded-lg lg:hidden" />
             <span className="text-ink font-semibold">Meu painel</span>
           </div>
           <div className="flex items-center gap-3">
@@ -122,16 +126,54 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <span className="text-sm font-black text-muted">{userInitial}</span>
               )}
             </Link>
-            <div className="lg:hidden scale-90">
+            <div className="hidden lg:block">
               <LogoutButton />
             </div>
           </div>
         </header>
 
-        <section className="min-w-0 p-4 md:p-8 flex-1">
+        {/* pb-24 no mobile: espaço pra barra de abas fixa não cobrir o
+            fim do conteúdo (a barra em si tem ~64px + área segura) */}
+        <section className="min-w-0 p-4 pb-24 md:p-8 lg:pb-8 flex-1">
           <div className="mx-auto max-w-7xl">{children}</div>
         </section>
       </div>
+
+      {/* Barra de abas fixa (mobile) — 3 essenciais + "Mais" (2026-09-06,
+          padrão do app do Linktree: nav de app de verdade em vez de menu
+          escondido atrás de hambúrguer). */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-border bg-card pb-[env(safe-area-inset-bottom)] lg:hidden">
+        {MOBILE_TAB_ITEMS.map((item) => {
+          const active = item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
+          return (
+            <Link key={item.href} href={item.href} className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-bold transition ${active ? "text-accent" : "text-muted"}`}>
+              <item.icon className="h-5 w-5" />
+              {item.label}
+            </Link>
+          );
+        })}
+        <button type="button" onClick={() => setMoreOpen((v) => !v)} className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-bold transition ${moreOpen ? "text-accent" : "text-muted"}`}>
+          <MoreHorizontal className="h-5 w-5" />
+          Mais
+        </button>
+      </nav>
+
+      {/* Painel "Mais" — sobe de baixo, mesmo padrão de bottom-sheet do
+          Linktree pro que não cabe na barra principal. */}
+      {moreOpen ? (
+        <>
+          <div className="fixed inset-0 z-40 bg-ink/40 lg:hidden" onClick={() => setMoreOpen(false)} />
+          <div className="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-50 rounded-t-3xl border border-border bg-card p-3 shadow-2xl lg:hidden">
+            {MOBILE_MORE_ITEMS.map((item) => {
+              const active = item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
+              return <Nav key={item.href} href={item.href} icon={<item.icon className="h-5 w-5" />} label={item.label} active={active} />;
+            })}
+            <div className="mt-2 border-t border-border pt-2">
+              <LogoutButton />
+            </div>
+          </div>
+        </>
+      ) : null}
     </main>
   );
 }
