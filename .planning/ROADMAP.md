@@ -130,6 +130,18 @@ vez dela, não todas de uma vez — mesmo princípio do GSD (`/gsd:plan-phase N`
   4. Reversível: botão de remover domínio tira ele do projeto na Vercel e do banco
 **Plans**: ✓ Código completo (migration `2026-09-05_custom_domains.sql`, `src/lib/vercelDomains.ts`, `src/app/api/domains/route.ts`, `src/middleware.ts`, `src/app/custom-domain/page.tsx`, `src/app/app/dominio/page.tsx`). ✓ Migration aplicada em produção (`leonardo-ecossistema`, 2026-09-05, colunas `custom_domain`/`custom_domain_status` confirmadas em `toqy_biosites`). **Pendente 1 passo manual do Leonardo**: criar um token na Vercel (conta que hospeda o toqyapp de verdade) e preencher `VERCEL_API_TOKEN`/`VERCEL_PROJECT_ID` nas env vars do projeto (ver `.env.example`) — sem isso a rota responde erro 502 amigável, não quebra o resto do app.
 
+### Phase 11: Segmentação de público (Pro Pessoal + landing dedicada)
+**Goal**: O toqy.com.br deixa de vender "planos de bio site" genéricos e passa a segmentar por público desde a primeira tela — "pro meu negócio" vs "pra vender" — cada um com sua página, seus planos e seu preço certo. Novo plano de entrada (Pro Pessoal, R$9,90/mês) fecha o buraco entre o Gratuito e o Essencial (que sempre foi pensado pra quem revende, não pra uso pessoal).
+**Depends on**: Phase 10 (domínio próprio) — o Pro Pessoal usa o mesmo sistema de add-on avulso
+**Requirements**: (novo, sem IDs formais — pedido direto do Leonardo, 2026-09-05)
+**Success Criteria**:
+  1. ✓ Plano "Pro" novo em `subscriptions.ts` (R$9,90/mês, 1 site, Pix/Wi-Fi/Catálogo/QR, sem arte/revenda)
+  2. ✓ Domínio próprio do Pro Pessoal é add-on avulso anual (R$59,90 sugerido), não recorrente
+  3. ✓ Figurinhas, música e preview de Instagram ao vivo — liberado Pro Pessoal + revenda, fora do Gratuito
+  4. ✓ Hero da landing com espaço de vídeo + 2 CTAs indo pra páginas dedicadas
+  5. ✓ `/para-mim` (Gratuito/Pro) e `/para-vender` (Essencial/Freelancer/Agência) no ar, cada uma com sua copy
+**Plans**: ✓ Código completo (commits desta sessão, 2026-09-05) — **pendente 3 passos manuais do Leonardo**: (a) criar produto recorrente "TOQY Pro" na Kiwify; (b) criar produto avulso "TOQY - Domínio Próprio" (anual); (c) preencher `KIWIFY_LINKS.pro`/`OVERAGE_LINKS.customDomain` em `subscriptions.ts` com os links reais assim que existirem. Fase 6 (login) do plano original desta sessão foi avaliada e não precisou de mudança — Google OAuth já funciona no código, só falta o Leonardo confirmar Client ID/Secret no painel do Supabase (não verificável via código/MCP).
+
 ## Progress
 
 **Execution Order:**
@@ -149,6 +161,7 @@ si, só dependem de 1), 9 por último.
 | 8. Geração de arte | 0/TBD | Not started | - |
 | 9. Conteúdo | 0/TBD | Not started | - |
 | 10. Domínio próprio | 1/1 (código) | Código completo, aguardando setup manual | 2026-09-05 |
+| 11. Segmentação de público | 1/1 (código) | Código completo, aguardando 2 produtos Kiwify | 2026-09-05 |
 
 \* Fase 2: código 100% completo (backend + frontend). Resta 1 passo manual
 fora de código, por revendedor: Leonardo cadastra o afiliado na Kiwify e
