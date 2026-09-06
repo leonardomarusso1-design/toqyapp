@@ -94,6 +94,12 @@ marca própria. Todos os planos pagos são assinatura mensal (decisão confirmad
 - [ ] CONT-02: Blog com títulos específicos (SEO pro público "quero renda extra", não "quero bio site")
 - [ ] CONT-03: Diretório "Consultor Certificado TOQY"
 
+**Decisão de produto — Gerador de arte com IA descontinuado dos planos (2026-09-06)**: removido de Essencial/Freelancer/Agência (features, copy, menu do painel). Motivo do Leonardo: "no começo o Toqy foi criado por causa das plaquinhas que eu estava fazendo, mas hoje quero ser concorrente do Linktree — a pessoa não vai vender plaquinha, vai vender bio site". A plaquinha física vira um sistema separado, a decidir depois — código de `/app/artes` e `/api/plaque-designs/generate` mantido (não deletado), só desacoplado da oferta atual.
+
+**Novo — Blocos reordenáveis + figurinhas livres + música própria (2026-09-06)**: `bodyBlockOrder` em `types.ts` deixa botões/catálogo/música/Instagram na ordem que o dono do bio site quiser (drag no editor). Figurinhas ganharam posição livre x/y arrastável no preview (banco próprio de emojis/formas, sem risco de direito autoral). Música agora é upload de verdade (hospedado no Supabase Storage do Toqy, limite ~60s/~4MB pelo teto real da Vercel). Registrado como não feito nesta rodada (fica pra próxima, ver ADIC-01 abaixo): posição x/y livre pra catálogo/botões (decisão técnica: quebraria em telas diferentes — só blocos reordenáveis, como Linktree/Beacons fazem), intercalar item a item dentro de um bloco, e melhorias específicas de catálogo (galeria de fotos por item, vídeo, selo de esgotado, "clica num item abre outro").
+
+- [ ] ADIC-01: Autonomia de layout, próxima etapa — editor de blocos mais profundo (cada item de catálogo/botão vira entidade própria, intercalável um a um) + melhorias de catálogo (galeria de fotos, vídeo, selo de esgotado, detalhe expandido tipo vitrine). Não iniciado.
+
 ### Out of Scope (por enquanto)
 
 - Reescrever o motor de bio site do zero — evolução, não substituição
