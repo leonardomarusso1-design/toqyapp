@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { ToqySite } from "@/lib/types";
 import { getSupabaseAdmin } from "@/lib/supabaseServer";
 import { PublicBioSiteServer } from "@/components/PublicBioSiteServer";
+import { toPublicSite } from "@/lib/publicSite";
 
 async function getBiosite(slug: string): Promise<ToqySite | null> {
   const supabase = getSupabaseAdmin();
@@ -13,7 +14,11 @@ async function getBiosite(slug: string): Promise<ToqySite | null> {
     .eq("slug", slug)
     .eq("status", "active")
     .maybeSingle();
-  return data?.site_data as ToqySite | null;
+  // Remove a chave de edicao ANTES de qualquer coisa chegar ao
+  // navegador (ver src/lib/publicSite.ts) — vulnerabilidade critica
+  // corrigida em 2026-09-06.
+  const site = data?.site_data as ToqySite | null;
+  return site ? toPublicSite(site) : null;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

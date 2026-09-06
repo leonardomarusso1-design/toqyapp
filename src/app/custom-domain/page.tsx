@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { ToqySite } from "@/lib/types";
 import { getSupabaseAdmin } from "@/lib/supabaseServer";
 import { PublicBioSiteServer } from "@/components/PublicBioSiteServer";
+import { toPublicSite } from "@/lib/publicSite";
 
 /**
  * Rota interna (nunca acessada por /custom-domain de verdade, só via o
@@ -29,7 +30,11 @@ async function getBiositeByDomain(domain: string): Promise<ToqySite | null> {
     .eq("custom_domain_status", "verified")
     .eq("status", "active")
     .maybeSingle();
-  return data?.site_data as ToqySite | null;
+  // Remove a chave de edicao ANTES de qualquer coisa chegar ao
+  // navegador (ver src/lib/publicSite.ts) — vulnerabilidade critica
+  // corrigida em 2026-09-06.
+  const site = data?.site_data as ToqySite | null;
+  return site ? toPublicSite(site) : null;
 }
 
 export async function generateMetadata(): Promise<Metadata> {

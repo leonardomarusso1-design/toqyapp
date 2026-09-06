@@ -1,5 +1,7 @@
 import { getSupabaseAdmin, hasSupabaseEnv } from "@/lib/supabaseServer";
 import { getMockSiteBySlug } from "@/lib/mockSites";
+import { toPublicSite } from "@/lib/publicSite";
+import type { ToqySite } from "@/lib/types";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -15,8 +17,14 @@ export async function GET(_req: Request, { params }: Params) {
     const supabase = getSupabaseAdmin()!;
     const { data, error } = await supabase.from("toqy_biosites").select("*").eq("slug", slug).single();
     if (!error && data) {
+      // Sanitizacao obrigatoria (2026-09-06, vulnerabilidade critica —
+      // ver src/lib/publicSite.ts): esta rota e PUBLICA, sem nenhuma
+      // autenticacao, e devolvia `site_data` cru — que carrega a chave
+      // de edicao em texto puro. Confirmado ao vivo em producao antes da
+      // correcao: GET /api/biosites/yakisabor entregava "editKey".
+      const site = toPublicSite(data.site_data as ToqySite);
       return Response.json(
-        { site: { ...data.site_data, id: data.id, slug: data.slug, status: data.status }, source: "supabase" },
+        { site: { ...site, id: data.id, slug: data.slug, status: data.status }, source: "supabase" },
         { headers: CACHE_HEADERS }
       );
     }
@@ -26,18 +34,24 @@ export async function GET(_req: Request, { params }: Params) {
   return Response.json({ site, source: "mock" }, { headers: CACHE_HEADERS });
 }
 
-export async function PATCH(request: Request, { params }: Params) {
-  const { slug } = await params;
-  const body = await request.json().catch(() => ({}));
-  const { site, edit_key } = body as { site: Record<string, unknown>; edit_key?: string };
-  if (!hasSupabaseEnv()) return Response.json({ ok: true, source: "mock" });
-  const supabase = getSupabaseAdmin()!;
-  // Comparação via RPC (2026-07-17) — edit_key_hash é bcrypt de verdade.
-  if (edit_key) {
-    const { data: keyValid } = await supabase.rpc("verify_biosite_key", { p_slug: slug, p_key: edit_key });
-    if (!keyValid) return Response.json({ error: "Chave invalida" }, { status: 401 });
-  }
-  const { error } = await supabase.from("toqy_biosites").update({ site_data: site, status: (site?.status as string) ?? "active", updated_at: new Date().toISOString() }).eq("slug", slug);
-  if (error) return Response.json({ error: error.message }, { status: 500 });
-  return Response.json({ ok: true, source: "supabase" });
-}
+// PATCH REMOVIDO (2026-09-06) — era uma vulnerabilidade crítica.
+//
+// A checagem de autorização estava DENTRO de um `if (edit_key)`:
+//
+//   if (edit_key) {
+//     const { data: keyValid } = await supabase.rpc("verify_biosite_key", ...);
+//     if (!keyValid) return 401;
+//   }
+//   await supabase.from("toqy_biosites").update({ site_data: site }).eq("slug", slug);
+//
+// Ou seja: bastava NÃO enviar `edit_key` para pular a verificação inteira
+// e cair direto no `update`, que roda com service role (ignora RLS).
+// Qualquer pessoa que soubesse o slug — e slugs são públicos, estão na
+// URL — podia sobrescrever o bio site de qualquer cliente: trocar a
+// CHAVE PIX (desviando pagamento), o número de WhatsApp (interceptando
+// contato) ou tirar o site do ar.
+//
+// A rota foi REMOVIDA em vez de corrigida porque era código morto: nada
+// no app a chamava (só `showcaseSiteCache.ts` usa o GET acima). O
+// caminho real de salvamento é POST /api/biosite/save, que sempre exige
+// a chave, valida por dono e tem rate limit.
