@@ -22,9 +22,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Node 22 (2026-09-06): a primeira rodada deste CI quebrou com
+      # "Node.js 20 detected without native WebSocket support" vindo do
+      # @supabase/realtime-js. WebSocket nativo só existe a partir do
+      # Node 22 — no 20 a lib exige o pacote `ws` como transporte. Além
+      # disso, o runtime da Vercel hoje é Node 22: CI rodando numa versão
+      # diferente da produção testa outra coisa.
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Instalar dependências

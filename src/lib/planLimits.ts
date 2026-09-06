@@ -1,44 +1,19 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
+import { PLAN_BIOSITE_LIMITS, PLAN_AI_ART_CREDITS, type PlanTier } from "./planConstants";
 
-export const PLAN_BIOSITE_LIMITS = {
-  free: 1,
-  // Pro Pessoal (2026-09-05): 1 site só, de propósito — é pro público que
-  // só quer o próprio bio site, não pra revender (ver subscriptions.ts).
-  pro: 1,
-  community: 10,
-  freelancer: 20,
-  agency: 100,
-} as const;
-
-// Créditos VITALÍCIOS de geração de arte com IA por plano (2026-07-13,
-// ajustado 2026-07-16, restaurado no Freelancer na Fase 1 do roadmap
-// 2026-07-16 — ver .planning/ROADMAP.md e src/lib/subscriptions.ts). O
-// Freelancer virou assinatura mensal e precisava de diferencial real
-// frente ao Essencial — ganhou o dobro dos créditos dele (10 vs 5) pra
-// justificar o preço mais alto (R$39,90 vs R$29,90). Números iniciais,
-// ajustar conforme custo real observado (~R$0,20-0,25 por geração via
-// gpt-image-2) — se a demanda for maior que isso, o caminho é vender
-// pacotes de créditos extras via Kiwify, não aumentar o limite grátis.
+// As constantes saíram daqui pra `planConstants.ts` em 2026-09-06 — este
+// módulo importa `supabaseClient`, que CRIA o cliente no import, então
+// quem só queria o número do limite de um plano acabava subindo um
+// cliente Supabase com WebSocket junto (foi o que quebrou o CI em um
+// teste de lógica pura, ver comentário completo em planConstants.ts).
 //
-// Nota: Essencial e Freelancer agora são recorrentes mensais (não mais
-// pagamento único) — "vitalício" neles soa estranho a longo prazo
-// (créditos que nunca resetam mesmo pagando todo mês). Reset mensal de
-// créditos pra esses planos é uma melhoria futura razoável, não
-// implementada agora (exigiria um job recorrente pra zerar
-// ai_art_credits_used).
-export const PLAN_AI_ART_CREDITS = {
-  free: 0,
-  // Pro Pessoal não inclui gerador de arte de propósito (decisão do
-  // Leonardo, 2026-09-05) — é um recurso pensado pra quem entrega bio
-  // site + plaquinha física pra CLIENTE (revenda), não pro uso pessoal.
-  pro: 0,
-  community: 5,
-  freelancer: 10,
-  agency: 50,
-} as const;
-
-type PlanTier = keyof typeof PLAN_BIOSITE_LIMITS;
+// A reexportação abaixo existe pra não quebrar os arquivos que já
+// importavam essas constantes daqui. Código NOVO que precise só das
+// constantes deve importar direto de `./planConstants`, sem passar por
+// este módulo.
+export { PLAN_BIOSITE_LIMITS, PLAN_AI_ART_CREDITS };
+export type { PlanTier };
 
 export type BiositeLimitCheckResult = {
   allowed: boolean;

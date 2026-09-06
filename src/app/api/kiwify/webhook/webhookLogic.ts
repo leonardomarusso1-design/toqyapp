@@ -3,7 +3,7 @@
 // simular um Request/Supabase inteiro. route.ts importa e usa estas
 // funções; os testes em webhookLogic.test.ts cobrem só isto.
 
-import { PLAN_BIOSITE_LIMITS } from "@/lib/planLimits";
+import { PLAN_BIOSITE_LIMITS } from "@/lib/planConstants";
 
 // Bug real corrigido (2026-07-16, achado investigando um scenario do Make):
 // o limite do plano "comunidade" (Essencial) estava HARDCODED em 20 aqui,
