@@ -226,20 +226,26 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* COMO FUNCIONA — reescrito neutro (2026-09-06), sem prints soltos */}
-      <section id="como-funciona" className="bg-bg py-20">
-        <div className="mx-auto max-w-7xl px-5">
-          <div className="text-center">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Como funciona</p>
-            <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-ink md:text-5xl">Do zero ao ar em poucos minutos</h2>
-          </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {steps.map((s) => (
-              <article key={s.n} className="card-glow relative rounded-[1.75rem] border border-border bg-card p-8 shadow-sm">
-                <span className="gradient-text text-6xl font-extrabold">{s.n}</span>
-                <h3 className="mt-4 text-xl font-bold text-ink">{s.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted">{s.text}</p>
-              </article>
+      {/* COMO FUNCIONA — bloco escuro de propósito (2026-09-06, polimento
+          visual pedido pelo Leonardo): quebra o padrão "card branco
+          arredondado" repetido em toda seção — contraste de fundo entre
+          seções é uma das formas mais simples de parar de parecer
+          template (ver skill frontend-design: "evite layout previsível").
+          Números gigantes fora do card, texto alinhado à esquerda numa
+          linha vertical conectada, em vez de 3 cards centralizados iguais. */}
+      <section id="como-funciona" className="bg-ink py-24 text-white">
+        <div className="mx-auto max-w-4xl px-5">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Como funciona</p>
+          <h2 className="mt-3 max-w-md text-4xl font-extrabold tracking-tight md:text-5xl">Do zero ao ar em poucos minutos.</h2>
+          <div className="mt-16 space-y-0">
+            {steps.map((s, i) => (
+              <div key={s.n} className={`flex gap-6 border-white/10 py-8 md:gap-10 ${i > 0 ? "border-t" : ""}`}>
+                <span className="shrink-0 font-display text-6xl font-extrabold text-white/15 md:text-7xl">{s.n}</span>
+                <div className="pt-2">
+                  <h3 className="text-2xl font-bold md:text-3xl">{s.title}</h3>
+                  <p className="mt-2 max-w-md text-white/60">{s.text}</p>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -254,14 +260,25 @@ export default async function LandingPage() {
           <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-ink md:text-5xl">Tudo que seu link da bio pode fazer</h2>
           <p className="mx-auto mt-4 max-w-2xl text-muted">Coloque no link da bio do seu Instagram — pessoal ou de negócio — e concentre atendimento, pagamento, localização, catálogo e avaliação numa página só.</p>
         </div>
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {features.map(([title, text, Icon]) => (
-            <article key={title} className="card-glow rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 text-accent">
-                <Icon className="h-6 w-6" />
+        {/* Bento assimétrico (2026-09-06, polimento visual) — o primeiro
+            card (WhatsApp, o canal mais usado de longe) ganha destaque
+            de tamanho e cor cheia; o resto segue em grid menor. Quebra a
+            grade uniforme de 4 colunas iguais que lia como template. */}
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {features.map(([title, text, Icon], i) => (
+            <article
+              key={title}
+              className={
+                i === 0
+                  ? "card-glow rounded-[1.75rem] bg-ink p-7 text-white shadow-sm sm:col-span-2 sm:row-span-2 sm:p-9"
+                  : "card-glow rounded-2xl border border-border bg-card p-6 shadow-sm"
+              }
+            >
+              <div className={i === 0 ? "flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-accent" : "flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 text-accent"}>
+                <Icon className={i === 0 ? "h-7 w-7" : "h-6 w-6"} />
               </div>
-              <h3 className="mt-5 text-lg font-bold text-ink">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted">{text}</p>
+              <h3 className={i === 0 ? "mt-6 text-2xl font-extrabold" : "mt-5 text-lg font-bold text-ink"}>{title}</h3>
+              <p className={i === 0 ? "mt-2 max-w-xs text-sm leading-relaxed text-white/60" : "mt-2 text-sm leading-relaxed text-muted"}>{text}</p>
             </article>
           ))}
         </div>
