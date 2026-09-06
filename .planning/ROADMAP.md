@@ -153,6 +153,7 @@ vez dela, não todas de uma vez — mesmo princípio do GSD (`/gsd:plan-phase N`
   4. **Selo de verificação** — precisa de um processo de moderação/verificação por trás, não é só um badge visual.
   5. **Captura de e-mail/WhatsApp de visitantes** (aba "Público" do Linktree: "Suas ferramentas de captura de público") — a parte de armazenar e listar contatos é viável rápido; a parte de "campanha de e-mail marketing" que o Linktree também oferece ali é maior.
   6. **Banners de causa** (Anti-Racism, Pride, etc., com toggle e link pra ação) e **coleções sazonais de figurinhas com curadoria** ("Daisy Chain Fields Festival") — o Toqy já tem a base de figurinhas livres (emoji + formas, arrastáveis); virar "coleções com tema/prazo" é decisão de conteúdo contínuo, não só código.
+  7. **Conectar a CONTA do Spotify via OAuth** (2026-09-06, 2ª rodada) — o Toqy já tem link direto de faixa/álbum/playlist do Spotify (ícone/botão/prévia, ver `spotifyUrl`/`spotifyDisplay` em `types.ts`); "Show links to all available streaming services" do Linktree (conectar a conta pra puxar todas as plataformas automaticamente) é integração de OAuth de verdade, mesma categoria dos outros itens desta fase.
 **Success Criteria**: TBD por item, quando o Leonardo priorizar algum
 **Plans**: TBD
 

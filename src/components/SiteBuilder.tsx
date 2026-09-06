@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, CheckCircle2, Copy, ExternalLink, Eye, Images, Loader2, MessageCircle, Plus, Save, Share2, Trash2, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import type { CatalogItem, CatalogLayout, ThemePreset, ToqySite } from "@/lib/types";
+import type { CatalogItem, CatalogLayout, ColorRole, ColorValue, ThemePreset, ToqySite } from "@/lib/types";
 import { createEditUrl, createPublicUrl, generateSlug } from "@/lib/dataProvider";
+import { COLOR_ROLES } from "@/lib/colorRoles";
 import { RealTemplateGallery } from "./RealTemplateGallery";
 import { syncBiositeToSupabase } from "@/lib/biositeSync";
 import { checkBiositeLimit } from "@/lib/planLimits";
@@ -32,7 +33,7 @@ import { DragHandle, DragReorderList } from "./DragReorderList";
 const BODY_BLOCK_LABELS: Record<"buttons" | "catalog" | "music" | "instagram", string> = {
   buttons: "Botões grandes",
   catalog: "Catálogo",
-  music: "Música",
+  music: "Botão do Spotify", // música de FUNDO não ocupa slot (é ambiente, sem posição no layout)
   instagram: "Preview do Instagram",
 };
 const DEFAULT_BODY_BLOCK_ORDER: Array<"buttons" | "catalog" | "music" | "instagram"> = ["buttons", "catalog", "music", "instagram"];
@@ -84,11 +85,11 @@ function normalizeToHex(input: string): string {
   }
 }
 
-function ColorPicker({ label, hint, value, onChange }: { label: string; hint: string; value: string; onChange: (v: string) => void }) {
+// Um único seletor sólido (swatch + hex) — usado pelo ColorPicker abaixo
+// tanto pro modo "Sólida" quanto pros 2 lados (de/para) do "Gradiente".
+function HexSwatchInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [local, setLocal] = useState(value);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Sincroniza se prop mudar externamente
   useEffect(() => { setLocal(value); }, [value]);
 
   function handleColorChange(v: string) {
@@ -99,25 +100,71 @@ function ColorPicker({ label, hint, value, onChange }: { label: string; hint: st
   }
 
   const safeHex = normalizeToHex(local);
-
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
-      <label className="relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center">
-        <span className="h-10 w-10 rounded-full border-2 border-[#ffffff] shadow-md ring-1 ring-border transition hover:scale-110" style={{ background: local }} />
+    <div className="flex items-center gap-2">
+      <label className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center">
+        <span className="h-9 w-9 rounded-full border-2 border-[#ffffff] shadow-md ring-1 ring-border transition hover:scale-110" style={{ background: local }} />
         <input type="color" value={safeHex}
           onChange={(e) => handleColorChange(e.target.value)}
           className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
       </label>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-black text-ink">{label}</p>
-        <p className="truncate text-xs text-muted">{hint}</p>
-        <input type="text" value={local}
-          onChange={(e) => { if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) handleColorChange(e.target.value); }}
-          className="mt-1 w-full rounded-lg border border-border bg-surface px-2 py-1 font-mono text-xs text-ink outline-none focus:border-accent"
-          maxLength={7} />
+      <input type="text" value={local}
+        onChange={(e) => { if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) handleColorChange(e.target.value); }}
+        className="w-full min-w-0 flex-1 rounded-lg border border-border bg-surface px-2 py-1 font-mono text-xs text-ink outline-none focus:border-accent"
+        maxLength={7} />
+    </div>
+  );
+}
+
+// Reforma completa (2026-09-06) — antes era só sólido; agora cada role
+// aceita sólido OU gradiente (ColorValue, ver types.ts/colorRoles.ts).
+// Reaproveita HexSwatchInput acima pros 2 lados do gradiente.
+function ColorPicker({ label, hint, value, onChange }: { label: string; hint: string; value: ColorValue; onChange: (v: ColorValue) => void }) {
+  const isGradient = value.mode === "gradient";
+  return (
+    <div className="rounded-2xl border border-border bg-card p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-black text-ink">{label}</p>
+          <p className="truncate text-xs text-muted">{hint}</p>
+        </div>
+        <div className="flex shrink-0 overflow-hidden rounded-full border border-border text-[10px] font-black">
+          <button type="button" onClick={() => !isGradient || onChange({ mode: "solid", value: value.from })} className={`px-2.5 py-1.5 transition ${!isGradient ? "bg-accent text-white" : "text-muted hover:bg-surface"}`}>Sólida</button>
+          <button type="button" onClick={() => isGradient || onChange({ mode: "gradient", from: value.value, to: value.value })} className={`px-2.5 py-1.5 transition ${isGradient ? "bg-accent text-white" : "text-muted hover:bg-surface"}`}>Gradiente</button>
+        </div>
+      </div>
+      <div className="mt-2">
+        {isGradient ? (
+          <div className="grid grid-cols-2 gap-2">
+            <HexSwatchInput value={value.from} onChange={(v) => onChange({ mode: "gradient", from: v, to: value.to })} />
+            <HexSwatchInput value={value.to} onChange={(v) => onChange({ mode: "gradient", from: value.from, to: v })} />
+          </div>
+        ) : (
+          <HexSwatchInput value={value.value} onChange={(v) => onChange({ mode: "solid", value: v })} />
+        )}
       </div>
     </div>
   );
+}
+
+// Cor de partida sensata pra cada role, na primeira vez que o editor
+// mostra o campo (antes de o usuário ter escolhido algo) — usa os
+// valores base do tema atual (que continuam existindo como "seed"
+// interno, nunca mais expostos como controle duplicado na tela).
+function roleFallback(role: ColorRole, site: ToqySite): string {
+  const t = site.theme;
+  const map: Partial<Record<ColorRole, string>> = {
+    pageBackground: t.background,
+    name: t.text, title: t.muted, location: t.muted, description: t.muted, logoText: t.text,
+    buttonBg: t.primary, buttonText: t.text, buttonBorder: t.primary,
+    socialIconBg: t.primary,
+    saveContactText: t.text, callText: t.text, wifiText: t.text,
+    catalogSectionLabel: t.accent, catalogTitle: t.text, catalogItemBg: t.card,
+    catalogItemName: t.text, catalogItemDesc: t.muted, catalogItemPrice: t.accent,
+    catalogItemHighlight: "#b45309", catalogActionBg: t.primary, catalogActionText: "#ffffff",
+    modalIconBg: t.primary, footerCreditText: t.primary,
+  };
+  return map[role] ?? t.text;
 }
 
 function updateCatalogItem(items: CatalogItem[], index: number, patch: Partial<CatalogItem>) {
@@ -394,7 +441,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   function setContact(patch: Partial<ToqySite["contact"]>) { update((s) => ({ ...s, contact: { ...s.contact, ...patch } })); }
   function setLinks(patch: Partial<ToqySite["links"]>) { update((s) => ({ ...s, links: { ...s.links, ...patch } })); }
   function setTheme(patch: Partial<ToqySite["theme"]>) { update((s) => ({ ...s, theme: { ...s.theme, ...patch } })); }
-  function setColor(key: string, value: string) { update((s) => ({ ...s, theme: { ...s.theme, colors: { ...s.theme.colors, [key]: value || undefined } } })); }
+  function setColor(key: ColorRole, value: ColorValue) { update((s) => ({ ...s, theme: { ...s.theme, colors: { ...s.theme.colors, [key]: value } } })); }
   // Arrastar figurinha no preview ao vivo (2026-09-06) — chamado a cada
   // pointermove pelo PublicBioSite quando `onStickerMove` é passado (só
   // acontece aqui no editor; o bio site público de verdade nunca recebe
@@ -402,7 +449,13 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   function handleStickerMove(id: string, x: number, y: number) {
     update((s) => ({ ...s, stickers: (s.stickers ?? []).map((st) => (st.id === id ? { ...st, x, y } : st)) }));
   }
-  function getColor(key: string, fallback: string) { return (site.theme.colors as Record<string, string> | undefined)?.[key] ?? fallback; }
+  // Normaliza pra ColorValue mesmo se o site foi salvo antes da reforma
+  // (valor antigo era string simples — vira sólido automaticamente).
+  function getColor(key: ColorRole, fallback: string): ColorValue {
+    const raw = site.theme.colors?.[key] as ColorValue | string | undefined;
+    if (raw === undefined) return { mode: "solid", value: fallback };
+    return typeof raw === "string" ? { mode: "solid", value: raw } : raw;
+  }
 
   function selectTheme(preset: ThemePreset) {
     update((s) => ({
@@ -642,7 +695,22 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
               <div className="mb-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
                 <strong>💡 Dica para melhor resultado:</strong> Use imagem <strong>1080×1920px</strong> (formato celular). A imagem fica fixa e o conteúdo rola por cima — ela não vai esticar.
               </div>
-              <ImageUploadField label="" value={site.profile.backgroundImageUrl} onChange={(url) => setProfile({ backgroundImageUrl: url })} placeholder="URL da imagem de fundo" slug={site.slug} fieldId="background" editKey={site.editKey} />
+              <ImageUploadField
+                label=""
+                value={site.profile.backgroundImageUrl}
+                onChange={(url) => setProfile({ backgroundImageUrl: url })}
+                placeholder="URL da imagem de fundo"
+                slug={site.slug}
+                fieldId="background"
+                editKey={site.editKey}
+                showPositionControl
+                position={site.profile.backgroundImagePosition ?? "center"}
+                onPositionChange={(pos) => setProfile({ backgroundImagePosition: pos })}
+              />
+              {/* Reposicionamento (2026-09-06, resolve o "tela corta" achado
+                  ao vivo em toqy.com.br/b/yakisabor) — antes o fundo usava
+                  sempre "centro/topo" fixo, cortando texto de imagens que
+                  não foram desenhadas pra proporção de celular. */}
               <ImageGuidelineHint type="background" />
               <label className="mt-2 flex items-center gap-1.5 text-xs font-black text-ink">
                 <input type="checkbox" checked={site.theme.useBackgroundOverlay} onChange={(e) => setTheme({ useBackgroundOverlay: e.target.checked })} />
@@ -651,101 +719,50 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             </label>
           </div>
 
-          {/* Cores separadas por funcao */}
+          {/* Reforma completa (2026-09-06, pedido do Leonardo: "remove
+              tudo que for configuração de cor e refaça um por um... cada
+              lugar tem que ter como mudar a cor individual, tanto sólida
+              quanto gradiente"). Causa raiz do "muitos lugares
+              repetidos": antes coexistiam um sistema "global" (theme.
+              primary/text/muted/accent/card, editável direto aqui) E um
+              granular por elemento — o mesmo conceito aparecia em 2
+              controles diferentes (ex: "Cor dos botões" E "Fundo dos
+              botões" eram a mesma coisa, "Fundo dos cards" existia 2x).
+              Agora existe 1 controle por lugar reconhecível do biosite,
+              cada um sólido OU gradiente (ver COLOR_ROLES em
+              src/lib/colorRoles.ts pra lista completa) — nada de campo
+              "global" separado escondendo qual controle realmente manda. */}
           <div className="mt-5 space-y-4">
-            {/* Fundo */}
-            <div className="rounded-3xl border border-border bg-surface p-5">
-              <p className="text-sm font-black text-ink">Fundo do bio site</p>
-              <p className="mt-0.5 text-xs text-muted">Define a cor de fundo da pagina inteira.</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <ColorPicker label="Cor do fundo" hint={site.theme.backgroundType === "gradient" ? "Inicio do gradiente" : "Cor solida de fundo"} value={site.theme.background} onChange={(v) => setTheme({ background: v })} />
-                {site.theme.backgroundType === "gradient" ? (
-                  <ColorPicker label="Cor 2 do gradiente" hint="Fim do gradiente (mistura com a cor 1)" value={site.theme.gradientTo} onChange={(v) => setTheme({ gradientTo: v })} />
+            {Object.entries(
+              Object.entries(COLOR_ROLES).reduce<Record<string, ColorRole[]>>((acc, [role, meta]) => {
+                acc[meta.group] = [...(acc[meta.group] ?? []), role as ColorRole];
+                return acc;
+              }, {})
+            ).map(([group, roles]) => (
+              <div key={group} className="rounded-3xl border border-border bg-surface p-5">
+                <p className="text-sm font-black text-ink">{group}</p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {roles.map((role) => {
+                    // Modo translúcido/glass já é automático (ver
+                    // buttonStyle/social icon em PublicBioSite.tsx) —
+                    // esconder o controle de cor de fundo evita a pessoa
+                    // configurar uma cor que não vai aparecer.
+                    if (role === "buttonBg" && site.theme.buttonFill !== "solid") return null;
+                    const meta = COLOR_ROLES[role];
+                    return <ColorPicker key={role} label={meta.label} hint={meta.hint} value={getColor(role, roleFallback(role, site))} onChange={(v) => setColor(role, v)} />;
+                  })}
+                </div>
+                {group === "Botões" && site.theme.buttonFill !== "solid" ? (
+                  <p className="mt-3 rounded-xl bg-card p-3 text-xs text-muted">Preenchimento é <strong>{site.theme.buttonFill === "glass" ? "Translúcido" : "Gradiente"}</strong> (ver etapa acima) — nesse modo o fundo dos botões é automático. Mude pra <strong>Sólido</strong> pra escolher a cor/gradiente aqui.</p>
+                ) : null}
+                {group === "Ícones sociais" ? (
+                  <label className="mt-3 flex items-center gap-1.5 text-xs font-black text-ink">
+                    <input type="checkbox" checked={Boolean(site.theme.socialIconTranslucent)} onChange={(e) => setTheme({ socialIconTranslucent: e.target.checked })} />
+                    Fundo translúcido (efeito vidro fosco)
+                  </label>
                 ) : null}
               </div>
-            </div>
-            {/* Botoes */}
-            <div className="rounded-3xl border border-border bg-surface p-5">
-              <p className="text-sm font-black text-ink">Botoes</p>
-              <p className="mt-0.5 text-xs text-muted">Cor de fundo e texto dos botoes principais.</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <ColorPicker label="Cor dos botoes" hint="Fundo dos botoes e links" value={site.theme.primary} onChange={(v) => setTheme({ primary: v })} />
-                <ColorPicker label="Gradiente dos botoes" hint="Segunda cor (botoes gradiente)" value={site.theme.secondary} onChange={(v) => setTheme({ secondary: v })} />
-              </div>
-            </div>
-            {/* Texto e destaques */}
-            <div className="rounded-3xl border border-border bg-surface p-5">
-              <p className="text-sm font-black text-ink">Textos e destaques</p>
-              <p className="mt-0.5 text-xs text-muted">Cor dos textos, precos e rotulos no bio site.</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <ColorPicker label="Texto principal" hint="Nome, descricao, labels" value={site.theme.text} onChange={(v) => setTheme({ text: v })} />
-                <ColorPicker label="Texto secundario" hint="Subtitulos e hints" value={site.theme.muted} onChange={(v) => setTheme({ muted: v })} />
-                <ColorPicker label="Destaque / Preco" hint="Precos, rotulos, badges" value={site.theme.accent} onChange={(v) => setTheme({ accent: v })} />
-              </div>
-            </div>
-            {/* Cards */}
-            <div className="rounded-3xl border border-border bg-surface p-5">
-              <p className="text-sm font-black text-ink">Cards e paineis</p>
-              <p className="mt-0.5 text-xs text-muted">Cor de fundo dos cartoes e modais internos.</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <ColorPicker label="Fundo dos cards" hint="Cards, modais, secoes" value={site.theme.card} onChange={(v) => setTheme({ card: v })} />
-              </div>
-            </div>
-
-            {/* CORES GRANULARES */}
-            <div className="rounded-3xl border border-border bg-surface p-5">
-              <p className="text-sm font-black text-ink">🎨 Cores por elemento</p>
-              <p className="mt-0.5 text-xs text-muted mb-4">Personalize cada parte separadamente. Deixe em branco para usar a cor geral do tema.</p>
-
-              <details className="mb-3">
-                <summary className="cursor-pointer text-xs font-black text-ink py-1">Textos do perfil (nome, subtítulo, endereço...)</summary>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <ColorPicker label="Nome do negócio" hint="Título principal" value={getColor("name", site.theme.text)} onChange={(v) => setColor("name", v)} />
-                  <ColorPicker label="Subtítulo/segmento" hint="Ex: Dentista, Barbearia" value={getColor("title", site.theme.muted)} onChange={(v) => setColor("title", v)} />
-                  <ColorPicker label="Endereço/localização" hint="Linha do endereço" value={getColor("location", site.theme.muted)} onChange={(v) => setColor("location", v)} />
-                  <ColorPicker label="Descrição" hint="Texto de apresentação" value={getColor("description", site.theme.muted)} onChange={(v) => setColor("description", v)} />
-                  <ColorPicker label="Texto decorativo/assinatura" hint="Texto abaixo da logo" value={getColor("logoText", site.theme.text)} onChange={(v) => setColor("logoText", v)} />
-                </div>
-              </details>
-
-              <details className="mb-3">
-                <summary className="cursor-pointer text-xs font-black text-ink py-1">Botões Salvar Contato, Ligar e Wi-Fi</summary>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <ColorPicker label="Texto — Salvar Contato" hint="Cor do texto do botão" value={getColor("saveContactText", site.theme.text)} onChange={(v) => setColor("saveContactText", v)} />
-                  <ColorPicker label="Texto — Ligar" hint="Cor do texto do botão" value={getColor("callText", site.theme.text)} onChange={(v) => setColor("callText", v)} />
-                  <ColorPicker label="Texto — Wi-Fi inline" hint="Cor do texto de rede/senha" value={getColor("wifiText", site.theme.text)} onChange={(v) => setColor("wifiText", v)} />
-                </div>
-              </details>
-
-              <details className="mb-3">
-                <summary className="cursor-pointer text-xs font-black text-ink py-1">Botões grandes (Agendar, Pix, etc.)</summary>
-                <div className="mt-3">
-                  {site.theme.buttonFill === "glass" ? (
-                    <p className="text-xs text-muted rounded-xl bg-surface p-3">No modo <strong>Translúcido</strong> as cores dos botões são automáticas. Mude o preenchimento para <strong>Sólido</strong> para personalizar as cores.</p>
-                  ) : (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <ColorPicker label="Fundo dos botões" hint="Cor de fundo" value={getColor("buttonBg", site.theme.primary)} onChange={(v) => setColor("buttonBg", v)} />
-                      <ColorPicker label="Texto dos botões" hint="Cor do texto/ícone" value={getColor("buttonText", site.theme.text)} onChange={(v) => setColor("buttonText", v)} />
-                      <ColorPicker label="Borda dos botões" hint="Cor da borda" value={getColor("buttonBorder", site.theme.primary)} onChange={(v) => setColor("buttonBorder", v)} />
-                    </div>
-                  )}
-                </div>
-              </details>
-
-              <details>
-                <summary className="cursor-pointer text-xs font-black text-ink py-1">Catálogo (cards, preços, botões)</summary>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <ColorPicker label="Título do catálogo" hint="Ex: Nossos Serviços" value={getColor("catalogTitle", site.theme.text)} onChange={(v) => setColor("catalogTitle", v)} />
-                  <ColorPicker label="Fundo dos cards" hint="Cor de fundo de cada card" value={getColor("catalogItemBg", site.theme.card)} onChange={(v) => setColor("catalogItemBg", v)} />
-                  <ColorPicker label="Nome do item" hint="Titulo do serviço/produto" value={getColor("catalogItemName", site.theme.text)} onChange={(v) => setColor("catalogItemName", v)} />
-                  <ColorPicker label="Descrição do item" hint="Texto descritivo" value={getColor("catalogItemDesc", site.theme.muted)} onChange={(v) => setColor("catalogItemDesc", v)} />
-                  <ColorPicker label="Preço" hint="Valor em R$" value={getColor("catalogItemPrice", site.theme.accent)} onChange={(v) => setColor("catalogItemPrice", v)} />
-                  <ColorPicker label="Badge/Destaque" hint="Cor do rótulo especial" value={getColor("catalogItemHighlight", "#b45309")} onChange={(v) => setColor("catalogItemHighlight", v)} />
-                  <ColorPicker label="Fundo botão de ação" hint="Ex: Ver, Agendar" value={getColor("catalogActionBg", site.theme.primary)} onChange={(v) => setColor("catalogActionBg", v)} />
-                  <ColorPicker label="Texto botão de ação" hint="Cor do texto" value={getColor("catalogActionText", "#ffffff")} onChange={(v) => setColor("catalogActionText", v)} />
-                </div>
-              </details>
-            </div>
+            ))}
           </div>
 
           {/* FIGURINHAS + MÚSICA + INSTAGRAM (2026-09-05/06, pedido do
@@ -795,11 +812,37 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                     </div>
                   ) : null}
                 </div>
+                {/* Música de fundo (2026-09-06, 2ª revisão — o Leonardo
+                    testou o player visível e pediu pra tirar: "tire o de
+                    deixar o player da música aparecendo"). Toca sozinha,
+                    sem controles visíveis, no volume escolhido aqui —
+                    ver BackgroundMusicPlayer em PublicBioSite.tsx. */}
                 <div>
-                  <span className={label}>Música</span>
+                  <span className={label}>Música de fundo</span>
+                  <p className="mt-0.5 text-xs text-muted">Toca sozinha quando a pessoa abre o biosite, sem player visível.</p>
                   <div className="mt-2">
-                    <AudioUploadField value={site.musicUrl} onChange={(url) => update((s) => ({ ...s, musicUrl: url }))} slug={site.slug} editKey={site.editKey} />
+                    <AudioUploadField value={site.backgroundMusicUrl ?? site.musicUrl} onChange={(url) => update((s) => ({ ...s, backgroundMusicUrl: url, musicUrl: undefined }))} slug={site.slug} editKey={site.editKey} />
                   </div>
+                  {(site.backgroundMusicUrl ?? site.musicUrl) ? (
+                    <label className="mt-3 block">
+                      <span className="text-xs font-black text-ink">Volume ({site.backgroundMusicVolume ?? 40}%)</span>
+                      <input type="range" min={0} max={100} value={site.backgroundMusicVolume ?? 40} onChange={(e) => update((s) => ({ ...s, backgroundMusicVolume: Number(e.target.value) }))} className="mt-1 w-full accent-accent" />
+                    </label>
+                  ) : null}
+                </div>
+                {/* Botão do Spotify (2026-09-06) — molde do "Music Link" do
+                    Linktree: link direto pra uma faixa/álbum (sem conectar
+                    conta), com label editável e 3 formatos de exibição. */}
+                <div>
+                  <span className={label}>Botão do Spotify</span>
+                  <p className="mt-0.5 text-xs text-muted">Link direto de uma faixa, álbum ou playlist do Spotify.</p>
+                  <input className={`${field}`} value={site.spotifyUrl ?? ""} onChange={(e) => update((s) => ({ ...s, spotifyUrl: e.target.value }))} placeholder="https://open.spotify.com/track/..." />
+                  {site.spotifyUrl ? (
+                    <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                      <label><span className="text-xs font-black text-ink">Texto do botão</span><input className={field} value={site.spotifyLabel ?? ""} onChange={(e) => update((s) => ({ ...s, spotifyLabel: e.target.value }))} placeholder="Ouça minha música" /></label>
+                      <label><span className="text-xs font-black text-ink">Formato</span><select className={field} value={site.spotifyDisplay ?? "button"} onChange={(e) => update((s) => ({ ...s, spotifyDisplay: e.target.value as "icon" | "button" | "preview" }))}><option value="button">Botão com texto</option><option value="icon">Só ícone</option><option value="preview">Prévia embutida</option></select></label>
+                    </div>
+                  ) : null}
                 </div>
                 <div>
                   <span className={label}>Posts do Instagram (adicione quantos quiser)</span>

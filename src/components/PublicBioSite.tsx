@@ -28,6 +28,7 @@ import type { CatalogItem, CatalogLayout, ToqyButton, ToqyLinkType, ToqySite } f
 import { buttonHref, createVCard, pixPayload, whatsappUrl, wifiPayload } from "@/lib/buttonUtils";
 import { ensureUrl, normalizeInstagram } from "@/lib/security";
 import { getPlan, resolvePlanTier } from "@/lib/subscriptions";
+import { colorSwatch, resolveColorStyle } from "@/lib/colorRoles";
 import { analytics } from "@/lib/analytics";
 import { StickerIcon } from "./StickerIcon";
 
@@ -357,6 +358,94 @@ const InstagramPostsBlock = ({ posts, layout, defaultSize }: { posts: Array<{ id
   );
 };
 
+// Música de fundo (2026-09-06, 2ª revisão do recurso de música — o
+// Leonardo testou o player visível <audio controls> e pediu pra tirar:
+// "tire o de deixar o player da música aparecendo"). Toca sozinha, sem
+// controles visíveis, no volume que o dono define. SEM slot em
+// bodyBlockOrder de propósito — é ambiente, não ocupa lugar no layout.
+//
+// Limitação real de navegador (documentada aqui, não é bug do Toqy):
+// autoplay COM SOM é bloqueado por padrão pela maioria dos navegadores
+// até o visitante interagir com a página — nenhum site contorna isso
+// 100%. Mitigação padrão de mercado: tenta tocar imediatamente; se o
+// navegador bloquear, um listener de "primeiro toque/clique em
+// qualquer lugar" dispara o play — na prática começa a tocar assim que
+// o visitante toca em qualquer botão do próprio biosite.
+const BackgroundMusicPlayer = ({ url, volume }: { url: string; volume: number }) => {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = Math.min(1, Math.max(0, volume / 100));
+    const tryPlay = () => { audio.play().catch(() => {}); };
+    tryPlay();
+    const onFirstInteraction = () => tryPlay();
+    document.addEventListener("click", onFirstInteraction, { once: true });
+    document.addEventListener("touchstart", onFirstInteraction, { once: true });
+    return () => {
+      document.removeEventListener("click", onFirstInteraction);
+      document.removeEventListener("touchstart", onFirstInteraction);
+    };
+  }, [url, volume]);
+  // eslint-disable-next-line jsx-a11y/media-has-caption
+  return <audio ref={audioRef} src={url} loop autoPlay hidden />;
+};
+
+// Converte um link normal do Spotify (faixa/álbum/playlist) pro formato
+// de embed oficial (open.spotify.com/embed/...) — sem precisar de API
+// key, mesmo espírito do embed de Instagram já usado no Toqy.
+function toSpotifyEmbedUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.pathname.includes("/embed/")) return url;
+    return `https://open.spotify.com/embed${parsed.pathname}${parsed.search}`;
+  } catch {
+    return url;
+  }
+}
+
+// Botão do Spotify (2026-09-06) — molde do "Music Link" do Linktree que
+// o Leonardo mandou print: 3 formatos de exibição, sem precisar de OAuth
+// de conta (isso fica pro roadmap) — só um link direto pra uma
+// faixa/álbum/playlist.
+const SpotifyLinkBlock = ({ url, label, display, site }: { url: string; label: string; display: "icon" | "button" | "preview"; site: ToqySite }) => {
+  if (display === "preview") {
+    return (
+      <div className="overflow-hidden rounded-2xl">
+        <iframe
+          src={toSpotifyEmbedUrl(url)}
+          width="100%"
+          height="152"
+          style={{ border: 0, borderRadius: 12 }}
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy"
+          title="Spotify"
+        />
+      </div>
+    );
+  }
+  if (display === "icon") {
+    // Mesmo padrão dos ícones de imagem própria (whatsapp/instagram, ver
+    // IMAGE_ICON_TYPES) — sem círculo de fundo, o próprio SVG já é colorido.
+    return (
+      <div className="flex justify-center">
+        <button type="button" onClick={() => window.open(url, "_blank", "noopener,noreferrer")} aria-label={label}
+          className="flex items-center justify-center p-1 transition active:scale-90 hover:scale-105">
+          <SpotifyIcon className="h-12 w-12" />
+        </button>
+      </div>
+    );
+  }
+  return (
+    <button type="button" onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
+      className="flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98]"
+      style={buttonStyle(site)}>
+      <SpotifyIcon className="h-5 w-5 shrink-0" />
+      <span>{label}</span>
+    </button>
+  );
+};
+
 // Tamanho do h1 (nome do negócio), 2026-07-16 — "md" é o text-2xl de sempre.
 const NAME_FONT_SIZE_CLASS: Record<"sm" | "md" | "lg", string> = {
   sm: "text-lg",
@@ -475,6 +564,12 @@ function backgroundStyle(site: ToqySite): React.CSSProperties {
   // quem pinta o fundo é só a camada fixa (que já leva seu próprio
   // themeGradient como "letterbox" fora da coluna de 430px, ver render).
   if (backgroundImageUrl(site)) return {};
+  // Role unificado (2026-09-06) — 1 controle só (sólido OU gradiente) no
+  // lugar dos 2 campos separados de antes (background + gradientTo).
+  // Sites que nunca tocaram nesse role continuam exatamente como antes
+  // (fallback pro backgroundType/themeGradient de sempre).
+  const role = site.theme.colors?.pageBackground;
+  if (role) return resolveColorStyle(role, "bg", site.theme.background);
   if (site.theme.backgroundType === "solid") return { background: site.theme.background };
   return { background: themeGradient(site) };
 }
@@ -493,22 +588,25 @@ function glassCard(site: ToqySite): React.CSSProperties {
 function buttonStyle(site: ToqySite): React.CSSProperties {
   const colors = site.theme.colors;
   const fill = site.theme.buttonFill;
-  // Glass e Gradiente ignoram cores granulares de botão — são automáticos
+  const textColor = resolveColorStyle(colors?.buttonText, "text", site.theme.mode === "light" ? "#ffffff" : "#F8FAFC").color as string;
+  // Glass e Gradiente (legado, seletor "Preenchimento") ignoram cores
+  // granulares de FUNDO — são automáticos; o texto/borda continua
+  // respeitando o role granular (solid ou gradiente via colorSwatch).
   if (fill === "glass") return {
     background: site.theme.mode === "light" ? "rgba(255,255,255,0.66)" : "rgba(255,255,255,0.13)",
-    color: colors?.buttonText ?? site.theme.text,
-    borderColor: colors?.buttonBorder ?? (site.theme.mode === "light" ? "rgba(15,23,42,0.10)" : "rgba(255,255,255,0.18)")
+    color: textColor,
+    borderColor: colorSwatch(colors?.buttonBorder, site.theme.mode === "light" ? "rgba(15,23,42,0.10)" : "rgba(255,255,255,0.18)"),
   };
   if (fill === "gradient") return {
-    background: `linear-gradient(135deg, ${colors?.buttonBg ?? site.theme.primary}, ${site.theme.secondary})`,
-    color: colors?.buttonText ?? (site.theme.mode === "light" ? "#ffffff" : "#F8FAFC"),
+    background: `linear-gradient(135deg, ${colorSwatch(colors?.buttonBg, site.theme.primary)}, ${site.theme.secondary})`,
+    color: textColor,
     borderColor: "rgba(255,255,255,0.18)"
   };
-  // Sólido — usa cores granulares se definidas
+  // Sólido (ou gradiente escolhido direto no role buttonBg)
   return {
-    background: colors?.buttonBg ?? site.theme.primary,
-    color: colors?.buttonText ?? (site.theme.mode === "light" ? "#ffffff" : "#F8FAFC"),
-    borderColor: colors?.buttonBorder ?? "rgba(255,255,255,0.18)"
+    ...resolveColorStyle(colors?.buttonBg, "bg", site.theme.primary),
+    color: textColor,
+    borderColor: colorSwatch(colors?.buttonBorder, "rgba(255,255,255,0.18)"),
   };
 }
 
@@ -589,9 +687,11 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [site.id, instanceId]);
 
-  // Helper: retorna cor granular com fallback para tema global
+  // Helper: resolve role de cor granular (sólido ou gradiente) já como
+  // CSSProperties prontas pra espalhar no style={} — ver colorRoles.ts.
+  // Todo uso de col() aqui é kind="text" (cor de texto).
   const col = (key: keyof NonNullable<typeof site.theme.colors>, fallback: string) =>
-    site.theme.colors?.[key] ?? fallback;
+    resolveColorStyle(site.theme.colors?.[key], "text", fallback);
   const [copied, setCopied] = useState("");
   const [selectedAmount, setSelectedAmount] = useState<number | undefined>();
 
@@ -675,9 +775,14 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { 
   );
 
   const bgImage = backgroundImageUrl(site);
+  // Compatibilidade (2026-09-06): musicUrl era o nome antigo do campo,
+  // quando o recurso ainda era um player visível — sites salvos antes
+  // desta revisão continuam tocando, só que agora como fundo ambiente.
+  const backgroundMusicUrl = site.backgroundMusicUrl || site.musicUrl;
 
   return (
     <div className="relative min-h-screen w-full" style={{ ...backgroundStyle(site), color: site.theme.text }}>
+      {backgroundMusicUrl ? <BackgroundMusicPlayer url={backgroundMusicUrl} volume={site.backgroundMusicVolume ?? 40} /> : null}
       {bgImage ? (
         <div className="fixed inset-0 -z-10" style={{ background: themeGradient(site) }}>
           <div
@@ -695,7 +800,12 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { 
                 ? `${backgroundOverlayGradient(site)}, url(${optimizedImageUrl(bgImage, 860)})`
                 : `url(${optimizedImageUrl(bgImage, 860)})`,
               backgroundSize: "cover",
-              backgroundPosition: "center top",
+              // Reposicionável (2026-09-06, resolve o "tela corta" achado
+              // ao vivo em toqy.com.br/b/yakisabor): antes era sempre
+              // "center top" fixo — uma imagem que não foi desenhada pra
+              // proporção de celular cortava texto nas bordas sem
+              // nenhum jeito de ajustar. Mesmo padrão de profileImagePosition.
+              backgroundPosition: site.profile.backgroundImagePosition ?? "center top",
               backgroundRepeat: "no-repeat",
             }}
           />
@@ -754,12 +864,17 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { 
                 <span className="text-4xl font-black text-white">{getInitials(site.profile.name)}</span>
               )}
             </div>
-          <h1 className={`mt-5 ${NAME_FONT_SIZE_CLASS[site.theme.nameFontSize ?? "md"]} font-black leading-tight${site.theme.nameShadow === false ? "" : " drop-shadow-sm"}`} style={{ color: col("name", site.theme.text), textShadow: site.theme.nameShadow === false ? "none" : site.theme.mode === "light" ? "none" : "0 0 10px rgba(0,0,0,0.5)" }}>{site.profile.name}</h1>
-            {site.profile.title ? <p className="mt-1 text-base font-medium" style={{ color: col("title", site.theme.muted) }}>{site.profile.title}</p> : null}
+          <h1 className={`mt-5 ${NAME_FONT_SIZE_CLASS[site.theme.nameFontSize ?? "md"]} font-black leading-tight${site.theme.nameShadow === false ? "" : " drop-shadow-sm"}`} style={{ ...col("name", site.theme.text), textShadow: site.theme.nameShadow === false ? "none" : site.theme.mode === "light" ? "none" : "0 0 10px rgba(0,0,0,0.5)" }}>{site.profile.name}</h1>
+            {site.profile.title ? <p className="mt-1 text-base font-medium" style={col("title", site.theme.muted)}>{site.profile.title}</p> : null}
             {site.profile.location ? (
               <div className="mt-2 flex flex-col items-center gap-0.5">
               <div className="flex items-start justify-center gap-1">
-                <svg className="mt-0.5 h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" style={{ color: col("location", site.theme.muted) }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                {/* Ícone do pin usa colorSwatch (nunca o truque de bg-clip
+                    do gradiente) — um SVG <path fill> não tem "texto" pra
+                    recortar, então o mesmo resolveColorStyle usado no
+                    endereço abaixo deixaria o ícone invisível se o role
+                    "location" estivesse em modo gradiente. */}
+                <svg className="mt-0.5 h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" style={{ color: colorSwatch(site.theme.colors?.location, site.theme.muted) }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                 {/* text-left (2026-07-15) é o padrão: com text-center, um
                     endereço que quebra em 2 linhas fica com a 2ª linha (mais
                     curta) centralizada sob a 1ª — visualmente longe do
@@ -767,22 +882,22 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { 
                     coladas à esquerda, ambas ficam rente ao ícone.
                     locationAlign="center" (2026-07-16) é opt-in pra quem
                     prefere centralizado mesmo com esse trade-off. */}
-                <p className={`${site.theme.locationAlign === "center" ? "text-center" : "text-left"} text-sm font-semibold leading-snug`} style={{ color: col("location", site.theme.muted) }}>{site.profile.location}</p>
+                <p className={`${site.theme.locationAlign === "center" ? "text-center" : "text-left"} text-sm font-semibold leading-snug`} style={col("location", site.theme.muted)}>{site.profile.location}</p>
               </div>
             </div>
             ) : null}
-            {site.profile.description ? <p className="mx-auto mt-4 max-w-[350px] text-center text-sm leading-relaxed" style={{ color: col("description", site.theme.muted) }}>{site.profile.description}</p> : null}
+            {site.profile.description ? <p className="mx-auto mt-4 max-w-[350px] text-center text-sm leading-relaxed" style={col("description", site.theme.muted)}>{site.profile.description}</p> : null}
             {site.profile.logoSignatureUrl ? (
               <img src={optimizedImageUrl(site.profile.logoSignatureUrl, 260)} alt={`${site.profile.name} assinatura`} className="mx-auto mt-4 max-h-20 max-w-[260px] object-contain drop-shadow-lg" />
             ) : null}
             {site.profile.logoText ? (
-              <p className="mt-3 tracking-widest drop-shadow-lg" style={{ color: site.theme.text, fontSize: "clamp(13px, 4vw, 20px)", fontFamily: site.profile.logoFont === "serif" || site.profile.logoFont === "italic" ? "Georgia, serif" : site.profile.logoFont === "mono" ? "monospace" : "inherit", fontWeight: !site.profile.logoFont || site.profile.logoFont === "bold" ? 900 : 700, fontStyle: site.profile.logoFont === "italic" ? "italic" : "normal", letterSpacing: "0.15em", textTransform: "uppercase", textShadow: site.theme.mode === "dark" ? "0 2px 12px rgba(0,0,0,0.6)" : "none" }}>{site.profile.logoText}</p>
+              <p className="mt-3 tracking-widest drop-shadow-lg" style={{ ...col("logoText", site.theme.text), fontSize: "clamp(13px, 4vw, 20px)", fontFamily: site.profile.logoFont === "serif" || site.profile.logoFont === "italic" ? "Georgia, serif" : site.profile.logoFont === "mono" ? "monospace" : "inherit", fontWeight: !site.profile.logoFont || site.profile.logoFont === "bold" ? 900 : 700, fontStyle: site.profile.logoFont === "italic" ? "italic" : "normal", letterSpacing: "0.15em", textTransform: "uppercase", textShadow: site.theme.mode === "dark" ? "0 2px 12px rgba(0,0,0,0.6)" : "none" }}>{site.profile.logoText}</p>
             ) : null}
           </header>
 
           <section className="mt-4 grid grid-cols-2 gap-2">
-            {site.modules?.saveContact !== false ? <button type="button" onClick={downloadVCard} className={`${radiusClass(site)} flex items-center justify-center gap-2 border px-4 py-3 text-xs font-black backdrop-blur-xl`} style={{ ...glassCard(site), color: col("saveContactText", site.theme.text) }}><Save className="h-4 w-4" />Salvar Contato</button> : null}
-            {site.contact.phone ? <button type="button" onClick={() => window.open(`tel:${site.contact.phone.replace(/\D/g, "")}`)} className={`${radiusClass(site)} flex items-center justify-center gap-2 border px-4 py-3 text-xs font-black backdrop-blur-xl`} style={{ ...glassCard(site), color: col("callText", site.theme.text) }}><Phone className="h-4 w-4" />Ligar</button> : null}
+            {site.modules?.saveContact !== false ? <button type="button" onClick={downloadVCard} className={`${radiusClass(site)} flex items-center justify-center gap-2 border px-4 py-3 text-xs font-black backdrop-blur-xl`} style={{ ...glassCard(site), ...col("saveContactText", site.theme.text) }}><Save className="h-4 w-4" />Salvar Contato</button> : null}
+            {site.contact.phone ? <button type="button" onClick={() => window.open(`tel:${site.contact.phone.replace(/\D/g, "")}`)} className={`${radiusClass(site)} flex items-center justify-center gap-2 border px-4 py-3 text-xs font-black backdrop-blur-xl`} style={{ ...glassCard(site), ...col("callText", site.theme.text) }}><Phone className="h-4 w-4" />Ligar</button> : null}
           </section>
 
           {/* Wi-Fi inline — mostra rede e senha sem precisar abrir modal */}
@@ -791,7 +906,7 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { 
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
                   <WifiIcon2 className="h-4 w-4 shrink-0 opacity-80" />
-                  <span className="text-xs font-black truncate" style={{ color: col("wifiText", site.theme.text) }}>
+                  <span className="text-xs font-black truncate" style={col("wifiText", site.theme.text)}>
                     Wi-Fi: <span className="font-mono">{site.wifi.ssid}</span>
                     {site.wifi.password ? <> &nbsp;·&nbsp; Senha: <span className="font-mono">{site.wifi.password}</span></> : null}
                   </span>
@@ -819,7 +934,6 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { 
                   ifood: "#EA1D2C", waze: "#33CCFF", picpay: "#21C25E",
                   mercadopago: "#00B1EA", behance: "#1769FF",
                 };
-                const useGlass = site.theme.socialIconStyle === "glass";
                 const isBrandType = button.type in brandColor;
 
                 // Ícones com imagem própria (2026-07-16, pedido do Leonardo:
@@ -840,44 +954,37 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { 
                   );
                 }
 
-                // Bug real corrigido (2026-09-01, achado ao vivo: YouTube
-                // aparecendo cinza/preto em vez do vermelho oficial): o
-                // estilo "glass" sobrescrevia a cor de marca de TODO ícone
-                // social baseado em SVG (youtube/tiktok/linkedin/telegram/
-                // spotify) — só whatsapp/instagram (PNG, IMAGE_ICON_TYPES)
-                // escapavam disso, porque nem passam por aqui.
+                // Fix estrutural (2026-09-06, 3ª correção do mesmo bug —
+                // as 2 anteriores regrediram porque cor-de-marca e
+                // translúcido eram decididos no MESMO cálculo entrelaçado.
+                // Agora são 2 passos separados e sequenciais:
                 //
-                // Segundo bug corrigido no mesmo dia (a correção acima
-                // "consertou demais"): ícone de marca virou SEMPRE cor
-                // sólida, ignorando por completo a escolha de "translúcido"
-                // — sem diferença visual nenhuma entre os dois estilos.
-                // Agora "translúcido" usa a cor de marca só como um fundo
-                // suave (baixa opacidade, efeito vidro fosco de verdade),
-                // com o ícone na cor real por cima — continua reconhecível
-                // como a marca, só não é mais o círculo sólido saturado.
-                const bg = isBrandType
-                  ? (useGlass ? `${brandColor[button.type]}26` : brandColor[button.type])
-                  : useGlass
-                    ? (site.theme.mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)")
-                    : site.theme.primary;
+                // 1) baseBg = a cor sólida de fundo, cheia, sem opacidade —
+                //    cor de marca de verdade se for um ícone reconhecido
+                //    (WhatsApp/Instagram/...), senão o role "Fundo dos
+                //    ícones sociais" (socialIconBg) escolhido no editor.
+                // 2) translucent = flag booleana isolada (não depende de
+                //    ser marca ou não) — se ligada, SEMPRE pega o baseBg
+                //    (seja qual for) e aplica alpha reduzido por cima, sem
+                //    condicional própria por tipo de ícone.
+                //
+                // socialIconStyle:"glass" (formato antigo) ainda é lido
+                // como equivalente a translucent=true, pra não quebrar
+                // bio sites salvos antes desta correção.
+                const baseBg = isBrandType ? brandColor[button.type] : colorSwatch(site.theme.colors?.socialIconBg, site.theme.primary);
+                const translucent = Boolean(site.theme.socialIconTranslucent) || site.theme.socialIconStyle === "glass";
+                const bg = translucent ? `${baseBg}26` : baseBg;
                 // Bug real corrigido (2026-07-16): ícone branco fixo quebrava
                 // (sumia) quando o fundo caía no fallback theme.primary (tipo
                 // sem cor de marca, ex: mapa/localização) E o usuário definia
-                // "Cor dos botões" como branco — branco no branco, invisível.
+                // a cor do ícone como branco — branco no branco, invisível.
                 // Marcas (whatsapp/instagram/...) sempre têm fundo saturado o
-                // suficiente pra branco ficar legível; pro fallback, usava
-                // theme.text (a mesma cor que o usuário já ajusta pra
-                // legibilidade geral do site) — MAS theme.text podia coincidir
-                // com theme.primary no mesmo tema (caso real: link
-                // personalizado sem cor de marca virou círculo preto sem
-                // NENHUM ícone visível dentro, "AppSalão" da Studio Jessica).
-                // Agora calcula contraste de verdade contra o fundo do
-                // círculo em vez de confiar cegamente em theme.text.
+                // suficiente pra branco ficar legível; pro fallback, calcula
+                // contraste de verdade contra o fundo real do círculo em vez
+                // de confiar cegamente numa cor de texto que podia coincidir.
                 const iconColor = isBrandType
-                  ? (useGlass ? brandColor[button.type] : "#fff")
-                  : useGlass
-                    ? site.theme.text
-                    : readableIconColor(bg, site.theme.text);
+                  ? (translucent ? baseBg : "#fff")
+                  : (translucent ? site.theme.text : readableIconColor(baseBg, site.theme.text));
                 return (
                   <button key={button.id} type="button" onClick={() => handleButton(button)} aria-label={button.label}
                     className="flex h-12 w-12 items-center justify-center rounded-full shadow-md transition active:scale-90 hover:scale-105 backdrop-blur-sm"
@@ -922,10 +1029,13 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { 
               return activeCatalog.length ? <CatalogSection key="catalog" site={site} items={activeCatalog} layout={catalogLayout} catalogId={catalogId} /> : null;
             }
             if (blockType === "music") {
-              return site.musicUrl ? (
-                <section key="music" className="mt-4 rounded-2xl border p-3 backdrop-blur-xl" style={glassCard(site)}>
-                  {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                  <audio controls src={site.musicUrl} className="w-full" style={{ height: 32 }} />
+              // 2ª revisão (2026-09-06): este bloco não é mais o player de
+              // música em si (isso virou ambiente, ver BackgroundMusicPlayer
+              // renderizado no topo da página) — é só o botão/ícone/prévia
+              // do Spotify, molde do Music Link do Linktree.
+              return site.spotifyUrl ? (
+                <section key="music" className="mt-4">
+                  <SpotifyLinkBlock url={site.spotifyUrl} label={site.spotifyLabel || "Ouça minha música"} display={site.spotifyDisplay ?? "button"} site={site} />
                 </section>
               ) : null;
             }
@@ -946,7 +1056,7 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { 
                 Leonardo): nenhum plano promete mais esconder este selo. */}
             <p className="mt-1" style={{ color: site.theme.muted }}>
               Criado com{" "}
-              <a href="https://toqy.com.br" target="_blank" rel="noreferrer" className="font-black underline-offset-4 hover:underline" style={{ color: site.theme.primary }}>
+              <a href="https://toqy.com.br" target="_blank" rel="noreferrer" className="font-black underline-offset-4 hover:underline" style={resolveColorStyle(site.theme.colors?.footerCreditText, "text", site.theme.primary)}>
                 TOQY
               </a>
             </p>
@@ -1079,8 +1189,8 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
 
   return (
     <section id={catalogId} className="mt-8 scroll-mt-8">
-      <p className="text-xs font-black uppercase tracking-[0.22em]" style={{ color: site.theme.accent }}>Catálogo</p>
-      {(site.showCatalogTitle ?? true) ? <h2 className="mt-1 text-2xl font-black">{site.catalogTitle || "Produtos e serviços"}</h2> : null}
+      <p className="text-xs font-black uppercase tracking-[0.22em]" style={resolveColorStyle(site.theme.colors?.catalogSectionLabel, "text", site.theme.accent)}>Catálogo</p>
+      {(site.showCatalogTitle ?? true) ? <h2 className="mt-1 text-2xl font-black" style={resolveColorStyle(site.theme.colors?.catalogTitle, "text", site.theme.text)}>{site.catalogTitle || "Produtos e serviços"}</h2> : null}
       {(site.showCatalogSubtitle ?? true) ? <p className="mt-1 text-sm leading-relaxed" style={{ color: site.theme.muted }}>{site.catalogSubtitle || "Selecionados para você. Toque em um item para pedir ou agendar."}</p> : null}
 
       {categories.length > 1 ? (
@@ -1101,7 +1211,7 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
           <div className="space-y-8">
             {itemsBySection.destaques.length > 0 && (
               <div>
-                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={{ color: site.theme.accent }}>Destaques</p>
+                <p className="mb-3 text-xs font-black uppercase tracking-widest" style={resolveColorStyle(site.theme.colors?.catalogSectionLabel, "text", site.theme.accent)}>Destaques</p>
                 <div className="space-y-4">{itemsBySection.destaques.map(item => <CatalogCard key={item.id} site={site} item={item} stacked />)}</div>
               </div>
             )}
@@ -1167,7 +1277,7 @@ function CatalogSection({ site, items, layout, catalogId }: { site: ToqySite; it
               picker pra este botão específico). Agora reusa
               catalogActionBg/catalogActionText — os mesmos já editáveis na
               aba Catálogo ("Fundo botão de ação"/"Texto botão de ação"). */}
-          {whatsapp ? <button type="button" onClick={() => window.open(whatsapp, "_blank", "noopener,noreferrer")} className="mt-3 inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-xs font-black" style={{ background: site.theme.colors?.catalogActionBg ?? site.theme.primary, color: site.theme.colors?.catalogActionText ?? (site.theme.mode === "light" ? "#fff" : "#06111F") }}><WhatsAppIcon className="h-4 w-4" />Fale com a gente no WhatsApp</button> : null}
+          {whatsapp ? <button type="button" onClick={() => window.open(whatsapp, "_blank", "noopener,noreferrer")} className="mt-3 inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-xs font-black" style={{ ...resolveColorStyle(site.theme.colors?.catalogActionBg, "bg", site.theme.primary), ...resolveColorStyle(site.theme.colors?.catalogActionText, "text", site.theme.mode === "light" ? "#fff" : "#06111F") }}><WhatsAppIcon className="h-4 w-4" />Fale com a gente no WhatsApp</button> : null}
         </div>
       ) : null}
 
@@ -1203,7 +1313,7 @@ function CatalogCard({ site, item, compact = false, stacked = false, onOpenGalle
   const fitClass = item.imageFit === "contain" ? "object-contain bg-surface" : "object-cover";
   const positionStyle = item.imagePosition ? { objectPosition: item.imagePosition } : undefined;
   return (
-    <article className={`${width} snap-start overflow-hidden rounded-[1.6rem] border shadow-xl backdrop-blur`} style={{ background: site.theme.colors?.catalogItemBg ?? site.theme.card, borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.14)" }}>
+    <article className={`${width} snap-start overflow-hidden rounded-[1.6rem] border shadow-xl backdrop-blur`} style={{ ...resolveColorStyle(site.theme.colors?.catalogItemBg, "bg", site.theme.card), borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.14)" }}>
       <div
         className={`${imageHeight} relative ${canOpenGallery ? "cursor-pointer" : ""}`}
         style={{ background: `linear-gradient(135deg, ${site.theme.primary}33, ${site.theme.secondary}44)` }}
@@ -1219,14 +1329,14 @@ function CatalogCard({ site, item, compact = false, stacked = false, onOpenGalle
         ) : null}
       </div>
       <div className={compact ? "p-3" : "p-4"}>
-        {item.highlight ? <span className="mb-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-black" style={{ background: site.theme.colors?.catalogItemHighlight ? site.theme.colors.catalogItemHighlight + "22" : "#fef3c7", color: site.theme.colors?.catalogItemHighlight ?? "#b45309" }}>{item.highlight}</span> : null}
+        {item.highlight ? <span className="mb-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-black" style={{ background: site.theme.colors?.catalogItemHighlight ? colorSwatch(site.theme.colors.catalogItemHighlight, "#b45309") + "22" : "#fef3c7", ...resolveColorStyle(site.theme.colors?.catalogItemHighlight, "text", "#b45309") }}>{item.highlight}</span> : null}
         {/* Item "só foto" (2026-07-16) — nome/descrição agora são opcionais
             (ver BulkCatalogPhotoAdd/SiteBuilder). Sem isso, um item sem nome
             mostrava um <h3> vazio ocupando espaço em branco no card. */}
-        {item.name ? <h3 className={compact ? "text-sm font-black leading-tight" : "text-lg font-black"} style={{ color: site.theme.colors?.catalogItemName ?? site.theme.text }}>{item.name}</h3> : null}
-        {item.description ? <p className={compact ? "mt-1 line-clamp-3 text-xs leading-relaxed" : "mt-2 text-sm leading-relaxed"} style={{ color: site.theme.colors?.catalogItemDesc ?? site.theme.muted }}>{item.description}</p> : null}
+        {item.name ? <h3 className={compact ? "text-sm font-black leading-tight" : "text-lg font-black"} style={resolveColorStyle(site.theme.colors?.catalogItemName, "text", site.theme.text)}>{item.name}</h3> : null}
+        {item.description ? <p className={compact ? "mt-1 line-clamp-3 text-xs leading-relaxed" : "mt-2 text-sm leading-relaxed"} style={resolveColorStyle(site.theme.colors?.catalogItemDesc, "text", site.theme.muted)}>{item.description}</p> : null}
         <div className="mt-4 flex items-center justify-between gap-3">
-          {item.price ? <span className={compact ? "text-xs font-black" : "font-black"} style={{ color: site.theme.colors?.catalogItemPrice ?? site.theme.accent }}>{item.price}</span> : <span />}
+          {item.price ? <span className={compact ? "text-xs font-black" : "font-black"} style={resolveColorStyle(site.theme.colors?.catalogItemPrice, "text", site.theme.accent)}>{item.price}</span> : <span />}
           <div className="flex items-center gap-2">
             {whatsapp && site.showCatalogWhatsapp !== false ? <button type="button" aria-label="Falar no WhatsApp" onClick={() => window.open(whatsapp, "_blank", "noopener,noreferrer")} className="flex h-9 w-9 items-center justify-center rounded-full border" style={{ borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.12)" : "rgba(255,255,255,0.18)", color: site.theme.text }}><WhatsAppIcon className="h-4 w-4" /></button> : null}
             {/* Bug real corrigido (2026-07-16): botão "Ver" aparecia em TODO
@@ -1236,7 +1346,7 @@ function CatalogCard({ site, item, compact = false, stacked = false, onOpenGalle
                 aparece se o próprio item tem "Texto do botão" ou "Link do
                 botão" preenchido — item vazio (só foto) não mostra botão,
                 mesmo com o toggle geral ligado. */}
-            {site.showCatalogAction !== false && (item.actionLabel || item.actionUrl) ? <button type="button" onClick={() => { const href = item.actionUrl ? ensureUrl(item.actionUrl) : whatsapp; if (href) window.open(href, "_blank", "noopener,noreferrer"); }} className="rounded-full px-4 py-2 text-xs font-black" style={{ background: site.theme.colors?.catalogActionBg ?? site.theme.primary, color: site.theme.colors?.catalogActionText ?? (site.theme.mode === "light" ? "#fff" : "#06111F") }}>{item.actionLabel || "Ver"}</button> : null}
+            {site.showCatalogAction !== false && (item.actionLabel || item.actionUrl) ? <button type="button" onClick={() => { const href = item.actionUrl ? ensureUrl(item.actionUrl) : whatsapp; if (href) window.open(href, "_blank", "noopener,noreferrer"); }} className="rounded-full px-4 py-2 text-xs font-black" style={{ ...resolveColorStyle(site.theme.colors?.catalogActionBg, "bg", site.theme.primary), ...resolveColorStyle(site.theme.colors?.catalogActionText, "text", site.theme.mode === "light" ? "#fff" : "#06111F") }}>{item.actionLabel || "Ver"}</button> : null}
           </div>
         </div>
       </div>
@@ -1254,7 +1364,7 @@ function CategoryGalleryModal({ site, category, items, onClose }: { site: ToqySi
     <ModalShell title={category} onClose={onClose} site={site} icon={<Images className="h-6 w-6" />}>
       <div className="grid grid-cols-2 gap-3">
         {items.map((item) => (
-          <div key={item.id} className="overflow-hidden rounded-[1.2rem] border" style={{ background: site.theme.colors?.catalogItemBg ?? site.theme.card, borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.14)" }}>
+          <div key={item.id} className="overflow-hidden rounded-[1.2rem] border" style={{ ...resolveColorStyle(site.theme.colors?.catalogItemBg, "bg", site.theme.card), borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.14)" }}>
             <div className="h-28" style={{ background: `linear-gradient(135deg, ${site.theme.primary}33, ${site.theme.secondary}44)` }}>
               {item.imageUrl ? <img src={optimizedImageUrl(item.imageUrl, 260)} alt={item.name} loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><FileText className="h-8 w-8 opacity-60" /></div>}
             </div>
@@ -1264,13 +1374,13 @@ function CategoryGalleryModal({ site, category, items, onClose }: { site: ToqySi
                 solta de galeria, ex: "Diretoria"). */}
             {(item.name || item.price || item.actionUrl) ? (
               <div className="p-2.5">
-                {item.name ? <p className="line-clamp-2 text-xs font-black leading-tight" style={{ color: site.theme.colors?.catalogItemName ?? site.theme.text }}>{item.name}</p> : null}
-                {item.price ? <p className="mt-1 text-xs font-black" style={{ color: site.theme.colors?.catalogItemPrice ?? site.theme.accent }}>{item.price}</p> : null}
+                {item.name ? <p className="line-clamp-2 text-xs font-black leading-tight" style={resolveColorStyle(site.theme.colors?.catalogItemName, "text", site.theme.text)}>{item.name}</p> : null}
+                {item.price ? <p className="mt-1 text-xs font-black" style={resolveColorStyle(site.theme.colors?.catalogItemPrice, "text", site.theme.accent)}>{item.price}</p> : null}
                 <button
                   type="button"
                   onClick={() => { const href = item.actionUrl ? ensureUrl(item.actionUrl) : whatsapp; if (href) window.open(href, "_blank", "noopener,noreferrer"); }}
                   className="mt-2 w-full rounded-full px-2 py-1.5 text-[11px] font-black"
-                  style={{ background: site.theme.colors?.catalogActionBg ?? site.theme.primary, color: site.theme.colors?.catalogActionText ?? (site.theme.mode === "light" ? "#fff" : "#06111F") }}
+                  style={{ ...resolveColorStyle(site.theme.colors?.catalogActionBg, "bg", site.theme.primary), ...resolveColorStyle(site.theme.colors?.catalogActionText, "text", site.theme.mode === "light" ? "#fff" : "#06111F") }}
                 >
                   {item.actionLabel || "Ver"}
                 </button>
@@ -1342,7 +1452,7 @@ function WifiModal({ site, onClose, copied, copyText }: { site: ToqySite; onClos
 }
 
 function ModalShell({ title, onClose, site, children, icon }: { title: string; onClose: () => void; site: ToqySite; children: React.ReactNode; icon: React.ReactNode }) {
-  return <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={onClose}><div className="max-h-[92vh] w-full max-w-[420px] overflow-y-auto rounded-[2rem] border p-4 shadow-2xl" style={{ background: site.theme.card, borderColor: "rgba(255,255,255,0.16)", color: site.theme.text }} onClick={(event) => event.stopPropagation()}><div className="mb-4 flex items-center justify-between"><div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: site.theme.primary, color: site.theme.mode === "light" ? "#fff" : "#06111F" }}>{icon}</div><h3 className="text-xl font-black">{title}</h3></div><button onClick={onClose} className="rounded-full p-2" style={{ background: "rgba(255,255,255,.12)" }}><X className="h-5 w-5" /></button></div>{children}</div></div>;
+  return <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={onClose}><div className="max-h-[92vh] w-full max-w-[420px] overflow-y-auto rounded-[2rem] border p-4 shadow-2xl" style={{ background: site.theme.card, borderColor: "rgba(255,255,255,0.16)", color: site.theme.text }} onClick={(event) => event.stopPropagation()}><div className="mb-4 flex items-center justify-between"><div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ ...resolveColorStyle(site.theme.colors?.modalIconBg, "bg", site.theme.primary), color: site.theme.mode === "light" ? "#fff" : "#06111F" }}>{icon}</div><h3 className="text-xl font-black">{title}</h3></div><button onClick={onClose} className="rounded-full p-2" style={{ background: "rgba(255,255,255,.12)" }}><X className="h-5 w-5" /></button></div>{children}</div></div>;
 }
 
 export default PublicBioSite;

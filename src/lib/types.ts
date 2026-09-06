@@ -3,6 +3,40 @@ export type ButtonFill = "solid" | "gradient" | "glass";
 export type BackgroundType = "solid" | "gradient" | "image";
 export type CatalogLayout = "carousel" | "grid" | "stack" | "grouped" | "category-carousel";
 
+// Sistema de cores unificado (2026-09-06) — ver src/lib/colorRoles.ts
+// para a lista de roles e o resolver. Um ColorValue é sólido OU
+// gradiente; nunca os dois ao mesmo tempo.
+export type ColorValue = { mode: "solid"; value: string } | { mode: "gradient"; from: string; to: string };
+
+// Todo "lugar" colorível do biosite — cada um aparece EXATAMENTE 1 vez
+// no editor (ver colorRoles.ts), sem duplicar conceito com outro role
+// nem com um controle "global" à parte.
+export type ColorRole =
+  | "pageBackground"
+  | "name"
+  | "title"
+  | "location"
+  | "description"
+  | "logoText"
+  | "buttonBg"
+  | "buttonText"
+  | "buttonBorder"
+  | "socialIconBg"
+  | "saveContactText"
+  | "callText"
+  | "wifiText"
+  | "catalogSectionLabel"
+  | "catalogTitle"
+  | "catalogItemBg"
+  | "catalogItemName"
+  | "catalogItemDesc"
+  | "catalogItemPrice"
+  | "catalogItemHighlight"
+  | "catalogActionBg"
+  | "catalogActionText"
+  | "modalIconBg"
+  | "footerCreditText";
+
 export type Segment =
   | "barbearia"
   | "salao"
@@ -105,6 +139,13 @@ export type ToqySite = {
     logoSize: "small" | "medium" | "large";
     logoShape: "circle" | "rounded" | "square";
     backgroundImageUrl?: string;
+    // Reposicionamento do fundo (2026-09-06, achado ao vivo testando
+    // toqy.com.br/b/yakisabor no celular — "a tela fica cortada"): a
+    // imagem de fundo sempre usava background-position fixo, então uma
+    // imagem que não foi desenhada pra proporção de celular cortava texto
+    // nas bordas sem nenhum jeito de ajustar. Mesmo padrão já usado em
+    // profileImagePosition (via ImageCropper/react-easy-crop).
+    backgroundImagePosition?: string;
   };
   themePresetId?: string;
   theme: {
@@ -145,28 +186,26 @@ export type ToqySite = {
     // pra quem prefere o endereço centralizado mesmo com esse trade-off.
     locationAlign?: "left" | "center";
     useBackgroundOverlay: boolean;
-    // Cores granulares — opcionais, usam os valores acima como fallback
-    colors?: {
-      name?: string;           // Cor do nome do negócio
-      title?: string;          // Cor do subtítulo/segmento
-      location?: string;       // Cor do endereço
-      description?: string;    // Cor da descrição
-      logoText?: string;       // Cor do texto decorativo/assinatura
-      wifiText?: string;       // Cor do texto do Wi-Fi inline
-      saveContactText?: string;// Cor do texto do botão Salvar Contato
-      callText?: string;       // Cor do texto do botão Ligar
-      buttonText?: string;     // Cor do texto dos botões grandes
-      buttonBg?: string;       // Cor do fundo dos botões grandes
-      buttonBorder?: string;   // Cor da borda dos botões grandes
-      catalogTitle?: string;   // Cor do título do catálogo
-      catalogItemName?: string;// Cor do nome do item
-      catalogItemDesc?: string;// Cor da descrição do item
-      catalogItemPrice?: string;// Cor do preço
-      catalogItemHighlight?: string; // Cor do badge destaque
-      catalogItemBg?: string;  // Cor do card do catálogo
-      catalogActionBg?: string;// Cor do botão de ação do catálogo
-      catalogActionText?: string; // Cor do texto do botão de ação
-    };
+    // Ícone social translúcido (2026-09-06, 3ª correção — histórico: a
+    // opacidade ficava dentro do mesmo cálculo que decidia cor de marca
+    // vs. custom, e regrediu 2x nas mesmas linhas). Agora é uma flag
+    // isolada, aplicada como último passo (pega o socialIconBg já
+    // resolvido — sólido ou gradiente — e reduz a opacidade), independente
+    // de qualquer outra lógica de cor. Substitui socialIconStyle
+    // (mantido só pra compatibilidade de leitura de sites antigos).
+    socialIconTranslucent?: boolean;
+    // Cores granulares — cada "role" é UM lugar reconhecível do biosite,
+    // sem duplicar conceito (2026-09-06, reforma completa — antes disso
+    // coexistiam um sistema "global" (theme.primary/text/muted/accent/
+    // card, editável direto) e este granular, com o global só como
+    // fallback invisível: isso criava duplicação real na tela do editor
+    // ("Cor dos botões" E "Fundo dos botões" eram o mesmo conceito em 2
+    // lugares, "Fundo dos cards" aparecia 2x, etc — exatamente o "muitos
+    // lugares repetidos" reportado). Ver src/lib/colorRoles.ts pra lista
+    // completa + labels. Cada valor aceita sólido OU gradiente
+    // (ColorValue); string simples (formato antigo) continua sendo lida
+    // como sólida, via resolveColorStyle().
+    colors?: Partial<Record<ColorRole, ColorValue>>;
   };
   plaqueTheme?: {
     useSameBackground: boolean;
@@ -246,12 +285,27 @@ export type ToqySite = {
     size: "sm" | "md" | "lg";
     rotation: number; // graus
   }>;
-  // Música própria hospedada no Toqy (2026-09-06, redesenhado de "link de
-  // áudio externo" pra upload de verdade — pedido do Leonardo: "hospedar
-  // as músicas que ela tem no pc/celular no próprio Toqy"). Limite de
-  // ~60s/~4MB (confirmado com o Leonardo) pra nunca estourar o limite real
-  // de ~4,5MB por requisição das Vercel Functions.
+  // Música (2ª revisão, 2026-09-06 — o Leonardo testou o player visível
+  // <audio controls> e pediu pra tirar: "tire o de deixar o player da
+  // música aparecendo". Vira 2 recursos separados, no molde do bloco
+  // "Music Link" do Linktree que ele mandou print:
+  //
+  // 1) Música de FUNDO tocando sozinha (sem controles visíveis, volume
+  //    definido pelo dono) — upload próprio hospedado no Toqy, mesmo
+  //    limite de ~60s/~4MB de antes (audioStorage.ts), só mudou de nome
+  //    (musicUrl → backgroundMusicUrl) e de comportamento (visível →
+  //    autoplay). Compatibilidade: bio sites salvos com `musicUrl` (nome
+  //    antigo) são lidos como backgroundMusicUrl na renderização.
+  backgroundMusicUrl?: string;
+  /** @deprecated usar backgroundMusicUrl — mantido só pra ler sites salvos antes de 2026-09-06 */
   musicUrl?: string;
+  backgroundMusicVolume?: number; // 0-100, padrão 40
+  // 2) Botão de Spotify — link direto pra uma faixa/álbum (sem OAuth de
+  //    conta, isso fica pro roadmap), com label editável e 3 formatos de
+  //    exibição, igual às opções do Music Link do Linktree.
+  spotifyUrl?: string;
+  spotifyLabel?: string; // padrão "Ouça minha música"
+  spotifyDisplay?: "icon" | "button" | "preview";
   // Preview de posts do Instagram "em tempo real" — embed oficial da Meta
   // (`instagram.com/embed.js`), sem API key/login: renderiza cada post ao
   // vivo (like/comentário atuais, puxados pelo próprio Instagram), não é
