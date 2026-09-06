@@ -53,6 +53,32 @@ export default function ConfiguracoesPage() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  // Rotacao de chave de edicao (2026-09-06, item 3.1 da auditoria externa).
+  // Existe porque a chave ficou exposta publicamente num vazamento
+  // corrigido no mesmo dia — chave copiada continua valendo, e sem isso a
+  // unica saida seria trocar a de todo mundo de uma vez.
+  const [rotatingId, setRotatingId] = useState<string | null>(null);
+  const [novaChave, setNovaChave] = useState<{ slug: string; chave: string } | null>(null);
+
+  async function handleRotateKey(site: BioSiteRow) {
+    if (!window.confirm(`Gerar nova chave para "${site.slug}"?
+
+A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) precisa receber a nova.`)) return;
+    setRotatingId(site.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`/api/sites/${encodeURIComponent(site.slug)}/rotate-key`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.ok) { window.alert(body?.message || "Nao foi possivel gerar a nova chave."); return; }
+      setNovaChave({ slug: site.slug, chave: body.editKey as string });
+    } finally {
+      setRotatingId(null);
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -197,6 +223,25 @@ export default function ConfiguracoesPage() {
         <section className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-black text-ink">Meus bio sites</h2>
+            {/* Chave nova aparece UMA vez, aqui (2026-09-06). Depois disso
+                ela so volta a ser vista em /me pelo dono — nunca em
+                superficie publica, ver toPublicSite(). */}
+            {novaChave ? (
+              <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                <p className="text-sm font-black text-emerald-900">Nova chave de {novaChave.slug}</p>
+                <p className="mt-1 font-mono text-2xl font-black text-emerald-700">{novaChave.chave}</p>
+                <p className="mt-2 text-xs font-semibold text-emerald-800">
+                  A chave antiga parou de funcionar agora. Envie esta para quem edita o bio site.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { navigator.clipboard.writeText(novaChave.chave); setNovaChave(null); }}
+                  className="mt-3 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black text-white hover:bg-emerald-700"
+                >
+                  Copiar e fechar
+                </button>
+              </div>
+            ) : null}
             <Link href="/app/novo" className="inline-flex items-center gap-2 rounded-2xl bg-accent px-4 py-2.5 text-sm font-black text-white hover:bg-accent-dim">+ Novo</Link>
           </div>
           {biosites.length === 0 ? (
@@ -242,6 +287,15 @@ export default function ConfiguracoesPage() {
                             direto via sessao (ver tryUnlockBySession em
                             /editar/[slug]), sem precisar de chave nenhuma. */}
                         <Link href={`/editar/${site.slug}`} className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-black text-ink hover:border-accent">Editar</Link>
+                        <button
+                          type="button"
+                          onClick={() => handleRotateKey(site)}
+                          disabled={rotatingId === site.id}
+                          title="Gera uma chave de edicao nova e invalida a atual"
+                          className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-black text-muted hover:border-accent hover:text-accent-dim disabled:opacity-40"
+                        >
+                          {rotatingId === site.id ? "..." : "Nova chave"}
+                        </button>
                         {confirmDelete === site.id ? (
                           <div className="flex gap-1">
                             <button onClick={async () => {
