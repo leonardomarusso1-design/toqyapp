@@ -14,13 +14,28 @@ import { supabase } from "@/lib/supabaseClient";
 import { validateSite } from "@/lib/validation";
 import { ImageGuidelineHint } from "./ImageGuidelineHint";
 import { ImageUploadField, uploadImageFile } from "./ImageUploadField";
+import { AudioUploadField } from "./AudioUploadField";
 import { LiveBioSitePreview } from "./LiveBioSitePreview";
 import { PublicBioSite } from "./PublicBioSite";
+import { StickerIcon } from "./StickerIcon";
+import { STICKER_LIBRARY } from "@/lib/stickerLibrary";
 import { ThemePresetPicker } from "./ThemePresetPicker";
 import { ButtonEditor } from "./ButtonEditor";
 import { generateId } from "@/lib/security";
 import { syncModulesFromButtons } from "@/lib/buttonSync";
 import { DragHandle, DragReorderList } from "./DragReorderList";
+
+// Rótulos + ícone de cada bloco reordenável do corpo do bio site
+// (2026-09-06 — ver bodyBlockOrder em types.ts). Wi-Fi inline e o card de
+// Salvar Contato/Ligar continuam fixos (núcleo padronizado), só estes 4
+// entram na lista arrastável.
+const BODY_BLOCK_LABELS: Record<"buttons" | "catalog" | "music" | "instagram", string> = {
+  buttons: "Botões grandes",
+  catalog: "Catálogo",
+  music: "Música",
+  instagram: "Preview do Instagram",
+};
+const DEFAULT_BODY_BLOCK_ORDER: Array<"buttons" | "catalog" | "music" | "instagram"> = ["buttons", "catalog", "music", "instagram"];
 
 type Props = { mode: "create" | "edit"; initialSite: ToqySite; onSave: (site: ToqySite) => unknown | Promise<unknown> };
 
@@ -374,6 +389,13 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   function setLinks(patch: Partial<ToqySite["links"]>) { update((s) => ({ ...s, links: { ...s.links, ...patch } })); }
   function setTheme(patch: Partial<ToqySite["theme"]>) { update((s) => ({ ...s, theme: { ...s.theme, ...patch } })); }
   function setColor(key: string, value: string) { update((s) => ({ ...s, theme: { ...s.theme, colors: { ...s.theme.colors, [key]: value || undefined } } })); }
+  // Arrastar figurinha no preview ao vivo (2026-09-06) — chamado a cada
+  // pointermove pelo PublicBioSite quando `onStickerMove` é passado (só
+  // acontece aqui no editor; o bio site público de verdade nunca recebe
+  // essa prop, então nunca fica arrastável pro visitante).
+  function handleStickerMove(id: string, x: number, y: number) {
+    update((s) => ({ ...s, stickers: (s.stickers ?? []).map((st) => (st.id === id ? { ...st, x, y } : st)) }));
+  }
   function getColor(key: string, fallback: string) { return (site.theme.colors as Record<string, string> | undefined)?.[key] ?? fallback; }
 
   function selectTheme(preset: ThemePreset) {
@@ -720,60 +742,59 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             </div>
           </div>
 
-          {/* FIGURINHAS + MÚSICA (2026-09-05, pedido do Leonardo depois de
-              ver no Linktree) — liberado a partir do Pro Pessoal e planos
-              de revenda, ver hasStickersAndMusic em subscriptions.ts. */}
+          {/* FIGURINHAS + MÚSICA + INSTAGRAM (2026-09-05/06, pedido do
+              Leonardo) — liberado a partir do Pro Pessoal e planos de
+              revenda, exceto Essencial (ver hasStickersAndMusic em
+              subscriptions.ts). Figurinhas com posição livre arrastável no
+              preview ao lado (igual Canva); música com upload de verdade
+              (hospedado no Toqy); Instagram vira um bloco reordenável
+              (ver "Ordem das seções" logo abaixo). */}
           <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
-            <p className="text-sm font-black text-ink">✨ Figurinhas e música</p>
-            <p className="mt-0.5 text-xs text-muted">Dê mais personalidade ao bio site com figurinhas decorativas e uma música tocando.</p>
+            <p className="text-sm font-black text-ink">✨ Figurinhas, música e Instagram</p>
+            <p className="mt-0.5 text-xs text-muted">Dê mais personalidade ao bio site.</p>
             {canUseStickersAndMusic(ownerPlanTier) ? (
               <div className="mt-4 space-y-5">
                 <div>
-                  <p className={label}>Figurinhas (até 3)</p>
-                  <div className="mt-2 grid gap-3 sm:grid-cols-3">
-                    {(site.stickers ?? []).map((sticker) => (
-                      <div key={sticker.id} className="rounded-2xl border border-border bg-card p-3">
-                        <ImageUploadField
-                          label=""
-                          value={sticker.imageUrl}
-                          onChange={(url) => update((s) => ({ ...s, stickers: (s.stickers ?? []).map((st) => (st.id === sticker.id ? { ...st, imageUrl: url } : st)) }))}
-                          placeholder="URL da figurinha"
-                          slug={site.slug}
-                          fieldId={`sticker-${sticker.id}`}
-                          editKey={site.editKey}
-                        />
-                        <div className="mt-2 grid grid-cols-2 gap-2">
-                          <select className={field} value={sticker.corner} onChange={(e) => update((s) => ({ ...s, stickers: (s.stickers ?? []).map((st) => (st.id === sticker.id ? { ...st, corner: e.target.value as typeof st.corner } : st)) }))}>
-                            <option value="top-left">Canto sup. esq.</option>
-                            <option value="top-right">Canto sup. dir.</option>
-                            <option value="bottom-left">Canto inf. esq.</option>
-                            <option value="bottom-right">Canto inf. dir.</option>
-                          </select>
-                          <select className={field} value={sticker.size} onChange={(e) => update((s) => ({ ...s, stickers: (s.stickers ?? []).map((st) => (st.id === sticker.id ? { ...st, size: e.target.value as typeof st.size } : st)) }))}>
+                  <p className={label}>Figurinhas (até 3) — arraste no preview ao lado pra posicionar</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {STICKER_LIBRARY.map((s) => (
+                      <button
+                        key={s.key}
+                        type="button"
+                        title={s.label}
+                        disabled={(site.stickers ?? []).length >= 3}
+                        onClick={() => update((cur) => ({
+                          ...cur,
+                          stickers: [...(cur.stickers ?? []), { id: generateId("sticker"), key: s.key, x: 50 + ((cur.stickers?.length ?? 0) * 12 - 12), y: 8, size: "md" as const, rotation: (cur.stickers?.length ?? 0) % 2 === 0 ? -8 : 8 }],
+                        }))}
+                        className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card text-2xl transition hover:border-accent disabled:opacity-30"
+                      >
+                        <StickerIcon stickerKey={s.key} className="h-7 w-7" />
+                      </button>
+                    ))}
+                  </div>
+                  {(site.stickers ?? []).length ? (
+                    <div className="mt-3 space-y-2">
+                      {(site.stickers ?? []).map((sticker) => (
+                        <div key={sticker.id} className="flex items-center gap-2 rounded-xl border border-border bg-card p-2">
+                          <StickerIcon stickerKey={sticker.key} className="h-6 w-6 shrink-0" />
+                          <select className="flex-1 rounded-xl border border-border bg-surface px-2 py-1.5 text-xs" value={sticker.size} onChange={(e) => update((s) => ({ ...s, stickers: (s.stickers ?? []).map((st) => (st.id === sticker.id ? { ...st, size: e.target.value as typeof st.size } : st)) }))}>
                             <option value="sm">Pequena</option>
                             <option value="md">Média</option>
                             <option value="lg">Grande</option>
                           </select>
+                          <button type="button" onClick={() => update((s) => ({ ...s, stickers: (s.stickers ?? []).filter((st) => st.id !== sticker.id) }))} className="shrink-0 text-red-500"><Trash2 className="h-4 w-4" /></button>
                         </div>
-                        <button type="button" onClick={() => update((s) => ({ ...s, stickers: (s.stickers ?? []).filter((st) => st.id !== sticker.id) }))} className="mt-2 inline-flex items-center gap-1 text-xs font-black text-red-500"><Trash2 className="h-3.5 w-3.5" /> Remover</button>
-                      </div>
-                    ))}
-                    {(site.stickers ?? []).length < 3 ? (
-                      <button
-                        type="button"
-                        onClick={() => update((s) => ({ ...s, stickers: [...(s.stickers ?? []), { id: generateId("sticker"), imageUrl: "", corner: "top-right" as const, size: "md" as const }] }))}
-                        className="flex min-h-[7rem] items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border text-sm font-black text-muted hover:border-accent hover:text-accent"
-                      >
-                        <Plus className="h-4 w-4" /> Adicionar figurinha
-                      </button>
-                    ) : null}
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                <div>
+                  <span className={label}>Música (envie um arquivo do seu dispositivo)</span>
+                  <div className="mt-2">
+                    <AudioUploadField value={site.musicUrl} onChange={(url) => update((s) => ({ ...s, musicUrl: url }))} slug={site.slug} editKey={site.editKey} />
                   </div>
                 </div>
-                <label>
-                  <span className={label}>Música (link direto de um arquivo de áudio)</span>
-                  <input className={field} value={site.musicUrl ?? ""} onChange={(e) => update((s) => ({ ...s, musicUrl: e.target.value }))} placeholder="https://.../musica.mp3" />
-                  <p className="mt-1 text-xs text-muted">Cole o link direto do arquivo (mp3/ogg/wav) — aparece um player logo abaixo do seu perfil.</p>
-                </label>
                 <label>
                   <span className={label}>Preview de post do Instagram</span>
                   <input className={field} value={site.instagramPostUrl ?? ""} onChange={(e) => update((s) => ({ ...s, instagramPostUrl: e.target.value }))} placeholder="https://www.instagram.com/p/XXXXXXX/" />
@@ -785,6 +806,30 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 Disponível a partir do plano Pro. <a href="/#planos" className="underline">Ver planos</a>
               </div>
             )}
+          </div>
+
+          {/* ORDEM DAS SEÇÕES (2026-09-06, pedido do Leonardo: "o Toqy não
+              pode prender as pessoas a uma coisa só") — arrasta pra
+              intercalar botões, catálogo, música e Instagram na ordem que
+              quiser. Título/localização/descrição/QR/telefone continuam
+              padronizados (não entram nesta lista). */}
+          <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
+            <p className="text-sm font-black text-ink">↕️ Ordem das seções</p>
+            <p className="mt-0.5 text-xs text-muted">Arraste pra decidir o que aparece primeiro: botões, catálogo, música ou Instagram.</p>
+            <div className="mt-3 space-y-2">
+              <DragReorderList
+                items={site.bodyBlockOrder ?? DEFAULT_BODY_BLOCK_ORDER}
+                itemKey={(item) => item}
+                onReorder={(next) => update((s) => ({ ...s, bodyBlockOrder: next }))}
+              >
+                {(item, _index, drag) => (
+                  <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5">
+                    <DragHandle {...drag} />
+                    <span className="text-sm font-black text-ink">{BODY_BLOCK_LABELS[item]}</span>
+                  </div>
+                )}
+              </DragReorderList>
+            </div>
           </div>
 
         </Section>
@@ -1251,7 +1296,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             partir de sm (a barra deixa de ser fixa). */}
         <div className="h-20 sm:hidden" aria-hidden="true" />
       </div>
-      <LiveBioSitePreview site={site} />
+      <LiveBioSitePreview site={site} onStickerMove={handleStickerMove} />
 
       {/* Botão flutuante de preview no mobile — levantado (bottom-24) pra não
           ficar embaixo da barra fixa de navegação da etapa, acima. */}
@@ -1273,7 +1318,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             <p className="text-sm font-black text-white">Preview — /b/{site.slug}</p>
             <button type="button" onClick={() => setShowMobilePreview(false)} className="rounded-xl bg-white/10 px-4 py-2 text-sm font-black text-white">Fechar</button>
           </div>
-          <div className="flex-1 overflow-y-auto"><PublicBioSite site={site} /></div>
+          <div className="flex-1 overflow-y-auto"><PublicBioSite site={site} onStickerMove={handleStickerMove} /></div>
         </div>
       ) : null}
     </div>

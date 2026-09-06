@@ -229,27 +229,43 @@ export type ToqySite = {
     booking: boolean;
     catalog: boolean;
   };
-  // Figurinhas/GIFs decorativos + música (2026-09-05, pedido do Leonardo
-  // depois de ver no Linktree) — liberado a partir do Pro Pessoal e nos
-  // planos de revenda (ver hasStickersAndMusic em subscriptions.ts), fora
-  // do Gratuito. Máx. 3 stickers, posição por preset (não é canvas livre,
-  // pra nunca quebrar o layout do bio site em nenhum tema).
+  // Figurinhas decorativas (2026-09-05, redesenhado 2026-09-06: posição
+  // livre x/y arrastável no preview, igual Canva — pedido do Leonardo. Só
+  // faz sentido posição livre AQUI (não nos blocos grandes abaixo) porque
+  // um pequeno desencontro de pixels numa figurinha não quebra o layout em
+  // telas de tamanho diferente; um bloco inteiro em x/y fixo, quebraria.
+  // `key` referencia STICKER_LIBRARY (emoji/forma própria, sem risco de
+  // direito autoral — não são os stickers ilustrados do Linktree/WhatsApp).
+  // Liberado a partir do Pro Pessoal e nos planos de revenda, exceto
+  // Essencial (ver hasStickersAndMusic em subscriptions.ts).
   stickers?: Array<{
     id: string;
-    imageUrl: string;
-    corner: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+    key: string;
+    x: number; // 0-100 (%), posição livre dentro do header do perfil
+    y: number; // 0-100 (%)
     size: "sm" | "md" | "lg";
+    rotation: number; // graus
   }>;
-  // Link direto de um arquivo de áudio (mp3/ogg/wav) hospedado pelo
-  // próprio usuário — renderiza um player nativo `<audio controls>` logo
-  // abaixo do perfil. MVP sem pipeline de upload de áudio próprio.
+  // Música própria hospedada no Toqy (2026-09-06, redesenhado de "link de
+  // áudio externo" pra upload de verdade — pedido do Leonardo: "hospedar
+  // as músicas que ela tem no pc/celular no próprio Toqy"). Limite de
+  // ~60s/~4MB (confirmado com o Leonardo) pra nunca estourar o limite real
+  // de ~4,5MB por requisição das Vercel Functions.
   musicUrl?: string;
-  // Preview de post do Instagram "em tempo real" (2026-09-05, pedido do
-  // Leonardo) — embed oficial da Meta (`instagram.com/embed.js`), sem API
-  // key/login: renderiza o post ao vivo (like/comentário atuais, puxados
-  // pelo script da própria Instagram), não é uma captura estática. Link
-  // de um post público (ex: https://www.instagram.com/p/XXXXXXX/).
+  // Preview de post do Instagram "em tempo real" — embed oficial da Meta
+  // (`instagram.com/embed.js`), sem API key/login: renderiza o post ao
+  // vivo (like/comentário atuais, puxados pelo próprio Instagram), não é
+  // captura estática. Link de um post público (ex: instagram.com/p/XXX/).
   instagramPostUrl?: string;
+  // Ordem livre das seções do corpo do bio site (2026-09-06, pedido do
+  // Leonardo: "o Toqy não pode prender as pessoas a uma coisa só") — cada
+  // seção é um BLOCO que a pessoa arrasta pra cima/baixo e intercala como
+  // quiser. Título/subtítulo/localização/descrição/assinatura/QR/telefone
+  // continuam padronizados (núcleo fixo do bio site, fora desta lista) —
+  // só o CORPO (botões grandes, catálogo, música, Instagram) é livre.
+  // Undefined = ordem padrão de sempre (compatibilidade com bio sites já
+  // criados antes desta feature existir).
+  bodyBlockOrder?: Array<"buttons" | "catalog" | "music" | "instagram">;
   buttons: ToqyButton[];
   catalog: CatalogItem[];
   editKey: string;

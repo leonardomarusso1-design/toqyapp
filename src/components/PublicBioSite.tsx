@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import {
   CalendarCheck,
@@ -29,6 +29,7 @@ import { buttonHref, createVCard, pixPayload, whatsappUrl, wifiPayload } from "@
 import { ensureUrl, normalizeInstagram } from "@/lib/security";
 import { getPlan, resolvePlanTier } from "@/lib/subscriptions";
 import { analytics } from "@/lib/analytics";
+import { StickerIcon } from "./StickerIcon";
 
 // Ícones originais (2026-07-16, pedido do Leonardo) — PNGs próprios em vez
 // dos SVGs de marca genéricos abaixo. Mesma assinatura (className) das
@@ -224,18 +225,12 @@ const SOCIAL_ICON_SIZE_CLASS: Record<"sm" | "md" | "lg", string> = {
   lg: "h-16 w-16",
 };
 
-// Figurinhas decorativas (2026-09-05) — posição por preset (não é canvas
-// livre) pra nunca sair do card de perfil em nenhum tema/tamanho de tela.
+// Figurinhas decorativas (2026-09-05, posição livre desde 2026-09-06) —
+// x/y arrastável dentro do header do perfil (ver STICKER_SIZE_CLASS).
 const STICKER_SIZE_CLASS: Record<"sm" | "md" | "lg", string> = {
-  sm: "h-12 w-12",
-  md: "h-16 w-16",
-  lg: "h-20 w-20",
-};
-const STICKER_CORNER_CLASS: Record<"top-left" | "top-right" | "bottom-left" | "bottom-right", string> = {
-  "top-left": "-left-3 -top-3 rotate-[-8deg]",
-  "top-right": "-right-3 -top-3 rotate-[8deg]",
-  "bottom-left": "-left-3 -bottom-3 rotate-[8deg]",
-  "bottom-right": "-right-3 -bottom-3 rotate-[-8deg]",
+  sm: "h-10 w-10 text-4xl",
+  md: "h-14 w-14 text-5xl",
+  lg: "h-20 w-20 text-6xl",
 };
 
 // Preview de post do Instagram "em tempo real" (2026-09-05, pedido do
@@ -485,9 +480,11 @@ function representativeItemsByCategory(items: CatalogItem[]): CatalogItem[] {
   return result;
 }
 
-export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite; publicUrl?: string; instanceId?: string }) {
+export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { site: ToqySite; publicUrl?: string; instanceId?: string; onStickerMove?: (id: string, x: number, y: number) => void }) {
   const [modal, setModal] = useState<Modal>(null);
   const [qrModal, setQrModal] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const [draggingSticker, setDraggingSticker] = useState<string | null>(null);
 
   // URL e id do catálogo — quando publicUrl/instanceId são omitidos, comportamento
   // idêntico ao anterior (window.location.href e id fixo "catalogo-toqy"). Necessário
@@ -625,17 +622,32 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
             <button type="button" onClick={shareSite} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black backdrop-blur-xl" style={glassCard(site)}><Share2 className="h-4 w-4" />{copied === "share" ? "Copiado" : "Compartilhar"}</button>
           </div>
 
-          <header className="relative text-center">
-            {/* Figurinhas decorativas (2026-09-05) — ver STICKER_CORNER_CLASS */}
-            {(site.stickers ?? []).map((sticker) => sticker.imageUrl ? (
-              <img
+          <header ref={headerRef} className="relative text-center">
+            {/* Figurinhas decorativas — posição livre x/y (2026-09-06,
+                pedido do Leonardo: "mover pela tela do próprio preview,
+                como se fosse um Canva"). `onStickerMove` só é passado pelo
+                SiteBuilder (editor); no bio site público de verdade o
+                sticker fica fixo na posição salva, sem handlers de
+                arrastar. */}
+            {(site.stickers ?? []).map((sticker) => (
+              <div
                 key={sticker.id}
-                src={sticker.imageUrl}
-                alt=""
-                aria-hidden="true"
-                className={`pointer-events-none absolute z-10 object-contain drop-shadow-lg ${STICKER_SIZE_CLASS[sticker.size]} ${STICKER_CORNER_CLASS[sticker.corner]}`}
-              />
-            ) : null)}
+                onPointerDown={onStickerMove ? (e) => { e.preventDefault(); (e.target as HTMLElement).setPointerCapture(e.pointerId); setDraggingSticker(sticker.id); } : undefined}
+                onPointerMove={onStickerMove ? (e) => {
+                  if (draggingSticker !== sticker.id) return;
+                  const rect = headerRef.current?.getBoundingClientRect();
+                  if (!rect) return;
+                  const x = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100));
+                  const y = Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100));
+                  onStickerMove(sticker.id, x, y);
+                } : undefined}
+                onPointerUp={onStickerMove ? () => setDraggingSticker(null) : undefined}
+                className={`absolute z-10 flex items-center justify-center drop-shadow-lg ${STICKER_SIZE_CLASS[sticker.size]} ${onStickerMove ? "touch-none cursor-grab select-none active:cursor-grabbing" : "pointer-events-none"}`}
+                style={{ left: `${sticker.x}%`, top: `${sticker.y}%`, transform: `translate(-50%, -50%) rotate(${sticker.rotation}deg)` }}
+              >
+                <StickerIcon stickerKey={sticker.key} className="h-full w-full" />
+              </div>
+            ))}
             <div className={`${logoSize(site)} ${logoShape(site)} relative mx-auto overflow-hidden shadow-2xl`} style={{ border: (site.profile.logoUrl || site.profile.profileImageUrl) ? "none" : `2px solid ${site.theme.primary}88`, background: "transparent" }}>
               {site.profile.logoUrl || site.profile.profileImageUrl ? (
                 <img
@@ -681,19 +693,6 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
               <p className="mt-3 tracking-widest drop-shadow-lg" style={{ color: site.theme.text, fontSize: "clamp(13px, 4vw, 20px)", fontFamily: site.profile.logoFont === "serif" || site.profile.logoFont === "italic" ? "Georgia, serif" : site.profile.logoFont === "mono" ? "monospace" : "inherit", fontWeight: !site.profile.logoFont || site.profile.logoFont === "bold" ? 900 : 700, fontStyle: site.profile.logoFont === "italic" ? "italic" : "normal", letterSpacing: "0.15em", textTransform: "uppercase", textShadow: site.theme.mode === "dark" ? "0 2px 12px rgba(0,0,0,0.6)" : "none" }}>{site.profile.logoText}</p>
             ) : null}
           </header>
-
-          {/* Música + preview de Instagram (2026-09-05) */}
-          {site.musicUrl ? (
-            <section className="mt-4 rounded-2xl border p-3 backdrop-blur-xl" style={glassCard(site)}>
-              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-              <audio controls src={site.musicUrl} className="w-full" style={{ height: 32 }} />
-            </section>
-          ) : null}
-          {site.instagramPostUrl ? (
-            <section className="mt-4 flex justify-center overflow-hidden rounded-2xl">
-              <InstagramEmbed postUrl={site.instagramPostUrl} />
-            </section>
-          ) : null}
 
           <section className="mt-4 grid grid-cols-2 gap-2">
             {site.modules?.saveContact !== false ? <button type="button" onClick={downloadVCard} className={`${radiusClass(site)} flex items-center justify-center gap-2 border px-4 py-3 text-xs font-black backdrop-blur-xl`} style={{ ...glassCard(site), color: col("saveContactText", site.theme.text) }}><Save className="h-4 w-4" />Salvar Contato</button> : null}
@@ -804,16 +803,6 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
             </section>
           ) : null}
 
-          <section className={site.theme.buttonStyle === "icon" ? "mt-5 grid grid-cols-3 gap-3" : "mt-5 space-y-3"}>
-            {mainButtons.map((button) => {
-              const showIcon = site.theme.mainButtonDisplay !== "text-only";
-              if (site.theme.buttonStyle === "icon") {
-                return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex min-h-24 flex-col items-center justify-center gap-2 border p-3 text-center text-xs font-black shadow-lg transition active:scale-[0.98]`} style={buttonStyle(site)}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span>{button.label}</span></button>;
-              }
-              return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex w-full items-center justify-center gap-2 border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98]`} style={buttonStyle(site)}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span>{button.label}</span></button>;
-            })}
-          </section>
-
           {(site.promoCard?.enabled ?? true) ? (
             <section className="mt-5 rounded-[1.75rem] border p-4 backdrop-blur-xl" style={glassCard(site)}>
               <p className="text-sm font-black">{site.promoCard?.title || "Mais praticidade em um só lugar"}</p>
@@ -822,7 +811,47 @@ export function PublicBioSite({ site, publicUrl, instanceId }: { site: ToqySite;
             </section>
           ) : null}
 
-          {activeCatalog.length ? <CatalogSection site={site} items={activeCatalog} layout={catalogLayout} catalogId={catalogId} /> : null}
+          {/* Blocos reordenáveis do corpo (2026-09-06, pedido do Leonardo:
+              "o Toqy não pode prender as pessoas a uma coisa só") — a
+              pessoa arrasta a ordem no editor (ver bodyBlockOrder em
+              SiteBuilder.tsx); aqui só renderiza na ordem salva. Sem
+              bodyBlockOrder salvo (bio site criado antes desta feature),
+              usa a ordem padrão de sempre. */}
+          {(site.bodyBlockOrder ?? (["buttons", "catalog", "music", "instagram"] as const)).map((blockType) => {
+            if (blockType === "buttons") {
+              if (!mainButtons.length) return null;
+              return (
+                <section key="buttons" className={site.theme.buttonStyle === "icon" ? "mt-5 grid grid-cols-3 gap-3" : "mt-5 space-y-3"}>
+                  {mainButtons.map((button) => {
+                    const showIcon = site.theme.mainButtonDisplay !== "text-only";
+                    if (site.theme.buttonStyle === "icon") {
+                      return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex min-h-24 flex-col items-center justify-center gap-2 border p-3 text-center text-xs font-black shadow-lg transition active:scale-[0.98]`} style={buttonStyle(site)}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span>{button.label}</span></button>;
+                    }
+                    return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex w-full items-center justify-center gap-2 border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98]`} style={buttonStyle(site)}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span>{button.label}</span></button>;
+                  })}
+                </section>
+              );
+            }
+            if (blockType === "catalog") {
+              return activeCatalog.length ? <CatalogSection key="catalog" site={site} items={activeCatalog} layout={catalogLayout} catalogId={catalogId} /> : null;
+            }
+            if (blockType === "music") {
+              return site.musicUrl ? (
+                <section key="music" className="mt-4 rounded-2xl border p-3 backdrop-blur-xl" style={glassCard(site)}>
+                  {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                  <audio controls src={site.musicUrl} className="w-full" style={{ height: 32 }} />
+                </section>
+              ) : null;
+            }
+            if (blockType === "instagram") {
+              return site.instagramPostUrl ? (
+                <section key="instagram" className="mt-4 flex justify-center overflow-hidden rounded-2xl">
+                  <InstagramEmbed postUrl={site.instagramPostUrl} />
+                </section>
+              ) : null;
+            }
+            return null;
+          })}
 
           <footer className="mt-8 pb-6 text-center text-xs font-bold leading-relaxed" style={{ color: site.theme.muted }}>
             <p style={{ color: site.theme.muted }}>© {new Date().getFullYear()} {site.profile.name}. Todos os direitos reservados.</p>
