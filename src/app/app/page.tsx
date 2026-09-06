@@ -7,8 +7,11 @@ import { useRouter } from "next/navigation";
 // import — nenhum JSX desta página usava o ícone, só pesava o bundle.
 import { LogOut, UserRound } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
+import { DashboardHero } from "@/components/DashboardHero";
+import { listBiositesFromSupabase } from "@/lib/biositeSync";
 import { PLAN_BIOSITE_LIMITS } from "@/lib/planLimits";
 import { supabase } from "@/lib/supabaseClient";
+import type { ToqySite } from "@/lib/types";
 
 type PlanTier = keyof typeof PLAN_BIOSITE_LIMITS;
 
@@ -44,7 +47,7 @@ const SUBSCRIPTION_LABELS: Record<string, string> = {
   inactive: "Ativa", // plano free sempre ativo
 };
 
-export default function ConfiguracoesPage() {
+export default function PainelPage() {
   const router = useRouter();
   const [count, setCount] = useState(0);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -59,6 +62,10 @@ export default function ConfiguracoesPage() {
   // unica saida seria trocar a de todo mundo de uma vez.
   const [rotatingId, setRotatingId] = useState<string | null>(null);
   const [novaChave, setNovaChave] = useState<{ slug: string; chave: string } | null>(null);
+  // Bio site principal + avatar alimentam o topo em formato de app
+  // (DashboardHero). "Principal" = o mais recente, mesma ordem da lista.
+  const [heroSite, setHeroSite] = useState<ToqySite | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   async function handleRotateKey(site: BioSiteRow) {
     if (!window.confirm(`Gerar nova chave para "${site.slug}"?
@@ -115,7 +122,14 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
       setProfile(profileData as Profile);
       setBiosites((biositesData ?? []) as BioSiteRow[]);
       setCount((biositesData ?? []).length);
+      const meta = session.user.user_metadata;
+      setAvatarUrl(meta?.avatar_url || meta?.picture || null);
       setLoading(false);
+
+      // Carregado depois do resto: o site_data inteiro é pesado e só
+      // alimenta a prévia do topo — não vale segurar o painel por ele.
+      const sites = await listBiositesFromSupabase();
+      if (active) setHeroSite(sites[0] ?? null);
     };
 
     loadDashboard().catch(() => {
@@ -162,13 +176,9 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
 
   return (
     <DashboardShell>
-      <div>
-        <p className="text-sm font-black uppercase tracking-[0.18em] text-accent">Configurações</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight md:text-5xl text-ink">Configurações</h1>
-        <p className="mt-2 max-w-2xl text-muted">Conta, plano, integrações e dados da sua conta TOQY.</p>
-      </div>
+      <DashboardHero site={heroSite} name={displayName} planLabel={planLabel} avatarUrl={avatarUrl} />
 
-      <div className="mt-7 grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2">
         <section className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
