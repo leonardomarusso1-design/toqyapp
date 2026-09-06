@@ -2,11 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-// Limpeza (2026-09-06, auditoria externa): ChevronLeft, ChevronRight e
-// MessageCircle saíram do import — nenhum deles era renderizado (o carrossel
-// usa swipe/scroll e o WhatsApp usa o WhatsAppIcon próprio abaixo).
+// Limpeza (2026-09-06, auditoria externa): ChevronLeft e MessageCircle
+// saíram do import — nenhum dos dois era renderizado (o carrossel usa
+// swipe/scroll e o WhatsApp usa o WhatsAppIcon próprio abaixo).
+// ChevronRight VOLTOU no mesmo dia (mockup da auditoria externa): a seta
+// à direita dos botões grandes é parte da hierarquia primário/secundário.
 import {
   CalendarCheck,
+  ChevronRight,
+  Clock,
   Copy,
   CreditCard,
   FileText,
@@ -24,8 +28,9 @@ import {
   Wifi,
   X,
 } from "lucide-react";
-import type { CatalogItem, CatalogLayout, ToqyButton, ToqyLinkType, ToqySite } from "@/lib/types";
+import type { BusinessHours, CatalogItem, CatalogLayout, ToqyButton, ToqyLinkType, ToqySite } from "@/lib/types";
 import { buttonHref, createVCard, pixPayload, whatsappUrl, wifiPayload } from "@/lib/buttonUtils";
+import { resolveBodyBlockOrder } from "@/lib/bodyBlocks";
 import { ensureUrl, normalizeInstagram } from "@/lib/security";
 import { getPlan, resolvePlanTier } from "@/lib/subscriptions";
 import { colorSwatch, resolveColorStyle } from "@/lib/colorRoles";
@@ -650,6 +655,173 @@ function buttonStyle(site: ToqySite): React.CSSProperties {
   };
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// HIERARQUIA DE BOTÕES + CARD DE HORÁRIO (2026-09-06)
+// Origem: mockup conceitual do bio site público entregue pela auditoria
+// externa ("Café Aurora"). Princípios que o mockup aplica e que estas
+// funções implementam:
+//   • UM CTA primário por seção — preenchido, cor cheia, ícone em círculo
+//     BRANCO; todas as outras ações viram cards claros, subordinados.
+//   • Dois níveis de raio — controles menores e cards principais não podem
+//     ter o mesmo arredondamento (senão tudo vira a mesma cápsula).
+//   • Área de toque mínima de 44px.
+//   • Menos gradiente em área de leitura (o card de horário é sólido).
+// ─────────────────────────────────────────────────────────────────────────
+
+// Cor de acento do bio site = a MESMA cor do CTA primário (role "buttonBg",
+// com fallback pro theme.primary de sempre). Serve de base pro círculo
+// coral claro dos ícones secundários e do horário — derivar daqui evita
+// criar mais um role de cor duplicando um conceito que já existe.
+function accentColor(site: ToqySite): string {
+  return colorSwatch(site.theme.colors?.buttonBg, site.theme.primary);
+}
+
+// Mesma cor com opacidade baixa (o "círculo coral clarinho" do mockup).
+// Aceita hex de 3 ou 6 dígitos; qualquer outro formato (rgba/named) volta
+// intacto — melhor um círculo na cor cheia do que um valor CSS inválido.
+function softTint(hex: string, alpha = "1F"): string {
+  const match = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
+  if (!match) return hex;
+  const full = match[1].length === 3 ? match[1].split("").map((c) => c + c).join("") : match[1];
+  return `#${full}${alpha}`;
+}
+
+// Card claro das ações secundárias. Texto via colorSwatch (não
+// resolveColorStyle) de propósito: em modo gradiente o resolver de TEXTO
+// devolve `color: transparent` + bg-clip, o que aqui apagaria o texto por
+// cima do fundo do próprio card — o swatch entrega uma cor sólida legível.
+function secondaryButtonStyle(site: ToqySite): React.CSSProperties {
+  const isLight = site.theme.mode === "light";
+  return {
+    ...resolveColorStyle(site.theme.colors?.secondaryButtonBg, "bg", isLight ? "#FFFFFF" : "rgba(255,255,255,0.10)"),
+    color: colorSwatch(site.theme.colors?.secondaryButtonText, site.theme.text),
+    borderColor: isLight ? "rgba(15,23,42,0.06)" : "rgba(255,255,255,0.14)",
+    boxShadow: isLight ? "0 6px 18px rgba(15,23,42,0.06)" : "0 8px 22px rgba(0,0,0,0.20)",
+  };
+}
+
+const WEEKDAY_COUNT = 7;
+
+function parseMinutes(value: string): number | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+  return hours * 60 + minutes;
+}
+
+// "09:00" → "9h" | "18:30" → "18h30" (formato do mockup, e o jeito que
+// negócio local escreve horário no Brasil).
+function formatHour(value: string): string {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+  if (!match) return value;
+  return match[2] === "00" ? `${Number(match[1])}h` : `${Number(match[1])}h${match[2]}`;
+}
+
+// Estado "aberto agora" + a frase do dia. Recebe `now` de fora de propósito:
+// quem chama é um componente que só calcula DEPOIS de montar no navegador
+// (ver BusinessHoursCard) — o bio site é renderizado no servidor e um
+// `new Date()` durante o render daria divergência de hidratação.
+function businessHoursStatus(hours: BusinessHours, now: Date): { open: boolean; label: string } {
+  const dayFor = (weekday: number) => hours.days.find((day) => day.weekday === weekday);
+  const minutesNow = now.getHours() * 60 + now.getMinutes();
+  const today = dayFor(now.getDay());
+
+  const openNowToday = (() => {
+    if (!today || today.closed) return false;
+    const start = parseMinutes(today.open);
+    const end = parseMinutes(today.close);
+    if (start === null || end === null) return false;
+    // Expediente que vira a madrugada (close <= open): hoje ele vale do
+    // horário de abertura até a meia-noite.
+    return end > start ? minutesNow >= start && minutesNow < end : minutesNow >= start;
+  })();
+
+  // ...e a "sobra" do expediente de ONTEM que ainda não fechou (ex: abriu
+  // ontem 18h, fecha 02h — às 00h30 de hoje o negócio está aberto).
+  const openNowFromYesterday = (() => {
+    const yesterday = dayFor((now.getDay() + WEEKDAY_COUNT - 1) % WEEKDAY_COUNT);
+    if (!yesterday || yesterday.closed) return false;
+    const start = parseMinutes(yesterday.open);
+    const end = parseMinutes(yesterday.close);
+    if (start === null || end === null || end > start) return false;
+    return minutesNow < end;
+  })();
+
+  return {
+    open: openNowToday || openNowFromYesterday,
+    label: !today || today.closed ? "Fechado hoje" : `Aberto hoje • ${formatHour(today.open)} às ${formatHour(today.close)}`,
+  };
+}
+
+// Card de horário do mockup: ícone de relógio em círculo coral claro,
+// linha de horário em negrito, endereço embaixo (reaproveita
+// profile.location — não inventa campo novo) e selo verde/cinza à direita.
+const BusinessHoursCard = ({ site }: { site: ToqySite }) => {
+  const hours = site.businessHours;
+  // "Aberto agora" depende do relógio de QUEM VISITA, e esta página é
+  // renderizada no servidor — calcular no primeiro render quebraria a
+  // hidratação. Fica nulo até montar; enquanto isso o selo é renderizado
+  // invisível (`invisible`, não removido) pra não empurrar o layout quando
+  // aparecer. Re-checa de minuto em minuto pra virar de aberto pra fechado
+  // sozinho com a página aberta.
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!hours?.enabled || !hours.days.length) return null;
+
+  const status = now ? businessHoursStatus(hours, now) : null;
+  const accent = accentColor(site);
+  const isLight = site.theme.mode === "light";
+  // Verde/cinza fixos de propósito: "aberto"/"fechado" é status semântico
+  // (mesma convenção do Google/Maps), não identidade visual do negócio —
+  // deixar o dono pintar isso de qualquer cor só tornaria a informação
+  // menos legível. A cor "de marca" do card fica nos roles hoursCardBg/
+  // hoursText, esses sim configuráveis.
+  const badge = status?.open
+    ? { background: "#DCFCE7", color: "#15803D", text: "Aberto" }
+    : { background: isLight ? "#F1F5F9" : "rgba(255,255,255,0.14)", color: isLight ? "#475569" : "#E2E8F0", text: "Fechado" };
+
+  return (
+    <section
+      // rounded-[1.25rem] (20px) = nível "card principal" do mockup, contra
+      // o rounded-full do círculo/selo — os dois níveis de raio que a
+      // auditoria pediu, pra nada parecer a mesma cápsula.
+      className="mt-4 flex items-center gap-3 rounded-[1.25rem] border px-4 py-3"
+      style={{
+        ...resolveColorStyle(site.theme.colors?.hoursCardBg, "bg", isLight ? "#FFFFFF" : "rgba(255,255,255,0.10)"),
+        borderColor: isLight ? "rgba(15,23,42,0.06)" : "rgba(255,255,255,0.14)",
+        boxShadow: isLight ? "0 6px 18px rgba(15,23,42,0.06)" : "0 8px 22px rgba(0,0,0,0.20)",
+      }}
+    >
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ background: softTint(accent) }}>
+        <Clock className="h-5 w-5" style={{ color: accent }} />
+      </span>
+      <div className="min-w-0 flex-1 text-left">
+        <p className="text-sm font-black leading-snug" style={{ color: colorSwatch(site.theme.colors?.hoursText, site.theme.text) }}>
+          {status?.label ?? "Horário de funcionamento"}
+        </p>
+        {site.profile.location ? (
+          <p className="mt-0.5 truncate text-xs font-semibold" style={{ color: colorSwatch(site.theme.colors?.location, site.theme.muted) }}>
+            {site.profile.location}
+          </p>
+        ) : null}
+      </div>
+      <span
+        className={`shrink-0 rounded-full px-3 py-1 text-xs font-black ${status ? "" : "invisible"}`}
+        style={{ background: badge.background, color: badge.color }}
+      >
+        {badge.text}
+      </span>
+    </section>
+  );
+};
+
 function getInitials(name: string) {
   return name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "T";
 }
@@ -813,6 +985,20 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
   const mainButtons = activeButtons.filter((b) =>
     b.displayAs === "button" || (!b.displayAs && !SOCIAL_TYPES.includes(b.type) && b.type !== "phone" && !(wifiInline && b.type === "wifi"))
   );
+
+  // Chave de compatibilidade da hierarquia primário/secundário
+  // (2026-09-06, mockup da auditoria externa). ENQUANTO NINGUÉM MARCAR um
+  // botão como principal, isto é `false` e a lista de botões grandes
+  // renderiza exatamente como sempre renderizou — mesma classe, mesmo
+  // estilo, sem chevron. É o que garante que nenhum dos bio sites já
+  // publicados (clientes pagantes reais) mude de aparência sozinho ao
+  // subir esta versão.
+  //
+  // O estilo "ícone" (grade 3 colunas, theme.buttonStyle === "icon") fica
+  // de fora: lá os botões são quadradinhos de mesma altura numa grade, e a
+  // ideia de "um preenchido + os outros em card com seta" não se traduz.
+  const useButtonHierarchy = site.theme.buttonStyle !== "icon" && mainButtons.some((b) => b.isPrimary === true);
+  const accent = accentColor(site);
 
   const bgImage = backgroundImageUrl(site);
   // Compatibilidade (2026-09-06): musicUrl era o nome antigo do campo,
@@ -1078,8 +1264,11 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
               pessoa arrasta a ordem no editor (ver bodyBlockOrder em
               SiteBuilder.tsx); aqui só renderiza na ordem salva. Sem
               bodyBlockOrder salvo (bio site criado antes desta feature),
-              usa a ordem padrão de sempre. */}
-          {(site.bodyBlockOrder ?? (["buttons", "catalog", "music", "instagram"] as const)).map((blockType) => {
+              usa a ordem padrão de sempre. Bio site salvo com uma ordem
+              ANTIGA (sem o bloco "hours", que só existe desde 2026-09-06)
+              ganha o bloco novo reencaixado na posição padrão dele — ver
+              resolveBodyBlockOrder em src/lib/bodyBlocks.ts. */}
+          {resolveBodyBlockOrder(site.bodyBlockOrder).map((blockType) => {
             if (blockType === "buttons") {
               if (!mainButtons.length) return null;
               return (
@@ -1089,10 +1278,50 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
                     if (site.theme.buttonStyle === "icon") {
                       return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex min-h-24 flex-col items-center justify-center gap-2 border p-3 text-center text-xs font-black shadow-lg transition active:scale-[0.98]`} style={buttonStyle(site)}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span>{button.label}</span></button>;
                     }
+                    // Hierarquia do mockup (só quando algum botão foi
+                    // marcado como principal — ver useButtonHierarchy):
+                    // o primário fica preenchido com a cor cheia e o
+                    // ícone num círculo BRANCO; os demais viram cards
+                    // claros com o ícone num círculo da mesma cor em
+                    // opacidade baixa. Os dois ganham a seta à direita e
+                    // min-h-[56px] (acima dos 44px mínimos de toque).
+                    if (useButtonHierarchy) {
+                      const isPrimary = button.isPrimary === true;
+                      return (
+                        <button
+                          key={button.id}
+                          type="button"
+                          onClick={() => handleButton(button)}
+                          className={`${radiusClass(site)} flex min-h-[56px] w-full items-center gap-3 border px-3.5 py-3 text-left text-sm font-black transition active:scale-[0.98]`}
+                          style={isPrimary ? buttonStyle(site) : secondaryButtonStyle(site)}
+                        >
+                          {showIcon ? (
+                            <span
+                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                              style={{ background: isPrimary ? "rgba(255,255,255,0.95)" : softTint(accent) }}
+                            >
+                              {/* Ícones de marca (WhatsApp/Instagram/...)
+                                  são PNG já colorido e ignoram esta cor —
+                                  dentro do círculo branco eles aparecem
+                                  com a cor real da marca, que é o que o
+                                  visitante reconhece. */}
+                              <ButtonIcon type={button.type} color={accent} />
+                            </span>
+                          ) : null}
+                          <span className="min-w-0 flex-1 truncate">{button.label}</span>
+                          <ChevronRight className="h-5 w-5 shrink-0 opacity-70" />
+                        </button>
+                      );
+                    }
                     return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex w-full items-center justify-center gap-2 border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98]`} style={buttonStyle(site)}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span>{button.label}</span></button>;
                   })}
                 </section>
               );
+            }
+            if (blockType === "hours") {
+              // Renderiza só se o dono configurou (o próprio componente
+              // devolve null quando businessHours está ausente/desligado).
+              return <BusinessHoursCard key="hours" site={site} />;
             }
             if (blockType === "catalog") {
               return activeCatalog.length ? <CatalogSection key="catalog" site={site} items={activeCatalog} layout={catalogLayout} catalogId={catalogId} /> : null;

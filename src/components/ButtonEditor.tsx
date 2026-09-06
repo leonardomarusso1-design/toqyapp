@@ -16,6 +16,21 @@ export function ButtonEditor({ site, onChange }: Props) {
   function addButton() { commit({ ...site, buttons: [...site.buttons, { id: generateId("btn"), label: "Novo botão", type: "custom", url: "", enabled: true }] }); }
   function removeButton(id: string) { commit({ ...site, buttons: site.buttons.filter((button) => button.id !== id) }); }
   function duplicateButton(button: ToqyButton) { commit({ ...site, buttons: [...site.buttons, { ...button, id: generateId("btn"), label: `${button.label} cópia` }] }); }
+  // CTA primário (2026-09-06, mockup da auditoria externa: "UM CTA primário
+  // por seção"). Marcar um botão DESMARCA todos os outros — a hierarquia só
+  // funciona se existir exatamente um destaque; dois "principais" viram
+  // nenhum. Desmarcar grava `undefined` (e não `false`) de propósito: o
+  // JSON.stringify do save descarta a chave, então o bio site volta a ficar
+  // byte a byte igual ao que era antes desta feature existir.
+  function setPrimary(id: string, value: boolean) {
+    commit({
+      ...site,
+      buttons: site.buttons.map((button) => {
+        if (button.id === id) return { ...button, isPrimary: value ? true : undefined };
+        return value ? { ...button, isPrimary: undefined } : button;
+      }),
+    });
+  }
   function moveButton(index: number, dir: -1 | 1) {
     const target = index + dir;
     if (target < 0 || target >= site.buttons.length) return;
@@ -95,6 +110,23 @@ export function ButtonEditor({ site, onChange }: Props) {
                       ))}
                     </div>
                   </div>
+                  {/* AÇÃO PRINCIPAL (2026-09-06, mockup da auditoria
+                      externa) — enquanto NENHUM botão estiver marcado, o
+                      bio site renderiza a lista de botões exatamente como
+                      sempre renderizou. Marcando um, ele vira o único
+                      preenchido com a cor cheia (com o ícone num círculo
+                      branco) e os demais viram cards claros com seta. Não
+                      faz sentido pra botão exibido como ícone circular, por
+                      isso o controle some nesse caso. */}
+                  {button.displayAs === "icon" ? null : (
+                    <div className="mt-3">
+                      <label className="flex items-center gap-2 text-xs font-black text-ink">
+                        <input type="checkbox" checked={button.isPrimary === true} onChange={(e) => setPrimary(button.id, e.target.checked)} />
+                        ⭐ Ação principal (CTA em destaque)
+                      </label>
+                      <p className="mt-1 text-xs text-muted">Só um botão pode ser o principal. Ele fica preenchido com a cor do tema e os outros viram cards claros, pra o cliente saber onde clicar primeiro.</p>
+                    </div>
+                  )}
                   <div className="mt-4">{destinationFields(button)}</div>
                 </article>
               );

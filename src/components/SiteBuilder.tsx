@@ -7,9 +7,10 @@ import { QRCodeSVG } from "qrcode.react";
 // Limpeza (2026-09-06, auditoria externa): o tipo CatalogLayout e o helper
 // createEditUrl saíram dos imports — o tipo não era referenciado em nenhuma
 // anotação e createEditUrl só alimentava a const editLink, também morta.
-import type { CatalogItem, ColorRole, ColorValue, ThemePreset, ToqySite } from "@/lib/types";
+import type { BusinessHoursDay, CatalogItem, ColorRole, ColorValue, ThemePreset, ToqySite } from "@/lib/types";
 import { createPublicUrl, generateSlug } from "@/lib/dataProvider";
 import { COLOR_ROLES } from "@/lib/colorRoles";
+import { BODY_BLOCK_LABELS, resolveBodyBlockOrder } from "@/lib/bodyBlocks";
 import { RealTemplateGallery } from "./RealTemplateGallery";
 import { syncBiositeToSupabase } from "@/lib/biositeSync";
 import { checkBiositeLimit } from "@/lib/planLimits";
@@ -29,17 +30,30 @@ import { generateId } from "@/lib/security";
 import { syncModulesFromButtons } from "@/lib/buttonSync";
 import { DragHandle, DragReorderList } from "./DragReorderList";
 
-// Rótulos + ícone de cada bloco reordenável do corpo do bio site
-// (2026-09-06 — ver bodyBlockOrder em types.ts). Wi-Fi inline e o card de
-// Salvar Contato/Ligar continuam fixos (núcleo padronizado), só estes 4
-// entram na lista arrastável.
-const BODY_BLOCK_LABELS: Record<"buttons" | "catalog" | "music" | "instagram", string> = {
-  buttons: "Botões grandes",
-  catalog: "Catálogo",
-  music: "Botão do Spotify", // música de FUNDO não ocupa slot (é ambiente, sem posição no layout)
-  instagram: "Preview do Instagram",
-};
-const DEFAULT_BODY_BLOCK_ORDER: Array<"buttons" | "catalog" | "music" | "instagram"> = ["buttons", "catalog", "music", "instagram"];
+// Rótulos + ordem padrão dos blocos reordenáveis vivem em
+// src/lib/bodyBlocks.ts desde 2026-09-06 (entrou o bloco "hours" do mockup
+// da auditoria externa e a lista estava duplicada aqui e no site público).
+// Wi-Fi inline e o card de Salvar Contato/Ligar continuam fixos (núcleo
+// padronizado), não entram na lista arrastável.
+
+// Horário de funcionamento (2026-09-06, mockup da auditoria externa).
+// Ordem de EDIÇÃO começa na segunda — é como um negócio local lê a própria
+// semana — mas o dado guardado usa o índice de Date.getDay() (0 = domingo),
+// pra o site público casar direto com o relógio do visitante.
+const WEEKDAY_LABELS = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+const WEEKDAY_EDIT_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
+// Sugestão inicial ao ligar o horário pela primeira vez — comércio de rua
+// típico (seg-sex 9h-18h, sábado até 13h, domingo fechado). É só um ponto
+// de partida editável; nada disso aparece sem a pessoa ligar a chave.
+function defaultBusinessHoursDays(): BusinessHoursDay[] {
+  return [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
+    weekday,
+    closed: weekday === 0,
+    open: "09:00",
+    close: weekday === 6 ? "13:00" : "18:00",
+  }));
+}
 
 type Props = { mode: "create" | "edit"; initialSite: ToqySite; onSave: (site: ToqySite) => unknown | Promise<unknown> };
 
@@ -160,6 +174,14 @@ function roleFallback(role: ColorRole, site: ToqySite): string {
     pageBackground: t.background,
     name: t.text, title: t.muted, location: t.muted, description: t.muted, logoText: t.text,
     buttonBg: t.primary, buttonText: t.text, buttonBorder: t.primary,
+    // Botões secundários e card de horário (2026-09-06, mockup da auditoria
+    // externa): o padrão é card claro/neutro — o contrário do CTA, que é o
+    // único preenchido com a cor cheia. Em tema escuro o "card" do tema já
+    // é o tom certo pra isso.
+    secondaryButtonBg: t.mode === "light" ? "#FFFFFF" : t.card,
+    secondaryButtonText: t.text,
+    hoursCardBg: t.mode === "light" ? "#FFFFFF" : t.card,
+    hoursText: t.text,
     socialIconBg: t.primary,
     saveContactText: t.text, callText: t.text, wifiText: t.text,
     catalogSectionLabel: t.accent, catalogTitle: t.text, catalogItemBg: t.card,
@@ -447,6 +469,20 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   // objeto inteiro é opcional em ToqySite, então começa vazio.
   function setWhiteLabel(patch: Partial<NonNullable<ToqySite["whiteLabel"]>>) { update((s) => ({ ...s, whiteLabel: { ...s.whiteLabel, ...patch } })); }
   function setColor(key: ColorRole, value: ColorValue) { update((s) => ({ ...s, theme: { ...s.theme, colors: { ...s.theme.colors, [key]: value } } })); }
+  // Horário de funcionamento (2026-09-06, mockup da auditoria externa) —
+  // ao ligar pela primeira vez, semeia os 7 dias com a sugestão padrão;
+  // depois disso só faz patch. Sempre grava os 7 dias pra o site público
+  // nunca precisar adivinhar o que fazer com um dia ausente.
+  function setBusinessHours(patch: Partial<NonNullable<ToqySite["businessHours"]>>) {
+    update((s) => ({ ...s, businessHours: { enabled: false, days: defaultBusinessHoursDays(), ...s.businessHours, ...patch } }));
+  }
+  function setBusinessHoursDay(weekday: number, patch: Partial<BusinessHoursDay>) {
+    update((s) => {
+      const current = s.businessHours ?? { enabled: true, days: defaultBusinessHoursDays() };
+      const days = (current.days.length ? current.days : defaultBusinessHoursDays()).map((day) => day.weekday === weekday ? { ...day, ...patch } : day);
+      return { ...s, businessHours: { ...current, days } };
+    });
+  }
   // Arrastar figurinha no preview ao vivo (2026-09-06) — chamado a cada
   // pointermove pelo PublicBioSite quando `onStickerMove` é passado (só
   // acontece aqui no editor; o bio site público de verdade nunca recebe
@@ -669,6 +705,44 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             </label>
             <label><span className={label}>E-mail</span><input className={field} value={site.contact.email ?? ""} onChange={(e) => setContact({ email: e.target.value })} /></label>
             <label><span className={label}>Site</span><input className={field} value={site.contact.website ?? ""} onChange={(e) => setContact({ website: e.target.value })} /></label>
+          </div>
+
+          {/* HORÁRIO DE FUNCIONAMENTO (2026-09-06, mockup da auditoria
+              externa) — card "Aberto hoje • 7h às 18h" com selo verde no
+              bio site. Sem gate de plano de propósito: horário é informação
+              básica de negócio local, vale até no Gratuito. Desligado por
+              padrão — bio site que não mexer aqui continua idêntico. */}
+          <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
+            <p className="text-sm font-black text-ink">🕒 Horário de funcionamento</p>
+            <p className="mt-0.5 text-xs text-muted">Mostra um card com o horário de hoje, o endereço e um selo “Aberto”/“Fechado” calculado na hora que o cliente abre o link.</p>
+            <label className="mt-3 flex items-center gap-2 text-sm font-black text-ink">
+              <input type="checkbox" checked={Boolean(site.businessHours?.enabled)} onChange={(e) => setBusinessHours({ enabled: e.target.checked })} />
+              Mostrar horário no bio site
+            </label>
+            {site.businessHours?.enabled ? (
+              <div className="mt-4 space-y-2">
+                {WEEKDAY_EDIT_ORDER.map((weekday) => {
+                  const day = site.businessHours?.days.find((item) => item.weekday === weekday) ?? { weekday, closed: true, open: "09:00", close: "18:00" };
+                  return (
+                    <div key={weekday} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card px-3 py-2.5">
+                      <span className="w-32 shrink-0 text-sm font-black text-ink">{WEEKDAY_LABELS[weekday]}</span>
+                      <label className="flex items-center gap-2 text-xs font-black text-muted">
+                        <input type="checkbox" checked={day.closed} onChange={(e) => setBusinessHoursDay(weekday, { closed: e.target.checked })} />
+                        Fechado
+                      </label>
+                      {day.closed ? null : (
+                        <div className="flex items-center gap-2">
+                          <input type="time" className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-ink outline-none focus:border-accent" value={day.open} onChange={(e) => setBusinessHoursDay(weekday, { open: e.target.value })} />
+                          <span className="text-xs font-black text-muted">às</span>
+                          <input type="time" className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-ink outline-none focus:border-accent" value={day.close} onChange={(e) => setBusinessHoursDay(weekday, { close: e.target.value })} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                <p className="text-xs text-muted">Vira a madrugada? É só colocar o fechamento menor que a abertura — ex: 18:00 às 02:00.</p>
+              </div>
+            ) : null}
           </div>
         </Section>
       );
@@ -922,15 +996,18 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
 
           {/* ORDEM DAS SEÇÕES (2026-09-06, pedido do Leonardo: "o Toqy não
               pode prender as pessoas a uma coisa só") — arrasta pra
-              intercalar botões, catálogo, música e Instagram na ordem que
-              quiser. Título/localização/descrição/QR/telefone continuam
-              padronizados (não entram nesta lista). */}
+              intercalar botões, horário, catálogo, música e Instagram na
+              ordem que quiser. Título/localização/descrição/QR/telefone
+              continuam padronizados (não entram nesta lista).
+              resolveBodyBlockOrder garante que quem salvou a ordem antes do
+              bloco "horário" existir também o veja aqui, na posição padrão
+              dele, sem perder o arranjo que já tinha. */}
           <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
             <p className="text-sm font-black text-ink">↕️ Ordem das seções</p>
-            <p className="mt-0.5 text-xs text-muted">Arraste pra decidir o que aparece primeiro: botões, catálogo, música ou Instagram.</p>
+            <p className="mt-0.5 text-xs text-muted">Arraste pra decidir o que aparece primeiro: botões, horário, catálogo, música ou Instagram.</p>
             <div className="mt-3 space-y-2">
               <DragReorderList
-                items={site.bodyBlockOrder ?? DEFAULT_BODY_BLOCK_ORDER}
+                items={resolveBodyBlockOrder(site.bodyBlockOrder)}
                 itemKey={(item) => item}
                 onReorder={(next) => update((s) => ({ ...s, bodyBlockOrder: next }))}
               >

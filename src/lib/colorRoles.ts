@@ -18,6 +18,16 @@ export const COLOR_ROLES: Record<ColorRole, { label: string; hint: string; kind:
   buttonBg: { label: "Fundo dos botões", hint: "Botões grandes (links)", kind: "bg", group: "Botões" },
   buttonText: { label: "Texto dos botões", hint: "Cor do texto/ícone", kind: "text", group: "Botões" },
   buttonBorder: { label: "Borda dos botões", hint: "Cor da borda", kind: "bg", group: "Botões" },
+  // Hierarquia primário/secundário (2026-09-06, mockup da auditoria externa).
+  // Só têm efeito depois que algum botão é marcado como "ação principal" no
+  // editor — sem isso, o bio site renderiza igual a antes e estes 2 roles
+  // ficam inertes. O círculo do ícone (coral claro) NÃO é um role: é
+  // derivado do próprio "Fundo dos botões" com opacidade baixa, pra
+  // acompanhar a cor do CTA sozinho em vez de virar mais um campo repetido.
+  secondaryButtonBg: { label: "Fundo dos botões secundários", hint: "Cards das ações que não são o CTA principal", kind: "bg", group: "Botões" },
+  secondaryButtonText: { label: "Texto dos botões secundários", hint: "Cor do texto/seta desses cards", kind: "text", group: "Botões" },
+  hoursCardBg: { label: "Fundo do card de horário", hint: "Card \"Aberto hoje\"", kind: "bg", group: "Horário" },
+  hoursText: { label: "Texto do horário", hint: "Linha \"Aberto hoje • 7h às 18h\"", kind: "text", group: "Horário" },
   socialIconBg: { label: "Fundo dos ícones sociais", hint: "Círculo por trás do ícone (ative \"translúcido\" abaixo pra suavizar)", kind: "bg", group: "Ícones sociais" },
   saveContactText: { label: "Texto — Salvar Contato", hint: "Cor do texto do botão", kind: "text", group: "Contato rápido" },
   callText: { label: "Texto — Ligar", hint: "Cor do texto do botão", kind: "text", group: "Contato rápido" },

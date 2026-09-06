@@ -3,6 +3,12 @@ export type ButtonFill = "solid" | "gradient" | "glass";
 export type BackgroundType = "solid" | "gradient" | "image";
 export type CatalogLayout = "carousel" | "grid" | "stack" | "grouped" | "category-carousel";
 
+// Blocos do CORPO do bio site que a pessoa pode reordenar livremente
+// (ver `bodyBlockOrder` em ToqySite). Extraído pra type próprio em
+// 2026-09-06, quando entrou o bloco "hours" — assim a lista de blocos
+// existe em UM lugar só, em vez de repetida em 3 arquivos.
+export type BodyBlock = "buttons" | "hours" | "catalog" | "music" | "instagram";
+
 // Sistema de cores unificado (2026-09-06) — ver src/lib/colorRoles.ts
 // para a lista de roles e o resolver. Um ColorValue é sólido OU
 // gradiente; nunca os dois ao mesmo tempo.
@@ -21,6 +27,20 @@ export type ColorRole =
   | "buttonBg"
   | "buttonText"
   | "buttonBorder"
+  // Hierarquia primário/secundário (2026-09-06, mockup da auditoria
+  // externa) — os botões grandes que NÃO são o CTA principal viram cards
+  // claros, subordinados visualmente. Precisam de fundo/texto próprios
+  // justamente porque a graça é NÃO usarem a cor cheia do CTA (buttonBg).
+  // Só têm efeito quando algum botão foi marcado como principal; sem isso
+  // o bio site continua renderizando do jeito antigo (ver PublicBioSite).
+  | "secondaryButtonBg"
+  | "secondaryButtonText"
+  // Card de horário de funcionamento (2026-09-06, mesmo mockup) — elemento
+  // novo e opcional, por isso ganha os próprios roles em vez de reaproveitar
+  // os do catálogo/botões (conceitos diferentes, ver regra de "1 role = 1
+  // lugar reconhecível" no comentário de `colors` abaixo).
+  | "hoursCardBg"
+  | "hoursText"
   | "socialIconBg"
   | "saveContactText"
   | "callText"
@@ -95,6 +115,37 @@ export type ToqyButton = {
   url?: string;
   enabled: boolean;
   displayAs?: "icon" | "button"; // "icon" = círculo social, "button" = botão grande
+  // CTA principal (2026-09-06, mockup da auditoria externa: "UM CTA
+  // primário por seção; ações secundárias visualmente subordinadas").
+  // Hoje TODOS os botões grandes têm o mesmo peso visual, então o visitante
+  // não sabe qual é a ação que importa. Marcando UM botão aqui, ele vira o
+  // único preenchido com a cor cheia e os outros viram cards claros.
+  //
+  // Compatibilidade (crítica — já existem bio sites de clientes pagantes no
+  // ar): enquanto NENHUM botão tiver isPrimary, o bio site renderiza
+  // exatamente como sempre renderizou (sem cards claros, sem chevron). O
+  // editor garante no máximo 1 primário por bio site (ver ButtonEditor).
+  isPrimary?: boolean;
+};
+
+// Horário de funcionamento (2026-09-06, mockup da auditoria externa — card
+// "Aberto hoje • 7h às 18h" + endereço + selo verde "Aberto"). Informação
+// básica de negócio local, por isso NÃO tem gate de plano: vale pra todos,
+// inclusive Gratuito. Totalmente opcional — sem configurar, nenhum card
+// aparece e nada muda nos bio sites já publicados.
+export type BusinessHoursDay = {
+  weekday: number; // 0 = domingo ... 6 = sábado (mesmo índice de Date.getDay())
+  closed: boolean;
+  open: string;    // "HH:MM"
+  // "HH:MM". Se for menor ou igual a `open`, entende-se que o expediente
+  // vira a madrugada (ex: bar que abre 18h e fecha 02h) — o cálculo de
+  // "aberto agora" trata esse caso olhando também o dia anterior.
+  close: string;
+};
+
+export type BusinessHours = {
+  enabled: boolean;
+  days: BusinessHoursDay[];
 };
 
 export type CatalogItem = {
@@ -245,6 +296,9 @@ export type ToqySite = {
     checkinLabel?: string;
     showInline?: boolean; // true = mostra no topo inline, false = só como botão na lista
   };
+  // Horário de funcionamento (2026-09-06, mockup da auditoria externa) —
+  // ver BusinessHours acima. Ausente/enabled:false = nenhum card renderiza.
+  businessHours?: BusinessHours;
   catalogLayout: CatalogLayout;
   catalogLayouts?: CatalogLayout[];
   catalogTitle?: string;
@@ -344,7 +398,13 @@ export type ToqySite = {
   // só o CORPO (botões grandes, catálogo, música, Instagram) é livre.
   // Undefined = ordem padrão de sempre (compatibilidade com bio sites já
   // criados antes desta feature existir).
-  bodyBlockOrder?: Array<"buttons" | "catalog" | "music" | "instagram">;
+  //
+  // "hours" entrou depois (2026-09-06, card de horário do mockup da
+  // auditoria) — bio sites salvos com uma lista SEM esse bloco não perdem
+  // nada: resolveBodyBlockOrder() (src/lib/bodyBlocks.ts) reinsere os
+  // blocos ausentes na posição padrão deles, preservando a ordem que a
+  // pessoa já tinha arrastado.
+  bodyBlockOrder?: BodyBlock[];
   // White label — marca do revendedor no lugar do selo "Criado com TOQY"
   // (2026-09-06, pedido do Guilbert, primeiro assinante do plano Agência).
   // Histórico importante: white label existiu, foi REMOVIDO do produto em
