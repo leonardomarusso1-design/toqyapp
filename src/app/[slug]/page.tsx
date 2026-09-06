@@ -23,7 +23,7 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   // Rotas do sistema — nunca chegam aqui na pratica (Next.js prioriza
   // segmentos estaticos sobre a rota dinamica), mas mantido por segurança.
-  const reserved = ["app", "login", "me", "editar", "onboarding", "obrigado", "b", "api", "auth", "termos", "privacidade", "cookies", "demo", "portal", "qr", "contrato-assinatura"];
+  const reserved = ["app", "login", "me", "editar", "onboarding", "obrigado", "b", "api", "auth", "termos", "privacidade", "cookies", "demo", "portal", "qr", "contrato-assinatura", "para-mim", "para-vender", "custom-domain"];
   if (reserved.includes(slug)) notFound();
 
   const exists = await biositeExists(slug);

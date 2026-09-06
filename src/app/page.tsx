@@ -1,12 +1,9 @@
 import Link from "next/link";
-import { EbookLeadForm } from "@/components/EbookLeadForm";
 import { LandingHeader } from "@/components/LandingHeader";
 import { LandingBioSiteCard } from "@/components/LandingBioSiteCard";
 import { ReferralCapture } from "@/components/ReferralCapture";
 import { APP_VERSION, BUILD_ID } from "@/lib/appInfo";
 import { getShowcaseSummaries } from "@/lib/realTemplates";
-import { KIWIFY_LINKS } from "@/lib/subscriptions";
-import { RESELLER_TIERS } from "@/lib/resellerTiers";
 import {
   ArrowRight,
   Building2,
@@ -28,15 +25,17 @@ import {
   Wifi,
   BriefcaseBusiness,
   CalendarCheck,
-  Zap,
-  Clock3,
   HelpCircle,
   Heart,
-  Handshake,
   Wallet,
-  Gift,
-  Lock,
 } from "lucide-react";
+
+// Espaço de vídeo explicativo na hero (2026-09-05, pedido do Leonardo) —
+// cole aqui a URL de embed (YouTube: https://www.youtube.com/embed/ID,
+// Vimeo: https://player.vimeo.com/video/ID). Enquanto vazio, mostra um
+// placeholder — mesmo padrão já usado pros espaços de imagem desta página
+// (ver seção "3 PASSOS" abaixo).
+const HERO_VIDEO_EMBED_URL = "";
 
 const features = [
   ["WhatsApp", "Atendimento direto com mensagem pronta.", MessageCircle],
@@ -79,26 +78,6 @@ const features = [
 //
 // Prefixo "★ " marca um item como exclusivo pro rendering abaixo
 // (ícone/cor diferente, chama mais atenção que os itens normais).
-const plans = [
-  { name: "Gratuito", price: "R$0", period: "", tag: "Pra testar", description: "Para conhecer a plataforma e gerar seus primeiros leads.", highlight: false, cta: "Começar grátis", items: ["1 bio site", "Domínio toqy.app/seunome", "QR Code básico", "Preview em tempo real", "Marca TOQY na página"] },
-  { name: "Essencial", price: "R$29,90", period: "/mês", tag: "Comece a vender bio site pra comércio local", description: "Pra começar a criar bio sites pra clientes, mensal, cancele quando quiser.", highlight: true, cta: "Assinar agora", items: ["Até 10 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "★ QR personalizado editável", "★ Gerador de arte com IA (5 créditos)", "Suporte por email", "Cancele quando quiser"] },
-  { name: "Freelancer", price: "R$39,90", period: "/mês", tag: "Atenda mais clientes, ganhe indicando", description: "Para quem cria pra clientes com mais frequência — mais créditos de arte e suporte prioritário. Mensal, cancele quando quiser.", highlight: false, cta: "Assinar agora", items: ["Até 20 bio sites", "Pix e Wi-Fi", "Catálogo completo", "★ QR personalizado editável", "★ Gerador de arte com IA (10 créditos)", "Suporte prioritário", "Cancele quando quiser", "Indique e ganhe 20% de comissão"] },
-  // Voltou a ser paga (2026-07-15, mesmo dia) — o desenho "Agência grátis +
-  // revenda 30/70" tinha um furo real: qualquer assinante pagante viraria
-  // revendedor de graça sem nunca precisar revender nada. Ver histórico
-  // completo em src/lib/subscriptions.ts (comentário de SUBSCRIPTION_PLANS
-  // .agency). O programa de indicação com comissão continua existindo,
-  // agora como benefício de quem já é Freelancer/Agência pagante — não
-  // mais como a própria razão de existir do plano.
-  { name: "Agência", price: "R$99,90", period: "/mês", tag: "Monte uma operação, gerencie equipe", description: "Para equipes e agências em escala. 100 bio sites, 50 créditos de arte, tudo do Freelancer e mais.", highlight: false, cta: "Assinar agora", items: ["Até 100 bio sites", "★ QR personalizado editável", "★ Gerador de arte com IA (50 créditos)", "Domínio próprio", "Gestão de equipe", "Indique e ganhe 30% de comissão"] },
-  // Nota (pendência da Fase 2 quitada aqui, 2026-07-15): antes só a Agência
-  // mostrava o benefício de indicação — Freelancer também ganha (20%) e
-  // nunca aparecia. Uma seção dedicada explicando comissão+desconto+bônus
-  // de bio site em detalhe fica pra Fase 3 (Landing Page), que já tem isso
-  // como critério de sucesso explícito no roadmap — aqui é só a paridade
-  // pontual entre os dois cards.
-] as const;
-
 const featureShowcase = [
   { title: "Editor visual com preview ao vivo", text: "Personalize paletas, botões, fundos, logo e módulos sem mexer em código.", image: "/images/landing-feature-editor-preview.png", alt: "Editor visual do TOQY com preview ao vivo" },
   { title: "Onboarding guiado pra criar pro cliente", text: "Um passo a passo simples — negócio, localização, visual, contato — pra criar o bio site do seu cliente em minutos.", image: "/images/landing-feature-onboarding.png", alt: "Onboarding guiado para criar bio site de cliente" },
@@ -186,12 +165,28 @@ export default async function LandingPage() {
               Mais clientes. <span className="gradient-text">Menos trabalho.</span>
             </h1>
             <p className="fade-up mx-auto mt-5 max-w-2xl text-base leading-relaxed text-muted md:text-lg" style={{ animationDelay: "0.1s" }}>
-              Crie biosites premium com WhatsApp, Pix, Wi-Fi, catálogo e avaliação Google em minutos. Perfeito para o seu negócio ou para vender como serviço.
+              Duas formas de usar o Toqy: um bio site profissional pro seu próprio negócio, ou uma forma de vender bio sites pra outros negócios e ganhar todo mês. Escolha abaixo.
             </p>
           </div>
 
+          {/* Espaço de vídeo explicativo (2026-09-05, pedido do Leonardo) —
+              ver HERO_VIDEO_EMBED_URL no topo do arquivo. Vídeo curto e
+              pessoal costuma converter mais que texto sozinho (ver skill
+              premium-design-standards, princípio 29). */}
+          <div className="fade-up mx-auto mt-10 max-w-3xl" style={{ animationDelay: "0.15s" }}>
+            {HERO_VIDEO_EMBED_URL ? (
+              <div className="aspect-video overflow-hidden rounded-3xl border border-border shadow-lg">
+                <iframe src={HERO_VIDEO_EMBED_URL} title="Como o Toqy funciona" className="h-full w-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+              </div>
+            ) : (
+              <div className="flex aspect-video items-center justify-center rounded-3xl border-2 border-dashed border-border bg-white/60 text-sm font-semibold text-muted">
+                <span className="inline-flex items-center gap-2"><PlayCircle className="h-5 w-5" /> Espaço para vídeo explicando como o Toqy funciona</span>
+              </div>
+            )}
+          </div>
+
           {/* DUAS DIREÇÕES PRINCIPAIS */}
-          <div className="fade-up mt-12 grid gap-6 lg:grid-cols-2" style={{ animationDelay: "0.2s" }}>
+          <div className="fade-up mt-10 grid gap-6 lg:grid-cols-2" style={{ animationDelay: "0.2s" }}>
             {/* Direção 1: Para o próprio negócio */}
             <div className="card-glow relative overflow-hidden rounded-3xl border border-border bg-white p-8 shadow-sm transition hover:-translate-y-1">
               <div className="absolute right-0 top-0 h-32 w-32 rounded-bl-full bg-accent/10" />
@@ -200,20 +195,20 @@ export default async function LandingPage() {
               </div>
               <h3 className="text-2xl font-extrabold text-ink">Para o meu negócio</h3>
               <p className="mt-3 text-muted">
-                Crie um bio site profissional para o seu negócio e comece a receber mais clientes hoje mesmo.
+                Um bio site completo pra receber mais clientes — pronto em minutos, sem precisar de designer.
               </p>
               <ul className="mt-6 space-y-3">
                 {[
-                  "1 bio site gratuito para começar",
+                  "1 bio site grátis, sem cartão de crédito",
                   "WhatsApp, localização e redes sociais",
-                  "Upgrade para PRO e libere tudo",
+                  "Pix, catálogo e QR a partir de R$9,90/mês",
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-sm font-semibold text-ink/80">
                     <Check className="h-5 w-5 shrink-0 text-accent" /> {item}
                   </li>
                 ))}
               </ul>
-              <Link href="/login" className="btn-glow mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full px-7 py-3 text-sm font-bold text-white">
+              <Link href="/para-mim" className="btn-glow mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full px-7 py-3 text-sm font-bold text-white">
                 Criar meu bio site <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -229,22 +224,22 @@ export default async function LandingPage() {
               </div>
               <h3 className="text-2xl font-extrabold text-ink">Vender bio sites</h3>
               <p className="mt-3 text-muted">
-                Ofereça criação de bio sites como serviço e ganhe renda extra todo mês com planos recorrentes.
+                Crie bio sites pra clientes, cobre mensalidade e ganhe comissão indicando o Toqy pra outros revendedores.
               </p>
               <ul className="mt-6 space-y-3">
                 {[
-                  "Até 100 bio sites por mês",
-                  "IA gera artes de plaquinhas",
-                  "Comissão por indicações",
+                  "Até 100 bio sites, gerencie tudo num painel só",
+                  "Gerador de arte com IA pras plaquinhas",
+                  "Até 30% de comissão por indicação",
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-sm font-semibold text-ink/80">
                     <Check className="h-5 w-5 shrink-0 text-accent" /> {item}
                   </li>
                 ))}
               </ul>
-              <a href="#planos" className="btn-glow mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-7 py-3 text-sm font-bold text-white">
+              <Link href="/para-vender" className="btn-glow mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-7 py-3 text-sm font-bold text-white">
                 Começar a vender <ArrowRight className="h-4 w-4" />
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -288,43 +283,6 @@ export default async function LandingPage() {
                 )}
               </article>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* LEAD MAGNET - EBOOK GRÁTIS */}
-      <section className="bg-gradient-to-br from-ink to-ink/95 py-20 text-white">
-        <div className="mx-auto max-w-4xl px-5">
-          <div className="grid gap-10 lg:grid-cols-2">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Ebook grátis</p>
-              <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">
-                7 Formas de Ganhar Dinheiro com Bio Sites em 2025
-              </h2>
-              <p className="mt-4 text-white/70">
-                Descubra como começar a vender bio sites como serviço, quais nichos são mais lucrativos e como precificar seus serviços corretamente.
-              </p>
-              <ul className="mt-6 space-y-3">
-                {[
-                  "Nichos que pagam mais caro por bio sites",
-                  "Como precificar seus serviços (R$97 a R$497)",
-                  "Script pronto para oferecer para clientes",
-                  "Modelo de contrato editável",
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-sm font-semibold">
-                    <Check className="h-5 w-5 shrink-0 text-accent" /> {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="card-glow rounded-3xl border border-white/10 bg-white/5 p-8 shadow-xl">
-              <h3 className="text-xl font-extrabold">Baixe o ebook grátis</h3>
-              <p className="mt-2 text-sm text-white/70">Preencha abaixo e receba no seu email:</p>
-              <EbookLeadForm />
-              <p className="mt-4 text-center text-xs text-white/50">
-                Não enviamos spam. Você pode cancelar a qualquer momento.
-              </p>
-            </div>
           </div>
         </div>
       </section>
@@ -434,151 +392,30 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* PLANOS */}
-      <section id="planos" className="mx-auto max-w-7xl px-5 py-20">
+      {/* PLANOS — reduzido a uma ponte pras 2 páginas dedicadas (2026-09-05,
+          segmentação de público). Antes havia uma tabela de 12 linhas +
+          4 cards misturando os 2 públicos na mesma seção — cada preço e
+          feature agora mora só na página do público certo (/para-mim,
+          /para-vender), sem duplicar manutenção em 2 lugares. */}
+      <section id="planos" className="mx-auto max-w-5xl px-5 py-20">
         <div className="text-center">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Planos</p>
-          <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-ink md:text-5xl">Escolha o plano ideal para você</h2>
-          <p className="mx-auto mt-3 max-w-xl text-muted">Comece grátis e faça upgrade quando precisar de mais recursos</p>
+          <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-ink md:text-5xl">Qual dos dois é você?</h2>
+          <p className="mx-auto mt-3 max-w-xl text-muted">Os planos e preços certos dependem do que você quer fazer com o Toqy.</p>
         </div>
-        
-        {/* Tabela comparativa */}
-        <div className="mt-12 overflow-hidden rounded-3xl border border-border bg-white shadow-sm">
-          <div className="grid grid-cols-5 border-b border-border">
-            <div className="p-6"></div>
-            {["Gratuito", "Essencial", "Freelancer", "Agência"].map((plan) => (
-              <div key={plan} className="p-6 text-center">
-                <p className="text-lg font-extrabold text-ink">{plan}</p>
-              </div>
-            ))}
-          </div>
-          {[
-            ["Bio sites", "1", "10", "20", "100"],
-            ["WhatsApp", "✅", "✅", "✅", "✅"],
-            ["Localização", "✅", "✅", "✅", "✅"],
-            ["Redes sociais", "✅", "✅", "✅", "✅"],
-            ["Pix", "🔒", "✅", "✅", "✅"],
-            ["Wi-Fi", "🔒", "✅", "✅", "✅"],
-            ["Catálogo", "🔒", "✅", "✅", "✅"],
-            ["QR personalizado", "🔒", "✅", "✅", "✅"],
-            ["IA artes plaquinhas", "🔒", "5 créditos", "10 créditos", "50 créditos"],
-            ["Domínio próprio", "🔒", "🔒", "🔒", "✅"],
-            ["Gestão de equipe", "🔒", "🔒", "🔒", "✅"],
-            ["Comissão indicações", "🔒", "🔒", "20%", "30%"],
-          ].map(([feature, free, essential, freelancer, agency]) => (
-            <div key={feature} className="grid grid-cols-5 border-b border-border">
-              <div className="flex items-center p-6 text-sm font-semibold text-muted">{feature}</div>
-              {[free, essential, freelancer, agency].map((val, i) => (
-                <div key={i} className="flex items-center justify-center p-6">
-                  {val === "✅" ? (
-                    <Check className="h-5 w-5 text-accent" />
-                  ) : val === "🔒" ? (
-                    <div className="flex items-center gap-2 text-sm text-muted">
-                      <Lock className="h-4 w-4" />PRO
-                    </div>
-                  ) : (
-                    <span className="text-sm font-extrabold text-ink">{val}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-
-        {/* Cards dos planos */}
-        <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {plans.map((plan) => (
-            <article key={plan.name} className={`relative flex flex-col rounded-2xl border bg-card p-7 shadow-sm transition hover:-translate-y-1 ${plan.highlight ? "border-accent shadow-xl shadow-accent/10 glow-pulse" : "border-border card-glow"}`}>
-              {plan.highlight ? <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent px-5 py-2 text-xs font-extrabold text-white uppercase tracking-wider">Mais popular</span> : null}
-              <h3 className="text-2xl font-bold text-ink">{plan.name}</h3>
-              <p className="mt-2 min-h-[4rem] text-sm text-muted">{plan.description}</p>
-              <div className="mt-4">
-                <p className="text-4xl font-extrabold text-ink">{plan.price}<span className="text-base font-bold text-muted">{plan.period}</span></p>
-              </div>
-              <span className={`mt-3 inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-extrabold ${plan.highlight ? "bg-accent/15 text-accent" : "bg-surface text-muted"}`}>{plan.tag}</span>
-              <div className="mt-6 grid gap-3 flex-1">
-                {plan.items.map((item) => {
-                  const isExclusive = item.startsWith("★ ");
-                  const label = isExclusive ? item.slice(2) : item;
-                  return isExclusive ? (
-                    <p key={item} className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-accent/15 to-transparent px-2 py-1 text-sm font-black text-accent">
-                      <Star className="h-4 w-4 shrink-0 fill-accent text-accent" />
-                      {label}
-                    </p>
-                  ) : (
-                    <p key={item} className="flex items-center gap-3 text-sm font-semibold text-ink/80">
-                      <Check className="h-4 w-4 shrink-0 text-accent" />
-                      {label}
-                    </p>
-                  );
-                })}
-              </div>
-              {/* Agência volta a ter checkout Kiwify (2026-07-15, ver
-                  comentário no array `plans` acima) — mesmo tratamento dos
-                  outros planos pagos, nova aba pro checkout. */}
-              <a href={plan.name === "Essencial" ? KIWIFY_LINKS.community : plan.name === "Freelancer" ? KIWIFY_LINKS.freelancer : plan.name === "Agência" ? KIWIFY_LINKS.agency : "/login"} target={plan.name === "Gratuito" ? undefined : "_blank"} rel={plan.name === "Gratuito" ? undefined : "noreferrer noopener"} className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}>
-                {plan.cta}
-              </a>
-            </article>
-          ))}
-        </div>
-        <div className="mx-auto mt-8 max-w-3xl space-y-3 text-center">
-          <div className="rounded-2xl border border-accent/20 bg-accent/5 p-6">
-            <p className="text-sm font-bold text-ink">
-              💡 <strong>Essencial ou Freelancer?</strong> Os dois são mensais e você pode cancelar quando quiser. O Essencial é o ponto de entrada mais barato. O Freelancer custa um pouco mais e traz mais créditos de arte com IA e suporte prioritário — vale a pena se você atende clientes com mais frequência.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* GANHE DINHEIRO — Fase 3 do roadmap (2026-07-17), critério de sucesso
-          #2: seção explícita sobre o programa de indicação. Antes disso só
-          existia um bullet solto em cada card de plano + a linha genérica
-          "renda extra" na seção "Usos do Toqy" — nenhum lugar explicava os
-          números reais. Fonte única dos números: RESELLER_TIERS
-          (src/lib/resellerTiers.ts) — nada aqui é inventado. */}
-      <section id="ganhe-dinheiro" className="border-t border-border bg-gradient-to-br from-ink to-ink/95 py-20 text-white">
-        <div className="mx-auto max-w-6xl px-5">
-          <div className="text-center">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Programa de indicação</p>
-            <h2 className="mt-3 text-4xl font-extrabold tracking-tight md:text-5xl">Ganhe dinheiro indicando o Toqy</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-base text-white/70">
-              Quem já assina Freelancer ou Agência ganha automaticamente um link de indicação — sem precisar &quot;virar revendedor&quot;, é um benefício de quem já paga.
-            </p>
-          </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-2">
-            {(["freelancer", "agency"] as const).map((tier) => {
-              const config = RESELLER_TIERS[tier];
-              const label = tier === "freelancer" ? "Freelancer" : "Agência";
-              return (
-                <div key={tier} className="rounded-[1.75rem] border border-white/10 bg-white/5 p-8">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Plano {label}</p>
-                  <div className="mt-6 grid gap-5 sm:grid-cols-3">
-                    <div>
-                      <Wallet className="h-6 w-6 text-accent" />
-                      <p className="mt-3 text-3xl font-black">{config.commissionPct}%</p>
-                      <p className="mt-1 text-sm text-white/70">de comissão por venda</p>
-                    </div>
-                    <div>
-                      <Handshake className="h-6 w-6 text-accent" />
-                      <p className="mt-3 text-3xl font-black">{config.buyerDiscountPct}%</p>
-                      <p className="mt-1 text-sm text-white/70">de desconto pra quem você indicar</p>
-                    </div>
-                    <div>
-                      <Gift className="h-6 w-6 text-accent" />
-                      <p className="mt-3 text-3xl font-black">+{config.bonusSites}</p>
-                      <p className="mt-1 text-sm text-white/70">bio site{config.bonusSites > 1 ? "s" : ""} de bônus por venda</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-8 flex justify-center">
-            <a href="#planos" className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 btn-glow">
-              <ArrowRight className="h-4 w-4" /> Assinar e começar a indicar
-            </a>
-          </div>
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
+          <Link href="/para-mim" className="card-glow group flex flex-col rounded-3xl border border-border bg-white p-8 shadow-sm transition hover:-translate-y-1">
+            <Store className="h-8 w-8 text-accent" />
+            <h3 className="mt-4 text-xl font-extrabold text-ink">Pro mim mesmo</h3>
+            <p className="mt-2 text-sm text-muted">Grátis pra testar, R$9,90/mês pro completo. Ver planos Gratuito e Pro →</p>
+            <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-accent group-hover:gap-3 transition-all">Ver detalhes <ArrowRight className="h-4 w-4" /></span>
+          </Link>
+          <Link href="/para-vender" className="card-glow group flex flex-col rounded-3xl border-2 border-accent bg-accent/5 p-8 shadow-sm transition hover:-translate-y-1">
+            <Wallet className="h-8 w-8 text-accent" />
+            <h3 className="mt-4 text-xl font-extrabold text-ink">Pra vender</h3>
+            <p className="mt-2 text-sm text-muted">A partir de R$29,90/mês, até 100 bio sites. Ver planos Essencial, Freelancer e Agência →</p>
+            <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-accent group-hover:gap-3 transition-all">Ver detalhes <ArrowRight className="h-4 w-4" /></span>
+          </Link>
         </div>
       </section>
 
@@ -634,10 +471,14 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* CTA FINAL */}
+      {/* CTA FINAL — reforça a escolha dos 2 caminhos (2026-09-05), em vez
+          de um CTA genérico só pro público de revenda como era antes. */}
       <section className="bg-bg px-5 py-20 text-center border-t border-border">
-        <h2 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight text-ink md:text-5xl">Crie uma página profissional para seu cliente em poucos minutos.</h2>
-        <Link href="/login" className="btn-glow mt-8 inline-flex items-center gap-2 rounded-full px-8 py-4 font-bold text-white">Começar agora <ArrowRight className="h-4 w-4" /></Link>
+        <h2 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight text-ink md:text-5xl">Seu bio site profissional está a poucos minutos de distância.</h2>
+        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Link href="/para-mim" className="btn-glow inline-flex items-center gap-2 rounded-full px-8 py-4 font-bold text-white">Pro meu negócio <ArrowRight className="h-4 w-4" /></Link>
+          <Link href="/para-vender" className="inline-flex items-center gap-2 rounded-full border border-border px-8 py-4 font-bold text-ink transition hover:border-accent hover:text-accent">Quero vender bio sites <ArrowRight className="h-4 w-4" /></Link>
+        </div>
       </section>
 
       {/* FAQ */}
@@ -695,10 +536,8 @@ export default async function LandingPage() {
             <div>
               <p className="text-sm font-black text-ink">Planos</p>
               <ul className="mt-3 space-y-2 text-sm text-muted">
-                <li><Link href="/login" className="hover:text-accent">Gratuito</Link></li>
-                <li><a href={KIWIFY_LINKS.community} target="_blank" rel="noopener noreferrer" className="hover:text-accent">Essencial — R$29,90/mês</a></li>
-                <li><a href={KIWIFY_LINKS.freelancer} target="_blank" rel="noopener noreferrer" className="hover:text-accent">Freelancer — R$39,90/mês</a></li>
-                <li><a href={KIWIFY_LINKS.agency} target="_blank" rel="noopener noreferrer" className="hover:text-accent">Agência — R$99,90/mês</a></li>
+                <li><Link href="/para-mim" className="hover:text-accent">Pro meu negócio (Grátis/Pro)</Link></li>
+                <li><Link href="/para-vender" className="hover:text-accent">Pra vender (Essencial/Freelancer/Agência)</Link></li>
               </ul>
             </div>
             <div>
@@ -706,12 +545,11 @@ export default async function LandingPage() {
               <ul className="mt-3 space-y-2 text-sm text-muted">
                 <li><Link href="/login" className="hover:text-accent">Entrar / Criar conta</Link></li>
                 <li><Link href="/me" className="hover:text-accent">Acessar meu bio site</Link></li>
-                {/* Não é mais o convite direto do Discord — o Leonardo tem um
-                    quiz/formulário de entrada (2026-07-16) que roda ANTES do
-                    convite, pra ele saber quem realmente está na comunidade e
-                    poder integrar isso depois. Todo link de "comunidade" do
-                    site aponta pra esse formulário, não pro discord.gg direto. */}
-                <li><a href="https://www.leonardomarusso.com.br/comunidade" target="_blank" rel="noopener noreferrer" className="hover:text-accent">Comunidade TOQY</a></li>
+                {/* Convite direto do Discord (2026-09-05) — antes apontava
+                    pro formulário/quiz de entrada (leonardomarusso.com.br
+                    /comunidade), trocado porque o formulário parou de abrir.
+                    Reverter se/quando ele for consertado (fora deste repo). */}
+                <li><a href="https://discord.gg/CnxUbdgbNG" target="_blank" rel="noopener noreferrer" className="hover:text-accent">Comunidade TOQY</a></li>
               </ul>
             </div>
           </div>
