@@ -141,7 +141,7 @@ export default function ParaVenderPage() {
           <div className="mx-auto mt-8 max-w-3xl">
             <div className="rounded-2xl border border-accent/20 bg-accent/5 p-6 text-center">
               <p className="text-sm font-bold text-ink">
-                💡 <strong>Essencial ou Freelancer?</strong> Os dois são mensais e você pode cancelar quando quiser. O Essencial é o ponto de entrada mais barato. O Freelancer custa um pouco mais e traz mais créditos de arte com IA e suporte prioritário — vale a pena se você atende clientes com mais frequência.
+                💡 <strong>Essencial ou Freelancer?</strong> Os dois são mensais e você pode cancelar quando quiser. O Essencial é o ponto de entrada mais barato. O Freelancer custa um pouco mais e traz analytics avançado e suporte prioritário — vale a pena se você atende clientes com mais frequência.
               </p>
             </div>
           </div>

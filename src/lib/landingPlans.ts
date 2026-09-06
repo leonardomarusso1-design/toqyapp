@@ -46,9 +46,11 @@ export const personalPlans: LandingPlanCard[] = [
 
 // Público 2 — "Vender bio sites" (Essencial/Freelancer/Agência). Ver
 // /para-vender. Reaproveitado como já existia na landing, sem reabrir
-// preço/feature (decisão do Leonardo, 2026-09-05).
+// preço/feature (decisão do Leonardo, 2026-09-05). "Gerador de arte com
+// IA" removido de todos os 3 (2026-09-06, pedido do Leonardo — ver nota
+// completa em subscriptions.ts).
 export const resellerPlans: LandingPlanCard[] = [
-  { name: "Essencial", price: "R$29,90", period: "/mês", tag: "Comece a vender bio site pra comércio local", description: "Pra começar a criar bio sites pra clientes, mensal, cancele quando quiser.", highlight: true, cta: "Assinar agora", items: ["Até 10 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "★ QR personalizado editável", "★ Gerador de arte com IA (5 créditos)", "Suporte por email", "Cancele quando quiser"] },
-  { name: "Freelancer", price: "R$39,90", period: "/mês", tag: "Atenda mais clientes, ganhe indicando", description: "Para quem cria pra clientes com mais frequência — mais créditos de arte e suporte prioritário. Mensal, cancele quando quiser.", highlight: false, cta: "Assinar agora", items: ["Até 20 bio sites", "Pix e Wi-Fi", "Catálogo completo", "★ QR personalizado editável", "★ Gerador de arte com IA (10 créditos)", "Suporte prioritário", "Cancele quando quiser", "Indique e ganhe 20% de comissão"] },
-  { name: "Agência", price: "R$99,90", period: "/mês", tag: "Monte uma operação, gerencie equipe", description: "Para equipes e agências em escala. 100 bio sites, 50 créditos de arte, tudo do Freelancer e mais.", highlight: false, cta: "Assinar agora", items: ["Até 100 bio sites", "★ QR personalizado editável", "★ Gerador de arte com IA (50 créditos)", "Domínio próprio", "Gestão de equipe", "Indique e ganhe 30% de comissão"] },
+  { name: "Essencial", price: "R$29,90", period: "/mês", tag: "Comece a vender bio site pra comércio local", description: "Pra começar a criar bio sites pra clientes, mensal, cancele quando quiser.", highlight: true, cta: "Assinar agora", items: ["Até 10 bio sites", "Sem taxa por bio site", "Catálogo, Pix e Wi-Fi", "★ QR personalizado editável", "Suporte por email", "Cancele quando quiser"] },
+  { name: "Freelancer", price: "R$39,90", period: "/mês", tag: "Atenda mais clientes, ganhe indicando", description: "Para quem cria pra clientes com mais frequência — analytics avançado e suporte prioritário. Mensal, cancele quando quiser.", highlight: false, cta: "Assinar agora", items: ["Até 20 bio sites", "Pix e Wi-Fi", "Catálogo completo", "★ QR personalizado editável", "Suporte prioritário", "Cancele quando quiser", "Indique e ganhe 20% de comissão"] },
+  { name: "Agência", price: "R$99,90", period: "/mês", tag: "Monte uma operação, gerencie equipe", description: "Para equipes e agências em escala. 100 bio sites, tudo do Freelancer e mais.", highlight: false, cta: "Assinar agora", items: ["Até 100 bio sites", "★ QR personalizado editável", "Domínio próprio", "Gestão de equipe", "Indique e ganhe 30% de comissão"] },
 ];

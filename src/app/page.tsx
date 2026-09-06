@@ -197,7 +197,7 @@ export default async function LandingPage() {
               <ul className="mt-6 space-y-3">
                 {[
                   "Até 100 bio sites, gerencie tudo num painel só",
-                  "Gerador de arte com IA pras plaquinhas",
+                  "Domínio próprio e gestão de equipe",
                   "Até 30% de comissão por indicação",
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-sm font-semibold text-ink/80">

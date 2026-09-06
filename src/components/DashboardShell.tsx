@@ -4,15 +4,20 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
-import { BarChart3, Globe, Handshake, Home, Menu, Plus, QrCode, Settings, Sparkles, Users, X } from "lucide-react";
+import { BarChart3, Globe, Handshake, Home, Menu, Plus, QrCode, Settings, Users, X } from "lucide-react";
 import { LogoutButton } from "@/components/LogoutButton";
 import { supabase } from "@/lib/supabaseClient";
 
+// "Artes com IA" removido do menu (2026-09-06, pedido do Leonardo: "tire o
+// gerador de arte de tudo, não faz sentido... hoje quero ser concorrente
+// do Linktree, a pessoa não vai vender plaquinha, e sim biosite"). A
+// página (/app/artes) e a rota de geração continuam existindo no código
+// (não descontinuadas, só desacopladas do produto atual) — a plaquinha
+// física vira um sistema separado, a pensar depois.
 const navItems = [
   { href: "/app", icon: Home, label: "Painel" },
   { href: "/onboarding", icon: Users, label: "Novo cliente" },
   { href: "/app/qr", icon: QrCode, label: "QR Codes" },
-  { href: "/app/artes", icon: Sparkles, label: "Artes com IA" },
   { href: "/app/analytics", icon: BarChart3, label: "Analytics" },
   { href: "/app/dominio", icon: Globe, label: "Domínio próprio" },
   { href: "/app/revenda", icon: Handshake, label: "Revenda" },

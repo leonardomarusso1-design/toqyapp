@@ -131,6 +131,16 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
   // pagamento ÚNICO (ver SELLABLE_PLANS + página de preços) — não geram
   // receita recorrente. Este plano é o único mensal de verdade, e é o que
   // sustenta MRR.
+  //
+  // "Gerador de arte com IA" removido de TODOS os planos (2026-09-06,
+  // pedido direto do Leonardo): "não faz sentido, no começo o Toqy foi
+  // criado por causa das plaquinhas que eu estava fazendo, mas hoje quero
+  // ser concorrente do Linktree — a pessoa não vai vender plaquinha, vai
+  // vender bio site". A plaquinha física vira um sistema separado, a
+  // pensar depois — não descontinuado, só desacoplado do Toqy atual. Os
+  // comentários abaixo que ainda mencionam "créditos de arte" como
+  // diferencial de preço são histórico da decisão de preço da época, não
+  // refletem mais o produto — mantidos como registro, não como instrução.
   community: {
     id: "community",
     name: "Essencial",
@@ -143,7 +153,6 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
       "Sem taxa por bio site",
       "Catálogo, Pix e Wi-Fi",
       "QR personalizado editável",
-      "Gerador de arte com IA",
       "Analytics básico",
       "Suporte por email",
     ],
@@ -188,7 +197,6 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
       "Pix e Wi-Fi",
       "Catálogo completo",
       "QR personalizado editável",
-      "Gerador de arte com IA (10 créditos)",
       "Analytics avançado",
       "Integração com APIs",
       "Suporte prioritário",
@@ -227,7 +235,6 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     features: [
       "Até 100 bio sites",
       "QR personalizado editável",
-      "Gerador de arte com IA (50 créditos)",
       "Domínio próprio",
       "Gestão de equipe completa",
       "Analytics avançado + API",
