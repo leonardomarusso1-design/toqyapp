@@ -4,6 +4,21 @@ import { withSentryConfig } from "@sentry/nextjs";
 // CSP sem nonce (abordagem recomendada pelos docs do Next.js pra apps que
 // nao precisam de CSP estrita) — mantem geracao estatica das paginas, que
 // uma CSP com nonce quebraria (forcaria renderizacao dinamica em tudo).
+//
+// DECISAO REVISADA E MANTIDA (2026-09-06, item 3.4 da auditoria externa,
+// que pedia CSP sem 'unsafe-inline'): a versao com nonce chegou a ser
+// implementada no middleware e foi REVERTIDA. Motivo concreto: o nonce
+// muda a cada request, entao so existe em pagina renderizada de forma
+// dinamica. As paginas mais visitadas daqui (home, /blog, /faq, /b/[slug])
+// sao pre-renderizadas no build — os scripts de hidratacao delas ficam
+// gravados no HTML SEM nonce e seriam BLOQUEADOS pela politica, deixando
+// a pagina inteira sem JavaScript. Trocar tudo por renderizacao dinamica
+// pra ganhar CSP estrita e um preco alto num site de marketing.
+//
+// O caminho correto pra fechar esse item, quando for a vez dele: mover
+// os poucos scripts inline proprios pra arquivos externos, medir o que
+// sobra de inline do Next e avaliar CSP por HASH (que funciona em pagina
+// estatica) — nao nonce.
 // 'unsafe-inline' em script-src/style-src fica necessario por causa disso;
 // e uma protecao mais fraca contra XSS que a versao com nonce, mas ainda
 // cobre clickjacking (frame-ancestors), MIME sniffing e restringe quais
