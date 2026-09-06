@@ -52,7 +52,27 @@ const cspHeader = `
 `.replace(/\s{2,}/g, " ").trim();
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
+  // `output: 'standalone'` REMOVIDO em 2026-09-06 — foi o que quebrou o
+  // deploy depois da atualização do Next (16.2.9 -> 16.3.4, feita pra
+  // fechar 8 vulnerabilidades altas). O build compilava e gerava as 54
+  // páginas normalmente, mas o passo final da Vercel morria com:
+  //
+  //   Error: ENOENT: no such file or directory, open
+  //   '/vercel/path0/.next/next-server.js.nft.json'
+  //   (durante "Running onBuildComplete from Vercel")
+  //
+  // Motivo: `standalone` existe pra DOCKER/self-host — ele monta um
+  // `.next/standalone/` autocontido, mexendo em onde os arquivos de
+  // rastreamento (.nft.json) ficam. A Vercel faz o próprio tracing e
+  // espera o layout padrão, então o hook dela procurava um arquivo que o
+  // modo standalone tinha reorganizado. Com a 16.2.9 passava batido; a
+  // 16.3.4 (Turbopack) mudou o suficiente pra estourar.
+  //
+  // Este projeto NÃO é self-hosted: não existe Dockerfile e nada no repo
+  // referencia `.next/standalone`. A flag era peso morto que só
+  // atrapalhava. Se um dia houver deploy em container, ela volta — mas
+  // aí junto de um Dockerfile de verdade.
+  //
   // Compressão automática
   compress: true,
   // Desabilita o Vercel Speed Insights / Toolbar em produção — esses
