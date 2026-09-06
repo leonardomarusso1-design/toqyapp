@@ -47,6 +47,14 @@ export type Plan = {
   // Gratuito (mesma lógica dos outros 3 gates acima: incentivo real de
   // upgrade, não só texto solto na tabela comparativa).
   hasStickersAndMusic: boolean;
+  // White label: esconder o selo "Criado com TOQY" e colocar a marca do
+  // revendedor no rodapé do bio site (2026-09-06). EXCLUSIVO da Agência —
+  // é o único plano de revenda em escala (até 100 bio sites), e o pedido
+  // veio do primeiro assinante Agência, que entrega os sites pros clientes
+  // dele com a marca da própria agência. Nenhum outro plano tem, nem os de
+  // revenda menores (Essencial/Freelancer): é justamente o diferencial que
+  // justifica o salto de preço pra R$99,90/mês.
+  hasWhiteLabel: boolean;
   supportLevel: "community" | "email" | "priority";
   highlight?: boolean;
 };
@@ -76,6 +84,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasWifi: false,
     hasCustomQr: false,
     hasStickersAndMusic: false,
+    hasWhiteLabel: false,
     supportLevel: "community",
   },
 
@@ -115,6 +124,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasWifi: true,
     hasCustomQr: true,
     hasStickersAndMusic: true,
+    hasWhiteLabel: false,
     supportLevel: "email",
   },
 
@@ -168,6 +178,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     // figurinhas/música/Instagram ao vivo ficam só no Pro Pessoal e nos
     // planos Freelancer/Agência, não no Essencial.
     hasStickersAndMusic: false,
+    hasWhiteLabel: false,
     supportLevel: "email",
     highlight: true,
   },
@@ -210,6 +221,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasWifi: true,
     hasCustomQr: true,
     hasStickersAndMusic: true,
+    hasWhiteLabel: false,
     supportLevel: "priority",
   },
 
@@ -234,6 +246,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     priceAnnual: 999,
     features: [
       "Até 100 bio sites",
+      "Marca própria no rodapé (white label)",
       "QR personalizado editável",
       "Domínio próprio",
       "Gestão de equipe completa",
@@ -251,6 +264,9 @@ export const SUBSCRIPTION_PLANS: Record<PlanType, Plan> = {
     hasWifi: true,
     hasCustomQr: true,
     hasStickersAndMusic: true,
+    // Único plano com white label (2026-09-06) — ver comentário do campo
+    // hasWhiteLabel no tipo Plan acima.
+    hasWhiteLabel: true,
     supportLevel: "priority",
   },
 };
@@ -348,6 +364,15 @@ export function isPremiumPlan(planType: PlanType): boolean {
 // do Leonardo). Só Pro Pessoal, Freelancer e Agência têm.
 export function canUseStickersAndMusic(planType: PlanType): boolean {
   return getPlan(planType).hasStickersAndMusic;
+}
+
+// White label (2026-09-06) — mesma forma dos outros gates de feature: a
+// fonte de verdade é a flag do plano em SUBSCRIPTION_PLANS, nunca uma
+// comparação solta de string espalhada pelo código. Hoje só a Agência
+// devolve true; se algum dia outro plano ganhar white label, muda só a
+// flag lá em cima e todo o produto acompanha.
+export function canUseWhiteLabel(planType: PlanType): boolean {
+  return getPlan(planType).hasWhiteLabel;
 }
 
 export function canCreateSite(planType: PlanType, currentSiteCount: number): boolean {

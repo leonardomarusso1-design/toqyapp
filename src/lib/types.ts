@@ -345,6 +345,29 @@ export type ToqySite = {
   // Undefined = ordem padrão de sempre (compatibilidade com bio sites já
   // criados antes desta feature existir).
   bodyBlockOrder?: Array<"buttons" | "catalog" | "music" | "instagram">;
+  // White label — marca do revendedor no lugar do selo "Criado com TOQY"
+  // (2026-09-06, pedido do Guilbert, primeiro assinante do plano Agência).
+  // Histórico importante: white label existiu, foi REMOVIDO do produto em
+  // 2026-09-01 (decisão do Leonardo: "nenhum plano promete mais esconder
+  // este selo") e voltou agora, revisto a pedido de cliente pagante real —
+  // quem assina Agência (R$99,90/mês, até 100 bio sites) revende os sites
+  // pros clientes DELE e precisa entregar com a marca da própria agência.
+  //
+  // EXCLUSIVO do plano Agência (ver hasWhiteLabel em subscriptions.ts). O
+  // gate que vale de verdade é o do site público (PublicBioSite.tsx), que
+  // checa site.ownerPlan — gravado no save pelo servidor, não pelo cliente
+  // (ver biositeSync.ts / api/biosite/save). Assim, mesmo que alguém edite
+  // este JSON na mão pra ligar o white label num plano menor, o selo do
+  // Toqy continua aparecendo.
+  //
+  // Tudo opcional de propósito: sem configuração nenhuma, o padrão seguro
+  // continua sendo o selo do Toqy visível.
+  whiteLabel?: {
+    hideToqyBadge?: boolean;   // true = esconde o selo "Criado com TOQY"
+    brandName?: string;        // Nome da agência/empresa exibido no rodapé
+    brandLogoUrl?: string;     // Logo da agência (upload via ImageUploadField)
+    brandUrl?: string;         // Link opcional do rodapé pro site da agência
+  };
   buttons: ToqyButton[];
   catalog: CatalogItem[];
   editKey: string;

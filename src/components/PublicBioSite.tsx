@@ -1129,15 +1129,69 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
 
           <footer className="mt-8 pb-6 text-center text-xs font-bold leading-relaxed" style={{ color: site.theme.muted }}>
             <p style={{ color: site.theme.muted }}>© {new Date().getFullYear()} {site.profile.name}. Todos os direitos reservados.</p>
-            {/* Selo "Criado com TOQY" — sempre visível em todo bio site.
-                White label foi removido do produto (2026-09-01, decisão do
-                Leonardo): nenhum plano promete mais esconder este selo. */}
-            <p className="mt-1" style={{ color: site.theme.muted }}>
-              Criado com{" "}
-              <a href="https://toqy.com.br" target="_blank" rel="noreferrer" className="font-black underline-offset-4 hover:underline" style={resolveColorStyle(site.theme.colors?.footerCreditText, "text", site.theme.primary)}>
-                TOQY
-              </a>
-            </p>
+            {/* Selo "Criado com TOQY" vs. marca do revendedor (white label).
+                Histórico: o white label tinha sido REMOVIDO do produto em
+                2026-09-01 ("nenhum plano promete mais esconder este selo",
+                decisão do Leonardo). Decisão REVISTA em 2026-09-06 a pedido
+                do primeiro assinante do plano Agência (R$99,90/mês, até 100
+                bio sites): ele revende os bio sites pros clientes DELE e
+                precisa entregar com a marca da própria agência, não com a
+                do Toqy. Agora é recurso EXCLUSIVO do plano Agência.
+
+                Este é o gate que vale de verdade — o do editor
+                (SiteBuilder.tsx) é só conveniência de UI. A checagem aqui é
+                contra `plan`, resolvido de site.ownerPlan, que é gravado
+                pelo servidor no save (ver biositeSync.ts e
+                api/biosite/save) e não pelo cliente: se alguém editar o
+                JSON do bio site na mão pra ligar `whiteLabel` num plano
+                menor, o selo do Toqy continua aparecendo.
+
+                Padrão seguro: só esconde o selo se o dono for Agência E
+                tiver marcado a opção E tiver de fato uma marca (nome ou
+                logo) pra colocar no lugar — senão o rodapé ficaria vazio,
+                que é pior que o selo pros dois lados. */}
+            {(() => {
+              const whiteLabel = plan.hasWhiteLabel ? site.whiteLabel : undefined;
+              const brandName = whiteLabel?.brandName?.trim();
+              const brandLogoUrl = whiteLabel?.brandLogoUrl?.trim();
+              const hideBadge = Boolean(whiteLabel?.hideToqyBadge) && Boolean(brandName || brandLogoUrl);
+
+              if (!hideBadge) {
+                return (
+                  <p className="mt-1" style={{ color: site.theme.muted }}>
+                    Criado com{" "}
+                    <a href="https://toqy.com.br" target="_blank" rel="noreferrer" className="font-black underline-offset-4 hover:underline" style={resolveColorStyle(site.theme.colors?.footerCreditText, "text", site.theme.primary)}>
+                      TOQY
+                    </a>
+                  </p>
+                );
+              }
+
+              const brand = (
+                <span className="inline-flex items-center justify-center gap-2 align-middle">
+                  {brandLogoUrl ? <img src={optimizedImageUrl(brandLogoUrl, 160)} alt={brandName || "Logo"} loading="lazy" decoding="async" className="max-h-6 w-auto object-contain" /> : null}
+                  {brandName ? <span className="font-black">{brandName}</span> : null}
+                </span>
+              );
+              // Mesmo tratamento de todo link externo do bio site
+              // (ensureUrl em security.ts): completa "suaempresa.com.br"
+              // pra https:// e, de quebra, impede que um esquema perigoso
+              // (javascript:, data:) digitado no editor vire href de
+              // verdade — vira "https://javascript:...", inofensivo.
+              const brandUrl = ensureUrl(whiteLabel?.brandUrl);
+
+              return (
+                <p className="mt-1" style={{ color: site.theme.muted }}>
+                  {brandUrl ? (
+                    <a href={brandUrl} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline" style={resolveColorStyle(site.theme.colors?.footerCreditText, "text", site.theme.primary)}>
+                      {brand}
+                    </a>
+                  ) : (
+                    brand
+                  )}
+                </p>
+              );
+            })()}
           </footer>
         </main>
       </div>

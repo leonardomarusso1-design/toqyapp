@@ -13,7 +13,7 @@ import { COLOR_ROLES } from "@/lib/colorRoles";
 import { RealTemplateGallery } from "./RealTemplateGallery";
 import { syncBiositeToSupabase } from "@/lib/biositeSync";
 import { checkBiositeLimit } from "@/lib/planLimits";
-import { OVERAGE_LINKS, canUseStickersAndMusic, resolvePlanTier, type PlanType } from "@/lib/subscriptions";
+import { OVERAGE_LINKS, canUseStickersAndMusic, canUseWhiteLabel, resolvePlanTier, type PlanType } from "@/lib/subscriptions";
 import { supabase } from "@/lib/supabaseClient";
 import { validateSite } from "@/lib/validation";
 import { ImageGuidelineHint } from "./ImageGuidelineHint";
@@ -443,6 +443,9 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   function setContact(patch: Partial<ToqySite["contact"]>) { update((s) => ({ ...s, contact: { ...s.contact, ...patch } })); }
   function setLinks(patch: Partial<ToqySite["links"]>) { update((s) => ({ ...s, links: { ...s.links, ...patch } })); }
   function setTheme(patch: Partial<ToqySite["theme"]>) { update((s) => ({ ...s, theme: { ...s.theme, ...patch } })); }
+  // White label (2026-09-06) — patch parcial igual aos outros setters; o
+  // objeto inteiro é opcional em ToqySite, então começa vazio.
+  function setWhiteLabel(patch: Partial<NonNullable<ToqySite["whiteLabel"]>>) { update((s) => ({ ...s, whiteLabel: { ...s.whiteLabel, ...patch } })); }
   function setColor(key: ColorRole, value: ColorValue) { update((s) => ({ ...s, theme: { ...s.theme, colors: { ...s.theme.colors, [key]: value } } })); }
   // Arrastar figurinha no preview ao vivo (2026-09-06) — chamado a cada
   // pointermove pelo PublicBioSite quando `onStickerMove` é passado (só
@@ -939,6 +942,66 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 )}
               </DragReorderList>
             </div>
+          </div>
+
+          {/* WHITE LABEL (2026-09-06, pedido do primeiro assinante do plano
+              Agência) — histórico: o white label existiu e foi REMOVIDO do
+              produto em 2026-09-01 (decisão do Leonardo). Voltou agora,
+              revisto a pedido de cliente pagante real que revende bio sites
+              pros clientes dele e precisa entregar com a marca da própria
+              agência. EXCLUSIVO do plano Agência (ver hasWhiteLabel em
+              subscriptions.ts).
+
+              Este gate aqui é só conveniência de UI — quem realmente decide
+              se o selo some é o site público (PublicBioSite.tsx), que checa
+              site.ownerPlan gravado pelo servidor. */}
+          <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
+            <p className="text-sm font-black text-ink">🏷️ Sua marca no rodapé (white label)</p>
+            <p className="mt-0.5 text-xs text-muted">Entregue o bio site com a marca da sua empresa no lugar do selo do Toqy.</p>
+            {canUseWhiteLabel(ownerPlanTier) ? (
+              <div className="mt-4 space-y-4">
+                <label className="flex items-center gap-2 text-sm font-black text-ink">
+                  <input type="checkbox" checked={Boolean(site.whiteLabel?.hideToqyBadge)} onChange={(e) => setWhiteLabel({ hideToqyBadge: e.target.checked })} />
+                  Esconder o selo &quot;Criado com TOQY&quot;
+                </label>
+                {site.whiteLabel?.hideToqyBadge ? (
+                  <div className="space-y-4">
+                    <label className="block">
+                      <span className={label}>Nome da empresa</span>
+                      <input className={field} value={site.whiteLabel?.brandName ?? ""} onChange={(e) => setWhiteLabel({ brandName: e.target.value })} placeholder="Ex: Studio Criativo" />
+                    </label>
+                    <div>
+                      <span className={label}>Logo da empresa</span>
+                      <p className="mb-2 text-xs text-muted">Aparece pequena no rodapé, ao lado do nome. Use PNG com fundo transparente.</p>
+                      <ImageUploadField
+                        label=""
+                        value={site.whiteLabel?.brandLogoUrl}
+                        onChange={(url) => setWhiteLabel({ brandLogoUrl: url })}
+                        placeholder="URL da logo da empresa"
+                        slug={site.slug}
+                        fieldId="white-label-logo"
+                        editKey={site.editKey}
+                      />
+                    </div>
+                    <label className="block">
+                      <span className={label}>Link do seu site (opcional)</span>
+                      <input className={field} value={site.whiteLabel?.brandUrl ?? ""} onChange={(e) => setWhiteLabel({ brandUrl: e.target.value })} placeholder="https://suaempresa.com.br" />
+                    </label>
+                    {/* Mesmo padrão seguro do rodapé público: sem nome nem
+                        logo não dá pra esconder o selo, senão o rodapé
+                        ficaria vazio. Avisa aqui pra pessoa não achar que
+                        salvou e não funcionou. */}
+                    {!(site.whiteLabel?.brandName?.trim() || site.whiteLabel?.brandLogoUrl?.trim()) ? (
+                      <p className="rounded-xl bg-card p-3 text-xs text-muted">Preencha o nome da empresa ou envie a logo pra substituir o selo. Enquanto não tiver nenhum dos dois, o selo do Toqy continua aparecendo.</p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div className="mt-3 rounded-2xl border border-violet/20 bg-violet/10 p-4 text-sm font-bold text-violet">
+                Disponível apenas no plano Agência. <Link href="/#planos" className="underline">Ver planos</Link>
+              </div>
+            )}
           </div>
 
         </Section>
