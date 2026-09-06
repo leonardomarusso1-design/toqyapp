@@ -140,7 +140,7 @@ vez dela, não todas de uma vez — mesmo princípio do GSD (`/gsd:plan-phase N`
   3. ✓ Figurinhas, música e preview de Instagram ao vivo — liberado Pro Pessoal + revenda, fora do Gratuito
   4. ✓ Hero da landing com espaço de vídeo + 2 CTAs indo pra páginas dedicadas
   5. ✓ `/para-mim` (Gratuito/Pro) e `/para-vender` (Essencial/Freelancer/Agência) no ar, cada uma com sua copy
-**Plans**: ✓ Código completo (commits desta sessão, 2026-09-05) — **pendente 3 passos manuais do Leonardo**: (a) criar produto recorrente "TOQY Pro" na Kiwify; (b) criar produto avulso "TOQY - Domínio Próprio" (anual); (c) preencher `KIWIFY_LINKS.pro`/`OVERAGE_LINKS.customDomain` em `subscriptions.ts` com os links reais assim que existirem. Fase 6 (login) do plano original desta sessão foi avaliada e não precisou de mudança — Google OAuth já funciona no código, só falta o Leonardo confirmar Client ID/Secret no painel do Supabase (não verificável via código/MCP).
+**Plans**: ✓ Código completo, ✓ produtos criados na Kiwify e links reais já ligados em `subscriptions.ts` (`KIWIFY_LINKS.pro`, `OVERAGE_LINKS.customDomain`), ✓ e-mail de confirmação + página de obrigado próprias pros 2 (`/obrigado/pro`, `/obrigado/dominio-proprio`). Fase 6 (login) do plano original desta sessão foi avaliada e não precisou de mudança — Google OAuth já funciona no código, só falta o Leonardo confirmar Client ID/Secret no painel do Supabase (não verificável via código/MCP).
 
 ## Progress
 
