@@ -8,6 +8,15 @@ const siteUrl =
 
 const staticRoutes: MetadataRoute.Sitemap = [
   { url: siteUrl, changeFrequency: "weekly", priority: 1 },
+  // Páginas COMERCIAIS (2026-09-06, achado P1 de auditoria externa): as 2
+  // páginas de maior intenção de compra do site — os dois funis separados
+  // ("quero pro meu negócio" vs "quero revender") — simplesmente não
+  // estavam no sitemap. São as páginas que devem ranquear, então entram
+  // com prioridade acima do blog. A /faq também estava de fora, mesmo
+  // sendo conteúdo de busca ("toqy é seguro?", "como funciona o pix").
+  { url: `${siteUrl}/para-mim`, changeFrequency: "weekly", priority: 0.9 },
+  { url: `${siteUrl}/para-vender`, changeFrequency: "weekly", priority: 0.9 },
+  { url: `${siteUrl}/faq`, changeFrequency: "monthly", priority: 0.7 },
   { url: `${siteUrl}/blog`, changeFrequency: "weekly", priority: 0.8 },
   { url: `${siteUrl}/login`, changeFrequency: "monthly", priority: 0.5 },
   { url: `${siteUrl}/demo`, changeFrequency: "monthly", priority: 0.5 },

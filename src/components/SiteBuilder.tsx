@@ -4,8 +4,11 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, CheckCircle2, Copy, ExternalLink, Eye, Images, Loader2, MessageCircle, Plus, Save, Share2, Trash2, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import type { CatalogItem, CatalogLayout, ColorRole, ColorValue, ThemePreset, ToqySite } from "@/lib/types";
-import { createEditUrl, createPublicUrl, generateSlug } from "@/lib/dataProvider";
+// Limpeza (2026-09-06, auditoria externa): o tipo CatalogLayout e o helper
+// createEditUrl saíram dos imports — o tipo não era referenciado em nenhuma
+// anotação e createEditUrl só alimentava a const editLink, também morta.
+import type { CatalogItem, ColorRole, ColorValue, ThemePreset, ToqySite } from "@/lib/types";
+import { createPublicUrl, generateSlug } from "@/lib/dataProvider";
 import { COLOR_ROLES } from "@/lib/colorRoles";
 import { RealTemplateGallery } from "./RealTemplateGallery";
 import { syncBiositeToSupabase } from "@/lib/biositeSync";
@@ -48,9 +51,9 @@ function Section({ children }: { children: React.ReactNode }) {
   return <section className="rounded-[2rem] border border-border bg-card p-5 shadow-sm md:p-6">{children}</section>;
 }
 
-function Help({ children }: { children: React.ReactNode }) {
-  return <p className="mt-2 text-xs font-semibold leading-relaxed text-muted">{children}</p>;
-}
+// Limpeza (2026-09-06, auditoria externa): o componente Help() foi removido —
+// nenhum painel do builder o renderizava (os textos de ajuda são escritos
+// direto com <p className="text-xs ... text-muted">).
 
 // Bug real corrigido (2026-07-16): TODOS os 10 presets em themePresets.ts
 // usam `card: "rgba(...)"` (transparência) — mas <input type="color">
@@ -253,7 +256,7 @@ function CatalogCategoryDisplayControl({ catalog, onChangeCategory, onReorderCat
       </div>
       {categories.some((cat) => categoryCommonDisplaySection(catalog, cat) === "subcategorias") ? (
         <p className="mt-3 text-xs text-muted">
-          Categoria em "Subcategorias": preencha o campo <b>Subcategoria</b> em cada foto (ex: "Cadeiras", "Mesas", "Estantes") — cada subcategoria vira sua própria capa, lado a lado, e clicar abre só as fotos dela.
+          Categoria em &quot;Subcategorias&quot;: preencha o campo <b>Subcategoria</b> em cada foto (ex: &quot;Cadeiras&quot;, &quot;Mesas&quot;, &quot;Estantes&quot;) — cada subcategoria vira sua própria capa, lado a lado, e clicar abre só as fotos dela.
         </p>
       ) : null}
     </div>
@@ -342,7 +345,7 @@ function BulkCatalogPhotoAdd({ slug, catalog, onAdd, editKey }: { slug: string; 
   return (
     <div className="rounded-2xl border border-dashed border-border bg-surface p-4">
       <p className="text-sm font-black text-ink">Adicionar várias fotos</p>
-      <p className="mt-1 text-xs text-muted">Escolha a categoria (ex: "Diretoria") e suba várias fotos de uma vez, sem precisar preencher nome/descrição em cada uma. Entram no mesmo modo de exibição que a categoria já usa.</p>
+      <p className="mt-1 text-xs text-muted">Escolha a categoria (ex: &quot;Diretoria&quot;) e suba várias fotos de uma vez, sem precisar preencher nome/descrição em cada uma. Entram no mesmo modo de exibição que a categoria já usa.</p>
       <div className="mt-3 grid gap-2 md:grid-cols-[1fr_auto]">
         {isNewCategory || existingCategories.length === 0 ? (
           <input
@@ -407,7 +410,6 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   const [limitState, setLimitState] = useState<{ current: number; limit: number; planTier: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const publicLink = createPublicUrl(site.slug);
-  const editLink = createEditUrl(site.slug);
 
   // Bug real corrigido (2026-09-06, achado ao vivo pelo Leonardo: conta no
   // plano Agência via "Disponível a partir do plano Pro" no lugar dos
@@ -610,7 +612,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 <option value="cover">Preencher (corta bordas se necessário)</option>
                 <option value="contain">Mostrar completa (sem cortes)</option>
               </select>
-              <p className="mt-1 text-xs text-muted">PNG com fundo transparente → use "Mostrar completa". Foto → use "Preencher".</p>
+              <p className="mt-1 text-xs text-muted">PNG com fundo transparente → use &quot;Mostrar completa&quot;. Foto → use &quot;Preencher&quot;.</p>
             </label>
             <label>
               <span className={label}>Texto decorativo abaixo da logo</span>
@@ -909,7 +911,8 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
               </div>
             ) : (
               <div className="mt-3 rounded-2xl border border-violet/20 bg-violet/10 p-4 text-sm font-bold text-violet">
-                Disponível a partir do plano Pro. <a href="/#planos" className="underline">Ver planos</a>
+                {/* Navegação interna (2026-09-06, auditoria externa): era <a href> cru pra home, agora <Link> */}
+                Disponível a partir do plano Pro. <Link href="/#planos" className="underline">Ver planos</Link>
               </div>
             )}
           </div>
@@ -953,7 +956,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
           <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-black text-slate-800">Botão "Salvar Contato"</p>
+                <p className="font-black text-slate-800">Botão &quot;Salvar Contato&quot;</p>
                 <p className="text-xs text-slate-500 mt-0.5">Aparece no bio site para o cliente salvar o contato na agenda</p>
               </div>
               <div className="relative w-10 h-6 shrink-0 ml-3" onClick={() => update((s) => ({ ...s, modules: { ...s.modules, saveContact: !(s.modules?.saveContact ?? true) } }))}>
@@ -1074,7 +1077,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
           {/* Card promo editavel */}
           <div className="mt-5 rounded-3xl border border-border bg-surface p-4">
             <div className="flex items-center justify-between">
-              <span className={label}>Card "Mais praticidade..."</span>
+              <span className={label}>Card &quot;Mais praticidade...&quot;</span>
               <label className="flex items-center gap-2 cursor-pointer">
                 <span className="text-xs font-bold text-muted">{(site.promoCard?.enabled ?? true) ? "Visível" : "Oculto"}</span>
                 <div className="relative w-10 h-6" onClick={() => update((s) => ({ ...s, promoCard: { enabled: !(s.promoCard?.enabled ?? true), title: s.promoCard?.title ?? "Mais praticidade em um só lugar", description: s.promoCard?.description ?? "Acesse contatos, Pix, Wi-Fi, catálogo, rotas e avaliações.", buttonLabel: s.promoCard?.buttonLabel ?? "Ver mais" } }))}>
@@ -1128,7 +1131,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
               exibição específica escolhida ali embaixo. */}
           <div className="mt-4 rounded-3xl border border-border bg-surface p-4">
             <span className={label}>Estilo padrão do catálogo</span>
-            <p className="mb-3 mt-1 text-xs text-muted">Vale pras categorias que não tiverem uma exibição específica escolhida no painel "Exibição por categoria" abaixo.</p>
+            <p className="mb-3 mt-1 text-xs text-muted">Vale pras categorias que não tiverem uma exibição específica escolhida no painel &quot;Exibição por categoria&quot; abaixo.</p>
             <div className="grid gap-2 sm:grid-cols-2">
               {([
                 ["carousel", "Carrossel horizontal", "Capa por categoria, arrasta para o lado — clique abre as outras fotos"],
@@ -1207,7 +1210,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                   <label>
                     <span className={label}>Subcategoria (opcional)</span>
                     <input className={field} placeholder="Ex: Cadeiras, Mesas, Estantes" value={item.subcategory ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { subcategory: e.target.value }) }))} />
-                    <p className="mt-1 text-xs text-muted">Só faz efeito se a categoria estiver com exibição "Subcategorias" (ver painel acima).</p>
+                    <p className="mt-1 text-xs text-muted">Só faz efeito se a categoria estiver com exibição &quot;Subcategorias&quot; (ver painel acima).</p>
                   </label>
                   {/* "Onde aparece no bio site" por item foi removido (2026-07-16)
                       — virou "Exibição por categoria" acima, uma escolha só
@@ -1297,7 +1300,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
               </div>
             </label>
             <div>
-              <span className="text-sm font-black text-ink mb-1 block">Texto do rodapé — "Não encontrou?"</span>
+              <span className="text-sm font-black text-ink mb-1 block">Texto do rodapé — &quot;Não encontrou?&quot;</span>
               <p className="text-xs text-muted mb-2">⚠️ Este campo muda só o texto do rodapé do catálogo. Não afeta outros textos.</p>
               <input className={field} placeholder="Não encontrou o que procura? Fale com a gente!" value={site.catalogWaLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalogWaLabel: e.target.value }))} />
             </div>

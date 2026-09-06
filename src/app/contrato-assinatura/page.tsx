@@ -1,3 +1,7 @@
+// Navegação interna (2026-09-06, auditoria externa): links entre páginas
+// legais usavam <a href> cru, o que força reload completo e perde o
+// client-side routing do Next. Trocado por <Link> (next/link).
+import Link from "next/link";
 import { LegalPageShell } from "@/components/LegalPageShell";
 
 export const metadata = { title: "Contrato de Assinatura — TOQY" };
@@ -8,7 +12,7 @@ export default function ContratoAssinaturaPage() {
       <p>
         Este Contrato regula a contratação de planos pagos do <strong>TOQY</strong> (toqy.com.br), oferecido
         por Leonardo Marusso (CPF 473.503.798-54), atuando sob a marca <strong>Marusso Produções</strong>.
-        Complementa os <a href="/termos">Termos de Uso</a> — em caso de conflito específico sobre cobrança e
+        Complementa os <Link href="/termos">Termos de Uso</Link> — em caso de conflito específico sobre cobrança e
         assinatura, este contrato prevalece.
       </p>
 

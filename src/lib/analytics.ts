@@ -99,7 +99,9 @@ export async function trackEvent(
     }).catch(() => {
       // Silently fail - don't disrupt user experience
     });
-  } catch (error) {
+    // Limpeza (2026-09-06, auditoria externa): binding do catch removido —
+    // analytics falha em silêncio de propósito, o erro nunca era lido.
+  } catch {
     // silenced in production
   }
 }

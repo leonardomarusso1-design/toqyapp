@@ -84,6 +84,19 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
     ],
   },
+  // Redirects (2026-09-06, achado P1 de auditoria externa): /planos
+  // retornava 404 enquanto toda a comunicação pública fala em "Planos" —
+  // links internos apontam pra âncora /#planos, mas quem digita a URL,
+  // clica num link externo antigo ou chega pela busca caía numa página de
+  // erro. Perda direta de conversão. 301 (permanent: true) porque a URL
+  // não vai voltar a existir como página própria: os 2 funis separados
+  // (/para-mim e /para-vender) já vivem na seção #planos da home.
+  async redirects() {
+    return [
+      { source: "/planos", destination: "/#planos", permanent: true },
+      { source: "/precos", destination: "/#planos", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

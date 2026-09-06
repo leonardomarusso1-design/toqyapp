@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { blogPosts } from "@/data/blogPosts";
-import { ArrowRight, Calendar, User, Tag } from "lucide-react";
+// Limpeza (2026-09-06, auditoria externa): ícone User removido do import —
+// não era usado em nenhum lugar do JSX desta listagem.
+import { ArrowRight, Calendar, Tag } from "lucide-react";
 
 export default function BlogPage() {
   return (

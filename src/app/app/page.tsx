@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, LogOut, UserRound } from "lucide-react";
+// Limpeza (2026-09-06, auditoria externa): CheckCircle2 foi removido do
+// import — nenhum JSX desta página usava o ícone, só pesava o bundle.
+import { LogOut, UserRound } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { PLAN_BIOSITE_LIMITS } from "@/lib/planLimits";
 import { supabase } from "@/lib/supabaseClient";

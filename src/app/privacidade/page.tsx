@@ -1,3 +1,7 @@
+// Navegação interna (2026-09-06, auditoria externa): links entre páginas
+// legais usavam <a href> cru, o que força reload completo e perde o
+// client-side routing do Next. Trocado por <Link> (next/link).
+import Link from "next/link";
 import { LegalPageShell } from "@/components/LegalPageShell";
 
 export const metadata = { title: "Política de Privacidade — TOQY" };
@@ -118,7 +122,7 @@ export default function PrivacidadePage() {
 
       <h2>10. Cookies</h2>
       <p>
-        O uso de cookies e tecnologias similares é detalhado na <a href="/cookies">Política de Cookies</a>,
+        O uso de cookies e tecnologias similares é detalhado na <Link href="/cookies">Política de Cookies</Link>,
         parte integrante desta política.
       </p>
 

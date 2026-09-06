@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+// Limpeza (2026-09-06, auditoria externa): ChevronLeft, ChevronRight e
+// MessageCircle saíram do import — nenhum deles era renderizado (o carrossel
+// usa swipe/scroll e o WhatsApp usa o WhatsAppIcon próprio abaixo).
 import {
   CalendarCheck,
-  ChevronLeft,
-  ChevronRight,
   Copy,
   CreditCard,
   FileText,
@@ -15,7 +16,6 @@ import {
   Link as LinkIcon,
   Mail,
   MapPin,
-  MessageCircle,
   Phone,
   QrCode,
   Save,
@@ -612,7 +612,9 @@ function backgroundStyle(site: ToqySite): React.CSSProperties {
   return { background: themeGradient(site) };
 }
 
-function solidBg(_site: ToqySite): React.CSSProperties { return {}; }
+// Limpeza (2026-09-06, auditoria externa): a função solidBg() foi removida —
+// era um stub que ignorava o argumento e devolvia {} sempre, e nenhum ponto
+// do componente a chamava.
 
 function glassCard(site: ToqySite): React.CSSProperties {
   const isLight = site.theme.mode === "light";

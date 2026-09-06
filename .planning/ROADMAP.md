@@ -157,6 +157,34 @@ vez dela, não todas de uma vez — mesmo princípio do GSD (`/gsd:plan-phase N`
 **Success Criteria**: TBD por item, quando o Leonardo priorizar algum
 **Plans**: TBD
 
+### Phase 13: Auditoria externa (Manus AI, 2026-09-06) — P0/P1 corrigidos e o que sobrou
+**Goal**: registrar o que foi corrigido a partir da auditoria externa integral (segurança defensiva, engenharia, SEO, UX) e o que ficou pendente por exigir rollout testado.
+**Depends on**: Nothing — os itens pendentes são independentes entre si.
+**Origem**: relatório "Auditoria integral do Toqy" + notas + npm audit + 3 mockups conceituais, entregues pelo Leonardo em 2026-09-06. Todos os achados P0/P1 foram VERIFICADOS como reais no código antes de agir (nenhum foi aceito no papel).
+
+**✓ Corrigido nesta rodada:**
+  1. Upload endurecido — magic bytes de verdade (JPEG/PNG/WebP; SVG bloqueado), limite de bytes ANTES do decode, nome de arquivo gerado no servidor, bucket não é mais criado em runtime, erro do Storage não vaza pro cliente. Mesmo tratamento no áudio.
+  2. LGPD no lead — checkbox de consentimento obrigatório, `purpose`/`consent_version`/`consented_at` persistidos, e-mail validado de verdade, nome escapado no HTML do e-mail, corpo limitado, e falha de gravação passou a ABORTAR em vez de seguir enviando o e-mail.
+  3. **Bug crítico descoberto ao aplicar a migration**: a tabela `public.leads` NUNCA EXISTIU no banco. Como o código engolia o erro de gravação, 100% dos leads do ebook foram perdidos silenciosamente desde sempre. Tabela criada + RLS ligado. Leads antigos são irrecuperáveis.
+  4. `/planos` (e `/precos`) deixaram de dar 404 — redirect 301 pra `/#planos`.
+  5. `/para-mim`, `/para-vender` e `/faq` entraram no sitemap (eram as páginas de maior intenção comercial e estavam de fora).
+  6. Middleware parou de aceitar qualquer valor no cookie de sessão — agora decodifica o JWT e checa `sub` + `exp`.
+  7. CI obrigatório (`.github/workflows/ci.yml`): tsc, lint, testes, build e `npm audit --audit-level=high` em todo push/PR. Antes não havia CI nenhum.
+  8. Lint zerado, `prefers-reduced-motion` respeitado, placeholder de vídeo do hero trocado por prova visual real.
+  9. Dependências atualizadas (as 8 vulnerabilidades altas + 1 moderada) e versões `latest` fixadas.
+  10. Buckets de Storage versionados em migration (`2026-09-06_storage_buckets.sql`).
+
+**⏳ Pendente — exige rollout testado, NÃO fazer às cegas:**
+  - **Sessão SSR com cookie HttpOnly** (P0 da auditoria). Hoje a sessão vive em `localStorage` + um cookie `toqy-session` criado por JS (logo, sem HttpOnly). O middleware já valida o JWT, mas a fronteira real de segurança continua sendo RLS + autorização por rota. Migrar pra `@supabase/ssr` mexe no login inteiro de um produto com cliente pagando — precisa de staging e teste de login real antes de ir pro ar.
+  - **CSP sem `unsafe-inline`**: exige infraestrutura de nonce no Next; remover na força bruta quebra Tailwind e os scripts inline do próprio framework.
+  - **Cobertura de teste** de auth, billing, upload, RLS e webhook (hoje: 1 arquivo, 18 testes).
+  - **Reencode de imagem com `sharp`** no servidor (remover metadados, normalizar) — a validação por magic bytes já entrou; o reencode é o passo seguinte.
+  - **Reconfirmação de opt-in** se algum dia aparecer base de lead legada de outra origem: `consented_at` nulo = sem prova de consentimento, não usar pra disparo.
+  - **Editor mobile por blocos** (mockup conceitual anexado): substituir o wizard de 7 etapas por lista de blocos arrastáveis com objetivos ("quero receber pedidos", "quero mostrar catálogo"). É o item de 31–60 dias da auditoria.
+  - **Reposicionamento da home** ("Seu link da bio virou atendimento, catálogo e Pix"), landing separada de revenda e clusters de SEO por segmento.
+**Success Criteria**: cada pendência tem critério próprio; a de sessão SSR só fecha com login testado em staging.
+**Plans**: os P0/P1 estão feitos; o resto entra por prioridade do Leonardo.
+
 ## Progress
 
 **Execution Order:**

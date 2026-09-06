@@ -1,5 +1,5 @@
 import { getSupabaseAdmin, hasSupabaseEnv } from "@/lib/supabaseServer";
-import { uploadImageIfBase64 } from "@/lib/imageStorage";
+import { MAX_IMAGE_BYTES, UploadValidationError, uploadImageIfBase64 } from "@/lib/imageStorage";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 // Recebe uma imagem em base64 (já redimensionada no navegador pelo
@@ -19,6 +19,14 @@ import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 // 2. editKey no corpo — cliente externo sem conta, editando via
 //    /editar/[slug]?key=..., mesma verificação de edit_key_hash que
 //    api/biosite/save já faz.
+//
+// Fix de segurança (2026-09-06, auditoria externa): a validação do conteúdo
+// em si (magic bytes, allowlist de formato, teto de tamanho antes do decode)
+// mora em src/lib/imageStorage.ts. Aqui a mudança é o tratamento de erro —
+// antes, `err.message` era devolvido cru ao cliente, o que repassava a
+// mensagem do Supabase Storage (nome de bucket, política, detalhe de infra).
+// Agora: erro de validação vira 400 com mensagem nossa; qualquer outro vira
+// 500 genérico, com o detalhe real ficando no log do servidor.
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) return Response.json({ error: "Servidor não configurado" }, { status: 500 });
 
@@ -26,6 +34,14 @@ export async function POST(request: Request) {
   const { dataUrl, slug, fieldId, editKey } = (body ?? {}) as { dataUrl?: string; slug?: string; fieldId?: string; editKey?: string };
   if (!dataUrl || !slug || !fieldId) {
     return Response.json({ error: "dataUrl, slug e fieldId são obrigatórios" }, { status: 400 });
+  }
+
+  // Corte grosseiro antes de qualquer trabalho: 4 caracteres base64 = 3
+  // bytes, então a string nunca precisa passar de ~4/3 do limite (+ margem
+  // pro prefixo "data:image/...;base64,"). Evita gastar rate limit, consulta
+  // de autorização e memória com um payload que já nasceu inválido.
+  if (dataUrl.length > (MAX_IMAGE_BYTES * 4) / 3 + 1024) {
+    return Response.json({ error: `Imagem muito grande (máx. ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)}MB).` }, { status: 413 });
   }
 
   const supabase = getSupabaseAdmin()!;
@@ -40,7 +56,13 @@ export async function POST(request: Request) {
     const url = await uploadImageIfBase64(supabase, slug, fieldId, dataUrl);
     return Response.json({ url });
   } catch (err) {
-    return Response.json({ error: err instanceof Error ? err.message : "Erro no upload" }, { status: 500 });
+    // Mensagem de UploadValidationError é escrita por nós e serve de
+    // orientação pro usuário ("envie um JPG/PNG/WebP") — pode ir pro cliente.
+    if (err instanceof UploadValidationError) {
+      return Response.json({ error: err.message }, { status: 400 });
+    }
+    console.error("[upload-image] falha inesperada:", err);
+    return Response.json({ error: "Não foi possível enviar a imagem. Tente novamente." }, { status: 500 });
   }
 }
 

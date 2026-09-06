@@ -1,0 +1,54 @@
+# Gate de qualidade obrigatório (2026-09-06, achado P1 de auditoria
+# externa: "Build real sem env falha ao coletar /api/lead; com
+# placeholders compila, mas lint falha com 42 erros. Deploy pode quebrar
+# por ambiente e qualidade fica sem gate confiável").
+#
+# Antes disso o projeto não tinha CI nenhum: tipo, lint, teste, build e
+# auditoria de dependência só rodavam quando alguém lembrava de rodar na
+# mão. Agora todo push/PR passa pelas 5 verificações.
+#
+# As env de build são PLACEHOLDERS de propósito — o objetivo aqui é
+# provar que o código compila, não falar com o Supabase de verdade.
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Tipos (tsc)
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Testes
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
+          NEXT_PUBLIC_APP_URL: https://toqy.com.br
+
+      # Não bloqueia o CI por vulnerabilidade transitiva sem correção
+      # disponível, mas falha se aparecer algo ALTO/CRÍTICO novo — que é
+      # exatamente o caso que a auditoria pegou (8 altas passando batido).
+      - name: Auditoria de dependências (alto/crítico)
+        run: npm audit --audit-level=high

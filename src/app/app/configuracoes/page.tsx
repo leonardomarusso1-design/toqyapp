@@ -53,9 +53,13 @@ export default function ConfiguracoesPage() {
   const [saved, setSaved] = useState(false);
 
   // Programa de indicação (2026-07-16)
-  const [referralCode, setReferralCode] = useState("");
-  const [referralCount, setReferralCount] = useState(0);
-  const [copiedReferral, setCopiedReferral] = useState(false);
+  // Limpeza (2026-09-06, auditoria externa): os states referralCode /
+  // referralCount / copiedReferral e a função copyReferralLink viraram
+  // código morto quando o card "Indique e ganhe +3 bio sites" saiu desta
+  // página em 2026-07-15 (ver comentário mais abaixo no JSX). Nada lia
+  // esses valores — só alimentavam re-renders inúteis. O que precisava
+  // sobreviver é o efeito colateral de getOrCreateReferralCode, que segue
+  // sendo chamado no load abaixo pra garantir que o código exista no banco.
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [kiwifyAffiliateId, setKiwifyAffiliateId] = useState<string | null>(null);
 
@@ -72,17 +76,14 @@ export default function ConfiguracoesPage() {
       }
       setLoading(false);
 
-      const [code, { count }, couponRes] = await Promise.all([
+      const [, couponRes] = await Promise.all([
         getOrCreateReferralCode(session.user.id, supabase),
-        supabase.from("toqy_referrals").select("id", { count: "exact", head: true }).eq("referrer_profile_id", session.user.id).eq("rewarded", true),
         // Programa de indicação com comissão (2026-07-15) — se este
         // usuário foi indicado por um revendedor Freelancer/Agência, o
         // cupom dele aplica desconto em qualquer plano pago que escolher.
         fetch("/api/resellers/my-coupon", { headers: { Authorization: `Bearer ${session.access_token}` } }).then((r) => r.json()).catch(() => ({ couponCode: null })),
       ]);
       if (!active) return;
-      setReferralCode(code);
-      setReferralCount(count ?? 0);
       setCouponCode(couponRes?.couponCode ?? null);
       setKiwifyAffiliateId(couponRes?.kiwifyAffiliateId ?? null);
     }
@@ -90,14 +91,6 @@ export default function ConfiguracoesPage() {
     return () => { active = false; };
   }, [router]);
 
-  const referralLink = typeof window !== "undefined" && referralCode ? `${window.location.origin}/?ref=${referralCode}` : "";
-
-  async function copyReferralLink() {
-    if (!referralLink) return;
-    await navigator.clipboard.writeText(referralLink);
-    setCopiedReferral(true);
-    setTimeout(() => setCopiedReferral(false), 1500);
-  }
 
   async function saveName() {
     if (!profile) return;

@@ -44,9 +44,9 @@ export default function CookiesPage() {
 
       <h2>Consentimento</h2>
       <p>
-        Os itens de "Necessário" e "Diagnóstico" acima são estritamente necessários para o funcionamento do
+        Os itens de &quot;Necessário&quot; e &quot;Diagnóstico&quot; acima são estritamente necessários para o funcionamento do
         serviço, sem finalidade publicitária. O Google Analytics não é necessário e só é carregado depois
-        que você clica em "Aceitar" no banner de cookies — se você clicar em "Recusar" ou não interagir, ele
+        que você clica em &quot;Aceitar&quot; no banner de cookies — se você clicar em &quot;Recusar&quot; ou não interagir, ele
         nunca carrega. Você pode mudar de ideia a qualquer momento limpando os dados do site nas
         configurações do navegador, o que faz o banner aparecer de novo na próxima visita.
       </p>

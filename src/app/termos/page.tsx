@@ -1,3 +1,7 @@
+// Navegação interna (2026-09-06, auditoria externa): links entre páginas
+// legais usavam <a href> cru, o que força reload completo e perde o
+// client-side routing do Next. Trocado por <Link> (next/link).
+import Link from "next/link";
 import { LegalPageShell } from "@/components/LegalPageShell";
 
 export const metadata = { title: "Termos de Uso — TOQY" };
@@ -32,7 +36,7 @@ export default function TermosPage() {
         O serviço é oferecido nos planos Gratuito, Essencial, Freelancer e Agência, cada um com limite de
         número de bio sites e recursos específicos (detalhados na página de planos do site). Os planos
         Essencial, Freelancer e Agência são cobrados de forma recorrente mensal. Ver{" "}
-        <a href="/contrato-assinatura">Contrato de Assinatura</a> para detalhes de cobrança,
+        <Link href="/contrato-assinatura">Contrato de Assinatura</Link> para detalhes de cobrança,
         cancelamento e reembolso.
       </p>
 
@@ -78,7 +82,7 @@ export default function TermosPage() {
       <p>
         Você pode encerrar sua conta a qualquer momento. Podemos suspender ou encerrar contas que violem
         estes Termos, mediante aviso quando possível. Ao encerrar a conta, seus dados poderão ser excluídos
-        conforme descrito na <a href="/privacidade">Política de Privacidade</a>.
+        conforme descrito na <Link href="/privacidade">Política de Privacidade</Link>.
       </p>
 
       <h2>9. Alterações destes Termos</h2>

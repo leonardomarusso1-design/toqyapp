@@ -319,7 +319,7 @@ export default function QRPage() {
                 </label>
               </div>
               <div className="rounded-[2rem] border border-border bg-surface p-5">
-                <p className="text-sm leading-relaxed text-muted">Este QR Code é um Pix de verdade (padrão Banco Central) — escaneável em qualquer app de banco, ou copie o código abaixo pra colar no "Pix Copia e Cola".</p>
+                <p className="text-sm leading-relaxed text-muted">Este QR Code é um Pix de verdade (padrão Banco Central) — escaneável em qualquer app de banco, ou copie o código abaixo pra colar no &quot;Pix Copia e Cola&quot;.</p>
                 <div className="mt-5 flex flex-wrap gap-3">
                   <button type="button" onClick={() => copy(pixValue)} disabled={!pixValue} className="inline-flex items-center gap-2 rounded-2xl bg-accent px-5 py-3 text-sm font-black text-white disabled:opacity-50">
                     <Copy className="h-4 w-4" />{copied === "pix" ? "Copiado" : "Copiar código Pix"}

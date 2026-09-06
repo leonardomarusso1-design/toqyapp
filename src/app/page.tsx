@@ -10,7 +10,8 @@ import {
   CreditCard,
   MapPin,
   MessageCircle,
-  PlayCircle,
+  // PlayCircle removido (2026-09-06, auditoria externa): só existia no
+  // placeholder "Espaço para vídeo" da hero, que saiu.
   Plus,
   QrCode,
   ShieldCheck,
@@ -89,6 +90,25 @@ const steps = [
 export default async function LandingPage() {
   const showcaseSummaries = await getShowcaseSummaries();
 
+  // Prova visual da hero (2026-09-06, auditoria externa): 3 bio sites reais
+  // no lugar do antigo placeholder de vídeo. Prioriza segmentos diferentes
+  // pra hero não abrir com três exemplos do mesmo nicho — se sobrar vaga
+  // (menos de 3 segmentos distintos disponíveis), completa com o que houver.
+  const heroShowcase = (() => {
+    const seen = new Set<string>();
+    const distinctSegments = showcaseSummaries.filter((s) => {
+      if (seen.has(s.segment)) return false;
+      seen.add(s.segment);
+      return true;
+    });
+    const chosen = [...distinctSegments];
+    for (const summary of showcaseSummaries) {
+      if (chosen.length >= 3) break;
+      if (!chosen.includes(summary)) chosen.push(summary);
+    }
+    return chosen.slice(0, 3);
+  })();
+
   return (
     <main className="min-h-screen bg-bg text-ink">
       <ReferralCapture />
@@ -140,18 +160,41 @@ export default async function LandingPage() {
           {/* Espaço de vídeo explicativo (2026-09-05, pedido do Leonardo) —
               ver HERO_VIDEO_EMBED_URL no topo do arquivo. Vídeo curto e
               pessoal costuma converter mais que texto sozinho (ver skill
-              premium-design-standards, princípio 29). */}
-          <div className="fade-up mx-auto mt-10 max-w-3xl" style={{ animationDelay: "0.15s" }}>
-            {HERO_VIDEO_EMBED_URL ? (
+              premium-design-standards, princípio 29).
+
+              Fallback trocado (2026-09-06, auditoria externa): enquanto a env
+              do vídeo está vazia (o caso em produção hoje), a primeira dobra
+              mostrava um retângulo tracejado com "Espaço para vídeo..." —
+              área nobre ocupada por um vazio que denuncia produto inacabado.
+              No lugar dele entram bio sites REAIS em produção, reaproveitando
+              o LandingBioSiteCard (PhoneMockup + PublicBioSite) já usado na
+              seção "Modelos por segmento" mais abaixo: prova visual do
+              produto funcionando em vez de promessa de vídeo. Se um dia a
+              env for preenchida, o iframe volta a ter prioridade e nada aqui
+              muda. Se não houver showcase (ex.: build sem env do Supabase),
+              não renderiza nada — melhor ausência que placeholder vazio. */}
+          {HERO_VIDEO_EMBED_URL ? (
+            <div className="fade-up mx-auto mt-10 max-w-3xl" style={{ animationDelay: "0.15s" }}>
               <div className="aspect-video overflow-hidden rounded-3xl border border-border shadow-lg">
                 <iframe src={HERO_VIDEO_EMBED_URL} title="Como o Toqy funciona" className="h-full w-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
               </div>
-            ) : (
-              <div className="flex aspect-video items-center justify-center rounded-3xl border-2 border-dashed border-border bg-white/60 text-sm font-semibold text-muted">
-                <span className="inline-flex items-center gap-2"><PlayCircle className="h-5 w-5" /> Espaço para vídeo explicando como o Toqy funciona</span>
+            </div>
+          ) : heroShowcase.length ? (
+            <div className="fade-up mt-12" style={{ animationDelay: "0.15s" }}>
+              <div className="flex items-start justify-center gap-5">
+                {heroShowcase.map((summary, i) => (
+                  // O card tem largura fixa (240px), então a quantidade
+                  // visível cresce com a tela em vez de espremer os três.
+                  <div key={summary.slug} className={i === 0 ? "" : i === 1 ? "hidden sm:block" : "hidden lg:block"}>
+                    <LandingBioSiteCard slug={summary.slug} publicUrl={`https://www.toqy.com.br/b/${summary.slug}`} />
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
+              <p className="mt-6 text-center text-sm font-semibold text-muted">
+                Bio sites de verdade, no ar agora — feitos no Toqy. Toque para abrir.
+              </p>
+            </div>
+          ) : null}
 
           {/* DUAS DIREÇÕES PRINCIPAIS */}
           <div className="fade-up mt-10 grid gap-6 lg:grid-cols-2" style={{ animationDelay: "0.2s" }}>

@@ -82,8 +82,10 @@ export async function POST(
     // TODO: Issue session JWT token (Phase 5 - production)
     return Response.json(response, { status: 200 });
 
-  } catch (error) {
-    // error logged server-side
+    // Limpeza (2026-09-06, auditoria externa): binding do catch removido —
+    // o erro não é usado (não logamos detalhe pro cliente de propósito) e
+    // ficava como variável morta no lint.
+  } catch {
     const response: VerifyResponse = { 
       ok: false,
       message: "Server error",

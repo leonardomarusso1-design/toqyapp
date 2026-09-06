@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+// Navegação interna (2026-09-06, auditoria externa): o CTA "Ver planos"
+// apontava pra home com <a href> cru, forçando reload total do app. Com
+// <Link> a volta pra home vira transição client-side.
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Globe, RefreshCw, ShieldCheck, ShieldAlert, Trash2 } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
@@ -152,7 +156,7 @@ export default function DominioPage() {
         <div className="mt-7 rounded-[2rem] border border-violet/20 bg-violet/10 p-6">
           <p className="text-lg font-black text-ink">Disponível no Pro Pessoal ou na Agência</p>
           <p className="mt-2 text-sm font-medium text-muted">Faça upgrade pra conectar um domínio próprio ao seu bio site.</p>
-          <a href="/#planos" className="mt-4 inline-flex rounded-2xl bg-violet px-5 py-3 text-sm font-black text-white transition hover:opacity-90">Ver planos</a>
+          <Link href="/#planos" className="mt-4 inline-flex rounded-2xl bg-violet px-5 py-3 text-sm font-black text-white transition hover:opacity-90">Ver planos</Link>
         </div>
       ) : access === "pro_needs_addon" ? (
         <div className="mt-7 rounded-[2rem] border border-violet/20 bg-violet/10 p-6">

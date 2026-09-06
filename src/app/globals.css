@@ -330,6 +330,67 @@ h3,
   animation: shimmer 4s linear infinite;
 }
 
+/* ---------- Acessibilidade: prefers-reduced-motion ----------
+   Adicionado em 2026-09-06 (auditoria externa): a home tinha marquee
+   contínuo de bio sites, blobs flutuando no hero e vários loops infinitos
+   (shimmer, gradiente animado, pulso, giro) sem nenhum respeito à
+   preferência de sistema "reduzir movimento". Pra quem tem sensibilidade
+   vestibular ou enxaqueca vestibular, movimento periférico contínuo é
+   gatilho real de tontura/náusea — e é exatamente o que essa preferência
+   sinaliza.
+
+   Escolha deliberada: em vez do reset global
+   (`* { animation-duration: 0.01ms !important }`), a lista abaixo é
+   explícita. O reset global também congelaria os spinners de carregamento
+   (`animate-spin` do Tailwind em botões e previews), que NÃO são
+   decoração — um spinner parado passa a mensagem errada de "travou".
+
+   Só o movimento morre; nada de layout muda. As classes de entrada
+   (.fade-up) usam `animation-fill-mode: both`, então sem animação o
+   elemento simplesmente aparece já no estado final (visível, na posição
+   certa) em vez de ficar invisível. Nos marquees o track para no frame 0,
+   mostrando o primeiro conjunto de cards normalmente. */
+@media (prefers-reduced-motion: reduce) {
+  /* Faixas deslizantes de bio sites — o movimento contínuo mais agressivo
+     da página. Param no início do track; os cards seguem clicáveis. */
+  .marquee,
+  .marquee-left,
+  .marquee-right,
+  .marquee-fast {
+    animation: none !important;
+  }
+
+  /* Loops infinitos decorativos: blobs do hero, pulso, giro e as variantes
+     "-animated" de gradiente/brilho/botão. */
+  .float-slow,
+  .pulse-soft,
+  .spin-slow,
+  .gradient-text-animated,
+  .shimmer-line-animated,
+  .btn-glow-animated {
+    animation: none !important;
+  }
+
+  /* Entrada de conteúdo: sem animação, o elemento nasce já visível. */
+  .fade-up {
+    animation: none !important;
+  }
+
+  /* Brilho que varre a badge da hero em loop — como o estado sem animação
+     seria o brilho estacionado sobre a pílula, some de vez. */
+  .pill::after {
+    display: none;
+  }
+
+  /* Deslocamentos de hover: mantém a mudança de sombra/cor (feedback de
+     "isso é clicável") e tira só o pulo vertical. */
+  .card-glow:hover,
+  .btn-glow:hover,
+  .btn-glow-animated:hover {
+    transform: none;
+  }
+}
+
 /* Scrollbar discreta */
 ::-webkit-scrollbar {
   width: 10px;
