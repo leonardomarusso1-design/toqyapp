@@ -43,7 +43,7 @@ export default function ParaVenderPage() {
           Monte uma <span className="gradient-text">renda recorrente</span> criando bio sites pra clientes.
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-lg text-muted">
-          Você cria, entrega e cobra mensalidade. O Toqy cuida do editor, do catálogo, do Pix e das artes com IA.
+          Você cria, entrega e cobra mensalidade. O Toqy cuida do editor, do catálogo e do Pix.
         </p>
         <a href="#planos" className="btn-glow mt-8 inline-flex items-center gap-2 rounded-full px-8 py-4 font-bold text-white">
           Ver planos de revenda <ArrowRight className="h-4 w-4" />
