@@ -850,7 +850,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                     {(site.instagramPosts ?? []).map((post) => (
                       <div key={post.id} className="flex items-center gap-2">
                         <input
-                          className={`${field} mt-0 flex-1`}
+                          className={`${field} mt-0 min-w-0 flex-1`}
                           value={post.url}
                           onChange={(e) => update((s) => ({ ...s, instagramPosts: (s.instagramPosts ?? []).map((p) => (p.id === post.id ? { ...p, url: e.target.value } : p)) }))}
                           placeholder="https://www.instagram.com/p/XXXXXXX/"
@@ -1390,7 +1390,16 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
         <div className="mb-5 rounded-[2rem] border border-border bg-card p-5 shadow-sm md:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div><p className="text-sm font-black uppercase tracking-[0.18em] text-accent">TOQY Builder</p><h1 className="mt-2 text-3xl font-black text-ink md:text-5xl">{mode === "create" ? "Criar bio site" : "Editar bio site"}</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">Tudo editável com preview ao vivo. Depois entregue link, QR Code e chave para o cliente.</p></div>
-            <div className="flex gap-2">
+            {/* Bug real corrigido (2026-09-06, reportado ao vivo: "ainda ta
+                cortando a tela, tenho que arrastar ou diminuir zoom no
+                celular") — esta linha não tinha "flex-wrap", então em
+                celulares mais estreitos (320-360px reais, mais estreitos
+                que os 375px do emulador padrão) "Compartilhar" + "Salvar
+                agora" lado a lado forçavam a LINHA a ficar mais larga que
+                a tela, empurrando a página inteira pra permitir scroll
+                horizontal — exatamente o "arrastar" que o Leonardo
+                descreveu. Agora quebra linha em vez de estourar a largura. */}
+            <div className="flex flex-wrap gap-2">
               {mode === "edit" ? (
                 <button type="button" onClick={() => setShowShareSheet(true)} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-black text-ink transition hover:border-accent" aria-label="Compartilhar">
                   <Share2 className="h-4 w-4" /> Compartilhar
@@ -1438,7 +1447,16 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
         <div className="fixed inset-x-0 bottom-0 z-20 flex gap-3 border-t border-border bg-bg/95 p-3 backdrop-blur-sm [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:z-auto sm:mt-5 sm:flex-row sm:items-center sm:justify-between sm:rounded-[1.5rem] sm:border sm:bg-card sm:p-3 sm:shadow-sm sm:backdrop-blur-none">
           <button type="button" disabled={step === 0} onClick={() => setStep((v) => Math.max(0, v - 1))} className="flex-1 rounded-2xl border border-border bg-card px-5 py-3.5 text-sm font-black text-ink disabled:opacity-40 sm:flex-none sm:py-3">Voltar</button>
           <div className="flex flex-1 gap-3 sm:flex-none">
-            <button type="button" onClick={save} disabled={isSaving} className="hidden rounded-2xl border border-accent/20 bg-accent/5 px-5 py-3 text-sm font-black text-accent-dim disabled:cursor-not-allowed disabled:opacity-60 sm:inline-flex">{isSaving ? "Salvando..." : "Salvar agora"}</button>
+            {/* Bug real corrigido (2026-09-06, reportado ao vivo: "o botão
+                salvar... aparece só no topo, não em todo o editor, pra
+                facilitar") — antes esse botão era "hidden sm:inline-flex",
+                ou seja, some completamente no celular; só sobrava o
+                "Salvar agora" lá em cima (linha ~1399), que exige rolar de
+                volta ao topo em etapas longas (Catálogo, Links e Botões).
+                Agora fica sempre visível na barra fixa — só ícone no
+                celular (economiza espaço ao lado de "Voltar"/"Continuar"),
+                com o texto completo a partir de sm. */}
+            <button type="button" onClick={save} disabled={isSaving} aria-label="Salvar agora" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-accent/20 bg-accent/5 px-3.5 py-3 text-sm font-black text-accent-dim disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"><Save className="h-4 w-4" /><span className="hidden sm:inline">{isSaving ? "Salvando..." : "Salvar agora"}</span></button>
             <button type="button" onClick={() => step < steps.length - 1 ? setStep((v) => v + 1) : save()} disabled={isSaving} className="flex-1 rounded-2xl bg-accent px-5 py-3.5 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:py-3">{step < steps.length - 1 ? "Continuar" : isSaving ? "Salvando..." : "Salvar e publicar"}</button>
           </div>
         </div>

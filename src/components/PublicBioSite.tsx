@@ -321,10 +321,44 @@ const InstagramPostsBlock = ({ posts, layout, defaultSize }: { posts: Array<{ id
     return () => track.removeEventListener("scroll", onScroll);
   }, [layout]);
 
+  // Auto-avanço (2026-09-06, 3ª revisão — o Leonardo pediu de volta:
+  // "ficar passando automatico as postagens"). Diferente do auto-scroll
+  // CONTÍNUO removido antes (que ficava "feio" porque posts de alturas
+  // diferentes deslizavam em pixel-a-pixel, desalinhados) — este avança
+  // em SALTOS discretos, sempre encaixando perfeitamente no post inteiro
+  // (mesma goTo() usada pelas bolinhas de navegação), então nunca fica
+  // deslizamento torto no meio de um post. Pausa assim que o visitante
+  // toca/arrasta pra não competir com o gesto dele.
+  const pausedRef = useRef(false);
+  useEffect(() => {
+    if (layout !== "carousel" || posts.length < 2) return;
+    const id = setInterval(() => {
+      if (pausedRef.current) return;
+      setActive((current) => {
+        const next = (current + 1) % posts.length;
+        const track = trackRef.current;
+        if (track) track.scrollTo({ left: next * track.clientWidth, behavior: "smooth" });
+        return next;
+      });
+    }, 4500);
+    return () => clearInterval(id);
+  }, [layout, posts.length]);
+
   if (layout === "list") {
     return (
       <div className="space-y-4">
-        {posts.map((p) => <InstagramEmbed key={p.id} postUrl={p.url} maxWidth={IG_SIZE_MAXWIDTH[p.size ?? defaultSize]} />)}
+        {/* Bug real corrigido (2026-09-06, reportado ao vivo: "colocando o
+            link do post, não aparece no preview") — o script oficial do
+            Instagram marca cada <blockquote> como "já processado" na
+            primeira vez que roda em cima dele, mesmo que o link ainda
+            esteja incompleto (digitando letra por letra). Como o React
+            reaproveitava o MESMO nó DOM (key={p.id} fixo), depois desse
+            primeiro processamento o Instagram nunca mais tentava de novo
+            — mesmo quando o link ficava completo/correto depois. Agora a
+            key inclui a URL: quando ela muda de verdade, o React descarta
+            o nó antigo e cria um novo <blockquote>, que o Instagram
+            processa do zero. */}
+        {posts.map((p) => <InstagramEmbed key={`${p.id}-${p.url}`} postUrl={p.url} maxWidth={IG_SIZE_MAXWIDTH[p.size ?? defaultSize]} />)}
       </div>
     );
   }
@@ -333,10 +367,14 @@ const InstagramPostsBlock = ({ posts, layout, defaultSize }: { posts: Array<{ id
     <div>
       <div
         ref={trackRef}
+        onPointerDown={() => { pausedRef.current = true; }}
+        onPointerUp={() => { pausedRef.current = false; }}
+        onMouseEnter={() => { pausedRef.current = true; }}
+        onMouseLeave={() => { pausedRef.current = false; }}
         className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth pb-1"
       >
         {posts.map((p) => (
-          <div key={p.id} className="flex w-full shrink-0 snap-center justify-center">
+          <div key={`${p.id}-${p.url}`} className="flex w-full shrink-0 snap-center justify-center">
             <InstagramEmbed postUrl={p.url} maxWidth={IG_SIZE_MAXWIDTH[p.size ?? defaultSize]} />
           </div>
         ))}
@@ -1069,8 +1107,17 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
               ) : null;
             }
             if (blockType === "instagram") {
+              // Moldura + título (2026-09-06, pedido do Leonardo: "devia
+              // aparecer algo bonito, tipo 'Nosso Instagram em tempo
+              // real'") — o card branco de CADA post é do próprio widget
+              // oficial do Instagram (não dá pra estilizar por dentro,
+              // ver comentário do InstagramEmbed), mas a MOLDURA ao redor
+              // do bloco inteiro é 100% nossa.
               return (site.instagramPosts ?? []).length ? (
-                <section key="instagram" className="mt-4 overflow-hidden">
+                <section key="instagram" className="mt-4 overflow-hidden rounded-[1.75rem] border p-4 backdrop-blur-xl" style={glassCard(site)}>
+                  <p className="mb-3 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest" style={col("title", site.theme.muted)}>
+                    <InstagramIcon className="h-4 w-4" /> Nosso Instagram em tempo real
+                  </p>
                   <InstagramPostsBlock posts={site.instagramPosts!} layout={site.instagramLayout ?? "carousel"} defaultSize={site.instagramSize ?? "md"} />
                 </section>
               ) : null;
