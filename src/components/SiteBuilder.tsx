@@ -9,7 +9,7 @@ import { createEditUrl, createPublicUrl, generateSlug } from "@/lib/dataProvider
 import { RealTemplateGallery } from "./RealTemplateGallery";
 import { syncBiositeToSupabase } from "@/lib/biositeSync";
 import { checkBiositeLimit } from "@/lib/planLimits";
-import { OVERAGE_LINKS, canUseStickersAndMusic, resolvePlanTier } from "@/lib/subscriptions";
+import { OVERAGE_LINKS, canUseStickersAndMusic, resolvePlanTier, type PlanType } from "@/lib/subscriptions";
 import { supabase } from "@/lib/supabaseClient";
 import { validateSite } from "@/lib/validation";
 import { ImageGuidelineHint } from "./ImageGuidelineHint";
@@ -340,6 +340,27 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   const [isSaving, setIsSaving] = useState(false);
   const publicLink = createPublicUrl(site.slug);
   const editLink = createEditUrl(site.slug);
+
+  // Bug real corrigido (2026-09-06, achado ao vivo pelo Leonardo: conta no
+  // plano Agência via "Disponível a partir do plano Pro" no lugar dos
+  // campos de figurinha/música). Causa: o gate usava `limitState`, que só é
+  // preenchido dentro de save() em modo "create" E só quando o limite de
+  // bio sites é ATINGIDO — fora desse caso (a imensa maioria do tempo,
+  // incluindo SEMPRE no modo "edit") `limitState` é `null`, e
+  // `resolvePlanTier(undefined)` cai em "free". Busca o plano de verdade
+  // uma vez, ao montar, independente do fluxo de limite de sites.
+  const [ownerPlanTier, setOwnerPlanTier] = useState<PlanType>("free");
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !active) return;
+      const { data: profile } = await supabase.from("profiles").select("plan_toqy, plan_tier").eq("id", session.user.id).maybeSingle();
+      if (!active) return;
+      setOwnerPlanTier(resolvePlanTier(profile?.plan_toqy ?? profile?.plan_tier));
+    })();
+    return () => { active = false; };
+  }, []);
 
   function update(next: ToqySite | ((current: ToqySite) => ToqySite)) {
     setSite((current) => {
@@ -705,7 +726,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
           <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
             <p className="text-sm font-black text-ink">✨ Figurinhas e música</p>
             <p className="mt-0.5 text-xs text-muted">Dê mais personalidade ao bio site com figurinhas decorativas e uma música tocando.</p>
-            {canUseStickersAndMusic(resolvePlanTier(limitState?.planTier)) ? (
+            {canUseStickersAndMusic(ownerPlanTier) ? (
               <div className="mt-4 space-y-5">
                 <div>
                   <p className={label}>Figurinhas (até 3)</p>

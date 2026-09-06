@@ -15,7 +15,11 @@ import { PhoneMockup } from "./PhoneMockup";
 // sobrepondo a foto de perfil etc.). Fix: renderiza o site na largura de
 // design real e encolhe visualmente com transform: scale — o layout
 // interno do PublicBioSite nunca "vê" 190px, só fica menor na tela.
-const CARD_WIDTH = 190; // deve ficar em sincronia com a classe w-[190px] no <a> abaixo
+// Aumentado de 190 pra 240px (2026-09-06, pedido do Leonardo: "modelos
+// prontos" pequenos demais pra ler o conteúdo do preview) — o resto da
+// fórmula (PREVIEW_SCALE etc.) já é proporcional, só muda esta constante
+// + a classe w-[240px]/h-[480px] no JSX abaixo.
+const CARD_WIDTH = 240; // deve ficar em sincronia com a classe w-[240px] no <a> abaixo
 const PHONE_BORDER = 10; // ver PhoneMockup.tsx: border-[10px]
 const DESIGN_WIDTH = 390; // largura real que o PublicBioSite espera (~iPhone)
 const VISIBLE_WIDTH = CARD_WIDTH - PHONE_BORDER * 2;
@@ -73,8 +77,8 @@ export function LandingBioSiteCard({ slug, publicUrl }: { slug: string; publicUr
   }, [slug]);
 
   return (
-    <a href={publicUrl} target="_blank" rel="noreferrer" className="group block w-[190px] shrink-0 snap-start">
-      <PhoneMockup className="mx-auto h-[380px] w-full transition duration-300 group-hover:-translate-y-1">
+    <a href={publicUrl} target="_blank" rel="noreferrer" className="group block w-[240px] shrink-0 snap-start">
+      <PhoneMockup className="mx-auto h-[480px] w-full transition duration-300 group-hover:-translate-y-1">
         {site ? (
           <ScaledSitePreview site={site} publicUrl={publicUrl} instanceId={slug} />
         ) : (
