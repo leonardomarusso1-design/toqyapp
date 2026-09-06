@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, CheckCircle2, Copy, ExternalLink, Eye, Images, Loader2, MessageCircle, Plus, Save, Share2, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, CheckCircle2, ChevronLeft, ChevronRight, Copy, ExternalLink, Eye, Images, LayoutGrid, Link2, Loader2, MessageCircle, Palette, Plus, Rocket, Save, Share2, ShoppingBag, Trash2, User, Wallet, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 // Limpeza (2026-09-06, auditoria externa): o tipo CatalogLayout e o helper
 // createEditUrl saíram dos imports — o tipo não era referenciado em nenhuma
@@ -58,6 +58,35 @@ function defaultBusinessHoursDays(): BusinessHoursDay[] {
 type Props = { mode: "create" | "edit"; initialSite: ToqySite; onSave: (site: ToqySite) => unknown | Promise<unknown> };
 
 const steps = ["Modelo", "Perfil", "Visual", "Links e Botões", "Pix e Wi-Fi", "Catálogo", "Salvar"];
+
+// Editor por blocos no celular (2026-09-06, mockup da auditoria externa).
+// A auditoria apontou: "o editor deve abandonar a lógica de painel desktop
+// comprimido e adotar uma sequência de tarefas". As 7 etapas viravam uma
+// fileira de pílulas rolando na horizontal — no celular, o usuário não via
+// onde estava nem quanto faltava.
+//
+// Em vez de reescrever os 1600 linhas de campos, o que muda é só a
+// NAVEGAÇÃO: as mesmas 7 etapas agrupadas em 3 abas de rodapé, cada aba
+// mostrando uma lista de blocos (ícone + título + descrição). Tocar num
+// bloco abre exatamente o mesmo editor de antes. Desktop segue com as
+// pílulas, sem mudança nenhuma.
+type StepGroup = "conteudo" | "design" | "publicar";
+
+const STEP_META: { icon: typeof User; subtitle: string; group: StepGroup }[] = [
+  { icon: LayoutGrid, subtitle: "Comece de um modelo pronto", group: "design" },
+  { icon: User, subtitle: "Foto, nome, descrição e endereço", group: "conteudo" },
+  { icon: Palette, subtitle: "Cores, fontes e estilo dos botões", group: "design" },
+  { icon: Link2, subtitle: "WhatsApp, Instagram e seus links", group: "conteudo" },
+  { icon: Wallet, subtitle: "Receba no Pix e mostre a senha do Wi-Fi", group: "conteudo" },
+  { icon: ShoppingBag, subtitle: "Produtos, serviços e cardápio", group: "conteudo" },
+  { icon: Rocket, subtitle: "Publique e entregue o link ao cliente", group: "publicar" },
+];
+
+const GROUP_TABS: { id: StepGroup; label: string; icon: typeof User }[] = [
+  { id: "conteudo", label: "Conteúdo", icon: LayoutGrid },
+  { id: "design", label: "Design", icon: Palette },
+  { id: "publicar", label: "Publicar", icon: Rocket },
+];
 const field = "mt-2 w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-ink outline-none transition focus:border-accent focus:ring-4 focus:ring-accent/10";
 const label = "text-sm font-black text-ink";
 
@@ -429,6 +458,11 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   // fluxo — o Toqy já tinha QR/link/WhatsApp na última etapa ("Salvar"),
   // isso só adianta o acesso pra qualquer momento da edição).
   const [showShareSheet, setShowShareSheet] = useState(false);
+  // Navegação por blocos no celular (ver STEP_META). `mobileTab` é a aba
+  // de rodapé aberta; `mobileOpen` diz se estamos DENTRO de um bloco
+  // (mostrando o editor) ou na lista. Desktop ignora os dois.
+  const [mobileTab, setMobileTab] = useState<StepGroup>("conteudo");
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [limitState, setLimitState] = useState<{ current: number; limit: number; planTier: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const publicLink = createPublicUrl(site.slug);
@@ -1576,8 +1610,59 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             </ul>
           </div>
         ) : null}
-        <div className="mb-5 flex gap-2 overflow-x-auto rounded-[1.5rem] border border-border bg-card p-2 shadow-sm">{steps.map((item, index) => <button key={item} type="button" onClick={() => setStep(index)} className={`shrink-0 rounded-2xl px-4 py-2 text-sm font-black transition ${index === step ? "bg-accent text-white" : "text-muted hover:bg-surface"}`}>{index + 1}. {item}</button>)}</div>
-        {body}
+        {/* Pílulas das 7 etapas — só no desktop a partir daqui (2026-09-06).
+            No celular quem navega é a lista de blocos + abas de rodapé. */}
+        <div className="mb-5 hidden gap-2 overflow-x-auto rounded-[1.5rem] border border-border bg-card p-2 shadow-sm sm:flex">{steps.map((item, index) => <button key={item} type="button" onClick={() => setStep(index)} className={`shrink-0 rounded-2xl px-4 py-2 text-sm font-black transition ${index === step ? "bg-accent text-white" : "text-muted hover:bg-surface"}`}>{index + 1}. {item}</button>)}</div>
+
+        {/* CELULAR — lista de blocos da aba atual. Cada bloco abre a MESMA
+            etapa que a pílula abriria no desktop. */}
+        {!mobileOpen ? (
+          <div className="mb-5 space-y-2 sm:hidden">
+            {steps
+              .map((titulo, index) => ({ titulo, index, meta: STEP_META[index] }))
+              .filter(({ meta }) => meta.group === mobileTab)
+              .map(({ titulo, index, meta }) => (
+                <button
+                  key={titulo}
+                  type="button"
+                  onClick={() => { setStep(index); setMobileOpen(true); }}
+                  className="flex w-full items-center gap-3 rounded-3xl border border-border bg-card p-4 text-left shadow-sm transition active:scale-[0.99]"
+                >
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+                    <meta.icon className="h-5 w-5" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-base font-black text-ink">{titulo}</span>
+                    <span className="block truncate text-xs font-semibold text-muted">{meta.subtitle}</span>
+                  </span>
+                  <ChevronRight className="h-5 w-5 shrink-0 text-muted" />
+                </button>
+              ))}
+          </div>
+        ) : null}
+
+        {/* Cabeçalho de volta, dentro de um bloco no celular (mockup: seta,
+            título, Salvar). */}
+        {mobileOpen ? (
+          <div className="mb-4 flex items-center gap-2 sm:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Voltar para a lista"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-border bg-card text-ink"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <p className="min-w-0 flex-1 truncate text-base font-black text-ink">{steps[step]}</p>
+            <button type="button" onClick={save} disabled={isSaving} className="shrink-0 rounded-2xl bg-accent px-4 py-2.5 text-sm font-black text-white disabled:opacity-60">
+              {isSaving ? "..." : "Salvar"}
+            </button>
+          </div>
+        ) : null}
+
+        {/* O editor da etapa: sempre visível no desktop; no celular, só
+            depois de abrir um bloco. */}
+        <div className={mobileOpen ? "" : "hidden sm:block"}>{body}</div>
         {/* Navegação da etapa — fixa embaixo da tela no celular (pedido do
             Leonardo, 2026-09-05: criação/edição tem que ser fácil pelo
             celular, igual Linktree). Antes disso, em etapas longas (Links e
@@ -1587,7 +1672,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             no celular (linha 1140 já cobre a mesma ação lá em cima, sem
             duplicar e sem deixar a barra fixa alta demais). A partir de sm,
             volta a ser um rodapé normal com os 3 botões. */}
-        <div className="fixed inset-x-0 bottom-0 z-20 flex gap-3 border-t border-border bg-bg/95 p-3 backdrop-blur-sm [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:z-auto sm:mt-5 sm:flex-row sm:items-center sm:justify-between sm:rounded-[1.5rem] sm:border sm:bg-card sm:p-3 sm:shadow-sm sm:backdrop-blur-none">
+        <div className={`fixed inset-x-0 bottom-0 z-20 gap-3 border-t border-border bg-bg/95 p-3 backdrop-blur-sm [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:z-auto sm:mt-5 sm:flex sm:flex-row sm:items-center sm:justify-between sm:rounded-[1.5rem] sm:border sm:bg-card sm:p-3 sm:shadow-sm sm:backdrop-blur-none ${mobileOpen ? "flex" : "hidden"}`}>
           <button type="button" disabled={step === 0} onClick={() => setStep((v) => Math.max(0, v - 1))} className="flex-1 rounded-2xl border border-border bg-card px-5 py-3.5 text-sm font-black text-ink disabled:opacity-40 sm:flex-none sm:py-3">Voltar</button>
           <div className="flex flex-1 gap-3 sm:flex-none">
             {/* Bug real corrigido (2026-09-06, reportado ao vivo: "o botão
@@ -1606,6 +1691,25 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
         {/* Espaçador — compensa a altura da barra fixa no celular, some a
             partir de sm (a barra deixa de ser fixa). */}
         <div className="h-20 sm:hidden" aria-hidden="true" />
+
+        {/* Abas de rodapé do celular (mockup da auditoria: Conteúdo /
+            Design / Publicar). Só aparecem na LISTA — dentro de um bloco
+            quem fica embaixo é a barra de Voltar/Continuar acima. */}
+        {!mobileOpen ? (
+          <nav className="fixed inset-x-0 bottom-0 z-20 flex items-stretch border-t border-border bg-card [padding-bottom:env(safe-area-inset-bottom)] sm:hidden">
+            {GROUP_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setMobileTab(tab.id)}
+                className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-black transition ${mobileTab === tab.id ? "text-accent" : "text-muted"}`}
+              >
+                <tab.icon className="h-5 w-5" />
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        ) : null}
       </div>
       <LiveBioSitePreview site={site} onStickerMove={handleStickerMove} />
 
