@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import sharp from "sharp";
 
 // Bug real corrigido em 2026-07-06: toda imagem de biosite (logo, assinatura,
 // fundo, fotos de catálogo) era salva como base64 embutido direto no JSON
@@ -18,6 +19,24 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // rotulado de `data:image/png`, e o arquivo virava URL pública num domínio
 // nosso (XSS armazenado, hospedagem de malware, phishing). Agora o formato é
 // decidido pelos MAGIC BYTES do conteúdo real, não pelo que o cliente diz.
+//
+// Segunda parte do mesmo achado (2026-09-06, auditoria externa): magic bytes
+// provam que o arquivo COMEÇA como imagem, não que ele seja SÓ isso. Um JPEG
+// legítimo com payload anexado depois dos pixels (polyglot / conteúdo
+// escondido em segmento EXIF/comentário) passa reto pela checagem de
+// assinatura. Por isso o arquivo do usuário nunca mais é gravado como veio:
+// ele é REENCODADO pelo sharp e o que sobe pro Storage é um buffer novo,
+// gerado a partir dos pixels decodificados. Qualquer coisa que não fosse
+// pixel morre nesse caminho. Junto disso vêm dois ganhos:
+//
+//  1. PRIVACIDADE (motivo concreto, não teórico): foto tirada de celular
+//     carrega EXIF com GPS. Um cliente de barbearia subindo a foto do
+//     próprio estabelecimento estava publicando a coordenada dele junto,
+//     num arquivo com URL pública. O sharp descarta metadata por padrão —
+//     a defesa aqui é NÃO chamar `.withMetadata()`.
+//  2. TETO DE DIMENSÃO: limita o custo de servir a imagem e fecha a porta
+//     pra "decompression bomb" (arquivo pequeno que descomprime em dezenas
+//     de milhares de pixels por lado e estoura a memória da Function).
 
 export const BIOSITE_IMAGES_BUCKET = "biosite-images";
 
@@ -33,12 +52,41 @@ export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 // executável (pode conter <script>/onload) e, servido de um domínio nosso,
 // vira XSS armazenado. GIF/BMP/TIFF também ficam de fora — o cliente nunca
 // gera esses formatos, então aceitar só amplia a superfície de ataque.
-const IMAGE_CONTENT_TYPE = {
-  jpg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-} as const;
-type AllowedImageExt = keyof typeof IMAGE_CONTENT_TYPE;
+type AllowedImageExt = "jpg" | "png" | "webp";
+
+// Formato de SAÍDA (2026-09-06, auditoria externa). Escolha: WebP para tudo,
+// independente do que entrou. Por quê:
+//
+//  • PESO — é o problema que originou este arquivo (a resposta de 6.8MB que
+//    estourou o Fast Origin Transfer da Vercel em 2026-07-06). WebP entrega
+//    a mesma imagem bem mais leve que JPEG/PNG na qualidade que um bio site
+//    precisa, e cada byte aqui é byte servido em toda visita à página.
+//  • TRANSPARÊNCIA PRESERVADA — WebP tem canal alpha, então logo em PNG
+//    transparente (caso comum no builder) continua funcionando. Era o
+//    motivo que normalmente obrigaria a manter o formato de entrada.
+//  • SUPORTE — WebP roda em todo navegador atual (Chrome, Safari 14+,
+//    Firefox, Edge). O público do bio site é mobile brasileiro moderno.
+//  • SAÍDA ÚNICA MATA UMA CLASSE DE BUG — com um só formato possível, a
+//    extensão do objeto e o Content-Type gravados no Storage não têm como
+//    divergir do conteúdo real. Não existe caminho onde a gente escreve
+//    ".png" num arquivo que o sharp gerou como outra coisa.
+const OUTPUT_EXT = "webp";
+const OUTPUT_CONTENT_TYPE = "image/webp";
+
+// Teto do maior lado da imagem final. 2000px cobre com folga um bio site
+// (o ImageUploadField já manda ~800px; isto é a rede de proteção do lado do
+// servidor, pra quem chama a API direto sem passar pelo nosso cliente).
+// `withoutEnlargement` garante que imagem menor que isso NÃO é esticada —
+// aumentar só geraria peso e borrão.
+const MAX_IMAGE_DIMENSION = 2000;
+
+// Teto de pixels da ENTRADA, aplicado pelo próprio decoder. Um PNG de poucos
+// KB pode declarar 50.000 x 50.000 px e só explodir na hora de descomprimir
+// (decompression bomb) — o limite de 5MB de arquivo não protege disso,
+// porque o problema não é o tamanho do arquivo, é o do bitmap. 50MP fica
+// muito acima de qualquer foto de celular e muito abaixo do que derrubaria
+// a Function.
+const MAX_INPUT_PIXELS = 50_000_000;
 
 /**
  * Erro de validação do payload (culpa do cliente, não do servidor). A rota
@@ -99,10 +147,14 @@ function safeSegment(value: string, fallback: string): string {
 }
 
 /**
- * Valida o data URL e devolve o buffer + formato REAL. Lança
+ * Valida o data URL e devolve o buffer bruto já conferido. Lança
  * UploadValidationError com mensagem amigável em qualquer caso inválido.
+ *
+ * Não devolve mais o formato detectado (2026-09-06): a saída agora é sempre
+ * WebP gerado pelo sharp, então o formato de entrada só serve pra decidir
+ * ACEITAR ou REJEITAR — não influencia mais nada a jusante.
  */
-function parseImageDataUrl(dataUrl: string): { buffer: Buffer; contentType: string; ext: AllowedImageExt } {
+function parseImageDataUrl(dataUrl: string): Buffer {
   const match = /^data:image\/([a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl.trim());
   if (!match) throw new UploadValidationError("Formato de imagem não reconhecido. Envie um JPG, PNG ou WebP.");
 
@@ -129,14 +181,51 @@ function parseImageDataUrl(dataUrl: string): { buffer: Buffer; contentType: stri
     throw new UploadValidationError(`Imagem muito grande (máx. ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)}MB).`);
   }
 
-  const ext = detectImageExt(buffer);
-  if (!ext) {
+  if (!detectImageExt(buffer)) {
     throw new UploadValidationError("O arquivo enviado não é uma imagem válida. Envie um JPG, PNG ou WebP.");
   }
 
-  // contentType vem do formato DETECTADO, nunca do declarado — assim não dá
-  // pra servir conteúdo com um Content-Type escolhido pelo atacante.
-  return { buffer, contentType: IMAGE_CONTENT_TYPE[ext], ext };
+  return buffer;
+}
+
+/**
+ * Reencoda a imagem: o buffer devolvido é gerado pelo sharp a partir dos
+ * pixels decodificados, NÃO é mais o arquivo que o usuário mandou. Essa é a
+ * defesa que magic bytes não dão — ver nota longa no topo do arquivo.
+ *
+ * Ordem da pipeline importa (2026-09-06, auditoria externa):
+ *
+ *  1. `.rotate()` SEM argumento aplica a rotação que estava declarada no EXIF
+ *     e só então a metadata é jogada fora. Sem esta linha, foto de celular
+ *     (que é gravada "deitada" + uma tag Orientation mandando girar) seria
+ *     publicada deitada, porque o dado que mandava girar teria sumido.
+ *  2. `.resize(..., fit: "inside", withoutEnlargement: true)` limita o maior
+ *     lado sem distorcer proporção e sem ampliar imagem pequena.
+ *  3. `.webp()` gera o buffer final. Nada de `.withMetadata()` aqui: é
+ *     justamente a ausência dessa chamada que descarta EXIF (e o GPS junto).
+ */
+async function reencodeImage(buffer: Buffer): Promise<Buffer> {
+  try {
+    return await sharp(buffer, { limitInputPixels: MAX_INPUT_PIXELS })
+      .rotate()
+      .resize({
+        width: MAX_IMAGE_DIMENSION,
+        height: MAX_IMAGE_DIMENSION,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({ quality: 82 })
+      .toBuffer();
+  } catch (err) {
+    // Chegar aqui significa que o conteúdo passou pelos magic bytes mas o
+    // decoder não conseguiu ler os pixels: arquivo truncado, corrompido,
+    // cabeçalho válido com corpo lixo, ou bitmap acima de MAX_INPUT_PIXELS.
+    // Tudo isso é payload ruim do cliente (400), não falha nossa (500) — mas
+    // o erro real vai pro log, porque se algum dia isto disparar em massa é
+    // sinal de problema no binário nativo do sharp, não de usuário.
+    console.error("[imageStorage] reencode falhou:", err);
+    throw new UploadValidationError("Não foi possível processar esta imagem. Envie um JPG, PNG ou WebP válido.");
+  }
 }
 
 let bucketChecked = false;
@@ -186,16 +275,20 @@ export async function uploadImageIfBase64(
 ): Promise<string | undefined> {
   if (!value || !value.startsWith("data:image")) return value;
 
-  const parsed = parseImageDataUrl(value);
+  // Ordem importa: valida ANTES de gastar CPU com o sharp. As checagens de
+  // tamanho e magic bytes continuam sendo a primeira linha de defesa — o
+  // reencode é a segunda, não a substituta.
+  const encoded = await reencodeImage(parseImageDataUrl(value));
 
   await assertBucketExists(supabase);
 
   // Nome 100% gerado no servidor: pasta derivada do slug (sanitizada) e
   // arquivo com UUID. Sem upsert, pra não permitir sobrescrever objeto que
-  // já existe.
-  const path = `${safeSegment(slug, "sem-slug")}/${safeSegment(fieldId, "campo")}-${randomUUID()}.${parsed.ext}`;
-  const { error } = await supabase.storage.from(BIOSITE_IMAGES_BUCKET).upload(path, parsed.buffer, {
-    contentType: parsed.contentType,
+  // já existe. Extensão e contentType vêm do que o sharp REALMENTE gerou
+  // (sempre WebP), nunca do formato de entrada — não há como divergirem.
+  const path = `${safeSegment(slug, "sem-slug")}/${safeSegment(fieldId, "campo")}-${randomUUID()}.${OUTPUT_EXT}`;
+  const { error } = await supabase.storage.from(BIOSITE_IMAGES_BUCKET).upload(path, encoded, {
+    contentType: OUTPUT_CONTENT_TYPE,
     upsert: false,
   });
   if (error) {

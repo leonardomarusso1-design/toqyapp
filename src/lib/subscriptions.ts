@@ -328,7 +328,14 @@ export const OVERAGE_LINKS = {
 // que não existe mais em SUBSCRIPTION_PLANS) e quebrar em runtime.
 export function resolvePlanTier(rawPlan?: string | null): PlanType {
   const normalized = (rawPlan || "free").toLowerCase();
-  return normalized in SUBSCRIPTION_PLANS ? (normalized as PlanType) : "free";
+  // Object.hasOwn e nao `in` (2026-09-06, bug real achado por teste): o
+  // operador `in` percorre a CADEIA DE PROTOTIPOS, entao
+  // "constructor" in SUBSCRIPTION_PLANS e true. Um plano gravado como
+  // "constructor"/"toString"/"__proto__" passava pelo filtro e era
+  // devolvido como PlanType valido — e isPremiumPlan() so testa
+  // `!== "free"`, entao virava plano PAGO. Liberava recurso premium de
+  // graca. hasOwn olha so as chaves proprias do objeto.
+  return Object.hasOwn(SUBSCRIPTION_PLANS, normalized) ? (normalized as PlanType) : "free";
 }
 
 // Não renderizado em lugar nenhum hoje (confirmado por grep, 2026-07-16) —

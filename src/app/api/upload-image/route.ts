@@ -22,11 +22,20 @@ import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 //
 // Fix de segurança (2026-09-06, auditoria externa): a validação do conteúdo
 // em si (magic bytes, allowlist de formato, teto de tamanho antes do decode)
-// mora em src/lib/imageStorage.ts. Aqui a mudança é o tratamento de erro —
+// e o reencode com sharp (mata payload escondido dentro de arquivo que
+// "parece" imagem, remove EXIF/GPS, limita dimensão) moram em
+// src/lib/imageStorage.ts. Aqui a mudança é o tratamento de erro —
 // antes, `err.message` era devolvido cru ao cliente, o que repassava a
 // mensagem do Supabase Storage (nome de bucket, política, detalhe de infra).
 // Agora: erro de validação vira 400 com mensagem nossa; qualquer outro vira
 // 500 genérico, com o detalhe real ficando no log do servidor.
+//
+// RUNTIME: esta rota depende do sharp, que é binário nativo e só roda em
+// Node. Não existe `export const runtime` aqui de propósito — Node já é o
+// padrão, e nesta versão do Next o Edge Runtime está DEPRECIADO, com a doc
+// (node_modules/next/dist/docs/.../route-segment-config/runtime.md) mandando
+// remover o export em vez de declará-lo. Só não adicione `runtime = "edge"`
+// nesta rota: o sharp quebraria.
 export async function POST(request: Request) {
   if (!hasSupabaseEnv()) return Response.json({ error: "Servidor não configurado" }, { status: 500 });
 

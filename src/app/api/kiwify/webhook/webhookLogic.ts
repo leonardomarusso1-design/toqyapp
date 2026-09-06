@@ -18,7 +18,10 @@ export function resolvePlan(productName: string): { plan: string; limit: number 
   // "TOQY Pro" (2026-09-05) — match estrito em "toqy pro" (não só "pro"
   // solto) pra nunca colidir por engano com outro nome de produto que
   // contenha essas 3 letras.
-  if (n.includes("toqy pro")) return { plan: "pro", limit: PLAN_BIOSITE_LIMITS.pro };
+  // Limite de palavra (2026-09-06, bug real achado por teste): includes()
+  // casava "toqy pro" dentro de "TOQY Promocao de Natal" e concedia plano
+  // Pro por causa de um produto promocional.  garante palavra inteira.
+  if (/toqy pro(?![a-z])/.test(n)) return { plan: "pro", limit: PLAN_BIOSITE_LIMITS.pro };
   if (n.includes("comunidade")) return { plan: "community", limit: PLAN_BIOSITE_LIMITS.community };
   if (n.includes("freelancer")) return { plan: "freelancer", limit: PLAN_BIOSITE_LIMITS.freelancer };
   if (n.includes("agencia") || n.includes("agência")) return { plan: "agency", limit: PLAN_BIOSITE_LIMITS.agency };

@@ -11,7 +11,12 @@ export function normalizeSlug(value: string) {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 64);
+    .slice(0, 64)
+    // Segundo trim DEPOIS do corte (2026-09-06, bug real achado por
+    // teste): o slice(0,64) pode cair exatamente em cima de um hifen e
+    // devolver slug terminando em "-", gerando URL feia e sem
+    // correspondencia com o slug re-normalizado depois.
+    .replace(/-+$/g, "");
 }
 
 export function generateSlug(value: string) {
