@@ -109,6 +109,11 @@ export default async function LandingPage() {
     return chosen.slice(0, 3);
   })();
 
+  // CTA secundário da hero ("Ver exemplo de negócio local"): usa o
+  // primeiro bio site real da vitrine, não um link fixo — se o site de
+  // exemplo sair do ar, o botão some sozinho em vez de virar link morto.
+  const heroExample = heroShowcase[0] ?? null;
+
   return (
     <main className="min-h-screen bg-bg text-ink">
       <ReferralCapture />
@@ -116,7 +121,11 @@ export default async function LandingPage() {
       <div className="bg-ink text-white">
         <div className="flex items-center justify-center px-4 py-2.5 text-center">
           <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em]">
-            <Sparkles className="h-3.5 w-3.5 text-accent" /> Deixe o negócio do cliente mais profissional e venda mais em menos de 10 minutos.
+            {/* A barra falava com o revendedor ("o negócio do CLIENTE"),
+                logo acima de uma hero que agora fala com o dono do
+                negócio — duas promessas diferentes na mesma dobra.
+                Alinhada ao novo posicionamento (2026-09-06). */}
+            <Sparkles className="h-3.5 w-3.5 text-accent" /> WhatsApp, catálogo, Pix e mapa em um link só. No ar em menos de 10 minutos.
           </span>
         </div>
       </div>
@@ -146,14 +155,39 @@ export default async function LandingPage() {
 
         <div className="relative mx-auto max-w-7xl px-5 py-16 lg:py-20">
           <div className="text-center">
+            {/* Reposicionamento da primeira dobra (2026-09-06, auditoria
+                externa, seção 5): antes a hero abria com "Mais clientes.
+                Menos trabalho." e um subtítulo que mandava a pessoa
+                ESCOLHER entre dois funis — ou seja, a primeira coisa que
+                o visitante via era uma decisão, não uma resposta. A dobra
+                agora responde em cinco segundos pra quem é (negócio
+                local), o que entrega (atendimento, catálogo e Pix num
+                link) e qual o próximo toque (um CTA primário só). Quem
+                quer revender continua tendo caminho — mas como link
+                discreto pra landing própria (/para-vender), não
+                disputando espaço com o público principal. */}
             <span className="pill inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-bold text-accent-dim shadow-sm fade-up">
-              <Sparkles className="h-4 w-4 text-accent" /> Transforme a presença digital de qualquer negócio
+              <Sparkles className="h-4 w-4 text-accent" /> Feito para negócios locais no Brasil
             </span>
             <h1 className="fade-up mt-6 text-3xl font-extrabold leading-[1.1] tracking-tight text-ink md:text-4xl lg:text-5xl" style={{ animationDelay: "0.05s" }}>
-              Mais clientes. <span className="gradient-text">Menos trabalho.</span>
+              Seu link da bio virou <span className="gradient-text">atendimento, catálogo e Pix.</span>
             </h1>
             <p className="fade-up mx-auto mt-5 max-w-2xl text-base leading-relaxed text-muted md:text-lg" style={{ animationDelay: "0.1s" }}>
-              Duas formas de usar o Toqy: um bio site profissional pro seu próprio negócio, ou uma forma de vender bio sites pra outros negócios e ganhar todo mês. Escolha abaixo.
+              Uma mini página feita pro celular onde seu cliente chama no WhatsApp, vê o cardápio, acha o endereço e paga no Pix. Pronta em minutos, sem código e sem designer.
+            </p>
+            <div className="fade-up mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row" style={{ animationDelay: "0.14s" }}>
+              <Link href="/onboarding" className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-accent px-7 py-4 text-base font-black text-white shadow-sm transition hover:bg-accent-dim sm:w-auto">
+                Criar grátis <ArrowRight className="h-5 w-5" />
+              </Link>
+              {heroExample ? (
+                <a href={`https://www.toqy.com.br/b/${heroExample.slug}`} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-border bg-white px-7 py-4 text-base font-bold text-ink transition hover:border-accent sm:w-auto">
+                  Ver exemplo de negócio local
+                </a>
+              ) : null}
+            </div>
+            <p className="fade-up mt-4 text-sm font-semibold text-muted" style={{ animationDelay: "0.16s" }}>
+              Quer ganhar dinheiro criando bio sites para outros negócios?{" "}
+              <Link href="/para-vender" className="font-black text-accent-dim underline underline-offset-4 transition hover:text-accent">Veja o plano de revenda</Link>.
             </p>
           </div>
 

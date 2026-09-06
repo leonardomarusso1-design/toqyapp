@@ -15,10 +15,10 @@ function ConfirmInner() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
         setStatus("ok");
-        setTimeout(() => router.replace("/app"), 1500);
+        setTimeout(() => router.replace(destinoPosLogin()), 1500);
       } else if (event === "TOKEN_REFRESHED" && session) {
         setStatus("ok");
-        setTimeout(() => router.replace("/app"), 1500);
+        setTimeout(() => router.replace(destinoPosLogin()), 1500);
       }
     });
 
@@ -31,7 +31,7 @@ function ConfirmInner() {
       }
       if (data.session) {
         setStatus("ok");
-        setTimeout(() => router.replace("/app"), 1500);
+        setTimeout(() => router.replace(destinoPosLogin()), 1500);
       }
     });
 
@@ -80,6 +80,16 @@ function ConfirmInner() {
       )}
     </main>
   );
+}
+
+// Mesmo destino do /login (ver destinoPosLogin lá): o OAuth do Google
+// volta pra cá, então o ?next= tem que sobreviver a esta parada também.
+// Só caminho interno — "//" e "/\\" viram outro domínio.
+function destinoPosLogin(): string {
+  if (typeof window === "undefined") return "/app";
+  const alvo = new URLSearchParams(window.location.search).get("next");
+  if (!alvo || !alvo.startsWith("/") || alvo.startsWith("//") || alvo.startsWith("/\\")) return "/app";
+  return alvo;
 }
 
 export default function ConfirmPage() {

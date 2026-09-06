@@ -95,10 +95,30 @@ export default function OnboardingPage() {
   const [limitBlocked, setLimitBlocked] = useState(false);
   const [limitInfo, setLimitInfo] = useState<{ current: number; limit: number; plan: string } | null>(null);
 
+  // Segmento pré-selecionado por link (2026-09-06, auditoria externa,
+  // seção 5: "cada artigo deve apontar para template/CTA relevante").
+  // Um artigo sobre cardápio digital manda pra
+  // /onboarding?segmento=Restaurante e a pessoa já cai com o segmento
+  // certo marcado. Lê de window.location em vez de useSearchParams pra
+  // não precisar embrulhar a página inteira num <Suspense>. Valor de
+  // fora só entra se bater exatamente com um item da lista — nada de
+  // texto arbitrário virando segmento.
+  useEffect(() => {
+    const alvo = new URLSearchParams(window.location.search).get("segmento");
+    if (alvo && segments.includes(alvo)) set({ segment: alvo });
+  }, []);
+
   useEffect(() => {
     async function checkAuth() {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.replace("/login?next=/onboarding"); return; }
+      if (!session) {
+        // Preserva a query (ex: ?segmento=Restaurante vindo de um artigo
+        // do blog) — sem isso, quem ainda não está logado perdia o
+        // segmento no caminho de volta.
+        const destino = `/onboarding${window.location.search}`;
+        router.replace(`/login?next=${encodeURIComponent(destino)}`);
+        return;
+      }
 
       const { data: profile } = await supabase
         .from("profiles")

@@ -70,6 +70,63 @@ export default function ParaVenderPage() {
         </div>
       </section>
 
+      {/* MARGEM E PAINEL (2026-09-06, auditoria externa, seção 5: "o funil
+          de revenda deve ter uma landing própria com exemplo de margem,
+          fluxo de entrega e painel de clientes"). O fluxo já estava
+          acima ("Como funciona"); faltavam a conta e o que o revendedor
+          recebe pra administrar os clientes.
+
+          Os valores da tabela são EXEMPLO de precificação de mercado,
+          não promessa de ganho — está escrito assim embaixo dela de
+          propósito. Quem define quanto cobra é o revendedor. */}
+      <section className="mx-auto max-w-5xl px-5 py-16">
+        <h2 className="text-center text-2xl font-extrabold text-ink md:text-3xl">A conta que interessa</h2>
+        <p className="mx-auto mt-3 max-w-2xl text-center text-muted">
+          Negócio local costuma aceitar uma mensalidade entre R$ 39 e R$ 99 pela página e pela manutenção. Um exemplo, cobrando R$ 59 por cliente:
+        </p>
+        <div className="mt-8 overflow-x-auto">
+          <table className="w-full min-w-[420px] overflow-hidden rounded-[1.5rem] border border-border bg-card text-left text-sm">
+            <thead className="bg-surface text-xs font-black uppercase tracking-wide text-muted">
+              <tr>
+                <th className="px-5 py-4">Clientes</th>
+                <th className="px-5 py-4">Recorrente por mês</th>
+                <th className="px-5 py-4">Em 12 meses</th>
+              </tr>
+            </thead>
+            <tbody className="font-bold text-ink">
+              {[5, 10, 20, 50].map((clientes) => (
+                <tr key={clientes} className="border-t border-border">
+                  <td className="px-5 py-4">{clientes}</td>
+                  <td className="px-5 py-4">R$ {(clientes * 59).toLocaleString("pt-BR")}</td>
+                  <td className="px-5 py-4">R$ {(clientes * 59 * 12).toLocaleString("pt-BR")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-4 text-center text-xs font-semibold text-muted">
+          Exemplo de precificação, não promessa de ganho. Você define quanto cobra; sobre isso incide só o custo do seu plano Toqy.
+        </p>
+
+        <h2 className="mt-16 text-center text-2xl font-extrabold text-ink md:text-3xl">O painel de clientes</h2>
+        <p className="mx-auto mt-3 max-w-2xl text-center text-muted">
+          Tudo que você precisa pra administrar as páginas dos seus clientes num lugar só.
+        </p>
+        <div className="mt-8 grid gap-5 md:grid-cols-2">
+          {[
+            { t: "Todos os clientes numa lista", d: "Cada bio site com nome, link e status. Você abre, edita e publica sem sair do painel." },
+            { t: "Chave de edição por cliente", d: "O cliente edita a própria página em toqy.com.br/me sem entrar na sua conta e sem ver os outros clientes. Se a chave vazar, você gera outra em um clique." },
+            { t: "Tirar do ar em um clique", d: "Cliente atrasou a mensalidade? A página sai do ar e volta depois — sem apagar nada." },
+            { t: "Sua marca no lugar da nossa", d: "No plano Agência, o rodapé passa a levar o nome, a logo e o link da sua agência." },
+          ].map((item) => (
+            <div key={item.t} className="rounded-[1.75rem] border border-border bg-card p-6">
+              <h3 className="text-lg font-black text-ink">{item.t}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">{item.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* EBOOK LEAD MAGNET (migrado da home, 2026-09-05) */}
       <section className="bg-gradient-to-br from-ink to-ink/95 py-16 text-white">
         <div className="mx-auto max-w-4xl px-5">

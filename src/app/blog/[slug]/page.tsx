@@ -64,14 +64,18 @@ export default async function BlogPostPage({
       {/* CTA Final */}
       <section className="border-t border-border bg-card py-20">
         <div className="mx-auto max-w-2xl px-5 text-center">
+          {/* CTA do próprio artigo quando existir (2026-09-06, auditoria
+              externa): quem leu sobre cardápio digital vai pro onboarding
+              já com "Restaurante" marcado; quem leu sobre revenda vai pra
+              landing de revenda. Antes todos caíam no mesmo /login. */}
           <h2 className="text-3xl font-extrabold text-ink">
-            Gostou do conteúdo?
+            {post.cta ? "Próximo passo" : "Gostou do conteúdo?"}
           </h2>
           <p className="mt-3 text-muted">
-            Crie o seu bio site profissional com o Toqy e comece a crescer o seu negócio hoje mesmo!
+            {post.cta?.text ?? "Crie o seu bio site profissional com o Toqy e comece a crescer o seu negócio hoje mesmo!"}
           </p>
-          <Link href="/login" className="btn-glow mt-7 inline-flex items-center justify-center gap-2 rounded-full px-8 py-4 text-sm font-bold text-white">
-            Criar bio site grátis
+          <Link href={post.cta?.href ?? "/login"} className="btn-glow mt-7 inline-flex items-center justify-center gap-2 rounded-full px-8 py-4 text-sm font-bold text-white">
+            {post.cta?.label ?? "Criar bio site grátis"}
           </Link>
         </div>
       </section>

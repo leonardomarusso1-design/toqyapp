@@ -8,9 +8,18 @@ export interface BlogPost {
   author: string;
   category: string;
   image: string;
+  // CTA proprio por artigo (2026-09-06, auditoria externa, secao 5:
+  // "cada artigo deve apontar para template/CTA relevante, nao apenas
+  // para a home"). Antes, todo post terminava mandando pra /login — o
+  // mesmo destino generico pra quem procurou "cardapio digital" e pra
+  // quem procurou "como vender bio sites". Opcional: post sem CTA
+  // proprio cai no texto padrao.
+  cta?: { label: string; href: string; text: string };
 }
 
-export const blogPosts: BlogPost[] = [
+import { blogPostsIntencao } from "./blogPostsIntencao";
+
+const blogPostsBase: BlogPost[] = [
   {
     id: "1",
     slug: "como-aumentar-clientes-barberia-qrcode",
@@ -80,3 +89,9 @@ export const blogPosts: BlogPost[] = [
     image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
   },
 ];
+
+// Ordenado do mais novo pro mais antigo — os artigos por intenção de
+// busca (blogPostsIntencao) são de 2026-09-06 e entram na frente.
+export const blogPosts: BlogPost[] = [...blogPostsBase, ...blogPostsIntencao].sort(
+  (a, b) => b.date.localeCompare(a.date)
+);
