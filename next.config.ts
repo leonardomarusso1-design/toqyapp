@@ -16,6 +16,13 @@ import { withSentryConfig } from "@sentry/nextjs";
 // só carrega depois de consentimento — ver CookieConsent.tsx) precisa de
 // script-src/connect-src liberado pros domínios do gtag.js.
 //
+// Bug real corrigido (2026-09-06, achado ao vivo pelo Leonardo: "música
+// consegui colocar, porém ela não reproduz") — não existia `media-src`
+// nenhum, então o `<audio src="...supabase.co/...">` caía no fallback
+// `default-src 'self'` e a CSP bloqueava o load do arquivo, silenciosamente
+// (sem erro visível na tela, só no console). `https:` liberado igual
+// img-src, pra também cobrir o link externo de música (ver AudioUploadField).
+//
 // Embed oficial do Instagram (2026-09-05, pedido do Leonardo — "preview de
 // Instagram em tempo real" no bio site, ver PublicBioSite.tsx InstagramEmbed)
 // usa o script `//www.instagram.com/embed.js` da própria Meta, que monta um
@@ -33,6 +40,7 @@ const cspHeader = `
   style-src 'self' 'unsafe-inline';
   img-src 'self' blob: data: https:;
   font-src 'self' data:;
+  media-src 'self' blob: https:;
   connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ingest.de.sentry.io https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com;
   frame-src https://www.instagram.com;
   worker-src 'self' blob:;

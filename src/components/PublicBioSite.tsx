@@ -247,7 +247,13 @@ declare global {
   }
 }
 
-const InstagramEmbed = ({ postUrl }: { postUrl: string }) => {
+// Tamanho controlável (2026-09-06, pedido do Leonardo: "não consigo
+// diminuir tamanho") — o embed oficial da Meta respeita o max-width do
+// container até um mínimo de ~326px (abaixo disso a própria Instagram
+// ignora e usa o mínimo dela).
+const IG_SIZE_MAXWIDTH: Record<"sm" | "md" | "lg", number> = { sm: 326, md: 400, lg: 500 };
+
+const InstagramEmbed = ({ postUrl, maxWidth = 400 }: { postUrl: string; maxWidth?: number }) => {
   useEffect(() => {
     const existing = document.getElementById("instagram-embed-script");
     if (!existing) {
@@ -259,15 +265,66 @@ const InstagramEmbed = ({ postUrl }: { postUrl: string }) => {
     } else {
       window.instgrm?.Embeds?.process?.();
     }
-  }, [postUrl]);
+  }, [postUrl, maxWidth]);
 
   return (
     <blockquote
       className="instagram-media"
       data-instgrm-permalink={postUrl}
       data-instgrm-version="14"
-      style={{ margin: "0 auto", maxWidth: 400, minWidth: 280, width: "100%" }}
+      style={{ margin: "0 auto", maxWidth, minWidth: 280, width: "100%" }}
     />
+  );
+};
+
+// Vários posts, autonomia de layout (2026-09-06, pedido do Leonardo:
+// "quero colocar como se fosse um carrossel... ou lista, embaixo do
+// outro"). "carousel" desliza sozinho bem devagar (auto-scroll suave,
+// pausa quando o visitante toca/arrasta manualmente); "list" empilha.
+const InstagramPostsBlock = ({ posts, layout, size }: { posts: Array<{ id: string; url: string }>; layout: "carousel" | "list"; size: "sm" | "md" | "lg" }) => {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const pausedRef = useRef(false);
+
+  useEffect(() => {
+    if (layout !== "carousel") return;
+    const track = trackRef.current;
+    if (!track) return;
+    let raf: number;
+    const tick = () => {
+      if (!pausedRef.current) {
+        track.scrollLeft += 0.4;
+        if (track.scrollLeft >= track.scrollWidth - track.clientWidth - 1) track.scrollLeft = 0;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [layout, posts.length]);
+
+  if (layout === "list") {
+    return (
+      <div className="space-y-4">
+        {posts.map((p) => <InstagramEmbed key={p.id} postUrl={p.url} maxWidth={IG_SIZE_MAXWIDTH[size]} />)}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={trackRef}
+      onPointerDown={() => { pausedRef.current = true; }}
+      onPointerUp={() => { pausedRef.current = false; }}
+      onMouseEnter={() => { pausedRef.current = true; }}
+      onMouseLeave={() => { pausedRef.current = false; }}
+      className="flex gap-4 overflow-x-auto scroll-smooth pb-1"
+      style={{ scrollSnapType: "x mandatory" }}
+    >
+      {posts.map((p) => (
+        <div key={p.id} className="shrink-0" style={{ width: IG_SIZE_MAXWIDTH[size], scrollSnapAlign: "start" }}>
+          <InstagramEmbed postUrl={p.url} maxWidth={IG_SIZE_MAXWIDTH[size]} />
+        </div>
+      ))}
+    </div>
   );
 };
 
@@ -844,9 +901,9 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove }: { 
               ) : null;
             }
             if (blockType === "instagram") {
-              return site.instagramPostUrl ? (
-                <section key="instagram" className="mt-4 flex justify-center overflow-hidden rounded-2xl">
-                  <InstagramEmbed postUrl={site.instagramPostUrl} />
+              return (site.instagramPosts ?? []).length ? (
+                <section key="instagram" className="mt-4 overflow-hidden">
+                  <InstagramPostsBlock posts={site.instagramPosts!} layout={site.instagramLayout ?? "carousel"} size={site.instagramSize ?? "md"} />
                 </section>
               ) : null;
             }

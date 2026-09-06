@@ -252,11 +252,22 @@ export type ToqySite = {
   // ~60s/~4MB (confirmado com o Leonardo) pra nunca estourar o limite real
   // de ~4,5MB por requisição das Vercel Functions.
   musicUrl?: string;
-  // Preview de post do Instagram "em tempo real" — embed oficial da Meta
-  // (`instagram.com/embed.js`), sem API key/login: renderiza o post ao
+  // Preview de posts do Instagram "em tempo real" — embed oficial da Meta
+  // (`instagram.com/embed.js`), sem API key/login: renderiza cada post ao
   // vivo (like/comentário atuais, puxados pelo próprio Instagram), não é
-  // captura estática. Link de um post público (ex: instagram.com/p/XXX/).
-  instagramPostUrl?: string;
+  // captura estática. Autonomia total (2026-09-06, pedido do Leonardo):
+  // vários posts (não só 1), com layout e tamanho escolhidos pela pessoa —
+  // NÃO puxa automaticamente do perfil (isso exigiria a API oficial do
+  // Instagram/Graph API + app registrado no Meta + OAuth por conta
+  // Business, decisão consciente de deixar pra um projeto separado depois).
+  instagramPosts?: Array<{ id: string; url: string }>;
+  // "grid" (2 colunas lado a lado) ficou de fora de propósito — o widget
+  // oficial do Instagram não encolhe abaixo de ~326px de largura, então
+  // 2 posts lado a lado nunca cabem numa tela de celular (a maioria das
+  // visitas). "carousel" (um de cada vez, deslizando) e "list" (empilhado)
+  // são os 2 formatos que realmente funcionam em qualquer tamanho de tela.
+  instagramLayout?: "carousel" | "list";
+  instagramSize?: "sm" | "md" | "lg";
   // Ordem livre das seções do corpo do bio site (2026-09-06, pedido do
   // Leonardo: "o Toqy não pode prender as pessoas a uma coisa só") — cada
   // seção é um BLOCO que a pessoa arrasta pra cima/baixo e intercala como

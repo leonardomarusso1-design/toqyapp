@@ -790,16 +790,41 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                   ) : null}
                 </div>
                 <div>
-                  <span className={label}>Música (envie um arquivo do seu dispositivo)</span>
+                  <span className={label}>Música</span>
                   <div className="mt-2">
                     <AudioUploadField value={site.musicUrl} onChange={(url) => update((s) => ({ ...s, musicUrl: url }))} slug={site.slug} editKey={site.editKey} />
                   </div>
                 </div>
-                <label>
-                  <span className={label}>Preview de post do Instagram</span>
-                  <input className={field} value={site.instagramPostUrl ?? ""} onChange={(e) => update((s) => ({ ...s, instagramPostUrl: e.target.value }))} placeholder="https://www.instagram.com/p/XXXXXXX/" />
-                  <p className="mt-1 text-xs text-muted">Cole o link de um post público do Instagram — aparece embutido e ao vivo no bio site (curtidas/comentários atualizados pelo próprio Instagram).</p>
-                </label>
+                <div>
+                  <span className={label}>Posts do Instagram (adicione quantos quiser)</span>
+                  <div className="mt-2 space-y-2">
+                    {(site.instagramPosts ?? []).map((post) => (
+                      <div key={post.id} className="flex items-center gap-2">
+                        <input
+                          className={`${field} mt-0 flex-1`}
+                          value={post.url}
+                          onChange={(e) => update((s) => ({ ...s, instagramPosts: (s.instagramPosts ?? []).map((p) => (p.id === post.id ? { ...p, url: e.target.value } : p)) }))}
+                          placeholder="https://www.instagram.com/p/XXXXXXX/"
+                        />
+                        <button type="button" onClick={() => update((s) => ({ ...s, instagramPosts: (s.instagramPosts ?? []).filter((p) => p.id !== post.id) }))} className="shrink-0 text-red-500"><Trash2 className="h-4 w-4" /></button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => update((s) => ({ ...s, instagramPosts: [...(s.instagramPosts ?? []), { id: generateId("ig"), url: "" }] }))}
+                      className="inline-flex items-center gap-2 rounded-2xl border-2 border-dashed border-border px-4 py-2.5 text-sm font-black text-muted hover:border-accent hover:text-accent"
+                    >
+                      <Plus className="h-4 w-4" /> Adicionar post
+                    </button>
+                  </div>
+                  {(site.instagramPosts ?? []).length ? (
+                    <div className="mt-3 grid grid-cols-2 gap-3">
+                      <label><span className="text-xs font-black text-ink">Layout</span><select className={field} value={site.instagramLayout ?? "carousel"} onChange={(e) => update((s) => ({ ...s, instagramLayout: e.target.value as "carousel" | "list" }))}><option value="carousel">Carrossel (desliza sozinho)</option><option value="list">Lista (um embaixo do outro)</option></select></label>
+                      <label><span className="text-xs font-black text-ink">Tamanho</span><select className={field} value={site.instagramSize ?? "md"} onChange={(e) => update((s) => ({ ...s, instagramSize: e.target.value as "sm" | "md" | "lg" }))}><option value="sm">Pequeno</option><option value="md">Médio</option><option value="lg">Grande</option></select></label>
+                    </div>
+                  ) : null}
+                  <p className="mt-1 text-xs text-muted">Cada post aparece embutido e ao vivo (curtidas/comentários atualizados pelo próprio Instagram). Não puxa automaticamente do perfil — cole o link de cada post que quiser mostrar.</p>
+                </div>
               </div>
             ) : (
               <div className="mt-3 rounded-2xl border border-violet/20 bg-violet/10 p-4 text-sm font-bold text-violet">
