@@ -61,6 +61,23 @@ function planActivatedEmailHtml(planName: string, planId: string) {
   `;
 }
 
+// E-mail do add-on de domínio próprio (2026-09-05) — mesmo padrão dos
+// e-mails de plano acima, mas pra uma compra avulsa (não muda plan_toqy).
+function domainAddonEmailHtml() {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h1 style="color: #FF4D6D;">Domínio próprio liberado! 🌐</h1>
+      <p style="font-size: 16px; line-height: 1.6;">
+        Recebemos seu pagamento e já liberamos o domínio próprio na sua conta Toqy. Agora é só entrar no painel, escolher o bio site e conectar o domínio que já é seu.
+      </p>
+      <div style="margin: 30px 0;">
+        <a href="https://toqy.com.br/obrigado/dominio-proprio" style="display: inline-block; padding: 15px 30px; background-color: #FF4D6D; color: white; text-decoration: none; border-radius: 9999px; font-weight: bold;">Conectar meu domínio</a>
+      </div>
+      <p style="font-size: 14px; color: #666;">Qualquer dúvida, é só responder este email.</p>
+    </div>
+  `;
+}
+
 function planPendingEmailHtml(planName: string, email: string) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -189,6 +206,7 @@ export async function POST(request: Request) {
       await supabase.from("profiles")
         .update({ custom_domain_addon: true, updated_at: new Date().toISOString() })
         .eq("id", overageProfile.id);
+      await sendPlanEmail(email, "Domínio próprio liberado na sua conta Toqy", domainAddonEmailHtml());
     } else {
       const column = overageType === "biosite" ? "overage_biosites" : "overage_ai_art_credits";
       const current = overageType === "biosite" ? (overageProfile.overage_biosites ?? 0) : (overageProfile.overage_ai_art_credits ?? 0);

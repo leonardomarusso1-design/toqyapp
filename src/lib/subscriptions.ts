@@ -270,13 +270,9 @@ export const SELLABLE_PLANS: PlanType[] = ["free", "pro", "community", "freelanc
 //
 // agency: produto recorrente "TOQY Agência" (R$99,90/mês) criado na Kiwify
 // em 2026-07-15, substitui o antigo pagamento único ("xFdnxvE").
-// pro: produto novo (2026-09-05) — AINDA NÃO CRIADO na Kiwify. Link vazio
-// de propósito até o Leonardo criar o produto recorrente "TOQY Pro"
-// (R$9,90/mês) — enquanto vazio, o botão de assinar do plano Pro na
-// landing fica desabilitado (ver src/lib/landingPlans.ts) em vez de levar
-// pra um link quebrado.
+// pro: produto "TOQY Pro" (R$9,90/mês) criado na Kiwify em 2026-09-05.
 export const KIWIFY_LINKS: Record<Exclude<PlanType, "free">, string> = {
-  pro: "",
+  pro: "https://pay.kiwify.com.br/BnfuznQ",
   community: "https://pay.kiwify.com.br/12uYE0c",
   freelancer: "https://pay.kiwify.com.br/jSvUXd5",
   agency: "https://pay.kiwify.com.br/DHPZf2c",
@@ -290,17 +286,14 @@ export const KIWIFY_LINKS: Record<Exclude<PlanType, "free">, string> = {
 //
 // Preços ajustados de R$2,99/R$5,99 (proposta inicial) pra R$5,99/R$8,99
 // (2026-07-16) — a Kiwify não permite produto com preço abaixo de R$5,99.
-// customDomain: produto novo (2026-09-05) — avulso ANUAL (não mensal, por
-// decisão do Leonardo), pro plano Pro Pessoal comprar domínio próprio sem
-// precisar de um plano de revenda (Agência já inclui domínio próprio na
-// assinatura). Preço sugerido R$59,90/ano (referência: Carrd cobra
-// US$19/ano só por domínio próprio) — Leonardo pode ajustar na Kiwify sem
-// mexer em código, o valor não é hardcoded em nenhuma lógica aqui. Também
-// AINDA NÃO CRIADO na Kiwify — link vazio até lá.
+// customDomain: produto avulso ANUAL "TOQY - Domínio Próprio" (não mensal,
+// por decisão do Leonardo), criado na Kiwify em 2026-09-05 — pro plano Pro
+// Pessoal comprar domínio próprio sem precisar de um plano de revenda
+// (Agência já inclui domínio próprio na assinatura).
 export const OVERAGE_LINKS = {
   biosite: "https://pay.kiwify.com.br/KOreqg7",
   aiArtCredit: "https://pay.kiwify.com.br/LsDkNHu",
-  customDomain: "",
+  customDomain: "https://pay.kiwify.com.br/J59820v",
 } as const;
 
 // Resolve um valor de plano vindo do banco (profiles.plan_toqy) pra um
