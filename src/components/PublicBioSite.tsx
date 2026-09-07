@@ -499,7 +499,7 @@ const NAME_FONT_SIZE_CLASS: Record<"sm" | "md" | "lg", string> = {
   lg: "text-3xl",
 };
 
-type Modal = "wifi" | "pix" | null;
+type Modal = "wifi" | "pix" | "booking" | null;
 
 function radiusClass(site: ToqySite) {
   if (site.theme.buttonRadius === "pill") return "rounded-full";
@@ -978,6 +978,9 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
   function handleButton(button: ToqyButton) {
     if (button.type === "wifi") return setModal("wifi");
     if (button.type === "pix" || button.type === "pixHub") return setModal("pix");
+    // Agendamento nativo (2026-09-07): só abre o modal se houver ao menos
+    // 1 serviço habilitado — senão comportamento de sempre, link externo.
+    if (button.type === "booking" && site.services?.some((s) => s.enabled)) return setModal("booking");
     if (button.type === "catalog") {
       document.getElementById(catalogId)?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
@@ -1481,6 +1484,7 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
       ) : null}
       {modal === "wifi" ? <WifiModal site={site} onClose={() => setModal(null)} copied={copied} copyText={copyText} /> : null}
       {modal === "pix" ? <PixModal site={site} onClose={() => setModal(null)} copied={copied} copyText={copyText} selectedAmount={selectedAmount} setSelectedAmount={setSelectedAmount} /> : null}
+      {modal === "booking" ? <BookingModal site={site} onClose={() => setModal(null)} /> : null}
     </div>
   );
 }
@@ -1845,6 +1849,118 @@ function WifiModal({ site, onClose, copied, copyText }: { site: ToqySite; onClos
             {site.contact.facebook ? <button onClick={() => window.open(ensureUrl(site.contact.facebook), "_blank", "noopener,noreferrer")} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700"><Globe2 className="mr-1 inline h-4 w-4" />Facebook</button> : null}
           </div>
         </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+// Agendamento nativo (2026-09-07, referência Coonexta) — fluxo "escolher
+// serviço → escolher dia → escolher horário → confirmar" dentro do
+// próprio modal. Horários vêm de /api/biosite-booking/available (nunca
+// expõe quem reservou, só a lista de "HH:MM" livres); confirmar chama
+// /api/biosite-booking, que recalcula tudo de novo no servidor.
+function BookingModal({ site, onClose }: { site: ToqySite; onClose: () => void }) {
+  const services = (site.services ?? []).filter((s) => s.enabled);
+  const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [slots, setSlots] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [notes, setNotes] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [error, setError] = useState("");
+
+  const minDate = new Date().toISOString().slice(0, 10);
+
+  useEffect(() => {
+    setTime("");
+    setSlots([]);
+    if (!serviceId || !date) return;
+    setLoadingSlots(true);
+    fetch(`/api/biosite-booking/available?bioSiteId=${encodeURIComponent(site.id)}&serviceId=${encodeURIComponent(serviceId)}&date=${date}`)
+      .then((r) => r.json())
+      .then((data) => setSlots(data.slots ?? []))
+      .catch(() => setSlots([]))
+      .finally(() => setLoadingSlots(false));
+  }, [serviceId, date, site.id]);
+
+  async function confirm() {
+    setStatus("sending");
+    setError("");
+    try {
+      const res = await fetch("/api/biosite-booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bioSiteId: site.id, serviceId, name, phone, notes, date, time }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Não foi possível confirmar.");
+      setStatus("done");
+    } catch (e) {
+      setStatus("error");
+      setError(e instanceof Error ? e.message : "Não foi possível confirmar.");
+    }
+  }
+
+  if (!services.length) return null;
+
+  if (status === "done") {
+    return (
+      <ModalShell title="Agendamento" onClose={onClose} site={site} icon={<CalendarCheck className="h-6 w-6" />}>
+        <div className="rounded-[1.75rem] bg-white p-6 text-center text-slate-950 shadow-xl">
+          <p className="text-lg font-black">Agendamento confirmado! ✅</p>
+          <p className="mt-2 text-sm font-bold text-slate-500">{name}, seu horário em {date?.split("-").reverse().join("/")} às {time} está reservado.</p>
+          <button onClick={onClose} className="mt-4 w-full rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white">Fechar</button>
+        </div>
+      </ModalShell>
+    );
+  }
+
+  const canConfirm = date && time && name.trim() && phone.trim() && status !== "sending";
+
+  return (
+    <ModalShell title="Agendar horário" onClose={onClose} site={site} icon={<CalendarCheck className="h-6 w-6" />}>
+      <div className="rounded-[1.75rem] bg-white p-4 text-slate-950 shadow-xl">
+        <label className="block">
+          <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Serviço</span>
+          <select className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold" value={serviceId} onChange={(e) => setServiceId(e.target.value)}>
+            {services.map((s) => <option key={s.id} value={s.id}>{s.name}{s.price ? ` — ${s.price}` : ""}</option>)}
+          </select>
+        </label>
+
+        <label className="mt-3 block">
+          <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Dia</span>
+          <input type="date" min={minDate} className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold" value={date} onChange={(e) => setDate(e.target.value)} />
+        </label>
+
+        {date ? (
+          <div className="mt-3">
+            <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Horário</span>
+            {loadingSlots ? (
+              <p className="mt-2 text-sm font-bold text-slate-400">Buscando horários...</p>
+            ) : slots.length ? (
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {slots.map((slot) => (
+                  <button key={slot} type="button" onClick={() => setTime(slot)} className={`rounded-xl px-3 py-2 text-xs font-black ${time === slot ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-700"}`}>{slot}</button>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-sm font-bold text-slate-400">Sem horários disponíveis neste dia.</p>
+            )}
+          </div>
+        ) : null}
+
+        {time ? (
+          <div className="mt-4 space-y-2 border-t border-slate-200 pt-4">
+            <input className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold" placeholder="Seu nome" value={name} onChange={(e) => setName(e.target.value)} />
+            <input className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold" placeholder="Telefone / WhatsApp" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <textarea className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold" rows={2} placeholder="Observações (opcional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
+            {error ? <p className="text-xs font-bold text-red-600">{error}</p> : null}
+            <button disabled={!canConfirm} onClick={confirm} className="w-full rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white disabled:opacity-50">{status === "sending" ? "Confirmando..." : "Confirmar agendamento"}</button>
+          </div>
+        ) : null}
       </div>
     </ModalShell>
   );

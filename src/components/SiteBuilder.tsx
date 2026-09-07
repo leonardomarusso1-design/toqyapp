@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, CheckCircle2, ChevronLeft, ChevronRight, Copy, ExternalLink, Eye, Images, Inbox, LayoutGrid, Link2, Loader2, MessageCircle, Palette, Plus, Rocket, Save, Share2, ShoppingBag, Trash2, User, Wallet, X } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarClock, CheckCircle2, ChevronLeft, ChevronRight, Copy, ExternalLink, Eye, Images, Inbox, LayoutGrid, Link2, Loader2, MessageCircle, Palette, Plus, Rocket, Save, Share2, ShoppingBag, Trash2, User, Wallet, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 // Limpeza (2026-09-06, auditoria externa): o tipo CatalogLayout e o helper
 // createEditUrl saíram dos imports — o tipo não era referenciado em nenhuma
@@ -80,7 +80,10 @@ type Props = { mode: "create" | "edit"; initialSite: ToqySite; onSave: (site: To
 // duas etapas separadas. Índices de step downstream (Botões/Pix/
 // Catálogo) andaram uma casa pra trás — ver os `if (step === N)`
 // correspondentes mais abaixo.
-const steps = ["Modelo", "Aparência", "Links e Botões", "Pix e Wi-Fi", "Catálogo", "Salvar"];
+// "Agendamento" (2026-09-07, referência Coonexta — grupo "Agenda" do
+// documento de análise) entra ANTES de "Salvar", depois de Catálogo —
+// mesma posição do fluxo deles (serviço → agenda → publicar).
+const steps = ["Modelo", "Aparência", "Links e Botões", "Pix e Wi-Fi", "Catálogo", "Agendamento", "Salvar"];
 
 // Editor por blocos no celular (2026-09-06, mockup da auditoria externa).
 // A auditoria apontou: "o editor deve abandonar a lógica de painel desktop
@@ -101,6 +104,7 @@ const STEP_META: { icon: typeof User; subtitle: string; group: StepGroup }[] = [
   { icon: Link2, subtitle: "WhatsApp, Instagram e seus links", group: "conteudo" },
   { icon: Wallet, subtitle: "Receba no Pix e mostre a senha do Wi-Fi", group: "conteudo" },
   { icon: ShoppingBag, subtitle: "Produtos, serviços e cardápio", group: "conteudo" },
+  { icon: CalendarClock, subtitle: "Serviços e horários pra agendar", group: "conteudo" },
   { icon: Rocket, subtitle: "Publique e entregue o link ao cliente", group: "publicar" },
 ];
 
@@ -1572,6 +1576,60 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
               <p className="text-xs text-muted mb-2">⚠️ Este campo muda só o texto do rodapé do catálogo. Não afeta outros textos.</p>
               <input className={field} placeholder="Não encontrou o que procura? Fale com a gente!" value={site.catalogWaLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalogWaLabel: e.target.value }))} />
             </div>
+          </div>
+        </Section>
+      );
+    }
+
+    if (step === 5) {
+      return (
+        <Section>
+          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+            <div>
+              <h2 className="text-2xl font-black text-ink">Agendamento</h2>
+              <p className="mt-1 text-sm text-muted">Cadastre os serviços que o cliente pode agendar direto no bio site.</p>
+            </div>
+            <button type="button" onClick={() => update((s) => ({ ...s, services: [...(s.services ?? []), { id: generateId("svc"), name: "", durationMinutes: 30, enabled: true }] }))} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-3 text-sm font-black text-white"><Plus className="h-4 w-4" />Adicionar serviço</button>
+          </div>
+
+          {!(site.services?.length) ? (
+            <p className="mt-4 rounded-2xl border border-dashed border-border bg-surface p-4 text-sm text-muted">Nenhum serviço cadastrado. Sem serviços habilitados, o botão de agendamento abre o link externo (se configurado) em vez do agendamento nativo.</p>
+          ) : null}
+
+          <div className="mt-5 grid gap-4">
+            {(site.services ?? []).map((svc, index) => (
+              <article key={svc.id} className="rounded-3xl border border-border bg-card p-4 shadow-sm">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-muted">#{index + 1}</span>
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-1.5 text-xs font-black text-ink"><input type="checkbox" checked={svc.enabled} onChange={(e) => update((s) => ({ ...s, services: (s.services ?? []).map((it, i) => i === index ? { ...it, enabled: e.target.checked } : it) }))} />Ativo</label>
+                    <button type="button" onClick={() => update((s) => ({ ...s, services: (s.services ?? []).filter((_, i) => i !== index) }))} className="rounded-xl border border-red-100 bg-red-50 px-2.5 py-1.5 text-red-500 hover:bg-red-100"><Trash2 className="h-3.5 w-3.5" /></button>
+                  </div>
+                </div>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <label className="md:col-span-1"><span className={label}>Nome do serviço</span><input className={field} placeholder="Ex: Corte masculino" value={svc.name} onChange={(e) => update((s) => ({ ...s, services: (s.services ?? []).map((it, i) => i === index ? { ...it, name: e.target.value } : it) }))} /></label>
+                  <label><span className={label}>Duração (minutos)</span><input type="number" min={5} step={5} className={field} value={svc.durationMinutes} onChange={(e) => update((s) => ({ ...s, services: (s.services ?? []).map((it, i) => i === index ? { ...it, durationMinutes: Number(e.target.value) || 30 } : it) }))} /></label>
+                  <label>
+                    <span className={label}>Preço (opcional)</span>
+                    <div className="flex items-center gap-0">
+                      <span className="flex h-[42px] items-center rounded-l-xl border border-r-0 border-border bg-surface px-3 text-sm font-black text-muted">R$</span>
+                      <input type="number" min={0} step="0.01" className="h-[42px] flex-1 rounded-r-xl border border-border bg-card px-3 text-sm font-black outline-none focus:border-accent" placeholder="80,00" value={svc.price ?? ""} onChange={(e) => { const v = e.target.value; update((s) => ({ ...s, services: (s.services ?? []).map((it, i) => i === index ? { ...it, price: v ? Number(v) : undefined } : it) })); }} />
+                    </div>
+                  </label>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-6 rounded-3xl border border-border bg-surface p-4">
+            <span className={label}>Intervalo entre horários (minutos)</span>
+            <p className="mb-2 mt-1 text-xs text-muted">Define de quanto em quanto tempo um novo horário fica disponível pro cliente escolher (ex: a cada 30 min).</p>
+            <select className={field} value={site.bookingSlotMinutes ?? 30} onChange={(e) => update((s) => ({ ...s, bookingSlotMinutes: Number(e.target.value) }))}>
+              <option value={15}>15 minutos</option>
+              <option value={30}>30 minutos</option>
+              <option value={60}>60 minutos</option>
+            </select>
+            <p className="mt-3 text-xs text-muted">Os horários disponíveis usam o mesmo &quot;Horário de funcionamento&quot; configurado na etapa Aparência.</p>
           </div>
         </Section>
       );
