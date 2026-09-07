@@ -88,9 +88,15 @@ export function DashboardHero({ site, name, planLabel, avatarUrl }: { site: Toqy
         <>
           <div className="mt-5 overflow-hidden rounded-[2rem] border border-border bg-card shadow-sm">
             <div className="flex items-center justify-between gap-3 p-4">
-              <span className="inline-flex items-center gap-2 rounded-2xl bg-surface px-3 py-2 text-sm font-black text-ink">
-                <span className={`h-2.5 w-2.5 rounded-full ${site.status === "active" ? "bg-emerald-500" : "bg-red-500"}`} />
-                {site.status === "active" ? "Meu bio site" : "Bio site offline"}
+              {/* "Meu bio site" removido (2026-09-07, pedido do Leonardo:
+                  "nada a ver, lá tem vários bio site, não quer dizer que
+                  um é meu" — o painel lista VÁRIOS bio sites, então
+                  chamar este card de "meu" sugere posse exclusiva de um
+                  só). Mostra o nome do site + status, sem a palavra
+                  "meu". */}
+              <span className="inline-flex min-w-0 items-center gap-2 rounded-2xl bg-surface px-3 py-2 text-sm font-black text-ink">
+                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${site.status === "active" ? "bg-emerald-500" : "bg-red-500"}`} />
+                <span className="truncate">{site.profile.name || site.slug}</span>
               </span>
               <Link href={`/b/${site.slug}`} target="_blank" className="text-sm font-black text-muted transition hover:text-accent">Ver página</Link>
             </div>

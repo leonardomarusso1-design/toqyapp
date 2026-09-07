@@ -246,6 +246,12 @@ export type ToqySite = {
     // Tamanho do nome/título principal (h1), 2026-07-16 — padrão "md" mantém
     // o tamanho de sempre (text-2xl).
     nameFontSize?: "sm" | "md" | "lg";
+    // Fonte do bio site (2026-09-07, referência Coonexta — "Estilo da
+    // letra do mini-site"). Sem valor, herda a fonte padrão do app
+    // (Manrope) — comportamento idêntico a antes desta feature existir.
+    // Ver src/lib/bioSiteFonts.ts pra lista de opções e como cada uma
+    // vira uma CSS var.
+    fontFamily?: import("./bioSiteFonts").BioSiteFontId;
     // Sombra no nome/título principal, 2026-09-01 (pedido do Leonardo) --
     // undefined/true mantém o comportamento de sempre (drop-shadow-sm +
     // glow em modo escuro); false desliga os dois pra quem não quer.

@@ -37,6 +37,7 @@ import { colorSwatch, resolveColorStyle } from "@/lib/colorRoles";
 import { analytics } from "@/lib/analytics";
 import { StickerIcon } from "./StickerIcon";
 import { LeadCaptureForm } from "./LeadCaptureForm";
+import { bioSiteFontById } from "@/lib/bioSiteFonts";
 
 // Ícones originais (2026-07-16, pedido do Leonardo) — PNGs próprios em vez
 // dos SVGs de marca genéricos abaixo. Mesma assinatura (className) das
@@ -1020,7 +1021,7 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
   const backgroundMusicUrl = site.backgroundMusicUrl || site.musicUrl;
 
   return (
-    <div className="relative min-h-screen w-full" style={{ ...backgroundStyle(site), color: site.theme.text }}>
+    <div className={`relative min-h-screen w-full ${bioSiteFontById(site.theme.fontFamily)?.variable ?? ""}`} style={{ ...backgroundStyle(site), color: site.theme.text, fontFamily: bioSiteFontById(site.theme.fontFamily)?.cssFamily }}>
       {/* Bug real reportado ao vivo (2026-09-06): sem a flag
           enableBackgroundMusic, a música de um bio site de exemplo tocava
           sozinha na página INICIAL do Toqy (o card de demonstração da

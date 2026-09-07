@@ -22,6 +22,7 @@ import { ImageGuidelineHint } from "./ImageGuidelineHint";
 import { ImageUploadField, uploadImageFile } from "./ImageUploadField";
 import { AudioUploadField } from "./AudioUploadField";
 import { VideoUploadField } from "./VideoUploadField";
+import { BIO_SITE_FONTS } from "@/lib/bioSiteFonts";
 import { LiveBioSitePreview } from "./LiveBioSitePreview";
 import { PublicBioSite } from "./PublicBioSite";
 import { StickerIcon } from "./StickerIcon";
@@ -711,6 +712,18 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 <input type="checkbox" checked={site.theme.nameShadow !== false} onChange={(e) => setTheme({ nameShadow: e.target.checked })} />
                 Sombra no título
               </label>
+            </label>
+            {/* Fonte do bio site (2026-09-07, referência Coonexta —
+                "Estilo da letra do mini-site"). Cada opção do <select>
+                mostra o nome JÁ na fonte real (style inline por option),
+                mesmo princípio do seletor deles. "Padrão" = sem override,
+                herda Manrope do app (comportamento de sempre). */}
+            <label className="md:col-span-2">
+              <span className={label}>Fonte do bio site</span>
+              <select className={field} value={site.theme.fontFamily ?? ""} onChange={(e) => setTheme({ fontFamily: (e.target.value || undefined) as ToqySite["theme"]["fontFamily"] })}>
+                <option value="">Padrão</option>
+                {BIO_SITE_FONTS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+              </select>
             </label>
             <label><span className={label}>Alinhamento da localização</span><select className={field} value={site.theme.locationAlign ?? "left"} onChange={(e) => setTheme({ locationAlign: e.target.value as "left" | "center" })}><option value="left">Esquerda (recomendado p/ endereços longos)</option><option value="center">Centralizado</option></select></label>
             <label className="md:col-span-2">
