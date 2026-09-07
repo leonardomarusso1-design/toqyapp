@@ -165,6 +165,21 @@ export type BusinessHours = {
   days: BusinessHoursDay[];
 };
 
+// Agendamento nativo (2026-09-07, referência Coonexta — documento de
+// análise: fluxo "escolher serviço → escolher dia → escolher horário →
+// confirmar", dentro da própria página pública, não um link externo).
+// Reaproveita BusinessHours (acima) como disponibilidade — não existe
+// um sistema de "dias liberados" separado; o horário de funcionamento
+// JÁ diz quando o negócio atende, então serve como base pros horários
+// possíveis de agendar.
+export type BookingService = {
+  id: string;
+  name: string;
+  durationMinutes: number;
+  price?: number; // opcional — alguns serviços não têm preço fixo
+  enabled: boolean;
+};
+
 export type CatalogItem = {
   id: string;
   name: string;
@@ -329,6 +344,14 @@ export type ToqySite = {
   // Horário de funcionamento (2026-09-06, mockup da auditoria externa) —
   // ver BusinessHours acima. Ausente/enabled:false = nenhum card renderiza.
   businessHours?: BusinessHours;
+  // Agendamento nativo — lista de serviços (config, vive no JSON igual
+  // ao catálogo, sem tabela própria) + intervalo entre horários
+  // oferecidos. Botão do tipo "booking" abre o modal nativo quando
+  // `services` tem pelo menos 1 item habilitado; senão continua indo
+  // pro link externo de `links.bookingUrl` (comportamento de sempre —
+  // zero mudança pra quem não configurar nada disso).
+  services?: BookingService[];
+  bookingSlotMinutes?: number; // padrão 30
   catalogLayout: CatalogLayout;
   catalogLayouts?: CatalogLayout[];
   catalogTitle?: string;

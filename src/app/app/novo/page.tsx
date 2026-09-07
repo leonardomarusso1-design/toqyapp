@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { DashboardShell } from "@/components/DashboardShell";
+import { EditorShell } from "@/components/EditorShell";
 import { SiteBuilder } from "@/components/SiteBuilder";
 import { createSiteFromSegmentTemplate } from "@/lib/segmentTemplates";
 import { syncBiositeToSupabase } from "@/lib/biositeSync";
@@ -34,8 +34,8 @@ export default function NewBioSitePage() {
   }
 
   return (
-    <DashboardShell>
+    <EditorShell>
       <SiteBuilder mode="create" initialSite={initialSite} onSave={handleSave} />
-    </DashboardShell>
+    </EditorShell>
   );
 }
