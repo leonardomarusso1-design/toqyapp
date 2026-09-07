@@ -36,6 +36,7 @@ import { getPlan, resolvePlanTier } from "@/lib/subscriptions";
 import { colorSwatch, resolveColorStyle } from "@/lib/colorRoles";
 import { analytics } from "@/lib/analytics";
 import { StickerIcon } from "./StickerIcon";
+import { LeadCaptureForm } from "./LeadCaptureForm";
 
 // Ícones originais (2026-07-16, pedido do Leonardo) — PNGs próprios em vez
 // dos SVGs de marca genéricos abaixo. Mesma assinatura (className) das
@@ -1383,6 +1384,9 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
                   <InstagramPostsBlock posts={site.instagramPosts!} layout={site.instagramLayout ?? "carousel"} defaultSize={site.instagramSize ?? "md"} />
                 </section>
               ) : null;
+            }
+            if (blockType === "leadForm") {
+              return <LeadCaptureForm key="leadForm" site={site} />;
             }
             return null;
           })}

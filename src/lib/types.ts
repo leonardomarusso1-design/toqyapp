@@ -7,7 +7,13 @@ export type CatalogLayout = "carousel" | "grid" | "stack" | "grouped" | "categor
 // (ver `bodyBlockOrder` em ToqySite). Extraído pra type próprio em
 // 2026-09-06, quando entrou o bloco "hours" — assim a lista de blocos
 // existe em UM lugar só, em vez de repetida em 3 arquivos.
-export type BodyBlock = "buttons" | "hours" | "catalog" | "music" | "instagram";
+// "leadForm" (2026-09-07, referência Coonexta — menu "Captura de leads"
+// visto no vídeo do Leonardo) entra no FIM da lista de propósito: a
+// ordem de DEFAULT_BODY_BLOCK_ORDER é a posição-padrão pra bio sites já
+// publicados sem esse bloco (ver resolveBodyBlockOrder em bodyBlocks.ts)
+// — inserir no meio empurraria blocos existentes pra baixo em todo
+// site já no ar.
+export type BodyBlock = "buttons" | "hours" | "catalog" | "music" | "instagram" | "leadForm";
 
 // Sistema de cores unificado (2026-09-06) — ver src/lib/colorRoles.ts
 // para a lista de roles e o resolver. Um ColorValue é sólido OU
@@ -378,6 +384,24 @@ export type ToqySite = {
   spotifyUrl?: string;
   spotifyLabel?: string; // padrão "Ouça minha música"
   spotifyDisplay?: "icon" | "button" | "preview";
+  // Captura de leads (2026-09-07, referência Coonexta — menu "Captura de
+  // leads" visto no vídeo do Leonardo: "Suas ferramentas de captura de
+  // público"). Formulário simples no bio site público que grava nome +
+  // contato numa tabela própria por dono (toqy_leads, RLS por
+  // owner_profile_id — ver migration 2026-09-07_toqy_leads.sql), listada
+  // no painel em /app/leads. Sem envio de e-mail marketing embutido (isso
+  // é maior, fica de fora); só captura e lista.
+  leadForm?: {
+    enabled?: boolean;
+    title?: string; // padrão "Deixe seu contato"
+    subtitle?: string;
+    // Quais campos de contato pedir, além do nome (sempre obrigatório).
+    // Pelo menos um precisa estar marcado — validado no editor.
+    askEmail?: boolean;
+    askPhone?: boolean;
+    askMessage?: boolean;
+    buttonLabel?: string; // padrão "Enviar"
+  };
   // Preview de posts do Instagram "em tempo real" — embed oficial da Meta
   // (`instagram.com/embed.js`), sem API key/login: renderiza cada post ao
   // vivo (like/comentário atuais, puxados pelo próprio Instagram), não é

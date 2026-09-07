@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
-import { BarChart3, Globe, Handshake, Home, MoreHorizontal, Plus, QrCode, Settings, Users } from "lucide-react";
+import { BarChart3, Globe, Handshake, Home, Inbox, MoreHorizontal, Plus, QrCode, Settings, Users } from "lucide-react";
 import { LogoutButton } from "@/components/LogoutButton";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -19,6 +19,9 @@ const navItems = [
   { href: "/onboarding", icon: Users, label: "Novo cliente" },
   { href: "/app/qr", icon: QrCode, label: "QR Codes" },
   { href: "/app/analytics", icon: BarChart3, label: "Analytics" },
+  // "Cadastros" (2026-09-07, referência Coonexta) — contatos capturados
+  // pelo bloco "Formulário de contato" (ver leadForm em types.ts).
+  { href: "/app/leads", icon: Inbox, label: "Cadastros" },
   { href: "/app/dominio", icon: Globe, label: "Domínio próprio" },
   { href: "/app/revenda", icon: Handshake, label: "Revenda" },
   { href: "/app/configuracoes", icon: Settings, label: "Configurações" },
@@ -31,7 +34,7 @@ const navItems = [
 // tela grande); no mobile os 3 itens mais usados ficam fixos + "Mais"
 // abre o resto (mesmo padrão do Linktree: itens essenciais + overflow).
 const MOBILE_TAB_ITEMS = [navItems[0], navItems[2], navItems[3]]; // Painel, QR Codes, Analytics
-const MOBILE_MORE_ITEMS = [navItems[1], navItems[4], navItems[5], navItems[6]]; // Novo cliente, Domínio, Revenda, Configurações
+const MOBILE_MORE_ITEMS = [navItems[1], navItems[4], navItems[5], navItems[6], navItems[7]]; // Novo cliente, Cadastros, Domínio, Revenda, Configurações
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();

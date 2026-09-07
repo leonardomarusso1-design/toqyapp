@@ -7,7 +7,10 @@ import type { BodyBlock } from "./types";
 // A ORDEM desta constante é a ordem padrão de exibição — e também a
 // referência usada pra reencaixar blocos novos em bio sites antigos (ver
 // resolveBodyBlockOrder abaixo).
-export const DEFAULT_BODY_BLOCK_ORDER: BodyBlock[] = ["buttons", "hours", "catalog", "music", "instagram"];
+// "leadForm" (2026-09-07, referência Coonexta) entra no FIM — inserir no
+// meio empurraria pra baixo blocos de bio sites já publicados (ver o
+// comentário grande de resolveBodyBlockOrder logo abaixo).
+export const DEFAULT_BODY_BLOCK_ORDER: BodyBlock[] = ["buttons", "hours", "catalog", "music", "instagram", "leadForm"];
 
 // Rótulos exibidos na lista arrastável do editor.
 export const BODY_BLOCK_LABELS: Record<BodyBlock, string> = {
@@ -16,6 +19,7 @@ export const BODY_BLOCK_LABELS: Record<BodyBlock, string> = {
   catalog: "Catálogo",
   music: "Botão do Spotify", // música de FUNDO não ocupa slot (é ambiente, sem posição no layout)
   instagram: "Preview do Instagram",
+  leadForm: "Formulário de contato",
 };
 
 // Compatibilidade com bio sites já publicados (regra crítica do projeto:

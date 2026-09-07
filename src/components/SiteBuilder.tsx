@@ -983,6 +983,32 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             </div>
           </div>
 
+          {/* CAPTURA DE LEADS (2026-09-07, referência Coonexta — vídeo do
+              Leonardo: "Suas ferramentas de captura de público"). Bloco
+              opcional na lista de seções acima ("Formulário de contato")
+              — aqui é só a configuração de conteúdo. Os leads capturados
+              aparecem em /app/leads (link abaixo). */}
+          <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
+            <label className="flex items-center gap-2 text-sm font-black text-ink">
+              <input type="checkbox" checked={site.leadForm?.enabled === true} onChange={(e) => update((s) => ({ ...s, leadForm: { ...s.leadForm, enabled: e.target.checked } }))} />
+              📋 Formulário de captura de contato
+            </label>
+            <p className="mt-0.5 text-xs text-muted">Um formulário no bio site pra visitante deixar nome e contato. Aparece na lista &quot;Ordem das seções&quot; acima quando ligado.</p>
+            {site.leadForm?.enabled ? (
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <label><span className={label}>Título</span><input className={field} value={site.leadForm?.title ?? ""} onChange={(e) => update((s) => ({ ...s, leadForm: { ...s.leadForm, title: e.target.value } }))} placeholder="Deixe seu contato" /></label>
+                <label><span className={label}>Texto do botão</span><input className={field} value={site.leadForm?.buttonLabel ?? ""} onChange={(e) => update((s) => ({ ...s, leadForm: { ...s.leadForm, buttonLabel: e.target.value } }))} placeholder="Enviar" /></label>
+                <label className="md:col-span-2"><span className={label}>Subtítulo (opcional)</span><input className={field} value={site.leadForm?.subtitle ?? ""} onChange={(e) => update((s) => ({ ...s, leadForm: { ...s.leadForm, subtitle: e.target.value } }))} placeholder="Deixe seus dados que a gente te chama" /></label>
+                <div className="flex flex-wrap gap-3 md:col-span-2">
+                  <label className="flex items-center gap-1.5 text-xs font-black text-ink"><input type="checkbox" checked={site.leadForm?.askEmail !== false} onChange={(e) => update((s) => ({ ...s, leadForm: { ...s.leadForm, askEmail: e.target.checked } }))} />Pedir e-mail</label>
+                  <label className="flex items-center gap-1.5 text-xs font-black text-ink"><input type="checkbox" checked={site.leadForm?.askPhone === true} onChange={(e) => update((s) => ({ ...s, leadForm: { ...s.leadForm, askPhone: e.target.checked } }))} />Pedir telefone</label>
+                  <label className="flex items-center gap-1.5 text-xs font-black text-ink"><input type="checkbox" checked={site.leadForm?.askMessage === true} onChange={(e) => update((s) => ({ ...s, leadForm: { ...s.leadForm, askMessage: e.target.checked } }))} />Pedir mensagem</label>
+                </div>
+                <Link href="/app/leads" target="_blank" className="md:col-span-2 inline-flex w-fit items-center gap-2 rounded-2xl border border-border bg-card px-4 py-2 text-xs font-black text-ink hover:border-accent">Ver contatos recebidos →</Link>
+              </div>
+            ) : null}
+          </div>
+
           {/* WHITE LABEL (2026-09-06, pedido do primeiro assinante do plano
               Agência) — histórico: o white label existiu e foi REMOVIDO do
               produto em 2026-09-01 (decisão do Leonardo). Voltou agora,
