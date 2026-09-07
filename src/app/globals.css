@@ -39,10 +39,25 @@
 
 html {
   scroll-behavior: smooth;
+  /* Bug real reportado ao vivo no celular (2026-09-07): "tá cortando,
+     tem que tirar o zoom ou arrastar pro lado", página por página, em
+     todo o app. O viewport meta já está correto (width=device-width);
+     a causa é que NENHUM lugar tinha uma trava de overflow-x — basta
+     UM elemento em QUALQUER página passar 100% da largura (uma grade
+     antiga com min-width fixo, uma linha flex sem wrap, etc.) pra abrir
+     rolagem/zoom horizontal na página inteira. html+body com
+     overflow-x:hidden é a trava padrão de mercado pra isso: contém
+     qualquer estouro lateral sem exigir caçar elemento por elemento em
+     cada página, e não afeta rolagem horizontal INTENCIONAL contida
+     (overflow-x-auto do carrossel de catálogo, do gráfico de
+     analytics, etc.), que continua funcionando normalmente dentro do
+     próprio contêiner. */
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
+  overflow-x: hidden;
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-body), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
