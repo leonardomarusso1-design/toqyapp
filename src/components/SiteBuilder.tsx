@@ -58,7 +58,20 @@ function defaultBusinessHoursDays(): BusinessHoursDay[] {
   }));
 }
 
-type Props = { mode: "create" | "edit"; initialSite: ToqySite; onSave: (site: ToqySite) => unknown | Promise<unknown> };
+// accessLevel (2026-09-07, referência Coonexta — "Acesso do cliente").
+// "full" (padrão) = comportamento de sempre. Quem chama esta prop é
+// /editar/[slug]/page.tsx — só passa um valor restrito quando quem
+// destravou foi a CHAVE de edição (não o dono logado via sessão; dono
+// sempre usa "full", nunca é afetado por isso).
+// isOwner (2026-09-07, referência Coonexta) — só o dono logado pode
+// DEFINIR o accessLevel de outra pessoa; um cliente com acesso "full"
+// (via chave) não vê nem pode mexer nesse controle, mesmo tendo acesso
+// total ao resto. Sem isso, um cliente full-access podia se
+// auto-restringir sem querer — ou, pior, um cliente restrito que
+// descobrisse o controle poderia tentar se promover (o servidor já
+// bloqueia isso em /api/biosite/save, mas nem mostrar o controle é
+// a primeira camada).
+type Props = { mode: "create" | "edit"; initialSite: ToqySite; onSave: (site: ToqySite) => unknown | Promise<unknown>; accessLevel?: "full" | "operational" | "readonly"; isOwner?: boolean };
 
 // Perfil + Visual viraram uma etapa só, "Aparência" (2026-09-07,
 // referência Coonexta — prints enviados pelo Leonardo: "a personalização
@@ -362,7 +375,8 @@ function BulkCatalogPhotoAdd({ slug, catalog, onAdd, editKey }: { slug: string; 
   );
 }
 
-export function SiteBuilder({ mode, initialSite, onSave }: Props) {
+export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", isOwner = true }: Props) {
+  const isReadOnly = accessLevel === "readonly";
   const [site, setSite] = useState<ToqySite>({ ...initialSite, catalogLayout: initialSite.catalogLayout ?? "carousel" });
   const [step, setStep] = useState(0);
   const [saved, setSaved] = useState<ToqySite | null>(null);
@@ -578,6 +592,20 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
     }
 
     if (step === 1) {
+      // Preset "Operacional" (2026-09-07, referência Coonexta — "Acesso
+      // do cliente"): a identidade visual do bio site fica fora do
+      // alcance de quem só tem acesso operacional — mexe no dia a dia
+      // (links, catálogo, Pix), não na aparência.
+      if (accessLevel === "operational") {
+        return (
+          <Section>
+            <h2 className="text-2xl font-black text-ink">Aparência</h2>
+            <div className="mt-5 rounded-2xl border border-border bg-surface p-6 text-center text-sm font-bold text-muted">
+              Esta etapa não está disponível no seu acesso. Fale com quem administra este bio site se precisar mudar algo aqui.
+            </div>
+          </Section>
+        );
+      }
       return (
         <Section>
           {/* Perfil + Visual viraram UMA etapa só (2026-09-07, referência
@@ -1147,6 +1175,40 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             </div>
           </div>
 
+          {/* ACESSO DO CLIENTE (2026-09-07, referência Coonexta —
+              "Configurações → Acesso do cliente", presets Só leitura/
+              Operacional/Editor completo). Adaptado ao modelo do Toqy:
+              não existe convite por e-mail nem múltiplos colaboradores
+              aqui, existe UMA chave de edição por site — este controle
+              define o que QUEM TEM A CHAVE pode fazer. Só o dono
+              (isOwner) vê e mexe nisto; o servidor (/api/biosite/save)
+              também recusa qualquer tentativa de um cliente mudar isto
+              sozinho, então esconder o controle é só a primeira
+              camada, não a única. */}
+          {isOwner ? (
+            <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
+              <p className="text-sm font-black text-ink">🔒 Acesso do cliente</p>
+              <p className="mt-0.5 text-xs text-muted">O que quem tem a chave de edição deste bio site pode fazer — não afeta você, logado.</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                {([
+                  { value: "full", label: "Editor completo", hint: "Mexe em tudo, igual você" },
+                  { value: "operational", label: "Operacional", hint: "Links, Pix, catálogo — sem aparência" },
+                  { value: "readonly", label: "Só leitura", hint: "Só consulta, não salva nada" },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => update((s) => ({ ...s, clientAccessLevel: opt.value }))}
+                    className={`rounded-2xl border p-3 text-left transition ${(site.clientAccessLevel ?? "full") === opt.value ? "border-accent bg-accent/10" : "border-border bg-card hover:border-accent"}`}
+                  >
+                    <p className="text-sm font-black text-ink">{opt.label}</p>
+                    <p className="mt-0.5 text-xs text-muted">{opt.hint}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
         </Section>
       );
     }
@@ -1594,7 +1656,18 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   const checklistPercent = Math.round((checklistDone / checklistItems.length) * 100);
 
   return (
-    <div className="mx-auto grid w-full max-w-6xl gap-6 xl:grid-cols-[200px_minmax(0,1fr)_420px]">
+    // fieldset disabled (2026-09-07, referência Coonexta — "Acesso do
+    // cliente", preset "Só leitura"): desabilita TODO input/select/
+    // textarea/button descendente de uma vez, sem precisar tocar em
+    // cada campo do editor (são centenas). Comportamento nativo do
+    // HTML — <fieldset disabled> cascateia pra qualquer elemento de
+    // formulário dentro dele, inclusive o botão de Salvar.
+    <fieldset disabled={isReadOnly} className="mx-auto grid w-full max-w-6xl gap-6 xl:grid-cols-[200px_minmax(0,1fr)_420px]">
+      {isReadOnly ? (
+        <div className="xl:col-span-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-800">
+          🔒 Acesso somente leitura — o dono deste bio site restringiu a edição. Você pode consultar tudo, mas não salvar mudanças.
+        </div>
+      ) : null}
       {/* Sidebar fixa (2026-09-07, referência Coonexta — Leonardo: "o
           dele é mais fácil de mexer, pelo jeito que montou o layout").
           Substitui as pílulas SÓ no desktop grande (xl+, onde já tinha
@@ -1847,6 +1920,6 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
           </div>
         </>
       ) : null}
-    </div>
+    </fieldset>
   );
 }

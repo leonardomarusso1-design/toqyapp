@@ -488,6 +488,21 @@ export type ToqySite = {
     brandLogoUrl?: string;     // Logo da agência (upload via ImageUploadField)
     brandUrl?: string;         // Link opcional do rodapé pro site da agência
   };
+  // Acesso do cliente (2026-09-07, referência Coonexta — documento de
+  // análise: "Configurações → Acesso do cliente", presets Só leitura/
+  // Operacional/Editor completo). Adaptado ao modelo do Toqy: aqui não
+  // existe convite por e-mail nem múltiplos colaboradores — existe UMA
+  // chave de edição por site (editKey). Este campo restringe o que
+  // QUEM TEM A CHAVE pode fazer; o dono logado (verify-owner) sempre
+  // tem acesso total, nunca é afetado por este campo.
+  //   "full"        — comportamento de sempre (padrão, sem mudança).
+  //   "operational" — a etapa "Aparência" some do editor; o resto
+  //                   (Links e Botões, Pix e Wi-Fi, Catálogo) continua
+  //                   editável — o cliente mexe no dia a dia, não na
+  //                   identidade visual.
+  //   "readonly"    — editor abre em modo consulta (todo campo
+  //                   desabilitado, botão de salvar não existe).
+  clientAccessLevel?: "full" | "operational" | "readonly";
   buttons: ToqyButton[];
   catalog: CatalogItem[];
   editKey: string;

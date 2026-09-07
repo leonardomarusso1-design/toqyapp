@@ -42,9 +42,22 @@ export async function POST(request: Request) {
     // fosse salvo de novo depois do dono (revendedor) cancelar o plano —
     // problema de quem nem tem relação com o pagamento do revendedor.
     const currentPlan = profile?.plan_toqy ?? "free";
-    const previousPlan = resolvePlanTier((existing.site_data as ToqySite | null)?.ownerPlan);
+    const existingData = existing.site_data as ToqySite | null;
+    const previousPlan = resolvePlanTier(existingData?.ownerPlan);
     const effectivePlan = isPremiumPlan(resolvePlanTier(currentPlan)) ? currentPlan : (isPremiumPlan(previousPlan) ? previousPlan : currentPlan);
-    const siteWithPlan = { ...site, ownerPlan: effectivePlan };
+
+    // "Acesso do cliente" (2026-09-07, referência Coonexta) — este é o
+    // caminho de save de quem tem só a CHAVE de edição, nunca o dono
+    // logado (esse usa syncBiositeToSupabase, outro arquivo). Sem a
+    // trava abaixo, um cliente com acesso restrito podia mandar
+    // `clientAccessLevel: "full"` no próprio payload e se autopromover
+    // — o campo nunca é lido do que o cliente mandou, só do que já
+    // estava gravado; só o dono (via sessão) muda isso.
+    const currentAccessLevel = existingData?.clientAccessLevel;
+    if (currentAccessLevel === "readonly") {
+      return Response.json({ error: "Este bio site está em modo somente leitura." }, { status: 403 });
+    }
+    const siteWithPlan = { ...site, ownerPlan: effectivePlan, clientAccessLevel: currentAccessLevel };
 
     const { error } = await supabase
       .from("toqy_biosites")

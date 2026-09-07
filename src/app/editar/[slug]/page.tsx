@@ -18,6 +18,10 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
   const [unlocked, setUnlocked] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  // "Acesso do cliente" (2026-09-07, referência Coonexta) — só quem
+  // destrava por SESSÃO (dono logado) é isOwner; quem destrava por
+  // CHAVE (client final, sem conta) sempre respeita site.clientAccessLevel.
+  const [isOwner, setIsOwner] = useState(false);
 
   // Fix de segurança real (2026-07-17, auditoria): o carregamento inicial
   // buscava site_data E edit_key_hash juntos, direto do navegador — a
@@ -59,6 +63,7 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
     if (res.ok && body?.ok) {
       setSite(body.site as ToqySite);
       setUnlocked(true);
+      setIsOwner(true);
       return true;
     }
     return false;
@@ -180,7 +185,7 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
 
   return (
     <ClientShell fullWidth>
-      <SiteBuilder mode="edit" initialSite={site} onSave={handleSave} />
+      <SiteBuilder mode="edit" initialSite={site} onSave={handleSave} accessLevel={isOwner ? "full" : (site.clientAccessLevel ?? "full")} isOwner={isOwner} />
       {saving && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
           <div className="rounded-2xl bg-white px-6 py-4 font-black text-slate-800 shadow-xl">Salvando...</div>
