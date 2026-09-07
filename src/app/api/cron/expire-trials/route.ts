@@ -63,7 +63,7 @@ async function sendTrialEndedEmail(to: string) {
         html: `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px">
           <h2>Seu teste de 2 semanas terminou</h2>
           <p>Sua conta Toqy voltou pro plano Gratuito. Se quiser continuar com os recursos do plano Agência (até 100 bio sites, domínio próprio, analytics avançado), é só assinar:</p>
-          <p><a href="https://toqy.com.br/#planos" style="display:inline-block;background:#E8476B;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold">Ver planos</a></p>
+          <p><a href="https://toqy.com.br/#planos" style="display:inline-block;background:#0b7a55;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:bold">Ver planos</a></p>
         </div>`,
       }),
     });

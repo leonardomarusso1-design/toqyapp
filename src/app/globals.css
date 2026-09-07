@@ -8,6 +8,15 @@
    só os VALORES ficam mais contidos: o coral neon virou um coral
    maduro, menos saturado; o resto segue a mesma lógica (creme + tinta
    + um acento só, sem "gritar"). */
+/* Cor principal trocada pro verde do Patrimo (2026-09-07, pedido
+   explícito: "pode mudar a cor do toqy para a mesma cor do patrimo").
+   --color-accent/--color-accent-dim usam o MESMO hex de --brand/
+   --brand-600 em /c/patrimo/src/app/globals.css — de propósito, é o
+   ponto de padronização entre os dois SaaS. Logo/identidade final
+   fica pro Leonardo refazer depois; isso aqui só troca a cor de ação
+   nos componentes que já existem. --color-violet mantido (não foi
+   pedido) — segue dando contraste nos gradientes hero/CTA, que com
+   verde+verde ficariam sem grau nenhum. */
 @theme {
   --color-bg: #FAFAF9;      /* Quase branco, leve calor (não gelado) */
   --color-surface: #F5F4F2; /* Um degrau acima do fundo, discreto */
@@ -15,8 +24,8 @@
   --color-border: #E8E6E1;  /* Cinza-bege ultra-fino */
   --color-ink: #14141A;     /* Tinta escura, não preto puro (mais suave) */
   --color-muted: #74727C;   /* Cinza neutro */
-  --color-accent: #E8476B;  /* Coral maduro — mesma família, menos neon */
-  --color-accent-dim: #C93357; /* Coral mais escuro, pra hover/texto */
+  --color-accent: #0b7a55;     /* Verde fintech do Patrimo (--brand) */
+  --color-accent-dim: #0a6a4a; /* Verde mais escuro do Patrimo (--brand-600), hover/texto */
   --color-violet: #5B5FD6;  /* Índigo, mesmo papel, um pouco mais calmo */
 }
 

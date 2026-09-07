@@ -145,10 +145,24 @@ const nextConfig: NextConfig = {
           { key: "Content-Security-Policy", value: cspHeader },
         ],
       },
-      // Cache longo para assets estáticos
+      // Cache longo para assets estáticos — SÓ em produção (2026-09-07,
+      // bug real achado ao vivo verificando a troca de cor pro verde do
+      // Patrimo): esse header não tinha guarda de NODE_ENV, então o
+      // `next dev`/Turbopack também mandava `immutable, max-age=1 ano`
+      // pros chunks de CSS/JS. Em prod isso é seguro (o hash do arquivo
+      // muda a cada build). Em dev, o Turbopack reaproveita o MESMO nome
+      // de chunk entre rebuilds — resultado: depois de editar
+      // globals.css, o navegador continuava servindo o CSS antigo do
+      // cache HTTP (confirmado: fetch com no-store trazia o valor novo,
+      // o <link> real da página continuava aplicando o antigo). Sem
+      // guarda, todo mundo rodando `next dev` local carrega mudança de
+      // CSS/JS só depois de um hard-refresh manual — silencioso e fácil
+      // de confundir com "a edição não pegou".
       {
         source: "/_next/static/(.*)",
-        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+        headers: process.env.NODE_ENV === "production"
+          ? [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }]
+          : [{ key: "Cache-Control", value: "no-store" }],
       },
       // Cache para imagens públicas (logos, templates)
       {
