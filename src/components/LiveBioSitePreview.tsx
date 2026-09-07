@@ -15,11 +15,6 @@ import { BrowserMockup } from "./BrowserMockup";
 // layout diferente.
 export function LiveBioSitePreview({ site, onStickerMove }: { site: ToqySite; onStickerMove?: (id: string, x: number, y: number) => void }) {
   const [mode, setMode] = useState<"mobile" | "desktop">("mobile");
-  // instanceId obrigatorio aqui (2026-09-06): sem ele, o PublicBioSite
-  // conta um page_view a cada vez que o preview monta — ou seja, o
-  // proprio dono editando inflava as visitas do bio site dele. So a
-  // pagina publica de verdade (sem instanceId) deve contar.
-  const content = <PublicBioSite site={site} instanceId="editor" onStickerMove={onStickerMove} />;
 
   return (
     <aside className="sticky top-6 hidden h-[calc(100vh-3rem)] min-w-0 xl:block">
@@ -30,11 +25,27 @@ export function LiveBioSitePreview({ site, onStickerMove }: { site: ToqySite; on
           <button type="button" onClick={() => setMode("desktop")} className={`px-3 py-1.5 font-black transition ${mode === "desktop" ? "bg-accent text-white" : "text-muted hover:bg-surface"}`}>Desktop</button>
         </div>
       </div>
-      {mode === "mobile" ? (
-        <PhoneMockup className="mx-auto h-[calc(100%-4rem)] w-full max-w-[420px]">{content}</PhoneMockup>
-      ) : (
-        <BrowserMockup url={`toqy.com.br/b/${site.slug}`} className="mx-auto h-[calc(100%-4rem)] w-full">{content}</BrowserMockup>
-      )}
+      {/* Ambas as molduras ficam SEMPRE montadas, só a visibilidade troca
+          (2026-09-07, bug real reportado com print: "o preview de mobile
+          e desktop estão diferentes"). Antes, o toggle trocava qual JSX
+          existia (ternário), então cada clique desmontava o PublicBioSite
+          inteiro de uma moldura e montava do zero na outra — o print
+          capturou exatamente esse instante de remount, com imagem/estado
+          ainda não assentado, aparentando conteúdo diferente entre os
+          dois modos. Com `hidden` em vez de desmontar, os dois ficam
+          prontos o tempo todo e o toggle vira só troca de exibição — sem
+          duplicar áudio/pixels porque instanceId="editor" já mantém
+          enableBackgroundMusic/enableTrackingPixels desligados aqui. */}
+      <div hidden={mode !== "mobile"} className="h-[calc(100%-4rem)]">
+        <PhoneMockup className="mx-auto h-full w-full max-w-[420px]">
+          <PublicBioSite site={site} instanceId="editor" onStickerMove={onStickerMove} />
+        </PhoneMockup>
+      </div>
+      <div hidden={mode !== "desktop"} className="h-[calc(100%-4rem)]">
+        <BrowserMockup url={`toqy.com.br/b/${site.slug}`} className="mx-auto h-full w-full">
+          <PublicBioSite site={site} instanceId="editor" onStickerMove={onStickerMove} />
+        </BrowserMockup>
+      </div>
     </aside>
   );
 }

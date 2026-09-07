@@ -1720,7 +1720,15 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
     // cada campo do editor (são centenas). Comportamento nativo do
     // HTML — <fieldset disabled> cascateia pra qualquer elemento de
     // formulário dentro dele, inclusive o botão de Salvar.
-    <fieldset disabled={isReadOnly} className="mx-auto grid w-full max-w-6xl gap-6 xl:grid-cols-[200px_minmax(0,1fr)_420px]">
+    // Sem mx-auto/max-w (2026-09-07, bug real reportado com print: "o menu
+    // lateral tá muito no meio da página" — o max-w-6xl centralizava a
+    // grade inteira, deixando margem enorme dos dois lados numa tela
+    // grande e a sidebar longe da borda esquerda de verdade. Grade agora
+    // usa a largura inteira que o EditorShell já dá (w-full px-3) — a
+    // sidebar encosta na borda, o miolo do formulário ganha o espaço que
+    // sobrava, e a coluna de preview cresce (420px → 460px) pra caber um
+    // "celular" mais perto do tamanho real.
+    <fieldset disabled={isReadOnly} className="grid w-full gap-6 xl:grid-cols-[200px_minmax(0,1fr)_460px]">
       {isReadOnly ? (
         <div className="xl:col-span-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-800">
           🔒 Acesso somente leitura — o dono deste bio site restringiu a edição. Você pode consultar tudo, mas não salvar mudanças.
