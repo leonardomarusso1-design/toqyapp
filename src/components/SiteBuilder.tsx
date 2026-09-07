@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, CheckCircle2, ChevronLeft, ChevronRight, Copy, ExternalLink, Eye, Images, LayoutGrid, Link2, Loader2, MessageCircle, Palette, Plus, Rocket, Save, Share2, ShoppingBag, Trash2, User, Wallet, X } from "lucide-react";
+import { ArrowDown, ArrowUp, CheckCircle2, ChevronLeft, ChevronRight, Copy, ExternalLink, Eye, Images, Inbox, LayoutGrid, Link2, Loader2, MessageCircle, Palette, Plus, Rocket, Save, Share2, ShoppingBag, Trash2, User, Wallet, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 // Limpeza (2026-09-06, auditoria externa): o tipo CatalogLayout e o helper
 // createEditUrl saíram dos imports — o tipo não era referenciado em nenhuma
@@ -1581,6 +1581,27 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
           sempre visível, sem wizard sequencial). Abaixo de xl, ainda
           sem espaço pra 3 colunas, continuam as pílulas de sempre. */}
       <nav className="sticky top-6 hidden h-fit flex-col gap-1 rounded-[1.5rem] border border-border bg-card p-2 shadow-sm xl:flex">
+        {/* Grupos "Análise" / "Editar site" (2026-09-07, referência
+            Coonexta — documento enviado pelo Leonardo: sidebar do
+            editor agrupada por Análise/Editar site/Agenda/Integrações/
+            Configurações/Parceria). Só "Análise" e "Editar site" entram
+            por enquanto — os outros grupos (Agenda, Integrações,
+            Configurações, Parceria) dependem de recursos que ainda não
+            existem no Toqy (agendamento nativo, pixels, permissões de
+            cliente); virão quando cada um for construído, não como
+            item vazio. */}
+        {mode === "edit" && site.slug ? (
+          <>
+            <p className="px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Análise</p>
+            <Link href={`/app/analytics/${site.slug}`} target="_blank" className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
+              <Eye className="h-4 w-4 shrink-0" /> Estatísticas
+            </Link>
+            <Link href="/app/leads" target="_blank" className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
+              <Inbox className="h-4 w-4 shrink-0" /> Cadastros deste site
+            </Link>
+            <p className="mt-2 px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Editar site</p>
+          </>
+        ) : null}
         {steps.map((item, index) => (
           <button
             key={item}
