@@ -60,7 +60,14 @@ function defaultBusinessHoursDays(): BusinessHoursDay[] {
 
 type Props = { mode: "create" | "edit"; initialSite: ToqySite; onSave: (site: ToqySite) => unknown | Promise<unknown> };
 
-const steps = ["Modelo", "Perfil", "Visual", "Links e Botões", "Pix e Wi-Fi", "Catálogo", "Salvar"];
+// Perfil + Visual viraram uma etapa só, "Aparência" (2026-09-07,
+// referência Coonexta — prints enviados pelo Leonardo: "a personalização
+// do biosite igual a dele... o layout, a personalização"). Lá é uma
+// página corrida só (logo → capa → cor → fonte → nome/descrição), não
+// duas etapas separadas. Índices de step downstream (Botões/Pix/
+// Catálogo) andaram uma casa pra trás — ver os `if (step === N)`
+// correspondentes mais abaixo.
+const steps = ["Modelo", "Aparência", "Links e Botões", "Pix e Wi-Fi", "Catálogo", "Salvar"];
 
 // Editor por blocos no celular (2026-09-06, mockup da auditoria externa).
 // A auditoria apontou: "o editor deve abandonar a lógica de painel desktop
@@ -77,8 +84,7 @@ type StepGroup = "conteudo" | "design" | "publicar";
 
 const STEP_META: { icon: typeof User; subtitle: string; group: StepGroup }[] = [
   { icon: LayoutGrid, subtitle: "Comece de um modelo pronto", group: "design" },
-  { icon: User, subtitle: "Foto, nome, descrição e endereço", group: "conteudo" },
-  { icon: Palette, subtitle: "Cores, fontes e estilo dos botões", group: "design" },
+  { icon: Palette, subtitle: "Logo, capa, cores, fonte, nome e descrição", group: "design" },
   { icon: Link2, subtitle: "WhatsApp, Instagram e seus links", group: "conteudo" },
   { icon: Wallet, subtitle: "Receba no Pix e mostre a senha do Wi-Fi", group: "conteudo" },
   { icon: ShoppingBag, subtitle: "Produtos, serviços e cardápio", group: "conteudo" },
@@ -574,7 +580,20 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
     if (step === 1) {
       return (
         <Section>
-          <h2 className="text-2xl font-black text-ink">Perfil</h2>
+          {/* Perfil + Visual viraram UMA etapa só (2026-09-07, referência
+              Coonexta — prints enviados pelo Leonardo: "a personalização
+              do biosite igual a dele... o layout, a personalização,
+              mantendo funções que o Toqy tem e eles não, porém adaptando
+              naquele estilo"). Ordem abaixo segue a página deles: logo →
+              cor principal/texto → fonte → capa (imagem/vídeo) → paleta
+              pronta → cores avançadas (recolhível) → estilo avançado
+              (recolhível) → nome/descrição/contato → horário → extras.
+              Nada foi apagado — as ~19 cores por elemento e os selects de
+              layout continuam existindo, só foram pra dentro de
+              <details> pra não competir visualmente com os controles
+              simples que a maioria vai usar. */}
+          <h2 className="text-2xl font-black text-ink">Aparência</h2>
+          <p className="mt-1 text-sm text-muted">Logo, cores, fonte e capa do bio site.</p>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
               <ImageUploadField
@@ -625,6 +644,157 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 editKey={site.editKey}
               />
             </div>
+          </div>
+
+          {/* CORES RÁPIDAS (2026-09-07, referência Coonexta — "Cor
+              primária" + "Cor do texto dos botões", 2 campos só). São
+              ALIAS dos roles granulares buttonBg/buttonText (mesmo
+              getColor/setColor de baixo) — mudar aqui muda a mesma coisa
+              que mudar em "Cores avançadas", só que num lugar rápido de
+              achar. Isso resolve pra maioria sem precisar abrir o
+              recolhível com as ~19 cores. */}
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <ColorPicker label="Cor principal" hint="Fundo dos botões — a cor de ação do bio site" value={getColor("buttonBg", roleFallback("buttonBg", site))} onChange={(v) => setColor("buttonBg", v)} />
+            <ColorPicker label="Cor do texto dos botões" hint="Texto/ícone em cima da cor principal" value={getColor("buttonText", roleFallback("buttonText", site))} onChange={(v) => setColor("buttonText", v)} />
+          </div>
+
+          {/* Fonte do bio site (2026-09-07, referência Coonexta —
+              "Estilo da letra do mini-site"). "Padrão" = sem override,
+              herda Manrope do app (comportamento de sempre). */}
+          <label className="mt-5 block">
+            <span className={label}>Fonte do bio site</span>
+            <select className={field} value={site.theme.fontFamily ?? ""} onChange={(e) => setTheme({ fontFamily: (e.target.value || undefined) as ToqySite["theme"]["fontFamily"] })}>
+              <option value="">Padrão</option>
+              {BIO_SITE_FONTS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+            </select>
+          </label>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <label>
+              <span className={label}>Imagem de fundo</span>
+              <div className="mb-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                <strong>💡 Dica para melhor resultado:</strong> Use imagem <strong>1080×1920px</strong> (formato celular). A imagem fica fixa e o conteúdo rola por cima — ela não vai esticar.
+              </div>
+              <ImageUploadField
+                label=""
+                value={site.profile.backgroundImageUrl}
+                onChange={(url) => setProfile({ backgroundImageUrl: url })}
+                placeholder="URL da imagem de fundo"
+                slug={site.slug}
+                fieldId="background"
+                editKey={site.editKey}
+                showPositionControl
+                position={site.profile.backgroundImagePosition ?? "center"}
+                onPositionChange={(pos) => setProfile({ backgroundImagePosition: pos })}
+              />
+              {/* Reposicionamento (2026-09-06, resolve o "tela corta" achado
+                  ao vivo em toqy.com.br/b/yakisabor) — antes o fundo usava
+                  sempre "centro/topo" fixo, cortando texto de imagens que
+                  não foram desenhadas pra proporção de celular. */}
+              <ImageGuidelineHint type="background" />
+              <label className="mt-2 flex items-center gap-1.5 text-xs font-black text-ink">
+                <input type="checkbox" checked={site.theme.useBackgroundOverlay} onChange={(e) => setTheme({ useBackgroundOverlay: e.target.checked })} />
+                Escurecer levemente a imagem (ajuda a ler o texto por cima, mas pode deixar a cor original mais acinzentada)
+              </label>
+            </label>
+            {/* Capa em vídeo (2026-09-07, referência Coonexta — vídeo do
+                Leonardo: "coloquei um vídeo no banner, olha que coisa
+                mais linda"). Com vídeo definido, ele substitui a imagem
+                de fundo acima (ver PublicBioSite.tsx) — deixado separado
+                da imagem, não escondido atrás de um switch, porque a
+                pessoa pode querer alternar/testar os dois. */}
+            <label>
+              <span className={label}>Vídeo de fundo (opcional)</span>
+              <div className="mb-2 rounded-2xl border border-violet/20 bg-violet/10 p-3 text-xs text-violet">
+                <strong>🎬 Quando definido, substitui a imagem de fundo acima.</strong> Vídeo curto (poucos segundos), sem som — toca automático e em loop.
+              </div>
+              <VideoUploadField
+                value={site.profile.backgroundVideoUrl}
+                onChange={(url) => setProfile({ backgroundVideoUrl: url })}
+                slug={site.slug}
+                editKey={site.editKey}
+              />
+            </label>
+          </div>
+
+          {/* Paleta pronta — ponto de partida rápido, sobrescreve as
+              cores acima de uma vez (ThemePresetPicker já existia, só
+              mudou de lugar pra cá). */}
+          <div className="mt-5">
+            <span className={label}>Ou comece de uma paleta pronta</span>
+            <div className="mt-2"><ThemePresetPicker selectedPresetId={site.themePresetId} onSelect={selectTheme} /></div>
+          </div>
+
+          {/* CORES AVANÇADAS — recolhido por padrão (2026-09-07). Mesmo
+              conteúdo de sempre (ver COLOR_ROLES em colorRoles.ts),
+              nada removido — só deixou de ser a primeira coisa que a
+              pessoa vê, já que "Cor principal"/"Cor do texto" acima
+              cobre o caso comum. Histórico da reforma original
+              (2026-09-06): antes coexistiam um sistema "global" e um
+              granular por elemento — o mesmo conceito aparecia em 2
+              controles diferentes. Isso já foi resolvido; o que mudou
+              agora foi só a posição/visibilidade padrão. */}
+          <details className="mt-5 rounded-3xl border border-border bg-surface p-5">
+            <summary className="cursor-pointer text-sm font-black text-ink">🎨 Cores avançadas (uma por uma)</summary>
+            <div className="mt-4 space-y-4">
+              {Object.entries(
+                Object.entries(COLOR_ROLES).reduce<Record<string, ColorRole[]>>((acc, [role, meta]) => {
+                  acc[meta.group] = [...(acc[meta.group] ?? []), role as ColorRole];
+                  return acc;
+                }, {})
+              ).map(([group, roles]) => (
+                <div key={group} className="rounded-3xl border border-border bg-card p-5">
+                  <p className="text-sm font-black text-ink">{group}</p>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {roles.map((role) => {
+                      // Modo translúcido/glass já é automático (ver
+                      // buttonStyle/social icon em PublicBioSite.tsx) —
+                      // esconder o controle de cor de fundo evita a pessoa
+                      // configurar uma cor que não vai aparecer.
+                      if (role === "buttonBg" && site.theme.buttonFill !== "solid") return null;
+                      const meta = COLOR_ROLES[role];
+                      return <ColorPicker key={role} label={meta.label} hint={meta.hint} value={getColor(role, roleFallback(role, site))} onChange={(v) => setColor(role, v)} />;
+                    })}
+                  </div>
+                  {group === "Botões" && site.theme.buttonFill !== "solid" ? (
+                    <p className="mt-3 rounded-xl bg-surface p-3 text-xs text-muted">Preenchimento é <strong>{site.theme.buttonFill === "glass" ? "Translúcido" : "Gradiente"}</strong> (ver &quot;Estilo avançado&quot; abaixo) — nesse modo o fundo dos botões é automático. Mude pra <strong>Sólido</strong> pra escolher a cor/gradiente aqui.</p>
+                  ) : null}
+                  {group === "Ícones sociais" ? (
+                    <label className="mt-3 flex items-center gap-1.5 text-xs font-black text-ink">
+                      <input type="checkbox" checked={Boolean(site.theme.socialIconTranslucent)} onChange={(e) => setTheme({ socialIconTranslucent: e.target.checked })} />
+                      Fundo translúcido (efeito vidro fosco)
+                    </label>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </details>
+
+          {/* ESTILO AVANÇADO — recolhido por padrão (2026-09-07). Layout
+              dos botões, ícones sociais e tamanho do título continuam
+              existindo, só não competem mais com os controles simples de
+              cima. */}
+          <details className="mt-5 rounded-3xl border border-border bg-surface p-5">
+            <summary className="cursor-pointer text-sm font-black text-ink">⚙️ Estilo avançado (fundo, botões, ícones)</summary>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              <label><span className={label}>Tipo de fundo</span><select className={field} value={site.theme.backgroundType} onChange={(e) => setTheme({ backgroundType: e.target.value as ToqySite["theme"]["backgroundType"] })}><option value="gradient">Gradiente</option><option value="solid">Cor sólida</option><option value="image">Imagem</option></select></label>
+              <label><span className={label}>Layout dos botões</span><select className={field} value={site.theme.buttonStyle} onChange={(e) => setTheme({ buttonStyle: e.target.value as ToqySite["theme"]["buttonStyle"] })}><option value="full">Botões grandes</option><option value="icon">Grade de ícones</option></select></label>
+              <label><span className={label}>Ícone nos botões</span><select className={field} value={site.theme.mainButtonDisplay ?? "icon-text"} onChange={(e) => setTheme({ mainButtonDisplay: e.target.value as "icon-text" | "text-only" })}><option value="icon-text">Ícone + texto</option><option value="text-only">Só texto</option></select></label>
+              <label><span className={label}>Preenchimento</span><select className={field} value={site.theme.buttonFill} onChange={(e) => setTheme({ buttonFill: e.target.value as ToqySite["theme"]["buttonFill"] })}><option value="glass">Translúcido premium</option><option value="solid">Sólido</option><option value="gradient">Gradiente</option></select></label>
+              <label><span className={label}>Formato</span><select className={field} value={site.theme.buttonRadius} onChange={(e) => setTheme({ buttonRadius: e.target.value as ToqySite["theme"]["buttonRadius"] })}><option value="soft">Soft</option><option value="rounded">Arredondado</option><option value="pill">Pill/cápsula</option></select></label>
+              <label><span className={label}>Ícones sociais (WhatsApp, Instagram...)</span><select className={field} value={site.theme.socialIconStyle ?? "brand"} onChange={(e) => setTheme({ socialIconStyle: e.target.value as "brand" | "glass" })}><option value="brand">Cores reais das marcas</option><option value="glass">Translúcido (igual botões)</option></select></label>
+              <label><span className={label}>Tamanho dos ícones (WhatsApp, Instagram, Facebook, localização)</span><select className={field} value={site.theme.socialIconSize ?? "md"} onChange={(e) => setTheme({ socialIconSize: e.target.value as "sm" | "md" | "lg" })}><option value="sm">Pequeno</option><option value="md">Médio</option><option value="lg">Grande</option></select></label>
+              <label><span className={label}>Tamanho do título (nome do negócio)</span><select className={field} value={site.theme.nameFontSize ?? "md"} onChange={(e) => setTheme({ nameFontSize: e.target.value as "sm" | "md" | "lg" })}><option value="sm">Pequeno</option><option value="md">Médio</option><option value="lg">Grande</option></select>
+                <label className="mt-2 flex items-center gap-1.5 text-xs font-black text-ink">
+                  <input type="checkbox" checked={site.theme.nameShadow !== false} onChange={(e) => setTheme({ nameShadow: e.target.checked })} />
+                  Sombra no título
+                </label>
+              </label>
+              <label><span className={label}>Alinhamento da localização</span><select className={field} value={site.theme.locationAlign ?? "left"} onChange={(e) => setTheme({ locationAlign: e.target.value as "left" | "center" })}><option value="left">Esquerda (recomendado p/ endereços longos)</option><option value="center">Centralizado</option></select></label>
+            </div>
+          </details>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
             <label><span className={label}>Título/subtítulo</span><input className={field} value={site.profile.title ?? ""} onChange={(e) => setProfile({ title: e.target.value })} /></label>
             <label><span className={label}>Localização</span><input className={field} value={site.profile.location} onChange={(e) => setProfile({ location: e.target.value })} /></label>
             <label className="md:col-span-2"><span className={label}>Descrição</span><textarea className={field} rows={3} value={site.profile.description} onChange={(e) => setProfile({ description: e.target.value })} /></label>
@@ -688,135 +858,6 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 <p className="text-xs text-muted">Vira a madrugada? É só colocar o fechamento menor que a abertura — ex: 18:00 às 02:00.</p>
               </div>
             ) : null}
-          </div>
-        </Section>
-      );
-    }
-
-    if (step === 2) {
-      return (
-        <Section>
-          <h2 className="text-2xl font-black text-ink">Visual</h2>
-          <p className="mt-1 text-sm text-muted">Escolha a paleta de cores, tipo de fundo e estilo dos botões.</p>
-          <div className="mt-5"><ThemePresetPicker selectedPresetId={site.themePresetId} onSelect={selectTheme} /></div>
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
-            <label><span className={label}>Tipo de fundo</span><select className={field} value={site.theme.backgroundType} onChange={(e) => setTheme({ backgroundType: e.target.value as ToqySite["theme"]["backgroundType"] })}><option value="gradient">Gradiente</option><option value="solid">Cor sólida</option><option value="image">Imagem</option></select></label>
-            <label><span className={label}>Layout dos botões</span><select className={field} value={site.theme.buttonStyle} onChange={(e) => setTheme({ buttonStyle: e.target.value as ToqySite["theme"]["buttonStyle"] })}><option value="full">Botões grandes</option><option value="icon">Grade de ícones</option></select></label>
-            <label><span className={label}>Ícone nos botões</span><select className={field} value={site.theme.mainButtonDisplay ?? "icon-text"} onChange={(e) => setTheme({ mainButtonDisplay: e.target.value as "icon-text" | "text-only" })}><option value="icon-text">Ícone + texto</option><option value="text-only">Só texto</option></select></label>
-            <label><span className={label}>Preenchimento</span><select className={field} value={site.theme.buttonFill} onChange={(e) => setTheme({ buttonFill: e.target.value as ToqySite["theme"]["buttonFill"] })}><option value="glass">Translúcido premium</option><option value="solid">Sólido</option><option value="gradient">Gradiente</option></select></label>
-            <label><span className={label}>Formato</span><select className={field} value={site.theme.buttonRadius} onChange={(e) => setTheme({ buttonRadius: e.target.value as ToqySite["theme"]["buttonRadius"] })}><option value="soft">Soft</option><option value="rounded">Arredondado</option><option value="pill">Pill/cápsula</option></select></label>
-            <label><span className={label}>Ícones sociais (WhatsApp, Instagram...)</span><select className={field} value={site.theme.socialIconStyle ?? "brand"} onChange={(e) => setTheme({ socialIconStyle: e.target.value as "brand" | "glass" })}><option value="brand">Cores reais das marcas</option><option value="glass">Translúcido (igual botões)</option></select></label>
-            <label><span className={label}>Tamanho dos ícones (WhatsApp, Instagram, Facebook, localização)</span><select className={field} value={site.theme.socialIconSize ?? "md"} onChange={(e) => setTheme({ socialIconSize: e.target.value as "sm" | "md" | "lg" })}><option value="sm">Pequeno</option><option value="md">Médio</option><option value="lg">Grande</option></select></label>
-            <label><span className={label}>Tamanho do título (nome do negócio)</span><select className={field} value={site.theme.nameFontSize ?? "md"} onChange={(e) => setTheme({ nameFontSize: e.target.value as "sm" | "md" | "lg" })}><option value="sm">Pequeno</option><option value="md">Médio</option><option value="lg">Grande</option></select>
-              <label className="mt-2 flex items-center gap-1.5 text-xs font-black text-ink">
-                <input type="checkbox" checked={site.theme.nameShadow !== false} onChange={(e) => setTheme({ nameShadow: e.target.checked })} />
-                Sombra no título
-              </label>
-            </label>
-            {/* Fonte do bio site (2026-09-07, referência Coonexta —
-                "Estilo da letra do mini-site"). Cada opção do <select>
-                mostra o nome JÁ na fonte real (style inline por option),
-                mesmo princípio do seletor deles. "Padrão" = sem override,
-                herda Manrope do app (comportamento de sempre). */}
-            <label className="md:col-span-2">
-              <span className={label}>Fonte do bio site</span>
-              <select className={field} value={site.theme.fontFamily ?? ""} onChange={(e) => setTheme({ fontFamily: (e.target.value || undefined) as ToqySite["theme"]["fontFamily"] })}>
-                <option value="">Padrão</option>
-                {BIO_SITE_FONTS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
-              </select>
-            </label>
-            <label><span className={label}>Alinhamento da localização</span><select className={field} value={site.theme.locationAlign ?? "left"} onChange={(e) => setTheme({ locationAlign: e.target.value as "left" | "center" })}><option value="left">Esquerda (recomendado p/ endereços longos)</option><option value="center">Centralizado</option></select></label>
-            <label className="md:col-span-2">
-              <span className={label}>Imagem de fundo</span>
-              <div className="mb-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-                <strong>💡 Dica para melhor resultado:</strong> Use imagem <strong>1080×1920px</strong> (formato celular). A imagem fica fixa e o conteúdo rola por cima — ela não vai esticar.
-              </div>
-              <ImageUploadField
-                label=""
-                value={site.profile.backgroundImageUrl}
-                onChange={(url) => setProfile({ backgroundImageUrl: url })}
-                placeholder="URL da imagem de fundo"
-                slug={site.slug}
-                fieldId="background"
-                editKey={site.editKey}
-                showPositionControl
-                position={site.profile.backgroundImagePosition ?? "center"}
-                onPositionChange={(pos) => setProfile({ backgroundImagePosition: pos })}
-              />
-              {/* Reposicionamento (2026-09-06, resolve o "tela corta" achado
-                  ao vivo em toqy.com.br/b/yakisabor) — antes o fundo usava
-                  sempre "centro/topo" fixo, cortando texto de imagens que
-                  não foram desenhadas pra proporção de celular. */}
-              <ImageGuidelineHint type="background" />
-              <label className="mt-2 flex items-center gap-1.5 text-xs font-black text-ink">
-                <input type="checkbox" checked={site.theme.useBackgroundOverlay} onChange={(e) => setTheme({ useBackgroundOverlay: e.target.checked })} />
-                Escurecer levemente a imagem (ajuda a ler o texto por cima, mas pode deixar a cor original mais acinzentada)
-              </label>
-            </label>
-            {/* Capa em vídeo (2026-09-07, referência Coonexta — vídeo do
-                Leonardo: "coloquei um vídeo no banner, olha que coisa
-                mais linda"). Com vídeo definido, ele substitui a imagem
-                de fundo acima (ver PublicBioSite.tsx) — deixado separado
-                da imagem, não escondido atrás de um switch, porque a
-                pessoa pode querer alternar/testar os dois. */}
-            <label className="md:col-span-2">
-              <span className={label}>Vídeo de fundo (opcional)</span>
-              <div className="mb-2 rounded-2xl border border-violet/20 bg-violet/10 p-3 text-xs text-violet">
-                <strong>🎬 Quando definido, substitui a imagem de fundo acima.</strong> Vídeo curto (poucos segundos), sem som — toca automático e em loop.
-              </div>
-              <VideoUploadField
-                value={site.profile.backgroundVideoUrl}
-                onChange={(url) => setProfile({ backgroundVideoUrl: url })}
-                slug={site.slug}
-                editKey={site.editKey}
-              />
-            </label>
-          </div>
-
-          {/* Reforma completa (2026-09-06, pedido do Leonardo: "remove
-              tudo que for configuração de cor e refaça um por um... cada
-              lugar tem que ter como mudar a cor individual, tanto sólida
-              quanto gradiente"). Causa raiz do "muitos lugares
-              repetidos": antes coexistiam um sistema "global" (theme.
-              primary/text/muted/accent/card, editável direto aqui) E um
-              granular por elemento — o mesmo conceito aparecia em 2
-              controles diferentes (ex: "Cor dos botões" E "Fundo dos
-              botões" eram a mesma coisa, "Fundo dos cards" existia 2x).
-              Agora existe 1 controle por lugar reconhecível do biosite,
-              cada um sólido OU gradiente (ver COLOR_ROLES em
-              src/lib/colorRoles.ts pra lista completa) — nada de campo
-              "global" separado escondendo qual controle realmente manda. */}
-          <div className="mt-5 space-y-4">
-            {Object.entries(
-              Object.entries(COLOR_ROLES).reduce<Record<string, ColorRole[]>>((acc, [role, meta]) => {
-                acc[meta.group] = [...(acc[meta.group] ?? []), role as ColorRole];
-                return acc;
-              }, {})
-            ).map(([group, roles]) => (
-              <div key={group} className="rounded-3xl border border-border bg-surface p-5">
-                <p className="text-sm font-black text-ink">{group}</p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  {roles.map((role) => {
-                    // Modo translúcido/glass já é automático (ver
-                    // buttonStyle/social icon em PublicBioSite.tsx) —
-                    // esconder o controle de cor de fundo evita a pessoa
-                    // configurar uma cor que não vai aparecer.
-                    if (role === "buttonBg" && site.theme.buttonFill !== "solid") return null;
-                    const meta = COLOR_ROLES[role];
-                    return <ColorPicker key={role} label={meta.label} hint={meta.hint} value={getColor(role, roleFallback(role, site))} onChange={(v) => setColor(role, v)} />;
-                  })}
-                </div>
-                {group === "Botões" && site.theme.buttonFill !== "solid" ? (
-                  <p className="mt-3 rounded-xl bg-card p-3 text-xs text-muted">Preenchimento é <strong>{site.theme.buttonFill === "glass" ? "Translúcido" : "Gradiente"}</strong> (ver etapa acima) — nesse modo o fundo dos botões é automático. Mude pra <strong>Sólido</strong> pra escolher a cor/gradiente aqui.</p>
-                ) : null}
-                {group === "Ícones sociais" ? (
-                  <label className="mt-3 flex items-center gap-1.5 text-xs font-black text-ink">
-                    <input type="checkbox" checked={Boolean(site.theme.socialIconTranslucent)} onChange={(e) => setTheme({ socialIconTranslucent: e.target.checked })} />
-                    Fundo translúcido (efeito vidro fosco)
-                  </label>
-                ) : null}
-              </div>
-            ))}
           </div>
 
           {/* FIGURINHAS + MÚSICA + INSTAGRAM (2026-09-05/06, pedido do
@@ -1086,9 +1127,9 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
       );
     }
 
-    if (step === 3) return <ButtonEditor site={site} onChange={(next) => update(next)} />;
+    if (step === 2) return <ButtonEditor site={site} onChange={(next) => update(next)} />;
 
-    if (step === 4) {
+    if (step === 3) {
       return (
         <Section>
           <h2 className="text-2xl font-black text-ink">Pix e Wi-Fi</h2>
@@ -1200,7 +1241,7 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
       );
     }
 
-    if (step === 5) {
+    if (step === 4) {
       return (
         <Section>
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
