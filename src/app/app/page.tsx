@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 // Limpeza (2026-09-06, auditoria externa): CheckCircle2 foi removido do
 // import — nenhum JSX desta página usava o ícone, só pesava o bundle.
-import { LogOut, UserRound } from "lucide-react";
+import { LogOut, Plus, UserRound } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { DashboardHero } from "@/components/DashboardHero";
 import { PLAN_BIOSITE_LIMITS } from "@/lib/planLimits";
@@ -163,6 +163,43 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
   const isNearLimit = usagePercentage > 80;
   const displayName = profile?.full_name?.trim() || "Usuário";
   const displayEmail = profile?.email ?? "—";
+  // Gratuito/Pro = 1 bio site só, pro próprio negócio (2026-09-07,
+  // referência Coonexta — print do Leonardo: painel de quem só quer 1
+  // biosite entra direto no "Meu biosite", sem lista de múltiplos sites
+  // no meio do caminho). Essencial/Freelancer/Agência (revenda) mantêm
+  // o painel de sempre, sem nenhuma mudança abaixo.
+  const isSingleSitePlan = planLimit <= 1;
+
+  useEffect(() => {
+    if (!loading && isSingleSitePlan && biosites.length >= 1) {
+      router.replace(`/editar/${biosites[0].slug}`);
+    }
+  }, [loading, isSingleSitePlan, biosites, router]);
+
+  if (isSingleSitePlan && !loading) {
+    if (biosites.length >= 1) {
+      // Redireciona pro editor do único site (efeito acima) — este
+      // retorno só evita piscar a tela de "criar" por uma fração de
+      // segundo antes do replace acontecer.
+      return (
+        <DashboardShell>
+          <p className="mt-10 text-center text-sm font-bold text-muted">Abrindo seu bio site...</p>
+        </DashboardShell>
+      );
+    }
+    return (
+      <DashboardShell>
+        <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+          <p className="text-2xl font-black text-ink">Bora criar seu bio site?</p>
+          <p className="mt-2 text-sm text-muted">Tudo pronto em minutos — nome, links, cores e catálogo, sem código.</p>
+          <Link href="/app/novo" className="mt-6 flex h-16 w-16 items-center justify-center rounded-full bg-accent text-white shadow-lg transition hover:bg-accent-dim">
+            <Plus className="h-7 w-7" />
+          </Link>
+          <Link href="/app/novo" className="mt-4 text-sm font-black text-accent hover:underline">CRIAR MEU BIOSITE</Link>
+        </div>
+      </DashboardShell>
+    );
+  }
 
   return (
     <DashboardShell>

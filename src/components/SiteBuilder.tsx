@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, CalendarClock, CheckCircle2, ChevronLeft, ChevronRight, Copy, ExternalLink, Eye, Images, Inbox, LayoutGrid, Link2, Loader2, MessageCircle, Palette, Plus, Rocket, Save, Share2, ShoppingBag, Trash2, User, Wallet, X } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarClock, CheckCircle2, ChevronLeft, ChevronRight, Copy, ExternalLink, Eye, Handshake, Images, Inbox, LayoutGrid, Link2, Loader2, Lock, MessageCircle, Palette, Plus, Rocket, Save, Share2, ShoppingBag, Target, Trash2, User, Wallet, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 // Limpeza (2026-09-06, auditoria externa): o tipo CatalogLayout e o helper
 // createEditUrl saíram dos imports — o tipo não era referenciado em nenhuma
@@ -80,10 +80,15 @@ type Props = { mode: "create" | "edit"; initialSite: ToqySite; onSave: (site: To
 // duas etapas separadas. Índices de step downstream (Botões/Pix/
 // Catálogo) andaram uma casa pra trás — ver os `if (step === N)`
 // correspondentes mais abaixo.
-// "Agendamento" (2026-09-07, referência Coonexta — grupo "Agenda" do
+// "Serviços" (2026-09-07, referência Coonexta — grupo "Agenda" do
 // documento de análise) entra ANTES de "Salvar", depois de Catálogo —
 // mesma posição do fluxo deles (serviço → agenda → publicar).
-const steps = ["Modelo", "Aparência", "Links e Botões", "Pix e Wi-Fi", "Catálogo", "Agendamento", "Salvar"];
+// "Integrações"/"Configurações"/"Parceria" (mesmo dia) — grupos próprios
+// que antes viviam embutidos dentro da Aparência (pixel de rastreio,
+// acesso do cliente) ou não existiam ainda (parceria só linkava pra
+// /app/revenda de outro lugar do painel). Sidebar agora bate 1:1 com o
+// documento de análise da Coonexta enviado pelo Leonardo.
+const steps = ["Modelo", "Aparência", "Links e Botões", "Pix e Wi-Fi", "Catálogo", "Serviços", "Integrações", "Configurações", "Parceria", "Salvar"];
 
 // Editor por blocos no celular (2026-09-06, mockup da auditoria externa).
 // A auditoria apontou: "o editor deve abandonar a lógica de painel desktop
@@ -105,6 +110,9 @@ const STEP_META: { icon: typeof User; subtitle: string; group: StepGroup }[] = [
   { icon: Wallet, subtitle: "Receba no Pix e mostre a senha do Wi-Fi", group: "conteudo" },
   { icon: ShoppingBag, subtitle: "Produtos, serviços e cardápio", group: "conteudo" },
   { icon: CalendarClock, subtitle: "Serviços e horários pra agendar", group: "conteudo" },
+  { icon: Target, subtitle: "Pixel do Meta e Google Analytics", group: "publicar" },
+  { icon: Lock, subtitle: "Acesso do cliente à edição", group: "publicar" },
+  { icon: Handshake, subtitle: "Comissão por indicação", group: "publicar" },
   { icon: Rocket, subtitle: "Publique e entregue o link ao cliente", group: "publicar" },
 ];
 
@@ -1154,65 +1162,6 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
               </div>
             )}
           </div>
-
-          {/* PIXELS & RASTREIO (2026-09-07, referência Coonexta —
-              documento de análise: grupo "Integrações"). Diferente do
-              GA do próprio Toqy (mede o marketing do Toqy) — aqui é o
-              CLIENTE FINAL medindo a campanha dele (Meta Ads, Google
-              Ads) na própria página. Nunca dispara no editor/preview
-              nem na vitrine da landing, só na página pública de
-              verdade — ver enablePixels em PublicBioSite.tsx. */}
-          <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
-            <p className="text-sm font-black text-ink">🎯 Pixels & Rastreio</p>
-            <p className="mt-0.5 text-xs text-muted">Meça as campanhas deste bio site nas suas próprias contas do Meta e do Google.</p>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <label>
-                <span className={label}>Meta Pixel ID</span>
-                <input className={field} value={site.trackingPixels?.metaPixelId ?? ""} onChange={(e) => update((s) => ({ ...s, trackingPixels: { ...s.trackingPixels, metaPixelId: e.target.value } }))} placeholder="Ex: 1234567890123456" />
-                <p className="mt-1 text-xs text-muted">Gerenciador de Eventos do Meta → Pixels.</p>
-              </label>
-              <label>
-                <span className={label}>Google Analytics (ID de medição)</span>
-                <input className={field} value={site.trackingPixels?.gaMeasurementId ?? ""} onChange={(e) => update((s) => ({ ...s, trackingPixels: { ...s.trackingPixels, gaMeasurementId: e.target.value } }))} placeholder="Ex: G-XXXXXXXXXX" />
-                <p className="mt-1 text-xs text-muted">Google Analytics → Administrador → Fluxos de dados.</p>
-              </label>
-            </div>
-          </div>
-
-          {/* ACESSO DO CLIENTE (2026-09-07, referência Coonexta —
-              "Configurações → Acesso do cliente", presets Só leitura/
-              Operacional/Editor completo). Adaptado ao modelo do Toqy:
-              não existe convite por e-mail nem múltiplos colaboradores
-              aqui, existe UMA chave de edição por site — este controle
-              define o que QUEM TEM A CHAVE pode fazer. Só o dono
-              (isOwner) vê e mexe nisto; o servidor (/api/biosite/save)
-              também recusa qualquer tentativa de um cliente mudar isto
-              sozinho, então esconder o controle é só a primeira
-              camada, não a única. */}
-          {isOwner ? (
-            <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
-              <p className="text-sm font-black text-ink">🔒 Acesso do cliente</p>
-              <p className="mt-0.5 text-xs text-muted">O que quem tem a chave de edição deste bio site pode fazer — não afeta você, logado.</p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                {([
-                  { value: "full", label: "Editor completo", hint: "Mexe em tudo, igual você" },
-                  { value: "operational", label: "Operacional", hint: "Links, Pix, catálogo — sem aparência" },
-                  { value: "readonly", label: "Só leitura", hint: "Só consulta, não salva nada" },
-                ] as const).map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => update((s) => ({ ...s, clientAccessLevel: opt.value }))}
-                    className={`rounded-2xl border p-3 text-left transition ${(site.clientAccessLevel ?? "full") === opt.value ? "border-accent bg-accent/10" : "border-border bg-card hover:border-accent"}`}
-                  >
-                    <p className="text-sm font-black text-ink">{opt.label}</p>
-                    <p className="mt-0.5 text-xs text-muted">{opt.hint}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
         </Section>
       );
     }
@@ -1635,6 +1584,108 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
       );
     }
 
+    // INTEGRAÇÕES (2026-09-07, referência Coonexta — grupo próprio na
+    // sidebar, antes vivia embutido dentro da Aparência). Mesma regra de
+    // acesso "operational" que a Aparência já tinha: quem só edita o
+    // dia-a-dia (links/Pix/catálogo) não mexe em pixel de campanha.
+    if (step === 6) {
+      if (accessLevel === "operational") {
+        return (
+          <Section>
+            <h2 className="text-2xl font-black text-ink">Integrações</h2>
+            <p className="mt-2 text-sm text-muted">Não disponível no seu nível de acesso.</p>
+          </Section>
+        );
+      }
+      return (
+        <Section>
+          <h2 className="text-2xl font-black text-ink">Integrações</h2>
+          <p className="mt-1 text-sm text-muted">Meça as campanhas deste bio site nas suas próprias contas do Meta e do Google.</p>
+          {/* Diferente do GA do próprio Toqy (mede o marketing do Toqy) —
+              aqui é o CLIENTE FINAL medindo a campanha dele (Meta Ads,
+              Google Ads) na própria página. Nunca dispara no editor/
+              preview nem na vitrine da landing, só na página pública de
+              verdade — ver enablePixels em PublicBioSite.tsx. */}
+          <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
+            <p className="text-sm font-black text-ink">🎯 Pixel &amp; Rastreio</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <label>
+                <span className={label}>Meta Pixel ID</span>
+                <input className={field} value={site.trackingPixels?.metaPixelId ?? ""} onChange={(e) => update((s) => ({ ...s, trackingPixels: { ...s.trackingPixels, metaPixelId: e.target.value } }))} placeholder="Ex: 1234567890123456" />
+                <p className="mt-1 text-xs text-muted">Gerenciador de Eventos do Meta → Pixels.</p>
+              </label>
+              <label>
+                <span className={label}>Google Analytics (ID de medição)</span>
+                <input className={field} value={site.trackingPixels?.gaMeasurementId ?? ""} onChange={(e) => update((s) => ({ ...s, trackingPixels: { ...s.trackingPixels, gaMeasurementId: e.target.value } }))} placeholder="Ex: G-XXXXXXXXXX" />
+                <p className="mt-1 text-xs text-muted">Google Analytics → Administrador → Fluxos de dados.</p>
+              </label>
+            </div>
+          </div>
+        </Section>
+      );
+    }
+
+    // CONFIGURAÇÕES (2026-09-07, referência Coonexta — "Acesso do
+    // cliente"). Só o dono (isOwner) vê e mexe — o servidor
+    // (/api/biosite/save) também recusa qualquer tentativa de um cliente
+    // mudar isto sozinho, então esconder o controle é só a primeira
+    // camada, não a única.
+    if (step === 7) {
+      if (!isOwner) {
+        return (
+          <Section>
+            <h2 className="text-2xl font-black text-ink">Configurações</h2>
+            <p className="mt-2 text-sm text-muted">Disponível apenas para o dono do bio site.</p>
+          </Section>
+        );
+      }
+      return (
+        <Section>
+          <h2 className="text-2xl font-black text-ink">Configurações</h2>
+          <p className="mt-1 text-sm text-muted">O que quem tem a chave de edição deste bio site pode fazer — não afeta você, logado.</p>
+          <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
+            <p className="text-sm font-black text-ink">🔒 Acesso do cliente</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              {([
+                { value: "full", label: "Editor completo", hint: "Mexe em tudo, igual você" },
+                { value: "operational", label: "Operacional", hint: "Links, Pix, catálogo — sem aparência" },
+                { value: "readonly", label: "Só leitura", hint: "Só consulta, não salva nada" },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => update((s) => ({ ...s, clientAccessLevel: opt.value }))}
+                  className={`rounded-2xl border p-3 text-left transition ${(site.clientAccessLevel ?? "full") === opt.value ? "border-accent bg-accent/10" : "border-border bg-card hover:border-accent"}`}
+                >
+                  <p className="text-sm font-black text-ink">{opt.label}</p>
+                  <p className="mt-0.5 text-xs text-muted">{opt.hint}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </Section>
+      );
+    }
+
+    // PARCERIA (2026-09-07, referência Coonexta — "Seja Parceiro"). O
+    // Toqy já tem o programa de indicação/revenda em /app/revenda
+    // (comissão automática pra quem assina Freelancer ou Agência) — este
+    // item só entrega o mesmo lugar, no lugar certo da navegação.
+    if (step === 8) {
+      return (
+        <Section>
+          <h2 className="text-2xl font-black text-ink">Parceria</h2>
+          <p className="mt-1 text-sm text-muted">Ganhe comissão indicando o Toqy pra outros negócios.</p>
+          <div className="mt-5 rounded-3xl border border-violet/20 bg-gradient-to-br from-violet/10 via-card to-surface p-6 text-center">
+            <Handshake className="mx-auto h-8 w-8 text-violet" />
+            <p className="mt-3 text-lg font-black text-ink">Seja Parceiro</p>
+            <p className="mt-1 text-sm text-muted">Benefício de quem assina Freelancer ou Agência — comissão automática por indicação.</p>
+            <Link href="/app/revenda" className="mt-4 inline-flex items-center justify-center rounded-2xl bg-violet px-5 py-3 text-sm font-black text-white transition hover:opacity-90">Ver programa de revenda</Link>
+          </div>
+        </Section>
+      );
+    }
+
     return (
       <Section>
         <h2 className="text-2xl font-black text-ink">{mode === "create" ? "Publicar" : "Salvar alterações"}</h2>
@@ -1744,37 +1795,53 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
           sempre visível, sem wizard sequencial). Abaixo de xl, ainda
           sem espaço pra 3 colunas, continuam as pílulas de sempre. */}
       <nav className="sticky top-6 hidden h-fit flex-col gap-1 rounded-[1.5rem] border border-border bg-card p-2 shadow-sm xl:flex">
-        {/* Grupos "Análise" / "Editar site" (2026-09-07, referência
-            Coonexta — documento enviado pelo Leonardo: sidebar do
-            editor agrupada por Análise/Editar site/Agenda/Integrações/
-            Configurações/Parceria). Só "Análise" e "Editar site" entram
-            por enquanto — os outros grupos (Agenda, Integrações,
-            Configurações, Parceria) dependem de recursos que ainda não
-            existem no Toqy (agendamento nativo, pixels, permissões de
-            cliente); virão quando cada um for construído, não como
-            item vazio. */}
+        {/* Grupos "Análise" / "Editar site" / "Agenda" / "Integrações" /
+            "Configurações" / "Parceria" (2026-09-07, referência Coonexta —
+            documento enviado pelo Leonardo: sidebar do editor agrupada
+            assim, 1:1). Cadastros/Pix recebidos/Agendamentos aqui são POR
+            ESTE site — "?site=slug" filtra as páginas globais de
+            leads/bookings pra mostrar só o que é deste bio site, em vez
+            da lista de todos os sites do usuário. */}
         {mode === "edit" && site.slug ? (
           <>
             <p className="px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Análise</p>
             <Link href={`/app/analytics/${site.slug}`} target="_blank" className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
               <Eye className="h-4 w-4 shrink-0" /> Estatísticas
             </Link>
-            <Link href="/app/leads" target="_blank" className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
+            <Link href={`/app/links/${site.slug}`} target="_blank" className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
+              <Link2 className="h-4 w-4 shrink-0" /> Meus Links
+            </Link>
+            <Link href={`/app/leads?site=${site.slug}`} target="_blank" className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
               <Inbox className="h-4 w-4 shrink-0" /> Cadastros deste site
+            </Link>
+            {/* Pix recebidos (2026-09-07): adiado de propósito — "hoje uso
+                apenas a Kiwify pra receber", sem PSP de Pix próprio pra
+                confirmar pagamento de visitante. Item fica visível (bate
+                com a referência) mas desabilitado, não escondido. */}
+            <span className="flex cursor-not-allowed items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted/40" title="Em breve — precisa de um meio de pagamento próprio de Pix">
+              <Wallet className="h-4 w-4 shrink-0" /> Pix recebidos
+            </span>
+            <Link href={`/app/bookings?site=${site.slug}`} target="_blank" className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
+              <CalendarClock className="h-4 w-4 shrink-0" /> Agendamentos
             </Link>
             <p className="mt-2 px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Editar site</p>
           </>
         ) : null}
         {steps.map((item, index) => (
-          <button
-            key={item}
-            type="button"
-            onClick={() => setStep(index)}
-            className={`flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black transition ${index === step ? "bg-accent text-white" : "text-muted hover:bg-surface hover:text-ink"}`}
-          >
-            {(() => { const Icon = STEP_META[index].icon; return <Icon className="h-4 w-4 shrink-0" />; })()}
-            <span className="truncate">{item}</span>
-          </button>
+          <div key={item}>
+            {index === 5 ? <p className="mt-2 px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Agenda</p> : null}
+            {index === 6 ? <p className="mt-2 px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Integrações</p> : null}
+            {index === 7 ? <p className="mt-2 px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Configurações</p> : null}
+            {index === 8 ? <p className="mt-2 px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Parceria</p> : null}
+            <button
+              type="button"
+              onClick={() => setStep(index)}
+              className={`flex w-full items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black transition ${index === step ? "bg-accent text-white" : "text-muted hover:bg-surface hover:text-ink"}`}
+            >
+              {(() => { const Icon = STEP_META[index].icon; return <Icon className="h-4 w-4 shrink-0" />; })()}
+              <span className="truncate">{item}</span>
+            </button>
+          </div>
         ))}
       </nav>
       <div className="min-w-0">

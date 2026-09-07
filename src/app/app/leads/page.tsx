@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Inbox, Mail, MessageSquare, Phone } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { listBiositesFromSupabase } from "@/lib/biositeSync";
@@ -24,7 +26,12 @@ type Lead = {
   created_at: string;
 };
 
-export default function LeadsPage() {
+function LeadsPageInner() {
+  // ?site=slug (2026-09-07, referência Coonexta — clicar em "Cadastros
+  // deste site" dentro do editor de UM bio site deve mostrar só os
+  // contatos DAQUELE site, não a lista de todos). Sem o parâmetro,
+  // comportamento de sempre: todos os sites, agrupados.
+  const siteSlug = useSearchParams().get("site");
   const [sites, setSites] = useState<ToqySite[]>([]);
   const [leadsBySite, setLeadsBySite] = useState<Record<string, Lead[]>>({});
   const [loading, setLoading] = useState(true);
@@ -56,13 +63,15 @@ export default function LeadsPage() {
     return () => { active = false; };
   }, []);
 
-  const totalLeads = Object.values(leadsBySite).reduce((sum, list) => sum + list.length, 0);
+  const visibleSites = siteSlug ? sites.filter((s) => s.slug === siteSlug) : sites;
+  const totalLeads = visibleSites.reduce((sum, s) => sum + (leadsBySite[s.id]?.length ?? 0), 0);
 
   return (
     <DashboardShell>
       <div>
-        <p className="text-sm font-black uppercase tracking-[0.18em] text-accent">Cadastros</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight md:text-5xl text-ink">Contatos recebidos</h1>
+        {siteSlug ? <Link href="/app/leads" className="text-xs font-bold text-muted hover:text-ink">← Ver cadastros de todos os bio sites</Link> : null}
+        <p className="mt-2 text-sm font-black uppercase tracking-[0.18em] text-accent">Cadastros</p>
+        <h1 className="mt-2 text-3xl font-black tracking-tight md:text-5xl text-ink">{siteSlug ? `Contatos — ${visibleSites[0]?.profile.name ?? siteSlug}` : "Contatos recebidos"}</h1>
         <p className="mt-2 max-w-2xl text-muted">Nome, e-mail e telefone de quem preencheu o formulário de contato do seu bio site. Ative o bloco em cada bio site na etapa Links e Botões.</p>
       </div>
 
@@ -75,7 +84,7 @@ export default function LeadsPage() {
         </div>
       ) : (
         <div className="mt-8 space-y-8">
-          {sites.filter((site) => leadsBySite[site.id]?.length).map((site) => (
+          {visibleSites.filter((site) => leadsBySite[site.id]?.length).map((site) => (
             <section key={site.id}>
               <h2 className="text-lg font-black text-ink">{site.profile.name} <span className="font-semibold text-muted">— /{site.slug}</span></h2>
               <div className="mt-3 space-y-2">
@@ -98,5 +107,13 @@ export default function LeadsPage() {
         </div>
       )}
     </DashboardShell>
+  );
+}
+
+export default function LeadsPage() {
+  return (
+    <Suspense fallback={null}>
+      <LeadsPageInner />
+    </Suspense>
   );
 }

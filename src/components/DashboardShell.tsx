@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
-import { BarChart3, CalendarCheck, Globe, Handshake, Home, Inbox, MoreHorizontal, Plus, QrCode, Settings, Users } from "lucide-react";
+import { BarChart3, CalendarCheck, Crown, Globe, Handshake, Home, Inbox, MoreHorizontal, Plus, QrCode, Settings, Users } from "lucide-react";
 import { LogoutButton } from "@/components/LogoutButton";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -39,12 +39,30 @@ const navItems = [
 const MOBILE_TAB_ITEMS = [navItems[0], navItems[2], navItems[3]]; // Painel, QR Codes, Analytics
 const MOBILE_MORE_ITEMS = [navItems[1], navItems[4], navItems[5], navItems[6], navItems[7], navItems[8]]; // Novo cliente, Cadastros, Agendamento, Domínio, Revenda, Configurações
 
+// Painel de quem só quer 1 biosite pro próprio negócio (2026-09-07,
+// referência Coonexta — print enviado pelo Leonardo: 3 itens só —
+// "Meu biosite" / "Meu perfil" / "Assinar PRO"). O Toqy já distingue
+// esses dois públicos no MODELO DE PLANOS (Gratuito/Pro = maxSites 1,
+// "pra quem quer um bio site completo só pro próprio negócio" — ver
+// subscriptions.ts) — faltava a NAVEGAÇÃO refletir essa mesma divisão.
+// maxSites > 1 (Essencial/Freelancer/Agência) continua com o menu
+// completo de sempre (é quem revende bio sites pra clientes).
+function singleSiteNavItems(planTier: string) {
+  return [
+    { href: "/app", icon: Home, label: "Meu biosite" },
+    { href: "/app/configuracoes", icon: Settings, label: "Meu perfil" },
+    { href: "/#planos", icon: Crown, label: planTier === "free" ? "Assinar PRO" : "Meu plano" },
+  ];
+}
+
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [atLimit, setAtLimit] = useState(false);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [userInitial, setUserInitial] = useState("U");
   const [moreOpen, setMoreOpen] = useState(false);
+  const [isSingleSitePlan, setIsSingleSitePlan] = useState(false);
+  const [planTier, setPlanTier] = useState("free");
 
   // Fecha o painel "Mais" automaticamente ao navegar
   useEffect(() => { setMoreOpen(false); }, [pathname]);
@@ -60,15 +78,21 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       setUserInitial((meta?.full_name || meta?.name || session.user.email || "U").charAt(0).toUpperCase());
 
       const [{ data: profile }, { count }] = await Promise.all([
-        supabase.from("profiles").select("biosites_limit").eq("id", session.user.id).maybeSingle(),
+        supabase.from("profiles").select("biosites_limit, plan_toqy, plan_tier").eq("id", session.user.id).maybeSingle(),
         supabase.from("toqy_biosites").select("id", { count: "exact", head: true }).eq("owner_profile_id", session.user.id),
       ]);
 
       const limit = profile?.biosites_limit ?? 1;
       setAtLimit((count ?? 0) >= limit);
+      setIsSingleSitePlan(limit <= 1);
+      setPlanTier((profile?.plan_toqy || profile?.plan_tier || "free") as string);
     }
     checkLimit();
   }, [pathname]);
+
+  const activeNavItems = isSingleSitePlan ? singleSiteNavItems(planTier) : navItems;
+  const activeMobileTabs = isSingleSitePlan ? activeNavItems : MOBILE_TAB_ITEMS;
+  const activeMobileMore = isSingleSitePlan ? [] : MOBILE_MORE_ITEMS;
 
   return (
     <main className="min-h-screen bg-bg text-ink lg:grid lg:grid-cols-[260px_1fr]">
@@ -84,7 +108,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             </Link>
           </div>
 
-          {atLimit ? (
+          {atLimit && isSingleSitePlan ? null : atLimit ? (
             <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center">
               <p className="text-xs font-black text-red-600">Limite atingido</p>
               <p className="mt-0.5 text-xs text-muted">Faça upgrade para criar mais bio sites.</p>
@@ -99,7 +123,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           )}
 
           <nav className="mt-6 flex-1 space-y-1">
-            {navItems.map((item) => {
+            {activeNavItems.map((item) => {
               const active = item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
               return <Nav key={item.href} href={item.href} icon={<item.icon className="h-5 w-5" />} label={item.label} active={active} />;
             })}
@@ -149,7 +173,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           padrão do app do Linktree: nav de app de verdade em vez de menu
           escondido atrás de hambúrguer). */}
       <nav className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-border bg-card pb-[env(safe-area-inset-bottom)] lg:hidden">
-        {MOBILE_TAB_ITEMS.map((item) => {
+        {activeMobileTabs.map((item) => {
           const active = item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
           return (
             <Link key={item.href} href={item.href} className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-bold transition ${active ? "text-accent" : "text-muted"}`}>
@@ -158,10 +182,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             </Link>
           );
         })}
-        <button type="button" onClick={() => setMoreOpen((v) => !v)} className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-bold transition ${moreOpen ? "text-accent" : "text-muted"}`}>
-          <MoreHorizontal className="h-5 w-5" />
-          Mais
-        </button>
+        {/* Só faz sentido "Mais" quando há itens escondidos — usuário de
+            plano single-site já vê os 3 únicos itens na barra principal. */}
+        {activeMobileMore.length ? (
+          <button type="button" onClick={() => setMoreOpen((v) => !v)} className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-bold transition ${moreOpen ? "text-accent" : "text-muted"}`}>
+            <MoreHorizontal className="h-5 w-5" />
+            Mais
+          </button>
+        ) : null}
       </nav>
 
       {/* Painel "Mais" — sobe de baixo, mesmo padrão de bottom-sheet do
@@ -170,7 +198,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         <>
           <div className="fixed inset-0 z-40 bg-ink/40 lg:hidden" onClick={() => setMoreOpen(false)} />
           <div className="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-50 rounded-t-3xl border border-border bg-card p-3 shadow-2xl lg:hidden">
-            {MOBILE_MORE_ITEMS.map((item) => {
+            {activeMobileMore.map((item) => {
               const active = item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
               return <Nav key={item.href} href={item.href} icon={<item.icon className="h-5 w-5" />} label={item.label} active={active} />;
             })}

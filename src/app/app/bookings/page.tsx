@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { CalendarCheck, Phone, StickyNote } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { listBiositesFromSupabase } from "@/lib/biositeSync";
@@ -23,7 +25,10 @@ type Booking = {
   created_at: string;
 };
 
-export default function BookingsPage() {
+function BookingsPageInner() {
+  // ?site=slug (2026-09-07, referência Coonexta — "Agendamentos" dentro
+  // do editor de UM bio site mostra só as reservas DAQUELE site).
+  const siteSlug = useSearchParams().get("site");
   const [sites, setSites] = useState<ToqySite[]>([]);
   const [bookingsBySite, setBookingsBySite] = useState<Record<string, Booking[]>>({});
   const [loading, setLoading] = useState(true);
@@ -57,14 +62,16 @@ export default function BookingsPage() {
     return () => { active = false; };
   }, []);
 
-  const totalBookings = Object.values(bookingsBySite).reduce((sum, list) => sum + list.length, 0);
+  const visibleSites = siteSlug ? sites.filter((s) => s.slug === siteSlug) : sites;
+  const totalBookings = visibleSites.reduce((sum, s) => sum + (bookingsBySite[s.id]?.length ?? 0), 0);
 
   return (
     <DashboardShell>
       <div>
-        <p className="text-sm font-black uppercase tracking-[0.18em] text-accent">Agendamento</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight md:text-5xl text-ink">Reservas confirmadas</h1>
-        <p className="mt-2 max-w-2xl text-muted">Horários agendados pelos visitantes direto no bio site. Cadastre serviços na etapa Agendamento de cada bio site.</p>
+        {siteSlug ? <Link href="/app/bookings" className="text-xs font-bold text-muted hover:text-ink">← Ver agendamentos de todos os bio sites</Link> : null}
+        <p className="mt-2 text-sm font-black uppercase tracking-[0.18em] text-accent">Agendamento</p>
+        <h1 className="mt-2 text-3xl font-black tracking-tight md:text-5xl text-ink">{siteSlug ? `Reservas — ${visibleSites[0]?.profile.name ?? siteSlug}` : "Reservas confirmadas"}</h1>
+        <p className="mt-2 max-w-2xl text-muted">Horários agendados pelos visitantes direto no bio site. Cadastre serviços na etapa Serviços de cada bio site.</p>
       </div>
 
       {loading ? (
@@ -76,7 +83,7 @@ export default function BookingsPage() {
         </div>
       ) : (
         <div className="mt-8 space-y-8">
-          {sites.filter((site) => bookingsBySite[site.id]?.length).map((site) => (
+          {visibleSites.filter((site) => bookingsBySite[site.id]?.length).map((site) => (
             <section key={site.id}>
               <h2 className="text-lg font-black text-ink">{site.profile.name} <span className="font-semibold text-muted">— /{site.slug}</span></h2>
               <div className="mt-3 space-y-2">
@@ -98,5 +105,13 @@ export default function BookingsPage() {
         </div>
       )}
     </DashboardShell>
+  );
+}
+
+export default function BookingsPage() {
+  return (
+    <Suspense fallback={null}>
+      <BookingsPageInner />
+    </Suspense>
   );
 }
