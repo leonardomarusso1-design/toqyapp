@@ -8,10 +8,8 @@ import { useRouter } from "next/navigation";
 import { LogOut, UserRound } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { DashboardHero } from "@/components/DashboardHero";
-import { listBiositesFromSupabase } from "@/lib/biositeSync";
 import { PLAN_BIOSITE_LIMITS } from "@/lib/planLimits";
 import { supabase } from "@/lib/supabaseClient";
-import type { ToqySite } from "@/lib/types";
 
 type PlanTier = keyof typeof PLAN_BIOSITE_LIMITS;
 
@@ -62,9 +60,6 @@ export default function PainelPage() {
   // unica saida seria trocar a de todo mundo de uma vez.
   const [rotatingId, setRotatingId] = useState<string | null>(null);
   const [novaChave, setNovaChave] = useState<{ slug: string; chave: string } | null>(null);
-  // Bio site principal + avatar alimentam o topo em formato de app
-  // (DashboardHero). "Principal" = o mais recente, mesma ordem da lista.
-  const [heroSite, setHeroSite] = useState<ToqySite | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   async function handleRotateKey(site: BioSiteRow) {
@@ -125,11 +120,6 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
       const meta = session.user.user_metadata;
       setAvatarUrl(meta?.avatar_url || meta?.picture || null);
       setLoading(false);
-
-      // Carregado depois do resto: o site_data inteiro é pesado e só
-      // alimenta a prévia do topo — não vale segurar o painel por ele.
-      const sites = await listBiositesFromSupabase();
-      if (active) setHeroSite(sites[0] ?? null);
     };
 
     loadDashboard().catch(() => {
@@ -176,7 +166,7 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
 
   return (
     <DashboardShell>
-      <DashboardHero site={heroSite} name={displayName} planLabel={planLabel} avatarUrl={avatarUrl} />
+      <DashboardHero name={displayName} planLabel={planLabel} avatarUrl={avatarUrl} />
 
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
