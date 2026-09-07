@@ -1123,6 +1123,30 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             )}
           </div>
 
+          {/* PIXELS & RASTREIO (2026-09-07, referência Coonexta —
+              documento de análise: grupo "Integrações"). Diferente do
+              GA do próprio Toqy (mede o marketing do Toqy) — aqui é o
+              CLIENTE FINAL medindo a campanha dele (Meta Ads, Google
+              Ads) na própria página. Nunca dispara no editor/preview
+              nem na vitrine da landing, só na página pública de
+              verdade — ver enablePixels em PublicBioSite.tsx. */}
+          <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
+            <p className="text-sm font-black text-ink">🎯 Pixels & Rastreio</p>
+            <p className="mt-0.5 text-xs text-muted">Meça as campanhas deste bio site nas suas próprias contas do Meta e do Google.</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <label>
+                <span className={label}>Meta Pixel ID</span>
+                <input className={field} value={site.trackingPixels?.metaPixelId ?? ""} onChange={(e) => update((s) => ({ ...s, trackingPixels: { ...s.trackingPixels, metaPixelId: e.target.value } }))} placeholder="Ex: 1234567890123456" />
+                <p className="mt-1 text-xs text-muted">Gerenciador de Eventos do Meta → Pixels.</p>
+              </label>
+              <label>
+                <span className={label}>Google Analytics (ID de medição)</span>
+                <input className={field} value={site.trackingPixels?.gaMeasurementId ?? ""} onChange={(e) => update((s) => ({ ...s, trackingPixels: { ...s.trackingPixels, gaMeasurementId: e.target.value } }))} placeholder="Ex: G-XXXXXXXXXX" />
+                <p className="mt-1 text-xs text-muted">Google Analytics → Administrador → Fluxos de dados.</p>
+              </label>
+            </div>
+          </div>
+
         </Section>
       );
     }

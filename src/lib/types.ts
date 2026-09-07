@@ -408,6 +408,18 @@ export type ToqySite = {
     askMessage?: boolean;
     buttonLabel?: string; // padrão "Enviar"
   };
+  // Pixels de rastreio (2026-09-07, referência Coonexta — documento de
+  // análise: grupo "Integrações → Pixels & Rastreio"). Cada bio site
+  // pode ter os PRÓPRIOS pixels — diferente do GA do Toqy em si
+  // (NEXT_PUBLIC_GA_MEASUREMENT_ID em GoogleAnalytics.tsx, que mede o
+  // marketing do Toqy). Isso aqui é o cliente final medindo campanha
+  // dele (Meta Ads, Google Ads) na própria página. Renderizado só na
+  // página pública de verdade (mesma regra de enableBackgroundMusic —
+  // nunca no preview do editor nem na vitrine da landing).
+  trackingPixels?: {
+    metaPixelId?: string;
+    gaMeasurementId?: string;
+  };
   // Preview de posts do Instagram "em tempo real" — embed oficial da Meta
   // (`instagram.com/embed.js`), sem API key/login: renderiza cada post ao
   // vivo (like/comentário atuais, puxados pelo próprio Instagram), não é

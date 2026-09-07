@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { GoogleAnalytics } from "./GoogleAnalytics";
-
-const CONSENT_KEY = "toqy-cookie-consent";
-type Consent = "accepted" | "rejected";
+import { CONSENT_KEY, type Consent } from "@/lib/cookieConsent";
 
 // Banner de consentimento (2026-09-01) — antes disso o site não pedia
 // consentimento de propósito (ver src/app/cookies/page.tsx), porque só

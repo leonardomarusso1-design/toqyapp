@@ -45,9 +45,15 @@ import { withSentryConfig } from "@sentry/nextjs";
 // frame-src novo (sem isso a CSP bloqueava silenciosamente, F12 cheio de
 // erro). Nenhum outro domínio do Instagram/Facebook é necessário além
 // desses 2 pro embed público funcionar (sem login, sem API key).
+// Meta Pixel (2026-09-07, referência Coonexta — "Pixels & Rastreio" por
+// bio site, ver trackingPixels em types.ts): o pixel do Meta carrega o
+// script de connect.facebook.net e depois manda os eventos pro mesmo
+// domínio. Sem isso na allowlist, todo bio site com Meta Pixel
+// configurado teria o script bloqueado silenciosamente pela CSP (F12
+// cheio de erro, igual aconteceu antes com o embed do Instagram).
 const scriptSrc = process.env.NODE_ENV === "development"
-  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.instagram.com;"
-  : "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.instagram.com;";
+  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.instagram.com https://connect.facebook.net;"
+  : "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.instagram.com https://connect.facebook.net;";
 
 const cspHeader = `
   default-src 'self';
@@ -56,7 +62,7 @@ const cspHeader = `
   img-src 'self' blob: data: https:;
   font-src 'self' data:;
   media-src 'self' blob: https:;
-  connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ingest.de.sentry.io https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com;
+  connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ingest.de.sentry.io https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://connect.facebook.net;
   frame-src https://www.instagram.com;
   worker-src 'self' blob:;
   object-src 'none';

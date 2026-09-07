@@ -38,6 +38,7 @@ import { analytics } from "@/lib/analytics";
 import { StickerIcon } from "./StickerIcon";
 import { LeadCaptureForm } from "./LeadCaptureForm";
 import { bioSiteFontById } from "@/lib/bioSiteFonts";
+import { TrackingPixels } from "./TrackingPixels";
 
 // Ícones originais (2026-07-16, pedido do Leonardo) — PNGs próprios em vez
 // dos SVGs de marca genéricos abaixo. Mesma assinatura (className) das
@@ -890,7 +891,7 @@ function representativeItemsByCategory(items: CatalogItem[]): CatalogItem[] {
   return result;
 }
 
-export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enableBackgroundMusic = false }: { site: ToqySite; publicUrl?: string; instanceId?: string; onStickerMove?: (id: string, x: number, y: number) => void; enableBackgroundMusic?: boolean }) {
+export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enableBackgroundMusic = false, enableTrackingPixels = false }: { site: ToqySite; publicUrl?: string; instanceId?: string; onStickerMove?: (id: string, x: number, y: number) => void; enableBackgroundMusic?: boolean; enableTrackingPixels?: boolean }) {
   const [modal, setModal] = useState<Modal>(null);
   const [qrModal, setQrModal] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
@@ -1029,6 +1030,7 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
           de verdade do bio site (ver PublicBioSiteServer.tsx) passa essa
           flag como true. */}
       {enableBackgroundMusic && backgroundMusicUrl ? <BackgroundMusicPlayer url={backgroundMusicUrl} volume={site.backgroundMusicVolume ?? 40} /> : null}
+      {enableTrackingPixels ? <TrackingPixels metaPixelId={site.trackingPixels?.metaPixelId} gaMeasurementId={site.trackingPixels?.gaMeasurementId} /> : null}
       {/* Capa em vídeo (2026-09-07, referência Coonexta) — some prioridade
           sobre a imagem de fundo quando presente. Muted é obrigatório:
           autoplay COM som é bloqueado por padrão pela maioria dos

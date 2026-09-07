@@ -13,5 +13,11 @@ export function PublicBioSiteServer({ site }: { site: ToqySite }) {
   // landing (LandingBioSiteCard), o preview ao vivo do editor
   // (LiveBioSitePreview) e o preview mobile do SiteBuilder renderizam o
   // MESMO <PublicBioSite> sem essa flag — nunca tocam música sozinhos.
-  return <PublicBioSite site={site} enableBackgroundMusic />;
+  //
+  // enableTrackingPixels (2026-09-07, referência Coonexta) — mesma regra:
+  // o Meta Pixel/GA de um bio site só pode disparar quando é a página
+  // pública de verdade sendo vista. Se disparasse no editor, o próprio
+  // dono editando contaminaria as métricas de campanha do cliente dele
+  // (o mesmo bug de fundo já corrigido pra page_view/analytics do Toqy).
+  return <PublicBioSite site={site} enableBackgroundMusic enableTrackingPixels />;
 }
