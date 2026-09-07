@@ -16,7 +16,8 @@ export type AnalyticsEventType =
   | "booking_click"
   | "review_click"
   | "catalog_view"
-  | "qr_scan";
+  | "qr_scan"
+  | "link_click";
 
 export type AnalyticsEvent = {
   id: string;
@@ -60,6 +61,7 @@ export const EVENT_LABELS: Record<AnalyticsEventType, string> = {
   review_click: "Cliques Avaliação",
   catalog_view: "Visualizações Catálogo",
   qr_scan: "Scans QR Code",
+  link_click: "Cliques em links",
 };
 
 /**
@@ -174,6 +176,28 @@ export const analytics = {
   trackCatalogView: (bioSiteId: string) =>
     trackEvent("catalog_view", bioSiteId),
 };
+
+// Mapa botão -> tipo de evento (2026-09-07, achado: PublicBioSite.tsx
+// nunca chamava trackButtonClick pra NENHUM botão — só o page_view era
+// gravado, por isso "Cliques" e "Taxa de conversão" sempre davam 0 no
+// painel de analytics, mesmo com visitantes reais clicando. Um mapa
+// central em vez de um trackEvent por tipo de botão espalhado pelo
+// PublicBioSite.tsx — um só ponto pra manter.
+export function eventTypeForButtonType(type: string): AnalyticsEventType {
+  switch (type) {
+    case "whatsapp": return "whatsapp_click";
+    case "instagram": return "instagram_click";
+    case "pix":
+    case "pixHub": return "pix_click";
+    case "wifi": return "wifi_click";
+    case "phone": return "phone_click";
+    case "maps": return "maps_click";
+    case "booking": return "booking_click";
+    case "review": return "review_click";
+    case "catalog": return "catalog_view";
+    default: return "link_click";
+  }
+}
 
 /**
  * Analytics dashboard metrics

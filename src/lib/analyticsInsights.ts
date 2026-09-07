@@ -76,3 +76,39 @@ export function periodRange(period: PeriodId): { from: string; to?: string } {
       return { from: new Date(0).toISOString() };
   }
 }
+
+/**
+ * Agrupa eventos por dia (2026-09-07, referência Coonexta — gráfico
+ * "Visitas e cliques ao longo do tempo" no painel do bio site). Um dia
+ * por bucket é suficiente pro volume esperado de um bio site — nada de
+ * granularidade por hora aqui.
+ */
+export function buildDailySeries(
+  events: Array<{ created_at: string; event_type: string }>,
+  from: string,
+  to?: string
+): Array<{ date: string; label: string; views: number; clicks: number }> {
+  const start = new Date(from);
+  const end = to ? new Date(to) : new Date();
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+
+  const dayKey = (d: Date) => d.toISOString().slice(0, 10);
+  const buckets = new Map<string, { views: number; clicks: number }>();
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    buckets.set(dayKey(d), { views: 0, clicks: 0 });
+  }
+
+  for (const e of events) {
+    const key = dayKey(new Date(e.created_at));
+    const bucket = buckets.get(key);
+    if (!bucket) continue; // fora do range de dias montado (evento no limite exato do período)
+    if (e.event_type === "page_view") bucket.views += 1;
+    else bucket.clicks += 1;
+  }
+
+  return [...buckets.entries()].map(([date, counts]) => {
+    const [, month, day] = date.split("-");
+    return { date, label: `${day}/${month}`, ...counts };
+  });
+}

@@ -34,7 +34,7 @@ import { resolveBodyBlockOrder } from "@/lib/bodyBlocks";
 import { ensureUrl, normalizeInstagram } from "@/lib/security";
 import { getPlan, resolvePlanTier } from "@/lib/subscriptions";
 import { colorSwatch, resolveColorStyle } from "@/lib/colorRoles";
-import { analytics } from "@/lib/analytics";
+import { analytics, eventTypeForButtonType } from "@/lib/analytics";
 import { StickerIcon } from "./StickerIcon";
 import { LeadCaptureForm } from "./LeadCaptureForm";
 import { bioSiteFontById } from "@/lib/bioSiteFonts";
@@ -976,6 +976,7 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
   }
 
   function handleButton(button: ToqyButton) {
+    analytics.trackButtonClick(eventTypeForButtonType(button.type), site.id, button.id, button.label);
     if (button.type === "wifi") return setModal("wifi");
     if (button.type === "pix" || button.type === "pixHub") return setModal("pix");
     // Agendamento nativo (2026-09-07): só abre o modal se houver ao menos
