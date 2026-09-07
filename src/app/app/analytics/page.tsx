@@ -76,8 +76,11 @@ export default function AnalyticsPage() {
         <p className="mt-8 text-sm text-muted">Nenhum bio site criado ainda.</p>
       ) : (
         <div className="mt-8 space-y-3">
+          {/* Cada linha agora abre a análise detalhada do site (origem
+              de tráfego, ranking de botões, mobile x desktop, conversão
+              — ver /app/analytics/[slug]/page.tsx, 2026-09-07). */}
           {stats.map(({ site, views }) => (
-            <div key={site.slug} className="flex items-center justify-between rounded-2xl border border-border bg-card p-5">
+            <Link key={site.slug} href={`/app/analytics/${site.slug}`} className="flex items-center justify-between rounded-2xl border border-border bg-card p-5 transition hover:border-accent">
               <div>
                 <p className="font-black text-ink">{site.profile.name}</p>
                 <p className="text-sm text-muted">/{site.slug}</p>
@@ -87,7 +90,7 @@ export default function AnalyticsPage() {
                 <span className="font-black">{views}</span>
                 <span className="text-sm font-bold">visualizações</span>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
