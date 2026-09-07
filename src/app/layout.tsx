@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
-import { Unbounded, Manrope } from "next/font/google";
+import { Bricolage_Grotesque, Manrope } from "next/font/google";
 import "./globals.css";
 import { AuthSync } from "@/components/AuthSync";
 import { CookieConsent } from "@/components/CookieConsent";
 
-// Identidade visual "Signal Ledger" do ecossistema (2026-07-03) — mesma
-// dupla de fontes usada no ZapFlow: Unbounded pro display (títulos, CTAs)
-// e Manrope pro corpo. next/font/google auto-hospeda os arquivos (sem
-// request externo pro Google Fonts em runtime, diferente da tag <link>
-// usada no Vite do ZapFlow) e gera as CSS vars usadas em globals.css.
-const unbounded = Unbounded({
+// Fonte de display trocada de Unbounded pra Bricolage Grotesque
+// (2026-09-07, pedido do Leonardo: "quero padronizar meus SaaS... todos
+// com a mesma fonte" — usando o Patrimo como referência de sistema). O
+// corpo já era Manrope nos dois, então essa era a única peça fora do
+// padrão. Nome da CSS var (--font-display) mantido de propósito — é
+// referenciado em globals.css e não muda em runtime, só o arquivo de
+// fonte por trás dela.
+const displayFont = Bricolage_Grotesque({
   subsets: ["latin"],
   variable: "--font-display",
   weight: ["400", "500", "600", "700", "800"],
@@ -62,7 +64,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR" className={`${unbounded.variable} ${manrope.variable}`}>
+    <html lang="pt-BR" className={`${displayFont.variable} ${manrope.variable}`}>
       <body className="min-h-screen font-body antialiased">
         <AuthSync />
         {children}
