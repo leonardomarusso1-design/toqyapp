@@ -1570,7 +1570,29 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
   const checklistPercent = Math.round((checklistDone / checklistItems.length) * 100);
 
   return (
-    <div className="mx-auto grid w-full max-w-6xl gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+    <div className="mx-auto grid w-full max-w-6xl gap-6 xl:grid-cols-[200px_minmax(0,1fr)_420px]">
+      {/* Sidebar fixa (2026-09-07, referência Coonexta — Leonardo: "o
+          dele é mais fácil de mexer, pelo jeito que montou o layout").
+          Substitui as pílulas SÓ no desktop grande (xl+, onde já tinha
+          espaço de sobra: o preview ocupa 420px fixos e o miolo ficava
+          largo demais pra formulário). Clique pula direto pra etapa,
+          sem exigir "Continuar" — mesmo modelo de navegação do Coonexta
+          (sidebar com Templates/Aparência/Botões/Catálogo/Endereço
+          sempre visível, sem wizard sequencial). Abaixo de xl, ainda
+          sem espaço pra 3 colunas, continuam as pílulas de sempre. */}
+      <nav className="sticky top-6 hidden h-fit flex-col gap-1 rounded-[1.5rem] border border-border bg-card p-2 shadow-sm xl:flex">
+        {steps.map((item, index) => (
+          <button
+            key={item}
+            type="button"
+            onClick={() => setStep(index)}
+            className={`flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black transition ${index === step ? "bg-accent text-white" : "text-muted hover:bg-surface hover:text-ink"}`}
+          >
+            {(() => { const Icon = STEP_META[index].icon; return <Icon className="h-4 w-4 shrink-0" />; })()}
+            <span className="truncate">{item}</span>
+          </button>
+        ))}
+      </nav>
       <div className="min-w-0">
         {/* Cabeçalho grande do builder. Dentro de um bloco no celular ele
             some (2026-09-06, print do Leonardo): o bloco já tem o próprio
@@ -1623,9 +1645,11 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
             </ul>
           </div>
         ) : null}
-        {/* Pílulas das 7 etapas — só no desktop a partir daqui (2026-09-06).
-            No celular quem navega é a lista de blocos + abas de rodapé. */}
-        <div className="mb-5 hidden gap-2 overflow-x-auto rounded-[1.5rem] border border-border bg-card p-2 shadow-sm sm:flex">{steps.map((item, index) => <button key={item} type="button" onClick={() => setStep(index)} className={`shrink-0 rounded-2xl px-4 py-2 text-sm font-black transition ${index === step ? "bg-accent text-white" : "text-muted hover:bg-surface"}`}>{index + 1}. {item}</button>)}</div>
+        {/* Pílulas das 7 etapas — desktop médio (sm até xl). No celular
+            quem navega é a lista de blocos + abas de rodapé; a partir de
+            xl quem navega é a sidebar fixa acima (não faz sentido as duas
+            juntas, uma duplicaria a outra). */}
+        <div className="mb-5 hidden gap-2 overflow-x-auto rounded-[1.5rem] border border-border bg-card p-2 shadow-sm sm:flex xl:hidden">{steps.map((item, index) => <button key={item} type="button" onClick={() => setStep(index)} className={`shrink-0 rounded-2xl px-4 py-2 text-sm font-black transition ${index === step ? "bg-accent text-white" : "text-muted hover:bg-surface"}`}>{index + 1}. {item}</button>)}</div>
 
         {/* CELULAR — lista de blocos da aba atual. Cada bloco abre a MESMA
             etapa que a pílula abriria no desktop. */}
