@@ -5,6 +5,7 @@ import type { ToqyButton, ToqyLinkType, ToqySite } from "@/lib/types";
 import { buttonTypeOptions, defaultLabelForType, syncModulesFromButtons } from "@/lib/buttonSync";
 import { generateId, normalizeInstagram } from "@/lib/security";
 import { DragHandle, DragReorderList } from "./DragReorderList";
+import { ColorPicker } from "./ColorPicker";
 
 type Props = { site: ToqySite; onChange: (site: ToqySite) => void };
 const input = "mt-2 w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-ink outline-none focus:border-accent";
@@ -125,6 +126,36 @@ export function ButtonEditor({ site, onChange }: Props) {
                         ⭐ Ação principal (CTA em destaque)
                       </label>
                       <p className="mt-1 text-xs text-muted">Só um botão pode ser o principal. Ele fica preenchido com a cor do tema e os outros viram cards claros, pra o cliente saber onde clicar primeiro.</p>
+                    </div>
+                  )}
+                  {/* Cor individual + pulsar (2026-09-07, referência
+                      Coonexta). Sem cor própria, o botão continua na cor
+                      global de "Fundo dos botões" (etapa Visual) — troca
+                      aqui só afeta ESTE botão. Some no modo ícone: ali quem
+                      manda é o role global "Fundo dos ícones sociais"
+                      (etapa Visual), não faz sentido os dois sistemas de
+                      cor competindo no mesmo botão. */}
+                  {button.displayAs === "icon" ? null : (
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      <ColorPicker
+                        label="Cor deste botão (opcional)"
+                        hint="Vazio = usa a cor global de todos os botões"
+                        value={button.color ?? { mode: "solid", value: "#000000" }}
+                        onChange={(v) => updateButton(button.id, { color: v })}
+                      />
+                      <div className="flex flex-col justify-between gap-2 rounded-2xl border border-border bg-card p-3">
+                        <div>
+                          <p className="text-sm font-black text-ink">Efeitos</p>
+                          <p className="text-xs text-muted">Chama atenção pro botão</p>
+                        </div>
+                        <label className="flex items-center gap-2 text-xs font-black text-ink">
+                          <input type="checkbox" checked={button.pulse === true} onChange={(e) => updateButton(button.id, { pulse: e.target.checked })} />
+                          💓 Pulsar
+                        </label>
+                        {button.color ? (
+                          <button type="button" onClick={() => updateButton(button.id, { color: undefined })} className="self-start text-xs font-black text-muted underline hover:text-accent-dim">Voltar pra cor global</button>
+                        ) : null}
+                      </div>
                     </div>
                   )}
                   <div className="mt-4">{destinationFields(button)}</div>

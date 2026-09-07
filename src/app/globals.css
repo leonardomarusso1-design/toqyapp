@@ -112,10 +112,10 @@ h3,
 
 @keyframes glowPulse {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.20), 0 0 30px rgba(255, 77, 109, 0.12);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 20%, transparent), 0 0 30px color-mix(in srgb, var(--color-accent) 12%, transparent);
   }
   50% {
-    box-shadow: 0 0 0 16px rgba(255, 77, 109, 0), 0 0 60px rgba(255, 77, 109, 0.22);
+    box-shadow: 0 0 0 16px color-mix(in srgb, var(--color-accent) 0%, transparent), 0 0 60px color-mix(in srgb, var(--color-accent) 22%, transparent);
   }
 }
 
@@ -249,6 +249,20 @@ h3,
    ainda chama atenção sem irritar. */
 .glow-pulse {
   box-shadow: 0 0 0 1px rgba(232, 71, 107, 0.12), 0 0 24px rgba(232, 71, 107, 0.10);
+}
+
+/* Pulsar de verdade, animado (2026-09-07, referência Coonexta: "eu posso
+   colocar um efeito pulsar"), por botão — ver `pulse` em ToqyButton
+   (types.ts). Reaproveita a keyframe glowPulse que já existia mas nunca
+   tinha sido usada como animação de verdade (só existia declarada). */
+.pulse-attention {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-attention {
+    animation: none;
+  }
 }
 
 .float-slow {

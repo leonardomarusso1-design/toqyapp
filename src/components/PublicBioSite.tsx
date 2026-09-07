@@ -28,7 +28,7 @@ import {
   Wifi,
   X,
 } from "lucide-react";
-import type { BusinessHours, CatalogItem, CatalogLayout, ToqyButton, ToqyLinkType, ToqySite } from "@/lib/types";
+import type { BusinessHours, CatalogItem, CatalogLayout, ColorValue, ToqyButton, ToqyLinkType, ToqySite } from "@/lib/types";
 import { buttonHref, createVCard, pixPayload, whatsappUrl, wifiPayload } from "@/lib/buttonUtils";
 import { resolveBodyBlockOrder } from "@/lib/bodyBlocks";
 import { ensureUrl, normalizeInstagram } from "@/lib/security";
@@ -630,10 +630,22 @@ function glassCard(site: ToqySite): React.CSSProperties {
   };
 }
 
-function buttonStyle(site: ToqySite): React.CSSProperties {
+// `buttonOverride` (2026-09-07, referência Coonexta: "alterar as cores de
+// cada botão individualmente") — cor de UM botão específico, definida no
+// editor (ButtonEditor.tsx). Quando presente, vence a cor global de
+// "Fundo dos botões" só pro fundo; texto/borda continuam vindo do role
+// global (não faz sentido pedir separadamente pra cada botão, e evita
+// contraste ruim se a pessoa só trocar o fundo). Sem valor, comportamento
+// idêntico a antes desta feature existir.
+function buttonStyle(site: ToqySite, buttonOverride?: ColorValue): React.CSSProperties {
   const colors = site.theme.colors;
   const fill = site.theme.buttonFill;
   const textColor = resolveColorStyle(colors?.buttonText, "text", site.theme.mode === "light" ? "#ffffff" : "#F8FAFC").color as string;
+  if (buttonOverride) return {
+    ...resolveColorStyle(buttonOverride, "bg", site.theme.primary),
+    color: textColor,
+    borderColor: colorSwatch(colors?.buttonBorder, "rgba(255,255,255,0.18)"),
+  };
   // Glass e Gradiente (legado, seletor "Preenchimento") ignoram cores
   // granulares de FUNDO — são automáticos; o texto/borda continua
   // respeitando o role granular (solid ou gradiente via colorSwatch).
@@ -1015,7 +1027,26 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
           de verdade do bio site (ver PublicBioSiteServer.tsx) passa essa
           flag como true. */}
       {enableBackgroundMusic && backgroundMusicUrl ? <BackgroundMusicPlayer url={backgroundMusicUrl} volume={site.backgroundMusicVolume ?? 40} /> : null}
-      {bgImage ? (
+      {/* Capa em vídeo (2026-09-07, referência Coonexta) — some prioridade
+          sobre a imagem de fundo quando presente. Muted é obrigatório:
+          autoplay COM som é bloqueado por padrão pela maioria dos
+          navegadores (mesma limitação documentada em BackgroundMusicPlayer
+          logo abaixo), e aqui não faz sentido nem lutar contra isso — o
+          vídeo é decorativo, não uma fonte de áudio. */}
+      {site.profile.backgroundVideoUrl ? (
+        <div className="fixed inset-0 -z-10 overflow-hidden bg-black">
+          <video
+            src={site.profile.backgroundVideoUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 mx-auto h-full w-full max-w-[430px] object-cover"
+            style={{ objectPosition: site.profile.backgroundImagePosition ?? "center top" }}
+          />
+          {site.theme.useBackgroundOverlay ? <div className="absolute inset-0 mx-auto w-full max-w-[430px]" style={{ backgroundImage: backgroundOverlayGradient(site) }} /> : null}
+        </div>
+      ) : bgImage ? (
         <div className="fixed inset-0 -z-10" style={{ background: themeGradient(site) }}>
           <div
             className="absolute inset-0 mx-auto w-full max-w-[430px]"
@@ -1276,7 +1307,7 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
                   {mainButtons.map((button) => {
                     const showIcon = site.theme.mainButtonDisplay !== "text-only";
                     if (site.theme.buttonStyle === "icon") {
-                      return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex min-h-24 flex-col items-center justify-center gap-2 border p-3 text-center text-xs font-black shadow-lg transition active:scale-[0.98]`} style={buttonStyle(site)}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span>{button.label}</span></button>;
+                      return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex min-h-24 flex-col items-center justify-center gap-2 border p-3 text-center text-xs font-black shadow-lg transition active:scale-[0.98] ${button.pulse ? "pulse-attention" : ""}`} style={buttonStyle(site, button.color)}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span>{button.label}</span></button>;
                     }
                     // Hierarquia do mockup (só quando algum botão foi
                     // marcado como principal — ver useButtonHierarchy):
@@ -1292,8 +1323,8 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
                           key={button.id}
                           type="button"
                           onClick={() => handleButton(button)}
-                          className={`${radiusClass(site)} flex min-h-[56px] w-full items-center gap-3 border px-3.5 py-3 text-left text-sm font-black transition active:scale-[0.98]`}
-                          style={isPrimary ? buttonStyle(site) : secondaryButtonStyle(site)}
+                          className={`${radiusClass(site)} flex min-h-[56px] w-full items-center gap-3 border px-3.5 py-3 text-left text-sm font-black transition active:scale-[0.98] ${button.pulse ? "pulse-attention" : ""}`}
+                          style={isPrimary ? buttonStyle(site, button.color) : secondaryButtonStyle(site)}
                         >
                           {showIcon ? (
                             <span
@@ -1313,7 +1344,7 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
                         </button>
                       );
                     }
-                    return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex w-full items-center justify-center gap-2 border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98]`} style={buttonStyle(site)}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span>{button.label}</span></button>;
+                    return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex w-full items-center justify-center gap-2 border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98] ${button.pulse ? "pulse-attention" : ""}`} style={buttonStyle(site, button.color)}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span>{button.label}</span></button>;
                   })}
                 </section>
               );

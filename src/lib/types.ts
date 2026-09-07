@@ -126,6 +126,17 @@ export type ToqyButton = {
   // exatamente como sempre renderizou (sem cards claros, sem chevron). O
   // editor garante no máximo 1 primário por bio site (ver ButtonEditor).
   isPrimary?: boolean;
+  // Cor individual por botão (2026-09-07, referência Coonexta — vídeo do
+  // Leonardo: "alterar as cores de cada botão individualmente"). Hoje só
+  // dava pra mudar a cor de TODOS os botões de uma vez (role global
+  // `buttonBg`/`buttonBorder`, ver colorRoles.ts). Sem valor aqui, o
+  // botão continua usando o role global — zero mudança nos ~57 bio
+  // sites que já existem.
+  color?: ColorValue;
+  // Efeito pulsar (mesma referência): chama atenção pro botão de ação
+  // principal (WhatsApp, agendamento). Reaproveita a keyframe
+  // `glowPulse` que já existe em globals.css.
+  pulse?: boolean;
 };
 
 // Horário de funcionamento (2026-09-06, mockup da auditoria externa — card
@@ -197,6 +208,13 @@ export type ToqySite = {
     // nas bordas sem nenhum jeito de ajustar. Mesmo padrão já usado em
     // profileImagePosition (via ImageCropper/react-easy-crop).
     backgroundImagePosition?: string;
+    // Capa em vídeo (2026-09-07, referência Coonexta — vídeo do Leonardo:
+    // "coloquei um vídeo no banner, olha que coisa mais linda"). Quando
+    // presente, substitui backgroundImageUrl no fundo do bio site — mudo,
+    // em loop, autoplay (mesma regra de qualquer vídeo de fundo: sem som,
+    // senão o navegador bloqueia o autoplay). Ver videoStorage.ts pro
+    // limite de tamanho/duração do upload direto.
+    backgroundVideoUrl?: string;
   };
   themePresetId?: string;
   theme: {

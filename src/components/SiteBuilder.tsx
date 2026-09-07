@@ -10,6 +10,7 @@ import { QRCodeSVG } from "qrcode.react";
 import type { BusinessHoursDay, CatalogItem, ColorRole, ColorValue, ThemePreset, ToqySite } from "@/lib/types";
 import { createPublicUrl, generateSlug } from "@/lib/dataProvider";
 import { COLOR_ROLES } from "@/lib/colorRoles";
+import { ColorPicker } from "./ColorPicker";
 import { BODY_BLOCK_LABELS, resolveBodyBlockOrder } from "@/lib/bodyBlocks";
 import { RealTemplateGallery } from "./RealTemplateGallery";
 import { syncBiositeToSupabase } from "@/lib/biositeSync";
@@ -20,6 +21,7 @@ import { validateSite } from "@/lib/validation";
 import { ImageGuidelineHint } from "./ImageGuidelineHint";
 import { ImageUploadField, uploadImageFile } from "./ImageUploadField";
 import { AudioUploadField } from "./AudioUploadField";
+import { VideoUploadField } from "./VideoUploadField";
 import { LiveBioSitePreview } from "./LiveBioSitePreview";
 import { PublicBioSite } from "./PublicBioSite";
 import { StickerIcon } from "./StickerIcon";
@@ -93,106 +95,6 @@ const label = "text-sm font-black text-ink";
 function Section({ children }: { children: React.ReactNode }) {
   return <section className="rounded-[2rem] border border-border bg-card p-5 shadow-sm md:p-6">{children}</section>;
 }
-
-// Limpeza (2026-09-06, auditoria externa): o componente Help() foi removido —
-// nenhum painel do builder o renderizava (os textos de ajuda são escritos
-// direto com <p className="text-xs ... text-muted">).
-
-// Bug real corrigido (2026-07-16): TODOS os 10 presets em themePresets.ts
-// usam `card: "rgba(...)"` (transparência) — mas <input type="color">
-// nativo só aceita "#rrggbb". Quando recebe qualquer outro formato (rgba,
-// nome de cor CSS, hex de 3 dígitos), o navegador silenciosamente troca
-// pra #000000 assim que o usuário toca no seletor — "mudo a cor e fica
-// tudo preto", reportado por cliente. normalizeToHex() resolve QUALQUER
-// string de cor CSS válida pro hex equivalente (via canvas), pra alimentar
-// o <input> nativo com um valor sempre seguro, sem perder a cor real na
-// bolinha de preview (que aceita rgba/qualquer CSS normalmente).
-function normalizeToHex(input: string): string {
-  const hex6 = /^#[0-9a-fA-F]{6}$/;
-  const hex3 = /^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/;
-  if (hex6.test(input)) return input.toLowerCase();
-  const m3 = input.match(hex3);
-  if (m3) return `#${m3[1]}${m3[1]}${m3[2]}${m3[2]}${m3[3]}${m3[3]}`.toLowerCase();
-  if (typeof document === "undefined") return "#000000";
-  try {
-    const ctx = document.createElement("canvas").getContext("2d");
-    if (!ctx) return "#000000";
-    const sentinel = "#123456";
-    ctx.fillStyle = sentinel;
-    ctx.fillStyle = input;
-    // Canvas ignora silenciosamente valores invalidos (mantem o anterior) —
-    // se ainda é o sentinel e o input não era literalmente essa cor, foi rejeitado.
-    if (ctx.fillStyle === sentinel && input.toLowerCase() !== sentinel) return "#000000";
-    ctx.fillRect(0, 0, 1, 1);
-    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
-    return `#${[r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
-  } catch {
-    return "#000000";
-  }
-}
-
-// Um único seletor sólido (swatch + hex) — usado pelo ColorPicker abaixo
-// tanto pro modo "Sólida" quanto pros 2 lados (de/para) do "Gradiente".
-function HexSwatchInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [local, setLocal] = useState(value);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => { setLocal(value); }, [value]);
-
-  function handleColorChange(v: string) {
-    setLocal(v);
-    // Debounce de 80ms para não re-renderizar o bio site a cada pixel do picker
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => onChange(v), 80);
-  }
-
-  const safeHex = normalizeToHex(local);
-  return (
-    <div className="flex items-center gap-2">
-      <label className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center">
-        <span className="h-9 w-9 rounded-full border-2 border-[#ffffff] shadow-md ring-1 ring-border transition hover:scale-110" style={{ background: local }} />
-        <input type="color" value={safeHex}
-          onChange={(e) => handleColorChange(e.target.value)}
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
-      </label>
-      <input type="text" value={local}
-        onChange={(e) => { if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) handleColorChange(e.target.value); }}
-        className="w-full min-w-0 flex-1 rounded-lg border border-border bg-surface px-2 py-1 font-mono text-xs text-ink outline-none focus:border-accent"
-        maxLength={7} />
-    </div>
-  );
-}
-
-// Reforma completa (2026-09-06) — antes era só sólido; agora cada role
-// aceita sólido OU gradiente (ColorValue, ver types.ts/colorRoles.ts).
-// Reaproveita HexSwatchInput acima pros 2 lados do gradiente.
-function ColorPicker({ label, hint, value, onChange }: { label: string; hint: string; value: ColorValue; onChange: (v: ColorValue) => void }) {
-  const isGradient = value.mode === "gradient";
-  return (
-    <div className="rounded-2xl border border-border bg-card p-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-black text-ink">{label}</p>
-          <p className="truncate text-xs text-muted">{hint}</p>
-        </div>
-        <div className="flex shrink-0 overflow-hidden rounded-full border border-border text-[10px] font-black">
-          <button type="button" onClick={() => !isGradient || onChange({ mode: "solid", value: value.from })} className={`px-2.5 py-1.5 transition ${!isGradient ? "bg-accent text-white" : "text-muted hover:bg-surface"}`}>Sólida</button>
-          <button type="button" onClick={() => isGradient || onChange({ mode: "gradient", from: value.value, to: value.value })} className={`px-2.5 py-1.5 transition ${isGradient ? "bg-accent text-white" : "text-muted hover:bg-surface"}`}>Gradiente</button>
-        </div>
-      </div>
-      <div className="mt-2">
-        {isGradient ? (
-          <div className="grid grid-cols-2 gap-2">
-            <HexSwatchInput value={value.from} onChange={(v) => onChange({ mode: "gradient", from: v, to: value.to })} />
-            <HexSwatchInput value={value.to} onChange={(v) => onChange({ mode: "gradient", from: value.from, to: v })} />
-          </div>
-        ) : (
-          <HexSwatchInput value={value.value} onChange={(v) => onChange({ mode: "solid", value: v })} />
-        )}
-      </div>
-    </div>
-  );
-}
-
 // Cor de partida sensata pra cada role, na primeira vez que o editor
 // mostra o campo (antes de o usuário ter escolhido algo) — usa os
 // valores base do tema atual (que continuam existindo como "seed"
@@ -837,6 +739,24 @@ export function SiteBuilder({ mode, initialSite, onSave }: Props) {
                 <input type="checkbox" checked={site.theme.useBackgroundOverlay} onChange={(e) => setTheme({ useBackgroundOverlay: e.target.checked })} />
                 Escurecer levemente a imagem (ajuda a ler o texto por cima, mas pode deixar a cor original mais acinzentada)
               </label>
+            </label>
+            {/* Capa em vídeo (2026-09-07, referência Coonexta — vídeo do
+                Leonardo: "coloquei um vídeo no banner, olha que coisa
+                mais linda"). Com vídeo definido, ele substitui a imagem
+                de fundo acima (ver PublicBioSite.tsx) — deixado separado
+                da imagem, não escondido atrás de um switch, porque a
+                pessoa pode querer alternar/testar os dois. */}
+            <label className="md:col-span-2">
+              <span className={label}>Vídeo de fundo (opcional)</span>
+              <div className="mb-2 rounded-2xl border border-violet/20 bg-violet/10 p-3 text-xs text-violet">
+                <strong>🎬 Quando definido, substitui a imagem de fundo acima.</strong> Vídeo curto (poucos segundos), sem som — toca automático e em loop.
+              </div>
+              <VideoUploadField
+                value={site.profile.backgroundVideoUrl}
+                onChange={(url) => setProfile({ backgroundVideoUrl: url })}
+                slug={site.slug}
+                editKey={site.editKey}
+              />
             </label>
           </div>
 
