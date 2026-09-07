@@ -591,10 +591,19 @@ function readableIconColor(bgColor: string, fallback: string): string {
 }
 
 function backgroundOverlayGradient(site: ToqySite): string {
+  // Bug real reportado ao vivo (2026-09-07, toqy.com.br/b/yakisabor):
+  // "site esprimido" — texto do perfil (nome/subtítulo/localização/
+  // descrição) ilegível, colidindo com o que está desenhado NA PRÓPRIA
+  // imagem de fundo. Causa: o degradê tinha um "vale" bem no meio (15%
+  // no escuro, 5% no claro) — exatamente onde o cabeçalho do perfil
+  // fica, por baixo do avatar. Ficava mais escuro em cima e embaixo (pros
+  // botões) e mais claro bem ali no meio, o pior lugar possível pra ficar
+  // fraco. Trocado por um degradê que só ESCURECE (nunca volta a
+  // clarear) — protege o texto do cabeçalho sem depender de onde ele cai.
   const isDark = site.theme.mode === "dark";
   return isDark
-    ? "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.55) 100%)"
-    : "linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 40%, rgba(0,0,0,0.30) 100%)";
+    ? "linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.6) 100%)"
+    : "linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.22) 45%, rgba(0,0,0,0.35) 100%)";
 }
 
 function themeGradient(site: ToqySite): string {
@@ -1136,7 +1145,11 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
               )}
             </div>
           <h1 className={`mt-5 ${NAME_FONT_SIZE_CLASS[site.theme.nameFontSize ?? "md"]} font-black leading-tight${site.theme.nameShadow === false ? "" : " drop-shadow-sm"}`} style={{ ...col("name", site.theme.text), textShadow: site.theme.nameShadow === false ? "none" : site.theme.mode === "light" ? "none" : "0 0 10px rgba(0,0,0,0.5)" }}>{site.profile.name}</h1>
-            {site.profile.title ? <p className="mt-1 text-base font-medium" style={col("title", site.theme.muted)}>{site.profile.title}</p> : null}
+            {/* textShadow (2026-09-07, mesmo bug do yakisabor): título,
+                localização e descrição não tinham nenhuma proteção contra o
+                que estiver desenhado atrás na imagem de fundo — só o nome
+                (h1 acima) já tinha. Mesmo valor de sombra do nome. */}
+            {site.profile.title ? <p className="mt-1 text-base font-medium" style={{ ...col("title", site.theme.muted), textShadow: site.theme.mode === "light" ? "none" : "0 0 10px rgba(0,0,0,0.5)" }}>{site.profile.title}</p> : null}
             {site.profile.location ? (
               <div className="mt-2 flex flex-col items-center gap-0.5">
               <div className="flex items-start justify-center gap-1">
@@ -1153,11 +1166,11 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
                     coladas à esquerda, ambas ficam rente ao ícone.
                     locationAlign="center" (2026-07-16) é opt-in pra quem
                     prefere centralizado mesmo com esse trade-off. */}
-                <p className={`${site.theme.locationAlign === "center" ? "text-center" : "text-left"} text-sm font-semibold leading-snug`} style={col("location", site.theme.muted)}>{site.profile.location}</p>
+                <p className={`${site.theme.locationAlign === "center" ? "text-center" : "text-left"} text-sm font-semibold leading-snug`} style={{ ...col("location", site.theme.muted), textShadow: site.theme.mode === "light" ? "none" : "0 0 10px rgba(0,0,0,0.5)" }}>{site.profile.location}</p>
               </div>
             </div>
             ) : null}
-            {site.profile.description ? <p className="mx-auto mt-4 max-w-[350px] text-center text-sm leading-relaxed" style={col("description", site.theme.muted)}>{site.profile.description}</p> : null}
+            {site.profile.description ? <p className="mx-auto mt-4 max-w-[350px] text-center text-sm leading-relaxed" style={{ ...col("description", site.theme.muted), textShadow: site.theme.mode === "light" ? "none" : "0 0 10px rgba(0,0,0,0.5)" }}>{site.profile.description}</p> : null}
             {site.profile.logoSignatureUrl ? (
               <img src={optimizedImageUrl(site.profile.logoSignatureUrl, 260)} alt={`${site.profile.name} assinatura`} className="mx-auto mt-4 max-h-20 max-w-[260px] object-contain drop-shadow-lg" />
             ) : null}
