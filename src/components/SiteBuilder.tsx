@@ -409,6 +409,15 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
   const [isSaving, setIsSaving] = useState(false);
   const publicLink = createPublicUrl(site.slug);
 
+  // Bug real reportado ao vivo (2026-09-08): "sempre que clico em algo,
+  // começa no final da página" — trocar de etapa/bloco não voltava o
+  // scroll pro topo, então quem tivesse rolado pra baixo numa etapa
+  // longa (Catálogo, Links e Botões) abria a próxima já no meio/fim
+  // dela, sem ver o título nem o começo do formulário.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [step, mobileOpen]);
+
   // Bug real corrigido (2026-09-06, achado ao vivo pelo Leonardo: conta no
   // plano Agência via "Disponível a partir do plano Pro" no lugar dos
   // campos de figurinha/música). Causa: o gate usava `limitState`, que só é
@@ -1871,7 +1880,17 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
             duplicar e sem deixar a barra fixa alta demais). A partir de sm,
             volta a ser um rodapé normal com os 3 botões. */}
         <div className={`fixed inset-x-0 bottom-0 z-20 gap-3 border-t border-border bg-bg/95 p-3 backdrop-blur-sm [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:z-auto sm:mt-5 sm:flex sm:flex-row sm:items-center sm:justify-between sm:rounded-[1.5rem] sm:border sm:bg-card sm:p-3 sm:shadow-sm sm:backdrop-blur-none ${mobileOpen ? "flex" : "hidden"}`}>
-          <button type="button" disabled={step === 0} onClick={() => setStep((v) => Math.max(0, v - 1))} className="flex-1 rounded-2xl border border-border bg-card px-5 py-3.5 text-sm font-black text-ink disabled:opacity-40 sm:flex-none sm:py-3">Voltar</button>
+          {/* "Voltar" só aparece a partir de sm (2026-09-08, bug real:
+              "aparece 2 voltar... fica confuso") — no celular o cabeçalho
+              do bloco (seta + título, logo acima) já é o único "voltar",
+              sempre volta pra lista. Este botão daqui, decrementando o
+              índice bruto da etapa, ignorava os grupos (Conteúdo/Design/
+              Publicar) e podia "vazar" pra etapa de outro grupo sem
+              trocar a aba visível — daí a sensação de "começa voltar pra
+              Links e Botões" vindo de Aparência. No desktop (pílulas em
+              fileira única, sem grupos) o índice bruto continua fazendo
+              sentido, por isso segue existindo a partir de sm. */}
+          <button type="button" disabled={step === 0} onClick={() => setStep((v) => Math.max(0, v - 1))} className="hidden flex-1 rounded-2xl border border-border bg-card px-5 py-3.5 text-sm font-black text-ink disabled:opacity-40 sm:inline-flex sm:flex-none sm:py-3">Voltar</button>
           <div className="flex flex-1 gap-3 sm:flex-none">
             {/* Bug real corrigido (2026-09-06, reportado ao vivo: "o botão
                 salvar... aparece só no topo, não em todo o editor, pra
@@ -1883,7 +1902,27 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                 celular (economiza espaço ao lado de "Voltar"/"Continuar"),
                 com o texto completo a partir de sm. */}
             <button type="button" onClick={save} disabled={isSaving} aria-label="Salvar agora" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-accent/20 bg-accent/5 px-3.5 py-3 text-sm font-black text-accent-dim disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"><Save className="h-4 w-4" /><span className="hidden sm:inline">{isSaving ? "Salvando..." : "Salvar agora"}</span></button>
-            <button type="button" onClick={() => step < steps.length - 1 ? setStep((v) => v + 1) : save()} disabled={isSaving} className="flex-1 rounded-2xl bg-accent px-5 py-3.5 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:py-3">{step < steps.length - 1 ? "Continuar" : isSaving ? "Salvando..." : "Salvar e publicar"}</button>
+            {/* No celular, "Continuar" virou "Concluído" e SEMPRE fecha
+                pra lista de blocos (2026-09-08, mesmo bug do "2 voltar") —
+                antes incrementava o índice bruto da etapa igual o
+                "Voltar", cruzando de um grupo pro outro sem aviso (ex:
+                terminar Aparência, cair direto em Links e Botões, ainda
+                com a aba "Design" marcada). Lista de blocos é o lugar
+                certo pra escolher o que vem depois, dentro do MESMO
+                grupo. A partir de sm, "Continuar" continua andando pela
+                fileira de pílulas normalmente. */}
+            <button
+              type="button"
+              onClick={() => {
+                if (mobileOpen) { setMobileOpen(false); return; }
+                if (step < steps.length - 1) setStep((v) => v + 1);
+                else save();
+              }}
+              disabled={isSaving}
+              className="flex-1 rounded-2xl bg-accent px-5 py-3.5 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:py-3"
+            >
+              {mobileOpen ? "Concluído" : step < steps.length - 1 ? "Continuar" : isSaving ? "Salvando..." : "Salvar e publicar"}
+            </button>
           </div>
         </div>
         {/* Espaçador — compensa a altura da barra fixa no celular, some a
