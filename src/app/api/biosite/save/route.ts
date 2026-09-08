@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer";
-import { isPremiumPlan, resolvePlanTier } from "@/lib/subscriptions";
+import { resolveEffectiveOwnerPlan } from "@/lib/subscriptions";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 import type { ToqySite } from "@/lib/types";
 
@@ -41,10 +41,8 @@ export async function POST(request: Request) {
     // já entregue com Pix/Wi-Fi/Catálogo perdia esses recursos assim que
     // fosse salvo de novo depois do dono (revendedor) cancelar o plano —
     // problema de quem nem tem relação com o pagamento do revendedor.
-    const currentPlan = profile?.plan_toqy ?? "free";
     const existingData = existing.site_data as ToqySite | null;
-    const previousPlan = resolvePlanTier(existingData?.ownerPlan);
-    const effectivePlan = isPremiumPlan(resolvePlanTier(currentPlan)) ? currentPlan : (isPremiumPlan(previousPlan) ? previousPlan : currentPlan);
+    const effectivePlan = resolveEffectiveOwnerPlan(profile?.plan_toqy, existingData?.ownerPlan);
 
     // "Acesso do cliente" (2026-09-07, referência Coonexta) — este é o
     // caminho de save de quem tem só a CHAVE de edição, nunca o dono

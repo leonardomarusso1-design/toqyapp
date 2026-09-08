@@ -7,9 +7,18 @@
 
 import { supabase } from "./supabaseClient";
 import { saveStoredSite } from "./siteStorage";
-import { isPremiumPlan, resolvePlanTier } from "./subscriptions";
 import type { ToqySite } from "./types";
 
+// Escreve via /api/biosite/sync (servidor), não mais direto no Supabase
+// pelo SDK do navegador (2026-09-08, achado numa auditoria de plano
+// gratuito x pro pedida pelo Leonardo). Motivo: RLS de toqy_biosites só
+// valida "é dono da linha" — não valida campos DENTRO do JSONB site_data.
+// Escrevendo direto do cliente, nada impedia (fora da tela normal, via
+// chamada manual à API do Supabase) setar site_data.ownerPlan pra um tier
+// pago e, graças à trava-nunca-desce, ficar com esse nível pra sempre sem
+// pagar. Agora o cálculo de ownerPlan só roda no servidor (ver
+// resolveEffectiveOwnerPlan em subscriptions.ts, chamado pela rota) — o
+// que for enviado aqui em site.ownerPlan é sempre ignorado lá.
 export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boolean; source: "supabase" | "local"; error?: string }> {
   // Tenta refresh da sessão primeiro — evita erro de token expirado
   let { data: { session } } = await supabase.auth.getSession();
@@ -23,75 +32,21 @@ export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boole
     return { ok: true, source: "local", error: "Sem sessão ativa — faça login novamente" };
   }
 
-  // Busca o plano atual do dono para salvar junto ao site
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("plan_toqy")
-    .eq("id", session.user.id)
-    .maybeSingle();
-
-  const currentPlan = profile?.plan_toqy ?? "free";
-
   try {
-    // Verifica se já existe (e busca o ownerPlan já gravado, se houver)
-    const { data: existing } = await supabase
-      .from("toqy_biosites")
-      .select("id, site_data")
-      .eq("slug", site.slug)
-      .maybeSingle();
+    const res = await fetch("/api/biosite/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ site }),
+    });
+    const data: { ok: boolean; ownerPlan?: string; error?: string } = await res.json();
 
-    // "Ownerplan trava-nunca-desce" (2026-09-01) — achado real: um bio site
-    // criado por um revendedor Freelancer/Agência é pra um CLIENTE FINAL dele
-    // (ex: uma barbearia), que não tem nada a ver com o revendedor atrasar o
-    // pagamento. Antes desta mudança, TODO save regravava ownerPlan com o
-    // plano ATUAL do dono — se o revendedor cancelasse e depois só corrigisse
-    // um texto num bio site antigo, aquele save apagava Pix/Wi-Fi/Catálogo da
-    // página pública do cliente final dele, sem o cliente final ter feito nada
-    // de errado. Regra nova: uma vez que o bio site foi salvo com um plano
-    // pago, ele mantém esse nível pra sempre (mesmo que o dono seja rebaixado
-    // depois) — só o plano ATUAL do dono decide se dá pra CRIAR bio site novo
-    // (ver checkBiositeLimit, que roda antes disso e é o bloqueio de verdade).
-    const previousPlan = resolvePlanTier((existing?.site_data as ToqySite | undefined)?.ownerPlan);
-    const effectivePlan = isPremiumPlan(resolvePlanTier(currentPlan)) ? currentPlan : (isPremiumPlan(previousPlan) ? previousPlan : currentPlan);
-    const siteWithPlan = { ...site, ownerPlan: effectivePlan };
-
-    if (existing) {
-      const { error } = await supabase
-        .from("toqy_biosites")
-        .update({
-          site_data: siteWithPlan,
-          name: siteWithPlan.profile.name,
-          status: site.status ?? "active",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("slug", site.slug)
-        .eq("owner_profile_id", session.user.id);
-
-      if (error) {
-        console.error("[biositeSync] UPDATE error:", JSON.stringify(error));
-        saveStoredSite(site);
-        return { ok: false, source: "local", error: error.message || error.code };
-      }
-    } else {
-      const { error } = await supabase
-        .from("toqy_biosites")
-        .insert({
-          slug: site.slug,
-          name: siteWithPlan.profile.name,
-          status: site.status ?? "active",
-          edit_key_hash: site.editKey,
-          owner_profile_id: session.user.id,
-          site_data: siteWithPlan,
-        });
-
-      if (error) {
-        console.error("[biositeSync] INSERT error:", JSON.stringify(error));
-        saveStoredSite(site);
-        return { ok: false, source: "local", error: error.message || error.code };
-      }
+    if (!res.ok || !data.ok) {
+      console.error("[biositeSync] /api/biosite/sync error:", data.error);
+      saveStoredSite(site);
+      return { ok: false, source: "local", error: data.error };
     }
 
-    saveStoredSite(siteWithPlan);
+    saveStoredSite({ ...site, ownerPlan: data.ownerPlan });
     return { ok: true, source: "supabase" };
 
   } catch (err) {

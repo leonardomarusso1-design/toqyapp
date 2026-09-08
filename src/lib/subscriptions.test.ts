@@ -6,6 +6,7 @@ import {
   OVERAGE_LINKS,
   PLAN_FEATURES_COMPARISON,
   resolvePlanTier,
+  resolveEffectiveOwnerPlan,
   getPlan,
   isPremiumPlan,
   canUseStickersAndMusic,
@@ -109,6 +110,45 @@ describe("capacidades por plano", () => {
   it("considera premium todo plano pago e só ele", () => {
     for (const plan of ALL_PLANS) {
       expect(isPremiumPlan(plan)).toBe(getPlan(plan).priceMonthly > 0);
+    }
+  });
+});
+
+describe("resolveEffectiveOwnerPlan (trava-nunca-desce)", () => {
+  // Fonte única desta regra pra /api/biosite/sync (dono logado) e
+  // /api/biosite/save (chave de edição) — os dois caminhos que gravam
+  // ownerPlan no servidor. Ver comentário grande em subscriptions.ts.
+
+  it("usa o plano atual quando ele é pago, mesmo com histórico gratuito", () => {
+    expect(resolveEffectiveOwnerPlan("pro", "free")).toBe("pro");
+    expect(resolveEffectiveOwnerPlan("agency", undefined)).toBe("agency");
+  });
+
+  it("mantém o plano anterior pago quando o dono foi rebaixado pro Gratuito", () => {
+    expect(resolveEffectiveOwnerPlan("free", "agency")).toBe("agency");
+    expect(resolveEffectiveOwnerPlan(undefined, "pro")).toBe("pro");
+  });
+
+  it("nunca sobe de plano sozinho — dois históricos gratuitos continuam gratuitos", () => {
+    expect(resolveEffectiveOwnerPlan("free", "free")).toBe("free");
+    expect(resolveEffectiveOwnerPlan(undefined, undefined)).toBe("free");
+  });
+
+  it("ignora valor de ownerPlan inválido/forjado no histórico — nunca eleva plano sozinho", () => {
+    // Regressão do achado real (2026-09-08): um client-side conseguindo
+    // escrever site_data.ownerPlan diretamente (fora da tela normal) não
+    // pode virar plano pago permanente só porque "previousOwnerPlanRaw"
+    // contém um valor forjado que não existe no catálogo de planos.
+    expect(resolveEffectiveOwnerPlan("free", "nao-existe")).toBe("free");
+    expect(resolveEffectiveOwnerPlan("free", "AGENCY; DROP TABLE")).toBe("free");
+  });
+
+  it("plano pago atual sempre vence, independente do histórico", () => {
+    for (const current of ALL_PLANS) {
+      for (const previous of ALL_PLANS) {
+        if (!isPremiumPlan(current)) continue;
+        expect(resolveEffectiveOwnerPlan(current, previous)).toBe(current);
+      }
     }
   });
 });

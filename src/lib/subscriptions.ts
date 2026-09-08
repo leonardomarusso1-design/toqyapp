@@ -366,6 +366,20 @@ export function isPremiumPlan(planType: PlanType): boolean {
   return planType !== "free";
 }
 
+// "Ownerplan trava-nunca-desce" (2026-09-01) — extraído aqui pra ter UMA
+// fonte de verdade, em vez de duas cópias coladas (biositeSync.ts e
+// api/biosite/save/route.ts, cada uma reimplementando a mesma conta).
+// Regra: um bio site salvo com plano pago mantém esse nível pra sempre
+// (mesmo que o dono seja rebaixado depois) — só o plano ATUAL decide se
+// dá pra CRIAR site novo (isso é canCreateSite, roda antes e em outro
+// lugar). Motivo: um bio site de revenda é pra um CLIENTE FINAL que não
+// tem nada a ver com o revendedor atrasar o pagamento.
+export function resolveEffectiveOwnerPlan(currentPlanRaw?: string | null, previousOwnerPlanRaw?: string | null): PlanType {
+  const currentPlan = resolvePlanTier(currentPlanRaw);
+  const previousPlan = resolvePlanTier(previousOwnerPlanRaw);
+  return isPremiumPlan(currentPlan) ? currentPlan : (isPremiumPlan(previousPlan) ? previousPlan : currentPlan);
+}
+
 // Stickers/música (2026-09-05, restrito 2026-09-06) — NÃO é a mesma regra
 // de isPremiumPlan: Essencial é pago mas fica de fora de propósito (pedido
 // do Leonardo). Só Pro Pessoal, Freelancer e Agência têm.
