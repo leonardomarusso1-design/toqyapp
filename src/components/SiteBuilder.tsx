@@ -389,6 +389,19 @@ function BulkCatalogPhotoAdd({ slug, catalog, onAdd, editKey }: { slug: string; 
 export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", isOwner = true }: Props) {
   const isReadOnly = accessLevel === "readonly";
   const [site, setSite] = useState<ToqySite>({ ...initialSite, catalogLayout: initialSite.catalogLayout ?? "carousel" });
+  // Slug de partida (2026-09-08, bug real: "dando não autorizado" ao subir
+  // logo em site novo) — usado só pra saber se o slug ainda está no
+  // padrão auto-gerado (ainda não customizado) enquanto a pessoa digita o
+  // nome do negócio. Antes comparava com a string fixa "novo-negocio" —
+  // TODO site novo nascia com esse MESMO slug até a pessoa digitar o
+  // nome, então o primeiro upload de imagem (antes de digitar o nome)
+  // sempre batia num "toqy_biosites" com esse slug já salvo por OUTRO
+  // usuário (achado real: linha criada em 2026-07-13, dono diferente) —
+  // a checagem de dono em /api/upload-image via isAuthorized() barrava
+  // corretamente, só que a causa raiz era o slug de partida não ser único
+  // por sessão de criação. Guardando o slug ORIGINAL desta sessão (que já
+  // é único, ver /app/novo/page.tsx) resolve sem precisar de string mágica.
+  const initialSlugRef = useRef(initialSite.slug);
   const [step, setStep] = useState(0);
   const [saved, setSaved] = useState<ToqySite | null>(null);
   const [copied, setCopied] = useState("");
@@ -577,7 +590,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                 ...s,
                 profile: { ...s.profile, name },
                 // Atualiza slug em tempo real enquanto está no padrão gerado pelo nome
-                slug: (s.slug === "novo-negocio" || s.slug === generateSlug(s.profile.name) || !s.slug)
+                slug: (s.slug === initialSlugRef.current || s.slug === generateSlug(s.profile.name) || !s.slug)
                   ? generateSlug(name)
                   : s.slug
               }));

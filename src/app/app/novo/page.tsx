@@ -6,7 +6,7 @@ import { EditorShell } from "@/components/EditorShell";
 import { SiteBuilder } from "@/components/SiteBuilder";
 import { createSiteFromSegmentTemplate } from "@/lib/segmentTemplates";
 import { syncBiositeToSupabase } from "@/lib/biositeSync";
-import { generateSlug } from "@/lib/security";
+import { generateId, generateSlug } from "@/lib/security";
 import type { ToqySite } from "@/lib/types";
 
 export default function NewBioSitePage() {
@@ -20,6 +20,16 @@ export default function NewBioSitePage() {
   // real") já dá pra clonar um catálogo de verdade quando quiser um
   // ponto de partida populado. Começar vazio bate com o pedido de "tudo
   // desativado, ir ativando aos poucos" pra quem está criando do zero.
+  // Slug único por sessão de criação (2026-09-08, RISCO REAL achado ao
+  // vivo: "tentando colocar logo do negócio... dando não autorizado").
+  // Todo /app/novo nascia com o MESMO slug fixo "novo-negocio" até a
+  // pessoa digitar o nome do negócio — e um bio site de teste antigo
+  // (2026-07-13) já tinha esse slug salvo, de OUTRO dono. Qualquer
+  // upload de imagem feito ANTES de digitar o nome batia nesse slug
+  // "ocupado", e /api/upload-image corretamente recusava (dono
+  // diferente) — só que a causa era o slug de partida não ser único.
+  // generateId() dá um sufixo que nenhuma outra criação em paralelo
+  // (mesmo negócio, mesmo instante) nunca vai repetir.
   const [initialSite] = useState(() => createSiteFromSegmentTemplate("servicos", {
     profile: {
       name: "Novo negócio",
@@ -29,7 +39,7 @@ export default function NewBioSitePage() {
       logoSize: "medium",
       logoShape: "circle",
     },
-    slug: "novo-negocio",
+    slug: `novo-negocio-${generateId().slice(0, 8)}`,
     catalog: [],
   }));
 

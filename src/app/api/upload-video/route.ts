@@ -58,12 +58,18 @@ async function isAuthorized(
     const { data, error } = await supabase!.auth.getUser(token);
     const userId = error ? null : data.user?.id;
     if (userId) {
+      // "!existing → true" (2026-09-08, bug real: fundo em vídeo é
+      // configurável na etapa Aparência, a MESMA etapa da criação —
+      // igual upload-image já fazia). Sem isso, subir um vídeo de capa
+      // ANTES do primeiro "Salvar" (site ainda não gravado em
+      // toqy_biosites) sempre dava 401, pra qualquer usuário.
       const { data: existing } = await supabase!
         .from("toqy_biosites")
         .select("owner_profile_id")
         .eq("slug", slug)
         .maybeSingle();
-      return existing?.owner_profile_id === userId;
+      if (!existing) return true;
+      return existing.owner_profile_id === userId;
     }
   }
 
