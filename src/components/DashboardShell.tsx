@@ -26,15 +26,33 @@ import { supabase } from "@/lib/supabaseClient";
 // ?site=slug), que é o lugar certo. As páginas /app/leads e
 // /app/bookings continuam existindo (chegam por ali), só não têm mais
 // item aqui no menu principal.
-const navItems = [
-  { href: "/app", icon: Home, label: "Painel" },
-  { href: "/onboarding", icon: Users, label: "Novo cliente" },
-  { href: "/app/qr", icon: QrCode, label: "QR Codes" },
-  { href: "/app/analytics", icon: BarChart3, label: "Analytics" },
-  { href: "/app/dominio", icon: Globe, label: "Domínio próprio" },
-  { href: "/app/revenda", icon: Handshake, label: "Revenda" },
-  { href: "/app/configuracoes", icon: Settings, label: "Configurações" },
+// Sidebar agrupada por intenção (2026-09-08, referência Coonexta — doc
+// "Toqy vs Coonexta": a sidebar antiga listava tudo no mesmo nível, o que
+// fazia QR/Analytics/Domínio/Revenda parecerem módulos desconectados
+// mesmo pertencendo ao mesmo fluxo de negócio). URLs não mudam — só a
+// organização visual. "Cadastros"/"Agendamento" continuam fora daqui de
+// propósito (ver nota grande abaixo, decisão de 2026-09-07).
+const NAV_GROUPS = [
+  { label: "Visão geral", items: [
+    { href: "/app", icon: Home, label: "Painel" },
+  ] },
+  { label: "Meus canais", items: [
+    { href: "/app/qr", icon: QrCode, label: "QR Codes" },
+    { href: "/app/dominio", icon: Globe, label: "Domínio próprio" },
+  ] },
+  { label: "Clientes e crescimento", items: [
+    { href: "/onboarding", icon: Users, label: "Novo cliente" },
+    { href: "/app/analytics", icon: BarChart3, label: "Analytics" },
+    { href: "/app/revenda", icon: Handshake, label: "Revenda" },
+  ] },
+  { label: "Conta", items: [
+    { href: "/app/configuracoes", icon: Settings, label: "Configurações" },
+  ] },
 ];
+const navItems = NAV_GROUPS.flatMap((g) => g.items);
+function navByHref(href: string) {
+  return navItems.find((i) => i.href === href)!;
+}
 
 // Navegação em abas no mobile (2026-09-06, pedido do Leonardo depois de
 // analisar o app do Linktree: "pense no Toqy como um app futuro" — o
@@ -42,8 +60,8 @@ const navItems = [
 // desktop continua com a sidebar de sempre (não faz sentido tab bar em
 // tela grande); no mobile os 3 itens mais usados ficam fixos + "Mais"
 // abre o resto (mesmo padrão do Linktree: itens essenciais + overflow).
-const MOBILE_TAB_ITEMS = [navItems[0], navItems[2], navItems[3]]; // Painel, QR Codes, Analytics
-const MOBILE_MORE_ITEMS = [navItems[1], navItems[4], navItems[5], navItems[6]]; // Novo cliente, Domínio, Revenda, Configurações
+const MOBILE_TAB_ITEMS = [navByHref("/app"), navByHref("/app/qr"), navByHref("/app/analytics")];
+const MOBILE_MORE_ITEMS = [navByHref("/onboarding"), navByHref("/app/dominio"), navByHref("/app/revenda"), navByHref("/app/configuracoes")];
 
 // Painel de quem só quer 1 biosite pro próprio negócio (2026-09-07,
 // referência Coonexta — print enviado pelo Leonardo: 3 itens só —
@@ -130,21 +148,48 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             </Link>
           )}
 
-          <nav className="mt-6 flex-1 space-y-1">
-            {activeNavItems.map((item) => {
-              const active = item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
-              return <Nav key={item.href} href={item.href} icon={<item.icon className="h-5 w-5" />} label={item.label} active={active} />;
-            })}
+          <nav className="mt-6 flex-1 space-y-4">
+            {isSingleSitePlan ? (
+              <div className="space-y-1">
+                {activeNavItems.map((item) => {
+                  const active = item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
+                  return <Nav key={item.href} href={item.href} icon={<item.icon className="h-5 w-5" />} label={item.label} active={active} />;
+                })}
+              </div>
+            ) : (
+              NAV_GROUPS.map((group) => (
+                <div key={group.label}>
+                  <p className="px-3 pb-1 text-[10px] font-black uppercase tracking-wider text-muted">{group.label}</p>
+                  <div className="space-y-1">
+                    {group.items.map((item) => {
+                      const active = item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
+                      return <Nav key={item.href} href={item.href} icon={<item.icon className="h-5 w-5" />} label={item.label} active={active} />;
+                    })}
+                  </div>
+                </div>
+              ))
+            )}
             {/* Admin (2026-09-08) — só quem tem profiles.is_admin=true
                 (hoje, só o Leonardo) vê este item; a página em si também
-                confere de novo, não depende só de esconder o link. */}
+                confere de novo, não depende só de esconder o link. Fica de
+                fora dos grupos de negócio de propósito — é área técnica,
+                não uma tarefa do dia a dia do dono do bio site (doc "Toqy
+                vs Coonexta", 7.1: "não deve aparecer na navegação normal
+                do cliente"). */}
             {isAdmin ? (
-              <Nav href="/app/admin/suporte" icon={<Headset className="h-5 w-5" />} label="Suporte (admin)" active={pathname.startsWith("/app/admin")} />
+              <div>
+                <p className="px-3 pb-1 text-[10px] font-black uppercase tracking-wider text-muted">Admin</p>
+                <Nav href="/app/admin/suporte" icon={<Headset className="h-5 w-5" />} label="Suporte (admin)" active={pathname.startsWith("/app/admin")} />
+              </div>
             ) : null}
-            <div className="pt-4 border-t border-border">
-              <LogoutButton />
-            </div>
           </nav>
+
+          {/* Logout (2026-09-08: tirada a duplicação — antes aparecia aqui
+              E no cabeçalho ao mesmo tempo no desktop, ver doc "Toqy vs
+              Coonexta", 7.2). Fica só aqui, fora dos grupos de navegação. */}
+          <div className="border-t border-border pt-3">
+            <LogoutButton />
+          </div>
 
           <div className="mt-auto border-t border-border pt-4">
             <div className="rounded-xl bg-surface p-4 text-center">
@@ -170,9 +215,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <span className="text-sm font-black text-muted">{userInitial}</span>
               )}
             </Link>
-            <div className="hidden lg:block">
-              <LogoutButton />
-            </div>
           </div>
         </header>
 
