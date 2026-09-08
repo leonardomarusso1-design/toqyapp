@@ -18,7 +18,27 @@ export function syncModulesFromButtons(site: ToqySite): ToqySite {
   Object.entries(moduleByButtonType).forEach(([type, moduleKey]) => {
     nextModules[moduleKey] = site.buttons.some((button) => button.type === type && button.enabled);
   });
-  return { ...site, modules: nextModules };
+  return { ...site, modules: nextModules, buttons: enforceSinglePrimary(site.buttons) };
+}
+
+// Rede de segurança pro invariante "só 1 botão principal" (2026-09-08,
+// bug real reportado ao vivo com print: "se eu marco apenas o botao de
+// cima, todos os botoes ficam com CTA EM DESTAQUE"). setPrimary() em
+// ButtonEditor.tsx já garante isso na hora de marcar, mas duplicar um
+// botão que já era principal copiava isPrimary junto (corrigido
+// separadamente) — sem essa rede, qualquer outro caminho futuro que
+// esqueça de zerar isPrimary (import, merge de template, etc.) volta a
+// deixar 2+ botões marcados ao mesmo tempo. Roda em TODO commit/save
+// (syncModulesFromButtons é chamado nos dois), então fecha a porta de
+// vez: só o primeiro isPrimary:true sobrevive, os demais são zerados.
+function enforceSinglePrimary(buttons: ToqySite["buttons"]): ToqySite["buttons"] {
+  let seen = false;
+  return buttons.map((button) => {
+    if (button.isPrimary !== true) return button;
+    if (seen) return { ...button, isPrimary: undefined };
+    seen = true;
+    return button;
+  });
 }
 
 export function defaultLabelForType(type: ToqyLinkType): string {

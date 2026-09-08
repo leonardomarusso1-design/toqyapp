@@ -30,7 +30,14 @@ export function ButtonEditor({ site, onChange }: Props) {
     setOpenIds((prev) => new Set(prev).add(newId));
   }
   function removeButton(id: string) { commit({ ...site, buttons: site.buttons.filter((button) => button.id !== id) }); }
-  function duplicateButton(button: ToqyButton) { commit({ ...site, buttons: [...site.buttons, { ...button, id: generateId("btn"), label: `${button.label} cópia` }] }); }
+  // isPrimary: undefined na cópia, sempre (2026-09-08, bug real
+  // reportado ao vivo com print: "se eu marco apenas o botao de cima,
+  // todos os botoes ficam com CTA EM DESTAQUE" — duplicar um botão que
+  // já era "Ação principal" copiava o isPrimary junto, sem passar pelo
+  // setPrimary abaixo (que é o único lugar que garante só 1 marcado).
+  // Resultado: 2 botões com isPrimary:true ao mesmo tempo — o checkbox
+  // aparecia marcado em mais de um sem ninguém ter clicado nele.
+  function duplicateButton(button: ToqyButton) { commit({ ...site, buttons: [...site.buttons, { ...button, id: generateId("btn"), label: `${button.label} cópia`, isPrimary: undefined }] }); }
   // CTA primário (2026-09-06, mockup da auditoria externa: "UM CTA primário
   // por seção"). Marcar um botão DESMARCA todos os outros — a hierarquia só
   // funciona se existir exatamente um destaque; dois "principais" viram
