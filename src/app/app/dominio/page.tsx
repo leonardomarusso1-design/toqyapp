@@ -173,15 +173,20 @@ export default function DominioPage() {
           <p className="text-sm font-bold text-muted">Crie um bio site primeiro pra poder conectar um domínio a ele.</p>
         </div>
       ) : (
+        // min-w-0 nas 2 sections (2026-09-08, mesmo bug de sempre: "grid"
+        // sem grid-cols no mobile — abaixo de lg não tem coluna
+        // declarada, item de grid recebe min-width:auto por padrão e
+        // estoura a faixa se o conteúdo pedir mais espaço, mesma causa
+        // raiz de app/page.tsx, db91f92.
         <div className="mt-7 grid gap-5 lg:grid-cols-[280px_1fr]">
-          <section className="rounded-[2rem] border border-border bg-card p-5 shadow-sm h-fit">
+          <section className="min-w-0 rounded-[2rem] border border-border bg-card p-5 shadow-sm h-fit">
             <p className="text-sm font-black text-ink">Escolha o bio site</p>
             <div className="mt-3 space-y-2">
               {sites.map((site) => (
                 <button
                   key={site.id}
                   onClick={() => setSelectedSlug(site.slug)}
-                  className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-sm font-bold transition ${
+                  className={`flex w-full min-w-0 items-center justify-between rounded-xl border px-3 py-2.5 text-left text-sm font-bold transition ${
                     selectedSlug === site.slug ? "border-accent bg-accent/10 text-accent-dim" : "border-border bg-surface text-ink hover:border-accent/40"
                   }`}
                 >
@@ -192,7 +197,7 @@ export default function DominioPage() {
             </div>
           </section>
 
-          <section className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
+          <section className="min-w-0 rounded-[2rem] border border-border bg-card p-6 shadow-sm">
             <p className="font-black text-ink">toqy.com.br/b/{selectedSlug}</p>
 
             {message ? <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{message}</p> : null}
