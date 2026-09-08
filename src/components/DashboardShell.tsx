@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
-import { BarChart3, CalendarCheck, Crown, Globe, Handshake, Home, Inbox, MoreHorizontal, Plus, QrCode, Settings, Users } from "lucide-react";
+import { BarChart3, Crown, Globe, Handshake, Home, MoreHorizontal, Plus, QrCode, Settings, Users } from "lucide-react";
 import { LogoutButton } from "@/components/LogoutButton";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -14,17 +14,22 @@ import { supabase } from "@/lib/supabaseClient";
 // página (/app/artes) e a rota de geração continuam existindo no código
 // (não descontinuadas, só desacopladas do produto atual) — a plaquinha
 // física vira um sistema separado, a pensar depois.
+// "Cadastros" e "Agendamento" saíram deste menu (2026-09-07, bug real
+// reportado ao vivo: "o Cadastros não sei se tá legal, vai aparecer de
+// vários biosites que criei pra venda... isso deveria ser individual,
+// no painel de cada biosite, não no meu painel de usuário"). Pra um
+// revendedor com vários clientes, uma lista global misturando os
+// contatos/reservas de negócios completamente diferentes não serve de
+// nada — cada bio site já tem "Cadastros deste site"/"Agendamentos"
+// dentro do próprio editor (ver SiteBuilder.tsx, grupo Análise, com
+// ?site=slug), que é o lugar certo. As páginas /app/leads e
+// /app/bookings continuam existindo (chegam por ali), só não têm mais
+// item aqui no menu principal.
 const navItems = [
   { href: "/app", icon: Home, label: "Painel" },
   { href: "/onboarding", icon: Users, label: "Novo cliente" },
   { href: "/app/qr", icon: QrCode, label: "QR Codes" },
   { href: "/app/analytics", icon: BarChart3, label: "Analytics" },
-  // "Cadastros" (2026-09-07, referência Coonexta) — contatos capturados
-  // pelo bloco "Formulário de contato" (ver leadForm em types.ts).
-  { href: "/app/leads", icon: Inbox, label: "Cadastros" },
-  // "Agendamento" (2026-09-07, referência Coonexta) — reservas feitas
-  // pelo fluxo nativo de agendamento (ver services em types.ts).
-  { href: "/app/bookings", icon: CalendarCheck, label: "Agendamento" },
   { href: "/app/dominio", icon: Globe, label: "Domínio próprio" },
   { href: "/app/revenda", icon: Handshake, label: "Revenda" },
   { href: "/app/configuracoes", icon: Settings, label: "Configurações" },
@@ -37,7 +42,7 @@ const navItems = [
 // tela grande); no mobile os 3 itens mais usados ficam fixos + "Mais"
 // abre o resto (mesmo padrão do Linktree: itens essenciais + overflow).
 const MOBILE_TAB_ITEMS = [navItems[0], navItems[2], navItems[3]]; // Painel, QR Codes, Analytics
-const MOBILE_MORE_ITEMS = [navItems[1], navItems[4], navItems[5], navItems[6], navItems[7], navItems[8]]; // Novo cliente, Cadastros, Agendamento, Domínio, Revenda, Configurações
+const MOBILE_MORE_ITEMS = [navItems[1], navItems[4], navItems[5], navItems[6]]; // Novo cliente, Domínio, Revenda, Configurações
 
 // Painel de quem só quer 1 biosite pro próprio negócio (2026-09-07,
 // referência Coonexta — print enviado pelo Leonardo: 3 itens só —

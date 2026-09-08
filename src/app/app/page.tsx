@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 // Limpeza (2026-09-06, auditoria externa): CheckCircle2 foi removido do
 // import — nenhum JSX desta página usava o ícone, só pesava o bundle.
-import { LogOut, Plus, UserRound } from "lucide-react";
+import { Plus } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { DashboardHero } from "@/components/DashboardHero";
 import { PLAN_BIOSITE_LIMITS } from "@/lib/planLimits";
@@ -38,16 +38,8 @@ const PLAN_LABELS: Record<PlanTier, string> = {
   agency: "Agência",
 };
 
-const SUBSCRIPTION_LABELS: Record<string, string> = {
-  active: "Ativa",
-  canceled: "Cancelada",
-  past_due: "Pagamento pendente",
-  inactive: "Ativa", // plano free sempre ativo
-};
-
 export default function PainelPage() {
   const router = useRouter();
-  const [count, setCount] = useState(0);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [biosites, setBiosites] = useState<BioSiteRow[]>([]);
@@ -116,7 +108,6 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
 
       setProfile(profileData as Profile);
       setBiosites((biositesData ?? []) as BioSiteRow[]);
-      setCount((biositesData ?? []).length);
       const meta = session.user.user_metadata;
       setAvatarUrl(meta?.avatar_url || meta?.picture || null);
       setLoading(false);
@@ -124,7 +115,6 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
 
     loadDashboard().catch(() => {
       if (!active) return;
-      setCount(0);
       setLoading(false);
     });
 
@@ -132,11 +122,6 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
       active = false;
     };
   }, [router]);
-
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    router.push("/");
-  }
 
   // Botão online/offline (pedido do Leonardo, 2026-09-05): usuários que
   // vendem o biosite pra um cliente final e cobram por assinatura/mensalidade
@@ -157,12 +142,8 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
 
   const planTier = (profile?.plan_toqy || profile?.plan_tier || "free") as PlanTier;
   const planLabel = PLAN_LABELS[planTier] ?? PLAN_LABELS.free;
-  const subscriptionLabel = SUBSCRIPTION_LABELS[profile?.subscription_status ?? "active"] ?? "Ativa";
   const planLimit = profile?.biosites_limit ?? PLAN_BIOSITE_LIMITS[planTier] ?? PLAN_BIOSITE_LIMITS.free;
-  const usagePercentage = planLimit > 0 ? Math.min((count / planLimit) * 100, 100) : 0;
-  const isNearLimit = usagePercentage > 80;
   const displayName = profile?.full_name?.trim() || "Usuário";
-  const displayEmail = profile?.email ?? "—";
   // Gratuito/Pro = 1 bio site só, pro próprio negócio (2026-09-07,
   // referência Coonexta — print do Leonardo: painel de quem só quer 1
   // biosite entra direto no "Meu biosite", sem lista de múltiplos sites
@@ -205,57 +186,13 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
     <DashboardShell>
       <DashboardHero name={displayName} planLabel={planLabel} avatarUrl={avatarUrl} />
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <section className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/10 text-accent"><UserRound className="h-5 w-5" /></span>
-              <h2 className="text-xl font-black text-ink">Conta</h2>
-            </div>
-            <button onClick={handleLogout} className="inline-flex items-center gap-2 rounded-2xl border border-border px-4 py-2 text-sm font-black text-ink transition hover:border-violet/30 hover:text-violet">
-              <LogOut className="h-4 w-4" />
-              Sair
-            </button>
-          </div>
-          <dl className="mt-5 grid gap-3 text-sm">
-            <div className="flex items-center justify-between"><dt className="font-bold text-muted">Nome</dt><dd className="font-black text-ink">{loading ? "Carregando..." : displayName}</dd></div>
-            <div className="flex items-center justify-between"><dt className="font-bold text-muted">E-mail</dt><dd className="font-black text-ink">{loading ? "Carregando..." : displayEmail}</dd></div>
-            <div className="flex items-center justify-between"><dt className="font-bold text-muted">Páginas criadas</dt><dd className="font-black text-ink">{count}</dd></div>
-          </dl>
-        </section>
-
-        <section className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
-          <h2 className="text-xl font-black text-ink">Plano atual</h2>
-          <p className="mt-2 text-sm text-muted">Acompanhe seu plano, assinatura e uso atual de biosites.</p>
-          <div className="mt-4 rounded-2xl bg-emerald-50 p-4">
-            <p className="text-2xl font-black text-emerald-950">{loading ? "Carregando..." : planLabel}</p>
-            <p className="text-sm font-bold text-emerald-800">Status da assinatura: {loading ? "Carregando..." : subscriptionLabel}</p>
-          </div>
-          <div className="mt-4 rounded-2xl border border-border bg-surface p-4">
-            <div className="flex items-center justify-between gap-3 text-sm font-bold text-muted">
-              <span>Biosites criados</span>
-              <span>{count} / {planLimit}</span>
-            </div>
-            <div className="mt-3 h-3 overflow-hidden rounded-full bg-border">
-              <div className="h-full rounded-full bg-gradient-to-r from-accent to-violet transition-all" style={{ width: `${usagePercentage}%` }} />
-            </div>
-            <p className="mt-3 text-sm text-muted">{Math.round(usagePercentage)}% do limite do plano utilizado.</p>
-          </div>
-          {planTier === "free" ? (
-            <div className="mt-4 rounded-2xl border border-violet/20 bg-violet/10 p-4">
-              <p className="text-base font-black text-ink">Faça upgrade para criar mais biosites!</p>
-              <p className="mt-1 text-sm font-medium text-muted">Desbloqueie mais páginas e recursos avançados para sua conta.</p>
-              <Link href="/#planos" className="mt-4 inline-flex rounded-2xl bg-violet px-5 py-3 text-sm font-black text-white transition hover:opacity-90">Ver planos</Link>
-            </div>
-          ) : null}
-          {isNearLimit ? (
-            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-800">
-              Você está próximo do limite do seu plano. Considere fazer upgrade para continuar criando biosites sem bloqueios.
-            </div>
-          ) : null}
-          <Link href="/#planos" className="mt-4 inline-flex rounded-2xl border border-border px-5 py-3 text-sm font-black text-ink transition hover:border-accent hover:text-accent-dim">Ver todos os planos</Link>
-        </section>
-
+      <div className="grid gap-5">
+        {/* "Conta" e "Plano atual" saíram desta página (2026-09-07, bug
+            real reportado ao vivo: "tá poluído, deviam estar em outro
+            lugar") — já existem, melhor feitos (com usagePercentage,
+            upgrade, Discord, cupom), em /app/configuracoes. Duplicar
+            aqui só juntava informação que não é sobre UM bio site
+            específico no meio da lista de bio sites. */}
         {/* Lista de bio sites */}
         <section className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
@@ -340,7 +277,6 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
                               setConfirmDelete(null);
                               await supabase.from("toqy_biosites").delete().eq("id", site.id);
                               setBiosites(b => b.filter(s => s.id !== site.id));
-                              setCount(c => c - 1);
                               setDeletingId(null);
                             }} className="rounded-xl bg-red-500 px-3 py-1.5 text-xs font-black text-white">Confirmar</button>
                             <button onClick={() => setConfirmDelete(null)} className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-black text-muted">Cancelar</button>
