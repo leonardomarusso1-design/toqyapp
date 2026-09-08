@@ -431,6 +431,12 @@ export type ToqySite = {
   spotifyUrl?: string;
   spotifyLabel?: string; // padrão "Ouça minha música"
   spotifyDisplay?: "icon" | "button" | "preview";
+  // Cor própria do botão do Spotify (2026-09-08, bug real reportado ao
+  // vivo: "botao do spotify nao consigo mudar a cor dele sozinho, ta
+  // mudando la em cor principal") — sem valor, cai na cor global "Fundo
+  // dos botões" (mesmo padrão do `color` de cada botão normal em
+  // ToqyButton, ver buttonOverride em PublicBioSite.tsx).
+  spotifyColor?: ColorValue;
   // Captura de leads (2026-09-07, referência Coonexta — menu "Captura de
   // leads" visto no vídeo do Leonardo: "Suas ferramentas de captura de
   // público"). Formulário simples no bio site público que grava nome +

@@ -580,6 +580,17 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
       await onSave(siteToValidate);
       setSite(siteToValidate);
       setSaved(siteToValidate);
+      // Vai pra etapa "Publicar" pra mostrar as instruções de entrega
+      // (link, QR Code, slug e chave) — 2026-09-08, bug real reportado ao
+      // vivo: "terminei de criar o biosite... mas ao salvar não aparece as
+      // instruções de mandar pro cliente". Existem 4 botões de "Salvar"
+      // espalhados pelo editor (topo, header mobile, barra fixa) e todos
+      // chamam esta mesma função — só que o bloco de instruções só existe
+      // dentro do RENDER da última etapa. Salvando de qualquer outra
+      // etapa, o site salvava certinho mas a pessoa nunca via o bloco.
+      // Mesmo padrão que erro de validação e limite de plano JÁ faziam
+      // aqui embaixo (setStep(steps.length - 1)) — só faltava no sucesso.
+      setStep(steps.length - 1);
     } catch (err) {
       setErrors([err instanceof Error ? err.message : "Erro ao salvar. Tente novamente."]);
     } finally {
@@ -954,6 +965,24 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                     <div className="mt-2 grid gap-3 sm:grid-cols-2">
                       <label><span className="text-xs font-black text-ink">Texto do botão</span><input className={field} value={site.spotifyLabel ?? ""} onChange={(e) => update((s) => ({ ...s, spotifyLabel: e.target.value }))} placeholder="Ouça minha música" /></label>
                       <label><span className="text-xs font-black text-ink">Formato</span><select className={field} value={site.spotifyDisplay ?? "button"} onChange={(e) => update((s) => ({ ...s, spotifyDisplay: e.target.value as "icon" | "button" | "preview" }))}><option value="button">Botão com texto</option><option value="icon">Só ícone</option><option value="preview">Prévia embutida</option></select></label>
+                      {/* Cor própria (2026-09-08, bug real reportado ao
+                          vivo: "botao do spotify nao consigo mudar a cor
+                          dele sozinho, ta mudando la em cor principal") —
+                          mesmo padrão do "Cor deste botão" em
+                          ButtonEditor.tsx: vazio usa a cor global. */}
+                      {site.spotifyDisplay !== "icon" ? (
+                        <div className="sm:col-span-2">
+                          <ColorPicker
+                            label="Cor deste botão (opcional)"
+                            hint="Vazio = usa a cor global de todos os botões"
+                            value={site.spotifyColor ?? { mode: "solid", value: "#000000" }}
+                            onChange={(v) => update((s) => ({ ...s, spotifyColor: v }))}
+                          />
+                          {site.spotifyColor ? (
+                            <button type="button" onClick={() => update((s) => ({ ...s, spotifyColor: undefined }))} className="mt-1.5 text-xs font-black text-muted hover:text-accent">Voltar pra cor global</button>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>
@@ -1965,13 +1994,16 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
         {mode === "edit" && site.slug ? (
           <>
             <p className="px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Análise</p>
-            <Link href={`/app/analytics/${site.slug}`} target="_blank" className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
+            {/* Sem target="_blank" (2026-09-08, bug real reportado ao vivo:
+                "nas analise quando clico em algum menu abre nova guia, nao
+                queria que abrisse nova guia") — abre na mesma aba agora. */}
+            <Link href={`/app/analytics/${site.slug}`} className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
               <Eye className="h-4 w-4 shrink-0" /> Estatísticas
             </Link>
-            <Link href={`/app/links/${site.slug}`} target="_blank" className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
+            <Link href={`/app/links/${site.slug}`} className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
               <Link2 className="h-4 w-4 shrink-0" /> Meus Links
             </Link>
-            <Link href={`/app/leads?site=${site.slug}`} target="_blank" className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
+            <Link href={`/app/leads?site=${site.slug}`} className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
               <Inbox className="h-4 w-4 shrink-0" /> Cadastros deste site
             </Link>
             {/* Pix recebidos (2026-09-07): adiado de propósito — "hoje uso
@@ -1981,7 +2013,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
             <span className="flex cursor-not-allowed items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted/40" title="Em breve — precisa de um meio de pagamento próprio de Pix">
               <Wallet className="h-4 w-4 shrink-0" /> Pix recebidos
             </span>
-            <Link href={`/app/bookings?site=${site.slug}`} target="_blank" className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
+            <Link href={`/app/bookings?site=${site.slug}`} className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
               <CalendarClock className="h-4 w-4 shrink-0" /> Agendamentos
             </Link>
             <p className="mt-2 px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Editar site</p>

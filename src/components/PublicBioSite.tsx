@@ -322,12 +322,18 @@ const SpotifyLinkBlock = ({ url, label, display, site }: { url: string; label: s
       </div>
     );
   }
+  // Cor própria (spotifyColor) — 2026-09-08, bug real reportado ao vivo:
+  // sem isso, este botão sempre usava a cor global "Fundo dos botões",
+  // então trocá-la mudava TODOS os botões junto, sem jeito de deixar só
+  // o Spotify diferente. Mesmo mecanismo de buttonOverride que os
+  // botões normais já usam (ToqyButton.color).
+  const spotifyStyle = buttonStyle(site, site.spotifyColor);
   return (
     <button type="button" onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
       className="flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98]"
-      style={buttonStyle(site).button}>
+      style={spotifyStyle.button}>
       <SpotifyIcon className="h-5 w-5 shrink-0" />
-      <span style={buttonStyle(site).text}>{label}</span>
+      <span style={spotifyStyle.text}>{label}</span>
     </button>
   );
 };
@@ -603,6 +609,13 @@ function secondaryButtonStyle(site: ToqySite): React.CSSProperties {
 }
 
 const WEEKDAY_COUNT = 7;
+
+// "YYYY-MM-DD" a partir dos componentes LOCAIS da data (não UTC) — usado
+// pelo agendamento pra saber o "hoje" de quem está agendando, sem o
+// adiantamento de dia que `toISOString()` causa à noite no Brasil.
+function localISODate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 function parseMinutes(value: string): number | null {
   const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
@@ -1871,7 +1884,13 @@ function BookingModal({ site, onClose, isPreview }: { site: ToqySite; onClose: (
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [error, setError] = useState("");
 
-  const minDate = new Date().toISOString().slice(0, 10);
+  // Data local (não UTC) — 2026-09-08, mesma família do bug de fuso já
+  // corrigido em outros lugares: toISOString() é sempre UTC, então à
+  // noite no Brasil (UTC-3) ela já mostra o dia seguinte como "hoje" —
+  // o mínimo selecionável ficava um dia adiantado bem na hora que mais
+  // gente agenda (fim de tarde/noite).
+  const todayLocal = localISODate(new Date());
+  const minDate = todayLocal;
 
   useEffect(() => {
     setTime("");
@@ -1880,21 +1899,40 @@ function BookingModal({ site, onClose, isPreview }: { site: ToqySite; onClose: (
     const service = services.find((s) => s.id === serviceId);
     if (!service) return;
 
+    // Filtra horário que já passou (2026-09-08, bug real reportado ao
+    // vivo: "os horario pra marcar daquele dia, se passou ou ta fora de
+    // hora, deveria estar fechados") — generateSlotsForDay só sabe o
+    // expediente (abre/fecha), não sabe que horas são agora; aplicado
+    // aqui, depois de receber a lista, pro MESMO filtro valer tanto pro
+    // preview (calculado local) quanto pra página pública (calculado no
+    // servidor) sem duplicar a lógica de "que horas são" nos dois lados.
+    // Usa o relógio de quem está agendando — é o cliente que está na
+    // frente do negócio, é o fuso certo pra essa decisão.
+    function dropPastSlots(list: string[]): string[] {
+      if (date !== todayLocal) return list;
+      const now = new Date();
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      return list.filter((slot) => {
+        const [h, m] = slot.split(":").map(Number);
+        return h * 60 + m > nowMinutes;
+      });
+    }
+
     if (isPreview) {
       const [year, month, day] = date.split("-").map(Number);
       const weekday = new Date(year, month - 1, day).getDay();
-      setSlots(generateSlotsForDay(site.businessHours, weekday, service.durationMinutes, site.bookingSlotMinutes ?? 30, []));
+      setSlots(dropPastSlots(generateSlotsForDay(site.businessHours, weekday, service.durationMinutes, site.bookingSlotMinutes ?? 30, [])));
       return;
     }
 
     setLoadingSlots(true);
     fetch(`/api/biosite-booking/available?bioSiteId=${encodeURIComponent(site.id)}&serviceId=${encodeURIComponent(serviceId)}&date=${date}`)
       .then((r) => r.json())
-      .then((data) => setSlots(data.slots ?? []))
+      .then((data) => setSlots(dropPastSlots(data.slots ?? [])))
       .catch(() => setSlots([]))
       .finally(() => setLoadingSlots(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serviceId, date, site.id, isPreview]);
+  }, [serviceId, date, site.id, isPreview, todayLocal]);
 
   async function confirm() {
     setStatus("sending");
