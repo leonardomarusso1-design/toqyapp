@@ -5,11 +5,10 @@ import { QRCodeSVG } from "qrcode.react";
 // Limpeza (2026-09-06, auditoria externa): ChevronLeft e MessageCircle
 // saíram do import — nenhum dos dois era renderizado (o carrossel usa
 // swipe/scroll e o WhatsApp usa o WhatsAppIcon próprio abaixo).
-// ChevronRight VOLTOU no mesmo dia (mockup da auditoria externa): a seta
-// à direita dos botões grandes é parte da hierarquia primário/secundário.
+// ChevronRight saiu de novo em 2026-09-08 — a hierarquia primário/
+// secundário (que usava a seta) foi revertida, ver useButtonHierarchy.
 import {
   CalendarCheck,
-  ChevronRight,
   Clock,
   Copy,
   CreditCard,
@@ -584,31 +583,6 @@ function softTint(hex: string, alpha = "1F"): string {
   if (!match) return hex;
   const full = match[1].length === 3 ? match[1].split("").map((c) => c + c).join("") : match[1];
   return `#${full}${alpha}`;
-}
-
-// Card claro das ações secundárias. Texto via colorSwatch (não
-// resolveColorStyle) de propósito: em modo gradiente o resolver de TEXTO
-// devolve `color: transparent` + bg-clip, o que aqui apagaria o texto por
-// cima do fundo do próprio card — o swatch entrega uma cor sólida legível.
-//
-// Fundo e texto SEMPRE claros de verdade, nos dois temas (2026-09-08, 2ª
-// correção do mesmo bug real, agora com print: "quando marco destaque, os
-// outros botão fica tudo preto" — a 1ª correção só ajustou o fallback do
-// TEXTO; o fundo continuava `rgba(255,255,255,0.10)` em tema escuro — 10%
-// de branco por cima de um fundo já escuro renderiza quase idêntico a
-// preto de novo, não o "card claro" que o texto da tela promete ("os
-// outros viram cards claros"). Fundo e texto agora são fixos (não
-// derivam de theme.text/buttonText, que são calibrados pro fundo da
-// PÁGINA, não pra este card) — sempre um cinza bem claro com texto
-// escuro, legível em cima de qualquer tema.
-function secondaryButtonStyle(site: ToqySite): React.CSSProperties {
-  const isLight = site.theme.mode === "light";
-  return {
-    ...resolveColorStyle(site.theme.colors?.secondaryButtonBg, "bg", "#F1F5F9"),
-    color: colorSwatch(site.theme.colors?.secondaryButtonText, "#0F172A"),
-    borderColor: "rgba(15,23,42,0.08)",
-    boxShadow: isLight ? "0 6px 18px rgba(15,23,42,0.06)" : "0 8px 22px rgba(0,0,0,0.20)",
-  };
 }
 
 const WEEKDAY_COUNT = 7;
@@ -1251,43 +1225,33 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
                     if (site.theme.buttonStyle === "icon") {
                       { const s = buttonStyle(site, button.color); return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex min-h-24 flex-col items-center justify-center gap-2 border p-3 text-center text-xs font-black shadow-lg transition active:scale-[0.98] ${button.pulse ? "pulse-attention" : ""}`} style={s.button}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span style={s.text}>{button.label}</span></button>; }
                     }
-                    // Hierarquia do mockup (só quando algum botão foi
-                    // marcado como principal — ver useButtonHierarchy):
-                    // o primário fica preenchido com a cor cheia e o
-                    // ícone num círculo BRANCO; os demais viram cards
-                    // claros com o ícone num círculo da mesma cor em
-                    // opacidade baixa. Os dois ganham a seta à direita e
-                    // min-h-[56px] (acima dos 44px mínimos de toque).
-                    if (useButtonHierarchy) {
-                      const isPrimary = button.isPrimary === true;
-                      const primary = isPrimary ? buttonStyle(site, button.color) : null;
-                      return (
-                        <button
-                          key={button.id}
-                          type="button"
-                          onClick={() => handleButton(button)}
-                          className={`${radiusClass(site)} flex min-h-[56px] w-full items-center gap-3 border px-3.5 py-3 text-left text-sm font-black transition active:scale-[0.98] ${button.pulse ? "pulse-attention" : ""}`}
-                          style={primary ? primary.button : secondaryButtonStyle(site)}
-                        >
-                          {showIcon ? (
-                            <span
-                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                              style={{ background: isPrimary ? "rgba(255,255,255,0.95)" : softTint(accent) }}
-                            >
-                              {/* Ícones de marca (WhatsApp/Instagram/...)
-                                  são PNG já colorido e ignoram esta cor —
-                                  dentro do círculo branco eles aparecem
-                                  com a cor real da marca, que é o que o
-                                  visitante reconhece. */}
-                              <ButtonIcon type={button.type} color={accent} />
-                            </span>
-                          ) : null}
-                          <span className="min-w-0 flex-1 truncate" style={primary ? primary.text : undefined}>{button.label}</span>
-                          <ChevronRight className="h-5 w-5 shrink-0 opacity-70" />
-                        </button>
-                      );
-                    }
-                    { const s = buttonStyle(site, button.color); return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex w-full items-center justify-center gap-2 border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98] ${button.pulse ? "pulse-attention" : ""}`} style={s.button}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span style={s.text}>{button.label}</span></button>; }
+                    // Destaque do botão principal (2026-09-08, pedido ao
+                    // vivo: "os botoes nao deve mudar nada.. o unico que
+                    // deve mudar e ficar destacado é o que estiver
+                    // selecionado e ativado .. os outros tem que manter
+                    // cores e tamanhos que ja estao"). ANTES, marcar um
+                    // botão como principal convertia TODOS os outros pra
+                    // um card "secundário" genérico com seta — perdiam a
+                    // cor/tamanho próprios (ver useButtonHierarchy acima,
+                    // e o histórico de bugs reportados com print sobre
+                    // "todos os botões ficam pretos"). Agora só o botão
+                    // marcado ganha destaque (brilho + leve aumento); os
+                    // demais renderizam exatamente como sempre — mesmo
+                    // tamanho, mesma cor própria.
+                    const isFeatured = useButtonHierarchy && button.isPrimary === true;
+                    const s = buttonStyle(site, button.color);
+                    return (
+                      <button
+                        key={button.id}
+                        type="button"
+                        onClick={() => handleButton(button)}
+                        className={`${radiusClass(site)} flex w-full items-center justify-center gap-2 border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98] ${button.pulse ? "pulse-attention" : ""} ${isFeatured ? "scale-[1.03]" : ""}`}
+                        style={isFeatured ? { ...s.button, boxShadow: `0 0 0 3px ${accent}55, 0 10px 24px ${accent}40` } : s.button}
+                      >
+                        {showIcon ? <ButtonIcon type={button.type} /> : null}
+                        <span style={s.text}>{button.label}</span>
+                      </button>
+                    );
                   })}
                 </section>
               );
