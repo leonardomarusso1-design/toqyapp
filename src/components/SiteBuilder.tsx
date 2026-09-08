@@ -13,6 +13,7 @@ import { COLOR_ROLES } from "@/lib/colorRoles";
 import { ColorPicker } from "./ColorPicker";
 import { BODY_BLOCK_LABELS, resolveBodyBlockOrder } from "@/lib/bodyBlocks";
 import { RealTemplateGallery } from "./RealTemplateGallery";
+import { AnalyticsPanel, BookingsPanel, LeadsPanel, LinksPanel } from "./AnalysisPanels";
 import { syncBiositeToSupabase } from "@/lib/biositeSync";
 import { checkBiositeLimit } from "@/lib/planLimits";
 import { OVERAGE_LINKS, canUseStickersAndMusic, canUseWhiteLabel, getPlan, resolvePlanTier, type PlanType } from "@/lib/subscriptions";
@@ -429,6 +430,11 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
   const [mobileOpen, setMobileOpen] = useState(false);
   const [limitState, setLimitState] = useState<{ current: number; limit: number; planTier: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  // Painel deslizante da sidebar "Análise" (2026-09-08, bug real: clicar
+  // em Estatísticas/Meus Links/Cadastros/Agendamentos navegava pra uma
+  // página cheia própria, trocando o menu inteiro — "tem que ficar
+  // voltando pagina"). Agora abre por cima do editor, sem navegar.
+  const [analysisPanel, setAnalysisPanel] = useState<null | "stats" | "links" | "leads" | "bookings">(null);
   const publicLink = createPublicUrl(site.slug);
 
   // Itens do catálogo e botões abertos/fechados (2026-09-08, pedido real:
@@ -1998,18 +2004,20 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
         {mode === "edit" && site.slug ? (
           <>
             <p className="px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Análise</p>
-            {/* Sem target="_blank" (2026-09-08, bug real reportado ao vivo:
-                "nas analise quando clico em algum menu abre nova guia, nao
-                queria que abrisse nova guia") — abre na mesma aba agora. */}
-            <Link href={`/app/analytics/${site.slug}`} className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
+            {/* Painel deslizante, não navegação (2026-09-08, bug real
+                reportado ao vivo — 1ª versão só tirou o target="_blank",
+                mas trocar de página ainda "mudava todo o menu" e exigia
+                voltar; ver analysisPanel state acima e o painel logo
+                abaixo desta nav). */}
+            <button type="button" onClick={() => setAnalysisPanel("stats")} className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
               <Eye className="h-4 w-4 shrink-0" /> Estatísticas
-            </Link>
-            <Link href={`/app/links/${site.slug}`} className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
+            </button>
+            <button type="button" onClick={() => setAnalysisPanel("links")} className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
               <Link2 className="h-4 w-4 shrink-0" /> Meus Links
-            </Link>
-            <Link href={`/app/leads?site=${site.slug}`} className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
+            </button>
+            <button type="button" onClick={() => setAnalysisPanel("leads")} className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
               <Inbox className="h-4 w-4 shrink-0" /> Cadastros deste site
-            </Link>
+            </button>
             {/* Pix recebidos (2026-09-07): adiado de propósito — "hoje uso
                 apenas a Kiwify pra receber", sem PSP de Pix próprio pra
                 confirmar pagamento de visitante. Item fica visível (bate
@@ -2017,9 +2025,9 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
             <span className="flex cursor-not-allowed items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted/40" title="Em breve — precisa de um meio de pagamento próprio de Pix">
               <Wallet className="h-4 w-4 shrink-0" /> Pix recebidos
             </span>
-            <Link href={`/app/bookings?site=${site.slug}`} className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
+            <button type="button" onClick={() => setAnalysisPanel("bookings")} className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm font-black text-muted transition hover:bg-surface hover:text-ink">
               <CalendarClock className="h-4 w-4 shrink-0" /> Agendamentos
-            </Link>
+            </button>
             <p className="mt-2 px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Editar site</p>
           </>
         ) : null}
@@ -2296,6 +2304,29 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
             </div>
           </div>
         </>
+      ) : null}
+
+      {/* Painel deslizante da sidebar "Análise" — ver comentário no
+          analysisPanel state e nos botões da nav acima. */}
+      {analysisPanel ? (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-[2px]" onClick={() => setAnalysisPanel(null)}>
+          <div className="flex h-full w-full max-w-lg flex-col bg-background shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <h2 className="text-lg font-black text-ink">
+                {analysisPanel === "stats" ? "Estatísticas" : analysisPanel === "links" ? "Meus Links" : analysisPanel === "leads" ? "Cadastros deste site" : "Agendamentos"}
+              </h2>
+              <button type="button" onClick={() => setAnalysisPanel(null)} className="flex h-9 w-9 items-center justify-center rounded-full text-muted transition hover:bg-surface hover:text-ink">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              {analysisPanel === "stats" ? <AnalyticsPanel site={site} /> : null}
+              {analysisPanel === "links" ? <LinksPanel site={site} /> : null}
+              {analysisPanel === "leads" ? <LeadsPanel site={site} /> : null}
+              {analysisPanel === "bookings" ? <BookingsPanel site={site} /> : null}
+            </div>
+          </div>
+        </div>
       ) : null}
     </fieldset>
   );
