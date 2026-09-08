@@ -892,26 +892,7 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
           flag como true. */}
       {enableBackgroundMusic && backgroundMusicUrl ? <BackgroundMusicPlayer url={backgroundMusicUrl} volume={site.backgroundMusicVolume ?? 40} /> : null}
       {enableTrackingPixels ? <TrackingPixels metaPixelId={site.trackingPixels?.metaPixelId} gaMeasurementId={site.trackingPixels?.gaMeasurementId} /> : null}
-      {/* Capa em vídeo (2026-09-07, referência Coonexta) — some prioridade
-          sobre a imagem de fundo quando presente. Muted é obrigatório:
-          autoplay COM som é bloqueado por padrão pela maioria dos
-          navegadores (mesma limitação documentada em BackgroundMusicPlayer
-          logo abaixo), e aqui não faz sentido nem lutar contra isso — o
-          vídeo é decorativo, não uma fonte de áudio. */}
-      {site.profile.backgroundVideoUrl ? (
-        <div className="fixed inset-0 -z-10 overflow-hidden bg-black">
-          <video
-            src={site.profile.backgroundVideoUrl}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 mx-auto h-full w-full max-w-[430px] object-cover"
-            style={{ objectPosition: site.profile.backgroundImagePosition ?? "center top" }}
-          />
-          {site.theme.useBackgroundOverlay ? <div className="absolute inset-0 mx-auto w-full max-w-[430px]" style={{ backgroundImage: backgroundOverlayGradient(site) }} /> : null}
-        </div>
-      ) : bgImage ? (
+      {bgImage ? (
         <div className="fixed inset-0 -z-10" style={{ background: themeGradient(site) }}>
           <div
             className="absolute inset-0 mx-auto w-full max-w-[430px]"
@@ -940,6 +921,33 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
         </div>
       ) : null}
       <div className="min-h-screen w-full">
+        {/* Vídeo de topo (2026-09-08, redesenhado a partir do "vídeo de
+            fundo" antigo — pedido real ao vivo: "eu tava vendo, ele
+            substitui a imagem de fundo, não é isso que quero... o vídeo
+            que quero é apenas na parte de cima do biosite"). ANTES esse
+            mesmo campo (backgroundVideoUrl) tomava a tela inteira e
+            escondia a imagem de fundo (ver comentário removido acima).
+            Confirmado com o Leonardo (2026-09-08) que nenhum bio site
+            real usava esse campo ainda, então reaproveitar o campo em vez
+            de criar um novo não quebra ninguém. Agora é uma faixa de
+            altura fixa no topo, a imagem/cor de fundo do resto da página
+            continua normal atrás/abaixo dela. `-mb-14` puxa o QR/
+            Compartilhar + avatar pra cima, sobrepondo a base do vídeo —
+            mesmo efeito "foto de capa com avatar por cima" do print de
+            referência que o Leonardo mandou. */}
+        {site.profile.backgroundVideoUrl ? (
+          <div className="relative -mb-14 h-56 w-full overflow-hidden bg-black">
+            <video
+              src={site.profile.backgroundVideoUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/10" />
+          </div>
+        ) : null}
         <main className="mx-auto w-full max-w-[430px] px-4 py-6">
           <div className="mb-6 flex items-center justify-between gap-3">
             <button type="button" onClick={() => setQrModal(true)} className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black backdrop-blur-xl" style={glassCard(site)}><QrCode className="h-4 w-4" />QR Code</button>
@@ -1575,7 +1583,13 @@ function CatalogCard({ site, item, compact = false, stacked = false, onOpenGalle
         role={canOpenGallery ? "button" : undefined}
         aria-label={canOpenGallery ? `Ver mais itens de ${item.subcategory?.trim() || item.category?.trim() || "Destaques"}` : undefined}
       >
-        {item.imageUrl ? <img src={optimizedImageUrl(item.imageUrl, 500)} alt={item.name} loading="lazy" decoding="async" className={`h-full w-full ${fitClass}`} style={positionStyle} /> : <div className="flex h-full items-center justify-center"><FileText className="h-10 w-10 opacity-60" /></div>}
+        {item.videoUrl ? (
+          <video src={item.videoUrl} autoPlay loop muted playsInline className={`h-full w-full ${fitClass}`} style={positionStyle} />
+        ) : item.imageUrl ? (
+          <img src={optimizedImageUrl(item.imageUrl, 500)} alt={item.name} loading="lazy" decoding="async" className={`h-full w-full ${fitClass}`} style={positionStyle} />
+        ) : (
+          <div className="flex h-full items-center justify-center"><FileText className="h-10 w-10 opacity-60" /></div>
+        )}
         {canOpenGallery ? (
           <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-black text-white backdrop-blur-sm">
             <Images className="h-3 w-3" />+{categoryCount - 1}
@@ -1620,7 +1634,13 @@ function CategoryGalleryModal({ site, category, items, onClose }: { site: ToqySi
         {items.map((item) => (
           <div key={item.id} className="overflow-hidden rounded-[1.2rem] border" style={{ ...resolveColorStyle(site.theme.colors?.catalogItemBg, "bg", site.theme.card), borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.08)" : "rgba(255,255,255,0.14)" }}>
             <div className="h-28" style={{ background: `linear-gradient(135deg, ${site.theme.primary}33, ${site.theme.secondary}44)` }}>
-              {item.imageUrl ? <img src={optimizedImageUrl(item.imageUrl, 260)} alt={item.name} loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><FileText className="h-8 w-8 opacity-60" /></div>}
+              {item.videoUrl ? (
+                <video src={item.videoUrl} autoPlay loop muted playsInline className="h-full w-full object-cover" />
+              ) : item.imageUrl ? (
+                <img src={optimizedImageUrl(item.imageUrl, 260)} alt={item.name} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full items-center justify-center"><FileText className="h-8 w-8 opacity-60" /></div>
+              )}
             </div>
             {/* Item "só foto" (2026-07-16): sem nome/preço/link próprio, não
                 mostra rodapé nenhum (nome vazio + botão "Ver" abrindo o

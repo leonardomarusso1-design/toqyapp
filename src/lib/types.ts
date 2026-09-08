@@ -187,6 +187,15 @@ export type CatalogItem = {
   price?: string;
   priceValue?: number;
   imageUrl?: string;
+  // Vídeo no lugar da foto (2026-09-08, pedido real — "o pessoal tá
+  // pedindo pra colocar vídeo no catálogo"). Mesmo SLOT visual que a
+  // foto (ver SiteBuilder.tsx, toggle Foto/Vídeo do item): quando
+  // presente, o vídeo é o que renderiza no card, não os dois juntos —
+  // o editor zera imageUrl ao subir um vídeo (e vice-versa), então nunca
+  // ficam os dois preenchidos ao mesmo tempo de verdade. Mesmo upload de
+  // vídeo do "vídeo no topo" (VideoUploadField/upload-video), sem limite
+  // novo.
+  videoUrl?: string;
   imageLayout: "square" | "horizontal" | "vertical";
   imageFit?: "cover" | "contain";
   imagePosition?: string;

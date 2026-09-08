@@ -437,6 +437,13 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
     if (next.has(id)) next.delete(id); else next.add(id);
     return next;
   });
+  // Toggle Foto/Vídeo do item de catálogo (2026-09-08) — só decide qual
+  // uploader MOSTRAR; não é salvo em site.catalog (deriva de qual campo
+  // já tem valor, default "foto"). Precisa ser estado próprio (não só
+  // derivar de item.videoUrl) pra clicar em "Foto" continuar mostrando o
+  // ImageUploadField mesmo antes de trocar o vídeo por uma imagem nova.
+  const [catalogMediaMode, setCatalogMediaMode] = useState<Record<string, "photo" | "video">>({});
+  const getCatalogMediaMode = (item: ToqySite["catalog"][number]) => catalogMediaMode[item.id] ?? (item.videoUrl ? "video" : "photo");
 
   // Bug real reportado ao vivo (2026-09-08): "sempre que clico em algo,
   // começa no final da página" — trocar de etapa/bloco não voltava o
@@ -754,16 +761,17 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                 Escurecer levemente a imagem (ajuda a ler o texto por cima, mas pode deixar a cor original mais acinzentada)
               </label>
             </label>
-            {/* Capa em vídeo (2026-09-07, referência Coonexta — vídeo do
-                Leonardo: "coloquei um vídeo no banner, olha que coisa
-                mais linda"). Com vídeo definido, ele substitui a imagem
-                de fundo acima (ver PublicBioSite.tsx) — deixado separado
-                da imagem, não escondido atrás de um switch, porque a
-                pessoa pode querer alternar/testar os dois. */}
+            {/* Capa em vídeo (2026-09-07, referência Coonexta). Redesenhado
+                2026-09-08 — pedido real ao vivo: "eu tava vendo, ele
+                substitui a imagem de fundo, não é isso que quero... o
+                vídeo que quero é apenas na parte de cima do biosite,
+                igual do print". Antes tomava a tela inteira; agora é uma
+                faixa de topo (~224px), a imagem/cor de fundo acima
+                continua valendo pro resto da página normalmente. */}
             <label>
-              <span className={label}>Vídeo de fundo (opcional)</span>
+              <span className={label}>Vídeo no topo (opcional)</span>
               <div className="mb-2 rounded-2xl border border-violet/20 bg-violet/10 p-3 text-xs text-violet">
-                <strong>🎬 Quando definido, substitui a imagem de fundo acima.</strong> Vídeo curto (poucos segundos), sem som — toca automático e em loop.
+                <strong>🎬 Aparece como uma faixa no topo do bio site</strong>, tipo foto de capa — não mexe na imagem de fundo acima, que continua no resto da página. Vídeo curto (poucos segundos), sem som — toca automático e em loop.
               </div>
               <VideoUploadField
                 value={site.profile.backgroundVideoUrl}
@@ -1366,6 +1374,8 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                 <button type="button" onClick={() => toggleCatalogOpen(item.id)} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface p-2.5 text-left transition hover:border-accent">
                   {item.imageUrl ? (
                     <img src={item.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
+                  ) : item.videoUrl ? (
+                    <video src={item.videoUrl} muted className="h-10 w-10 shrink-0 rounded-xl object-cover" />
                   ) : (
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-border text-muted"><Images className="h-4 w-4" /></span>
                   )}
@@ -1424,22 +1434,42 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                   <label className="md:col-span-2"><span className={label}>Descrição (opcional)</span><textarea className={field} rows={2} placeholder="Deixe vazio pra mostrar só a foto, sem texto" value={item.description} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { description: e.target.value }) }))} /></label>
                 </div>
                 <div className="mt-3">
-                  <ImageUploadField
-                    label="Imagem do item"
-                    value={item.imageUrl}
-                    onChange={(url) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageUrl: url }) }))}
-                    slug={site.slug}
-                    fieldId={`catalog-${item.id}`}
-                    editKey={site.editKey}
-                    cropAspectRatio={item.imageLayout === "square" ? "square" : item.imageLayout === "vertical" ? "4:5" : "16:9"}
-                    showPositionControl
-                    position={item.imagePosition ?? "center"}
-                    onPositionChange={(pos) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imagePosition: pos }) }))}
-                  />
-                  <ImageGuidelineHint type={item.imageLayout === "square" ? "productSquare" : item.imageLayout === "vertical" ? "productVertical" : "productHorizontal"} />
-                  <p className="mt-2 text-xs font-semibold text-muted">
-                    Agora você pode recortar a foto antes de salvar e escolher se quer preencher o card ou mostrar a imagem inteira.
-                  </p>
+                  {/* Foto/Vídeo no MESMO slot (2026-09-08, pedido real:
+                      "o pessoal tá pedindo pra colocar vídeo no
+                      catálogo"). Só um dos dois fica preenchido de
+                      verdade — trocar de aba e enviar no novo tipo zera
+                      o outro campo, ver os onChange abaixo. */}
+                  <div className="mb-2 inline-flex rounded-xl border border-border bg-surface p-1 text-xs font-black">
+                    <button type="button" onClick={() => setCatalogMediaMode((m) => ({ ...m, [item.id]: "photo" }))} className={`rounded-lg px-3 py-1.5 transition ${getCatalogMediaMode(item) === "photo" ? "bg-accent text-white" : "text-muted"}`}>Foto</button>
+                    <button type="button" onClick={() => setCatalogMediaMode((m) => ({ ...m, [item.id]: "video" }))} className={`rounded-lg px-3 py-1.5 transition ${getCatalogMediaMode(item) === "video" ? "bg-accent text-white" : "text-muted"}`}>Vídeo</button>
+                  </div>
+                  {getCatalogMediaMode(item) === "video" ? (
+                    <VideoUploadField
+                      value={item.videoUrl}
+                      onChange={(url) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { videoUrl: url, imageUrl: url ? "" : item.imageUrl }) }))}
+                      slug={site.slug}
+                      editKey={site.editKey}
+                    />
+                  ) : (
+                    <>
+                      <ImageUploadField
+                        label="Imagem do item"
+                        value={item.imageUrl}
+                        onChange={(url) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imageUrl: url, videoUrl: url ? "" : item.videoUrl }) }))}
+                        slug={site.slug}
+                        fieldId={`catalog-${item.id}`}
+                        editKey={site.editKey}
+                        cropAspectRatio={item.imageLayout === "square" ? "square" : item.imageLayout === "vertical" ? "4:5" : "16:9"}
+                        showPositionControl
+                        position={item.imagePosition ?? "center"}
+                        onPositionChange={(pos) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { imagePosition: pos }) }))}
+                      />
+                      <ImageGuidelineHint type={item.imageLayout === "square" ? "productSquare" : item.imageLayout === "vertical" ? "productVertical" : "productHorizontal"} />
+                      <p className="mt-2 text-xs font-semibold text-muted">
+                        Agora você pode recortar a foto antes de salvar e escolher se quer preencher o card ou mostrar a imagem inteira.
+                      </p>
+                    </>
+                  )}
                 </div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <input className={field} placeholder="Texto do botão (ex: Agendar)" value={item.actionLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionLabel: e.target.value }) }))} />
