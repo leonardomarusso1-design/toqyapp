@@ -1726,12 +1726,21 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
   // "Sua lista de configuração 5/6" do app do Linktree que o Leonardo
   // mandou) — 100% DERIVADO de campos que já existem em ToqySite, sem
   // nenhum campo novo no banco: só reflete o que já foi preenchido.
+  // Itens condicionais (2026-09-08, resto da Parte C — "Pix válido se o
+  // módulo estiver ligado" / "catálogo sem itens inválidos"): só entram na
+  // lista quando o módulo em questão está de fato ligado. Diferente dos 5
+  // de cima, aqui "inválido" tem um estado real e corrigível — não vira
+  // item de checklist algo que não tem como estar errado (ex: agenda não
+  // tem campo de disponibilidade no modelo de dados hoje, então não dá
+  // pra validar isso sem inventar um campo que não existe).
   const checklistItems = [
     { label: "Nome do negócio", done: Boolean(site.profile.name && site.profile.name !== "Novo negócio"), step: 1 },
     { label: "Descrição", done: Boolean(site.profile.description?.trim()), step: 1 },
     { label: "Foto de perfil ou logo", done: Boolean(site.profile.profileImageUrl || site.profile.logoUrl), step: 1 },
     { label: "Pelo menos 1 rede social", done: Boolean(site.contact.instagram || site.contact.facebook || site.contact.whatsapp), step: 2 },
     { label: "Pelo menos 1 botão ativo", done: site.buttons.some((b) => b.enabled), step: 2 },
+    ...(site.pix.enabled ? [{ label: "Chave Pix preenchida", done: Boolean(site.pix.key?.trim()), step: 3 }] : []),
+    ...(site.catalog.length ? [{ label: "Itens do catálogo com nome preenchido", done: site.catalog.every((item) => !item.enabled || item.name?.trim()), step: 4 }] : []),
   ];
   const checklistDone = checklistItems.filter((i) => i.done).length;
   const checklistPercent = Math.round((checklistDone / checklistItems.length) * 100);
