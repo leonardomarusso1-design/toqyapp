@@ -17,7 +17,7 @@ export function LiveBioSitePreview({ site, onStickerMove }: { site: ToqySite; on
   const [mode, setMode] = useState<"mobile" | "desktop">("mobile");
 
   return (
-    <aside className="sticky top-6 hidden h-[calc(100vh-3rem)] min-w-0 xl:block">
+    <aside className="sticky top-6 hidden h-[calc(100vh-3rem)] min-w-0 xl:block xl:w-[460px] xl:shrink-0">
       <div className="mb-3 flex items-center justify-between gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-black text-ink shadow-sm">
         <span>Preview ao vivo</span>
         <div className="flex shrink-0 overflow-hidden rounded-full border border-border text-xs">

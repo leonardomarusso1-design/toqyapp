@@ -1834,12 +1834,24 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
     // sidebar encosta na borda, o miolo do formulário ganha o espaço que
     // sobrava, e a coluna de preview cresce (420px → 460px) pra caber um
     // "celular" mais perto do tamanho real.
-    <fieldset disabled={isReadOnly} className="grid w-full gap-6 xl:grid-cols-[200px_minmax(0,1fr)_460px]">
+    <fieldset disabled={isReadOnly} className="flex w-full flex-col gap-6">
       {isReadOnly ? (
-        <div className="xl:col-span-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-800">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-800">
           🔒 Acesso somente leitura — o dono deste bio site restringiu a edição. Você pode consultar tudo, mas não salvar mudanças.
         </div>
       ) : null}
+      {/* grid → flex (2026-09-08, bug real reportado ao vivo: "o preview
+          nao acompanha a pagina quando desco, ele fica la em cima" — o
+          preview usa position:sticky dentro de uma coluna de CSS grid
+          com faixa `1fr` (minmax(0,1fr)); é um bug conhecido do Chrome
+          em telas com zoom/escala do Windows diferente de 100%: sticky
+          para de funcionar dentro de trilhas de grid fracionárias por
+          arredondamento de subpixel. Não reproduzi isolado (bateu certo
+          em teste limpo), mas é a explicação que bate com "mesmo Chrome,
+          mesma versão do código, ainda quebra" — flexbox não tem essa
+          categoria de bug. Nav e preview viram largura fixa (shrink-0),
+          o miolo do formulário estica (flex-1). */}
+      <div className="flex w-full flex-col gap-6 xl:flex-row">
       {/* Sidebar fixa (2026-09-07, referência Coonexta — Leonardo: "o
           dele é mais fácil de mexer, pelo jeito que montou o layout").
           Substitui as pílulas SÓ no desktop grande (xl+, onde já tinha
@@ -1849,7 +1861,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
           (sidebar com Templates/Aparência/Botões/Catálogo/Endereço
           sempre visível, sem wizard sequencial). Abaixo de xl, ainda
           sem espaço pra 3 colunas, continuam as pílulas de sempre. */}
-      <nav className="sticky top-6 hidden h-fit flex-col gap-1 rounded-[1.5rem] border border-border bg-card p-2 shadow-sm xl:flex">
+      <nav className="sticky top-6 hidden h-fit flex-col gap-1 rounded-[1.5rem] border border-border bg-card p-2 shadow-sm xl:flex xl:w-[200px] xl:shrink-0">
         {/* Grupos "Análise" / "Editar site" / "Agenda" / "Integrações" /
             "Configurações" / "Parceria" (2026-09-07, referência Coonexta —
             documento enviado pelo Leonardo: sidebar do editor agrupada
@@ -1899,7 +1911,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
           </div>
         ))}
       </nav>
-      <div className="min-w-0">
+      <div className="min-w-0 xl:flex-1">
         {/* Cabeçalho grande do builder. Dentro de um bloco no celular ele
             some (2026-09-06, print do Leonardo): o bloco já tem o próprio
             cabeçalho com voltar/título/Salvar, e os dois juntos deixavam
@@ -2094,6 +2106,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
         ) : null}
       </div>
       <LiveBioSitePreview site={previewSite} onStickerMove={handleStickerMove} />
+      </div>
 
       {/* Botão flutuante de preview no mobile — levantado (bottom-24) pra não
           ficar embaixo da barra fixa de navegação da etapa, acima. */}
