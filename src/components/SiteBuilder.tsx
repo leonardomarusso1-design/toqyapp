@@ -596,8 +596,20 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
               update((s) => ({
                 ...s,
                 profile: { ...s.profile, name },
-                // Atualiza slug em tempo real enquanto está no padrão gerado pelo nome
-                slug: (s.slug === initialSlugRef.current || s.slug === generateSlug(s.profile.name) || !s.slug)
+                // Slug só segue o nome em tempo real durante CRIAÇÃO
+                // (mode === "create"), nunca editando um site que já existe
+                // (2026-09-08, achado conferindo uma pergunta real de
+                // cliente: "se eu mudar o nome do negócio, o QR code
+                // continua o mesmo?"). Bug real que essa pergunta expôs:
+                // essa mesma condição, sem o `mode === "create"`, disparava
+                // IGUAL num site JÁ PUBLICADO — abrir com a chave de edição
+                // e só corrigir um typo no nome já regenerava o slug (ainda
+                // no padrão auto-gerado, que é o caso comum — quase
+                // ninguém mexe no campo "Link da página" à parte), trocando
+                // a URL pública e quebrando QR Code/plaquinha já impressos
+                // do cliente sem AVISO nenhum. Link só muda agora por ação
+                // explícita no campo "Link da página" abaixo.
+                slug: mode === "create" && (s.slug === initialSlugRef.current || s.slug === generateSlug(s.profile.name) || !s.slug)
                   ? generateSlug(name)
                   : s.slug
               }));
@@ -620,6 +632,9 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                   }}
                 />
               </div>
+              {mode === "edit" ? (
+                <p className="mt-1 text-xs font-bold text-amber-700">⚠️ Mudar isso troca a URL pública — QR Code, plaquinha ou link já compartilhados param de abrir este bio site.</p>
+              ) : null}
             </label>
           </div>
           <RealTemplateGallery businessName={site.profile.name} onApply={(cloned) => update(() => ({ ...cloned, slug: site.slug, editKey: site.editKey, id: site.id }))} />
