@@ -239,6 +239,22 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
     <DashboardShell>
       <DashboardHero name={displayName} planLabel={planLabel} avatarUrl={avatarUrl} />
 
+      {/* min-w-0 em CADA <section> filha direta (2026-09-08, causa raiz
+          FINAL do corte mobile — os 2 fixes anteriores, 4c23467/984d8e5,
+          fecharam o card individual mas o corte voltava mesmo assim).
+          Achado medindo de verdade: este `grid` (sem grid-template-
+          columns explícito) tem a largura CERTA (confirmei via
+          getBoundingClientRect), mas os itens de grid recebem
+          `min-width: auto` por padrão do CSS — se o CONTEÚDO de uma
+          section pedir mais espaço que a faixa disponível, a section
+          cresce além da faixa em vez de respeitar o limite, e arrasta a
+          página inteira junto (por isso TODAS as sections cortavam
+          igual, mesmo a que não tinha nome comprido nenhum — via print
+          "Fox Automoveis" também cortava). Sem `min-w-0` na própria
+          <section>, nenhum fix interno (truncate, flex, w-full) resolve,
+          porque o limite nunca chega até lá. Reproduzido e confirmado
+          isolado antes de aplicar: scrollWidth caiu de 555px pra 412px
+          (viewport) só com essa mudança. */}
       <div className="grid gap-5">
         {/* "Conta" e "Plano atual" saíram desta página (2026-09-07, bug
             real reportado ao vivo: "tá poluído, deviam estar em outro
@@ -252,7 +268,7 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
             publicado. Chamada pra continuar de onde parou, antes de
             qualquer outra coisa na tela. */}
         {draftSites.length ? (
-          <section className="rounded-[2rem] border border-amber-200 bg-amber-50 p-5">
+          <section className="min-w-0 rounded-[2rem] border border-amber-200 bg-amber-50 p-5">
             {draftSites.map((s) => (
               <div key={s.id} className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm font-black text-amber-900">
@@ -271,7 +287,7 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
             buildChecklist acima pro motivo). Some sozinho quando tudo
             está marcado. */}
         {!loading && checklist.some((c) => !c.done) ? (
-          <section className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
+          <section className="min-w-0 rounded-[2rem] border border-border bg-card p-6 shadow-sm">
             <h2 className="text-sm font-black uppercase tracking-wide text-muted">Seu portfólio está pronto?</h2>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {checklist.map((item) => (
@@ -287,7 +303,7 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
         ) : null}
 
         {/* Lista de bio sites */}
-        <section className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
+        <section className="min-w-0 rounded-[2rem] border border-border bg-card p-6 shadow-sm">
           <div className="flex items-center justify-between gap-3 mb-4">
             <h2 className="text-xl font-black text-ink">Meus bio sites</h2>
             <Link href="/app/novo" className="inline-flex items-center gap-2 rounded-2xl bg-accent px-4 py-2.5 text-sm font-black text-white hover:bg-accent-dim">+ Novo</Link>
