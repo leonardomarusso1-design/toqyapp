@@ -35,7 +35,7 @@ export function LegalPageShell({ title, updatedAt, children }: { title: string; 
         <div className="mx-auto max-w-3xl px-5 py-8 text-xs text-muted">
           <p className="font-bold text-ink">TOQY</p>
           <p className="mt-1">Um produto de Marusso Produções · Leonardo Marusso · CPF 473.503.798-54 · Indaiatuba - SP</p>
-          <p className="mt-1">leonardomarusso1@gmail.com · (19) 99705-1919</p>
+          <p className="mt-1">leonardomarusso1@gmail.com · Instagram: <a href="https://www.instagram.com/toqycontact/" target="_blank" rel="noopener noreferrer" className="hover:text-accent">@toqycontact</a></p>
           <p className="mt-3 flex flex-wrap gap-x-2 gap-y-1">
             {legalLinks.map((link, i) => (
               <span key={link.href}>

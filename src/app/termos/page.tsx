@@ -33,9 +33,9 @@ export default function TermosPage() {
 
       <h2>3. Planos, limites e pagamento</h2>
       <p>
-        O serviço é oferecido nos planos Gratuito, Essencial, Freelancer e Agência, cada um com limite de
+        O serviço é oferecido nos planos Gratuito, Pro, Essencial, Freelancer e Agência, cada um com limite de
         número de bio sites e recursos específicos (detalhados na página de planos do site). Os planos
-        Essencial, Freelancer e Agência são cobrados de forma recorrente mensal. Ver{" "}
+        Pro, Essencial, Freelancer e Agência são cobrados de forma recorrente mensal. Ver{" "}
         <Link href="/contrato-assinatura">Contrato de Assinatura</Link> para detalhes de cobrança,
         cancelamento e reembolso.
       </p>
@@ -99,7 +99,7 @@ export default function TermosPage() {
       </p>
 
       <h2>11. Contato</h2>
-      <p>Dúvidas sobre estes Termos: leonardomarusso1@gmail.com · (19) 99705-1919.</p>
+      <p>Dúvidas sobre estes Termos: leonardomarusso1@gmail.com · Instagram <a href="https://www.instagram.com/toqycontact/" target="_blank" rel="noopener noreferrer">@toqycontact</a>.</p>
     </LegalPageShell>
   );
 }

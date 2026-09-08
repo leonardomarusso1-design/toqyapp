@@ -133,7 +133,7 @@ export default function ParaVenderPage() {
           <div className="grid gap-10 lg:grid-cols-2">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Ebook grátis</p>
-              <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">7 Formas de Ganhar Dinheiro com Bio Sites em 2025</h2>
+              <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">7 Formas de Ganhar Dinheiro com Bio Sites</h2>
               <p className="mt-4 text-white/70">Descubra como começar a vender bio sites como serviço, quais nichos são mais lucrativos e como precificar seus serviços corretamente.</p>
               <ul className="mt-6 space-y-3">
                 {[

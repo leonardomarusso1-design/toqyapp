@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 const highlights = [
   { icon: QrCode, title: "QR Code e Pix", text: "Receba na hora e leve seus clientes pro WhatsApp com um toque." },
   { icon: ImageIcon, title: "Figurinhas e visual próprio", text: "Deixe seu bio site com a sua cara — cores, fundo, botões e figurinhas." },
-  { icon: Music, title: "Música e Instagram ao vivo", text: "Toque uma música e mostre seu post mais recente do Instagram, direto na página." },
+  { icon: Music, title: "Música no bio site", text: "Toque uma música de fundo ou destaque uma faixa do Spotify, direto na página." },
   { icon: Globe, title: "Domínio próprio", text: "Se quiser, aponte um domínio que já é seu — add-on avulso, sem mexer na mensalidade." },
 ] as const;
 

@@ -40,7 +40,7 @@ export const personalPlans: LandingPlanCard[] = [
     description: "Tudo que seu negócio precisa pra vender mais, sem pagar por recursos de agência que você não vai usar.",
     highlight: true,
     cta: "Assinar o Pro",
-    items: ["Pix, Wi-Fi e Catálogo", "QR personalizado editável", "Figurinhas e música no bio site", "Preview de Instagram ao vivo", "Analytics básico", "Domínio próprio (add-on avulso)", "Cancele quando quiser"],
+    items: ["Pix, Wi-Fi e Catálogo", "QR personalizado editável", "Figurinhas e música no bio site", "Analytics básico", "Domínio próprio (add-on avulso)", "Cancele quando quiser"],
   },
 ];
 

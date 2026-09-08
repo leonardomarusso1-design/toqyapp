@@ -430,7 +430,7 @@ export default async function LandingPage() {
           <h2 className="mt-3 text-4xl font-extrabold tracking-tight md:text-5xl">Nossa equipe está aqui para você</h2>
           <p className="mx-auto mt-4 max-w-2xl text-white/70">Fale com a nossa central de suporte pelo canal que preferir. Respondemos rápido e estamos sempre prontos para ajudar.</p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a href="https://wa.me/5519997051919" target="_blank" rel="noreferrer noopener" className="btn-glow inline-flex items-center gap-2 rounded-full px-8 py-3.5 text-base font-bold text-white">
+            <a href="https://www.instagram.com/toqycontact/" target="_blank" rel="noreferrer noopener" className="btn-glow inline-flex items-center gap-2 rounded-full px-8 py-3.5 text-base font-bold text-white">
               <MessageCircle className="h-5 w-5" /> Falar com o suporte
             </a>
             <Link href="/faq" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-8 py-3.5 text-base font-bold text-white transition hover:bg-white/10">
@@ -497,10 +497,9 @@ export default async function LandingPage() {
           <div className="mt-10 border-t border-border pt-8 text-xs text-muted">
             <p className="font-bold text-ink">TOQY</p>
             <p className="mt-1">Um produto de Marusso Produções · Leonardo Marusso · CPF 473.503.798-54 · Indaiatuba - SP</p>
-            <p className="mt-1">leonardomarusso1@gmail.com · (19) 99705-1919</p>
+            <p className="mt-1">leonardomarusso1@gmail.com</p>
             <p className="mt-1">
-              Instagram: <a href="https://instagram.com/leomvideomaker" target="_blank" rel="noopener noreferrer" className="hover:text-accent">@leomvideomaker</a>
-              {" "}· YouTube: <a href="https://youtube.com/@leomarussobr" target="_blank" rel="noopener noreferrer" className="hover:text-accent">@leomarussobr</a>
+              Instagram: <a href="https://www.instagram.com/toqycontact/" target="_blank" rel="noopener noreferrer" className="hover:text-accent">@toqycontact</a>
             </p>
             <p className="mt-3 flex flex-wrap gap-x-2 gap-y-1">
               <Link href="/termos" className="hover:text-accent">Termos de Uso</Link> ·

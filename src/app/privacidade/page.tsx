@@ -48,6 +48,11 @@ export default function PrivacidadePage() {
       <ul>
         <li>Dados de uso e navegação, para diagnóstico técnico (via Sentry) e métricas de performance (via Vercel Speed Insights);</li>
         <li>Identificador de sessão de login, armazenado no seu navegador (ver Política de Cookies).</li>
+        <li>
+          Se o dono de um bio site configurar um <strong>Meta Pixel</strong> e/ou <strong>Google Analytics</strong>{" "}
+          próprios (recurso opcional de Integrações do plano dele), o visitante desse bio site tem sua visita
+          também registrada por esses provedores, para fins de campanha do dono do bio site — não do TOQY.
+        </li>
       </ul>
 
       <h2>3. Para que usamos seus dados (finalidade)</h2>
@@ -75,6 +80,7 @@ export default function PrivacidadePage() {
           <tr><td>Kiwify</td><td>Processamento de pagamentos e gestão de assinatura</td></tr>
           <tr><td>Sentry</td><td>Monitoramento e diagnóstico de erros técnicos</td></tr>
           <tr><td>Vercel</td><td>Hospedagem e métricas de performance</td></tr>
+          <tr><td>Meta (Facebook) e Google Analytics</td><td>Só quando o dono de um bio site ativa seu próprio Pixel/Analytics naquela página (ver seção 2)</td></tr>
         </tbody>
       </table>
       <p>
@@ -130,7 +136,7 @@ export default function PrivacidadePage() {
       <p>Podemos atualizar esta Política periodicamente. Alterações relevantes serão comunicadas por e-mail ou aviso no serviço.</p>
 
       <h2>12. Contato</h2>
-      <p>Para exercer seus direitos ou tirar dúvidas: leonardomarusso1@gmail.com · (19) 99705-1919 · Indaiatuba - SP.</p>
+      <p>Para exercer seus direitos ou tirar dúvidas: leonardomarusso1@gmail.com · Instagram <a href="https://www.instagram.com/toqycontact/" target="_blank" rel="noopener noreferrer">@toqycontact</a> · Indaiatuba - SP.</p>
     </LegalPageShell>
   );
 }

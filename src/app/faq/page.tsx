@@ -131,7 +131,7 @@ export default function FaqPage() {
 
         <div className="mt-12 rounded-3xl border border-border bg-card p-8 text-center">
           <p className="font-bold text-ink">Não encontrou o que procurava?</p>
-          <a href="https://wa.me/5519997051919" target="_blank" rel="noreferrer noopener" className="btn-glow mt-4 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white">
+          <a href="https://www.instagram.com/toqycontact/" target="_blank" rel="noreferrer noopener" className="btn-glow mt-4 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white">
             <MessageCircle className="h-4 w-4" /> Falar com o suporte
           </a>
         </div>

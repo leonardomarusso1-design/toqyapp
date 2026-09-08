@@ -217,7 +217,7 @@ export const blogPostsIntencao: BlogPost[] = [
         <tr><td>Idioma e suporte</td><td>Principalmente em inglês</td><td>Tudo em português</td></tr>
       </table>
       <h2>Preço</h2>
-      <p>Os dois têm plano gratuito. A diferença aparece no plano pago: no Toqy os recursos que um comércio usa todo dia — Pix, catálogo, QR Code, domínio próprio — estão no plano de entrada, em real, sem conversão de moeda no cartão.</p>
+      <p>Os dois têm plano gratuito. A diferença aparece no plano pago: no Toqy os recursos que um comércio usa todo dia — Pix, catálogo, QR Code — estão no plano de entrada, em real, sem conversão de moeda no cartão.</p>
       <h2>Como decidir em uma pergunta</h2>
       <p>Se a sua página existe para a pessoa <strong>clicar e ir embora</strong> para outro lugar, use uma lista de links. Se ela existe para a pessoa <strong>falar com você, ver o que você vende e pagar</strong>, você precisa de algo que faça isso na própria página.</p>
     `,

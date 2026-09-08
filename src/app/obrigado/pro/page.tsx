@@ -9,7 +9,7 @@ export default function ObrigadoPro() {
       </div>
       <h1 className="mt-8 text-4xl font-black tracking-tight md:text-5xl">Plano Pro ativo! ✨</h1>
       <p className="mt-4 max-w-lg text-lg leading-relaxed text-muted">
-        Seu bio site já tem <strong className="text-ink">Pix, Wi-Fi, catálogo e QR Code personalizado</strong> liberados. Dá pra deixar com a sua cara: figurinhas, música e preview do seu Instagram, ao vivo.
+        Seu bio site já tem <strong className="text-ink">Pix, Wi-Fi, catálogo e QR Code personalizado</strong> liberados. Dá pra deixar com a sua cara: figurinhas e música.
       </p>
       <div className="mt-10 w-full max-w-md rounded-[2rem] border border-accent/20 bg-accent/5 p-6">
         <p className="font-black text-accent">Comece agora</p>
