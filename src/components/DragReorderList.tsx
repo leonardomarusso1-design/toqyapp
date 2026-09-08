@@ -53,8 +53,19 @@ export function DragHandle({ attributes, listeners, className = "" }: DragHandle
 function SortableRow({ id, children }: { id: string; children: (drag: DragHandleProps, isDragging: boolean) => ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  // min-w-0 (2026-09-08, bug real reportado ao vivo: "na aba de catálogos,
+  // tem lugares cortando ainda") — DragReorderList é usado dentro de um
+  // <div className="grid gap-N"> SEM grid-template-columns (catálogo,
+  // botões, categorias). DndContext/SortableContext não geram elemento no
+  // DOM, então cada SortableRow vira filho DIRETO desse grid — sem
+  // min-w-0, item de grid recebe `min-width: auto` por padrão e cresce
+  // além da faixa disponível se o conteúdo pedir mais espaço, arrastando
+  // a página inteira (mesma causa raiz já corrigida em app/page.tsx,
+  // commit db91f92, agora batendo aqui porque é outro grid, componente
+  // compartilhado por 3 telas diferentes — corrigir aqui fecha as 3 de
+  // uma vez).
   return (
-    <div ref={setNodeRef} style={style}>
+    <div ref={setNodeRef} style={style} className="min-w-0">
       {children({ attributes, listeners }, isDragging)}
     </div>
   );

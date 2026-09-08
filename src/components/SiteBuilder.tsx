@@ -1532,7 +1532,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
 
           <div className="mt-5 grid gap-4">
             {(site.services ?? []).map((svc, index) => (
-              <article key={svc.id} className="rounded-3xl border border-border bg-card p-4 shadow-sm">
+              <article key={svc.id} className="min-w-0 rounded-3xl border border-border bg-card p-4 shadow-sm">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs font-bold text-muted">#{index + 1}</span>
                   <div className="flex items-center gap-2">
