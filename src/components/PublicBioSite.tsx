@@ -30,7 +30,7 @@ import {
   X,
 } from "lucide-react";
 import type { BusinessHours, CatalogItem, CatalogLayout, ColorValue, ToqyButton, ToqyLinkType, ToqySite } from "@/lib/types";
-import { buttonHref, createVCard, googleMapsExternalUrl, mapsEmbedUrl, mapsQuery, pixPayload, wazeExternalUrl, whatsappUrl, wifiPayload } from "@/lib/buttonUtils";
+import { buttonHref, createVCard, googleMapsExternalUrl, mapsQuery, pixPayload, wazeExternalUrl, whatsappUrl, wifiPayload } from "@/lib/buttonUtils";
 import { resolveBodyBlockOrder } from "@/lib/bodyBlocks";
 import { ensureUrl, normalizeInstagram } from "@/lib/security";
 import { getPlan, resolvePlanTier } from "@/lib/subscriptions";
@@ -1745,31 +1745,32 @@ function WifiModal({ site, onClose, copied, copyText }: { site: ToqySite; onClos
   );
 }
 
-// "Como chegar" com mapa embutido (2026-09-08, pedido real com print de
-// referência: card com endereço, mapa com pino, botão "Maps" e opção de
-// Waze). Embed sem chave de API (ver mapsEmbedUrl em buttonUtils.ts) —
-// funciona só com o endereço que o dono já preenche em Identidade, sem
-// nenhuma configuração nova.
+// "Como chegar" (2026-09-08, pedido real com print de referência: card
+// com endereço, mapa com pino, botão "Maps" e opção de Waze).
+//
+// O mapa EMBUTIDO foi removido no mesmo dia (bug real reportado ao vivo,
+// com print): "Este conteúdo está bloqueado. Entre em contato com o
+// proprietário do site para corrigir o problema." — mensagem do PRÓPRIO
+// Google. Causa: o truque de embed sem chave de API
+// (maps.google.com/maps?output=embed) na verdade injeta uma API KEY
+// COMPARTILHADA do Google por trás (confirmado inspecionando o HTML
+// devolvido) — não é uma chave nossa, é uma chave interna que MILHÕES de
+// sites usando esse mesmo truque compartilham. O Google pode (e
+// aparentemente estava, na hora do teste) throttlar/bloquear essa chave
+// compartilhada sem aviso nenhum, a qualquer momento — inviável pra um
+// produto pago com clientes reais. Ficam o endereço e os botões "Maps"/
+// "Waze" (deep links de verdade, sem depender de embed nenhum — sempre
+// funcionam). Mapa visual embutido de verdade exigiria uma API key
+// PRÓPRIA do Google Maps Embed API (tem cota gratuita generosa, mas
+// precisa o Leonardo criar um projeto no Google Cloud — fora do escopo
+// desta correção).
 function MapsModal({ site, onClose }: { site: ToqySite; onClose: () => void }) {
-  const embedUrl = mapsEmbedUrl(site);
   const googleUrl = googleMapsExternalUrl(site);
   const wazeUrl = wazeExternalUrl(site);
   return (
     <ModalShell title="Como chegar" onClose={onClose} site={site} icon={<MapPin className="h-6 w-6" />}>
       <div className="rounded-[1.75rem] bg-white p-4 text-slate-950 shadow-xl">
         <p className="text-sm font-bold text-slate-600">{site.profile.location || site.profile.name}</p>
-        {embedUrl ? (
-          <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200">
-            <iframe
-              src={embedUrl}
-              title="Mapa"
-              className="h-48 w-full"
-              style={{ border: 0 }}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
-        ) : null}
         <div className="mt-4 grid grid-cols-2 gap-2">
           {googleUrl ? (
             <button onClick={() => window.open(googleUrl, "_blank", "noopener,noreferrer")} className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700">

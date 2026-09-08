@@ -18,17 +18,19 @@ export function mapsQuery(site: ToqySite): string {
   return (site.profile.location || site.profile.name || "").trim();
 }
 
-// Embed do Google Maps SEM chave de API (2026-09-08) — o projeto não tem
-// Google Maps API key configurada, e conseguir uma (Google Cloud,
-// billing, restrição de domínio) é escopo maior que "botão como chegar".
-// `maps.google.com/maps?q=...&output=embed` é o truque de mercado pra
-// embutir um mapa clicável com pino a partir só de um endereço em texto,
-// sem chave nenhuma — estável há anos, usado por incontáveis sites.
-export function mapsEmbedUrl(site: ToqySite): string {
-  const q = mapsQuery(site);
-  if (!q) return "";
-  return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=15&output=embed`;
-}
+// Embed com mapa visual (`maps.google.com/maps?output=embed`) foi
+// REMOVIDO no mesmo dia em que entrou (bug real reportado ao vivo, com
+// print): "Este conteúdo está bloqueado. Entre em contato com o
+// proprietário do site para corrigir o problema." — mensagem do próprio
+// Google. Inspecionando o HTML devolvido por esse endpoint, ele injeta
+// uma API KEY COMPARTILHADA do Google por trás (não é nossa) — o Google
+// pode throttlar/bloquear essa chave compartilhada sem aviso, a
+// qualquer momento, porque MILHÕES de sites usam o mesmo truque.
+// Inviável pra um produto pago com cliente real. Ver MapsModal em
+// PublicBioSite.tsx — ficaram só os deep links abaixo (Maps/Waze),
+// que não dependem de embed nenhum. Mapa visual de verdade exigiria uma
+// API key PRÓPRIA (Google Maps Embed API, cota gratuita generosa) — o
+// Leonardo precisaria criar um projeto no Google Cloud pra isso.
 
 // Abrir no Google Maps de verdade (app no celular, site no desktop).
 // Respeita um link customizado do dono (site.links.googleMapsUrl —
