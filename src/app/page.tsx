@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LandingHeader } from "@/components/LandingHeader";
 import { LandingBioSiteCard } from "@/components/LandingBioSiteCard";
 import { ReferralCapture } from "@/components/ReferralCapture";
+import { HashScroll } from "@/components/HashScroll";
 import { APP_VERSION, BUILD_ID } from "@/lib/appInfo";
 import { getShowcaseSummaries } from "@/lib/realTemplates";
 import {
@@ -117,6 +118,7 @@ export default async function LandingPage() {
   return (
     <main className="min-h-screen bg-bg text-ink">
       <ReferralCapture />
+      <HashScroll />
       {/* Barra de anúncio (estática) */}
       <div className="bg-ink text-white">
         <div className="flex items-center justify-center px-4 py-2.5 text-center">
