@@ -1773,6 +1773,20 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
     );
   })();
 
+  // site pro PREVIEW, com o plano real do dono embutido (2026-09-08, bug
+  // real reportado ao vivo: "alguns botões aparece, outros não... o do
+  // Pix eu ativo, coloco as informações, mas ele não aparece no
+  // preview"). Causa raiz: `site.ownerPlan` só é gravado pelo SERVIDOR
+  // no save (ver biositeSync.ts) — enquanto edita, o `site` local NUNCA
+  // tem esse campo preenchido, então PublicBioSite (que lê
+  // site.ownerPlan pra decidir hasPix/hasWifi/hasCatalog) cai no
+  // fallback "free" e filtra em silêncio qualquer botão/recurso pago,
+  // mesmo pra quem é Agência de verdade — só WhatsApp/Instagram (sem
+  // gate de plano) apareciam, exatamente o sintoma relatado. `site` de
+  // verdade (usado pra editar/salvar) continua sem essa mudança —
+  // ownerPlanTier só entra na CÓPIA que vai pro preview.
+  const previewSite = { ...site, ownerPlan: ownerPlanTier };
+
   // Checklist de configuração com % de progresso (2026-09-06, inspirado no
   // "Sua lista de configuração 5/6" do app do Linktree que o Leonardo
   // mandou) — 100% DERIVADO de campos que já existem em ToqySite, sem
@@ -2079,7 +2093,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
           </nav>
         ) : null}
       </div>
-      <LiveBioSitePreview site={site} onStickerMove={handleStickerMove} />
+      <LiveBioSitePreview site={previewSite} onStickerMove={handleStickerMove} />
 
       {/* Botão flutuante de preview no mobile — levantado (bottom-24) pra não
           ficar embaixo da barra fixa de navegação da etapa, acima. */}
@@ -2101,7 +2115,14 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
             <p className="text-sm font-black text-white">Preview — /b/{site.slug}</p>
             <button type="button" onClick={() => setShowMobilePreview(false)} className="rounded-xl bg-white/10 px-4 py-2 text-sm font-black text-white">Fechar</button>
           </div>
-          <div className="flex-1 overflow-y-auto"><PublicBioSite site={site} onStickerMove={handleStickerMove} /></div>
+          {/* instanceId="editor" (2026-09-08, achado junto do bug do
+              ownerPlan acima) — faltava aqui, só neste modal (os outros
+              3 usos de PublicBioSite no editor já passavam). Sem isso,
+              esta prévia contava como "página pública de verdade" pra
+              analytics (inflava visualização toda vez que alguém abria
+              o preview no celular) e agora também dispararia o modal de
+              captura de leads dentro do próprio editor. */}
+          <div className="flex-1 overflow-y-auto"><PublicBioSite site={previewSite} instanceId="editor" onStickerMove={handleStickerMove} /></div>
         </div>
       ) : null}
 
