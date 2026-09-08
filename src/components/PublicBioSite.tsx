@@ -13,6 +13,7 @@ import {
   Clock,
   Copy,
   CreditCard,
+  ExternalLink,
   FileText,
   Globe2,
   Image as ImageIcon,
@@ -29,7 +30,7 @@ import {
   X,
 } from "lucide-react";
 import type { BusinessHours, CatalogItem, CatalogLayout, ColorValue, ToqyButton, ToqyLinkType, ToqySite } from "@/lib/types";
-import { buttonHref, createVCard, pixPayload, whatsappUrl, wifiPayload } from "@/lib/buttonUtils";
+import { buttonHref, createVCard, googleMapsExternalUrl, mapsEmbedUrl, mapsQuery, pixPayload, wazeExternalUrl, whatsappUrl, wifiPayload } from "@/lib/buttonUtils";
 import { resolveBodyBlockOrder } from "@/lib/bodyBlocks";
 import { ensureUrl, normalizeInstagram } from "@/lib/security";
 import { getPlan, resolvePlanTier } from "@/lib/subscriptions";
@@ -337,7 +338,7 @@ const NAME_FONT_SIZE_CLASS: Record<"sm" | "md" | "lg", string> = {
   lg: "text-3xl",
 };
 
-type Modal = "wifi" | "pix" | "booking" | null;
+type Modal = "wifi" | "pix" | "booking" | "maps" | null;
 
 function radiusClass(site: ToqySite) {
   if (site.theme.buttonRadius === "pill") return "rounded-full";
@@ -836,6 +837,10 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
     analytics.trackButtonClick(eventTypeForButtonType(button.type), site.id, button.id, button.label);
     if (button.type === "wifi") return setModal("wifi");
     if (button.type === "pix" || button.type === "pixHub") return setModal("pix");
+    // "Como chegar" com mapa embutido (2026-09-08, pedido real com print
+    // de referência) — só abre o modal se tiver endereço pra mostrar;
+    // sem isso, comportamento de sempre (abre o link direto, se houver).
+    if (button.type === "maps" && mapsQuery(site)) return setModal("maps");
     // Agendamento nativo (2026-09-07): só abre o modal se houver ao menos
     // 1 serviço habilitado — senão comportamento de sempre, link externo.
     if (button.type === "booking" && site.services?.some((s) => s.enabled)) return setModal("booking");
@@ -1356,6 +1361,7 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
         </div>
       ) : null}
       {modal === "wifi" ? <WifiModal site={site} onClose={() => setModal(null)} copied={copied} copyText={copyText} /> : null}
+      {modal === "maps" ? <MapsModal site={site} onClose={() => setModal(null)} /> : null}
       {modal === "pix" ? <PixModal site={site} onClose={() => setModal(null)} copied={copied} copyText={copyText} selectedAmount={selectedAmount} setSelectedAmount={setSelectedAmount} /> : null}
       {modal === "booking" ? <BookingModal site={site} onClose={() => setModal(null)} /> : null}
     </div>
@@ -1734,6 +1740,53 @@ function WifiModal({ site, onClose, copied, copyText }: { site: ToqySite; onClos
             {site.contact.facebook ? <button onClick={() => window.open(ensureUrl(site.contact.facebook), "_blank", "noopener,noreferrer")} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700"><Globe2 className="mr-1 inline h-4 w-4" />Facebook</button> : null}
           </div>
         </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+// "Como chegar" com mapa embutido (2026-09-08, pedido real com print de
+// referência: card com endereço, mapa com pino, botão "Maps" e opção de
+// Waze). Embed sem chave de API (ver mapsEmbedUrl em buttonUtils.ts) —
+// funciona só com o endereço que o dono já preenche em Identidade, sem
+// nenhuma configuração nova.
+function MapsModal({ site, onClose }: { site: ToqySite; onClose: () => void }) {
+  const embedUrl = mapsEmbedUrl(site);
+  const googleUrl = googleMapsExternalUrl(site);
+  const wazeUrl = wazeExternalUrl(site);
+  return (
+    <ModalShell title="Como chegar" onClose={onClose} site={site} icon={<MapPin className="h-6 w-6" />}>
+      <div className="rounded-[1.75rem] bg-white p-4 text-slate-950 shadow-xl">
+        <p className="text-sm font-bold text-slate-600">{site.profile.location || site.profile.name}</p>
+        {embedUrl ? (
+          <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200">
+            <iframe
+              src={embedUrl}
+              title="Mapa"
+              className="h-48 w-full"
+              style={{ border: 0 }}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+        ) : null}
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {googleUrl ? (
+            <button onClick={() => window.open(googleUrl, "_blank", "noopener,noreferrer")} className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700">
+              <ExternalLink className="h-4 w-4" /> Maps
+            </button>
+          ) : null}
+          {wazeUrl ? (
+            <button onClick={() => window.open(wazeUrl, "_blank", "noopener,noreferrer")} className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700">
+              <WazeIcon className="h-4 w-4" /> Waze
+            </button>
+          ) : null}
+        </div>
+        {googleUrl ? (
+          <button onClick={() => window.open(googleUrl, "_blank", "noopener,noreferrer")} className="mt-2 w-full rounded-2xl px-4 py-3 text-sm font-black text-white" style={{ background: site.theme.primary }}>
+            <MapPin className="mr-2 inline h-4 w-4" />Nossa Localização
+          </button>
+        ) : null}
       </div>
     </ModalShell>
   );

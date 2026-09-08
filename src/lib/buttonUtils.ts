@@ -8,13 +8,54 @@ export function whatsappUrl(site: ToqySite) {
   return `https://wa.me/${phone}?text=${encodeURIComponent(site.contact.whatsappMessage || "Olá! Vim pelo Toqy.")}`;
 }
 
+// "Como chegar" com mapa embutido (2026-09-08, pedido real com print de
+// referência — "seria legal ao clicar, pra abrir aparecer mais ou menos
+// igual tá na imagem, e a opção de Google Maps ou Waze"). Endereço em
+// texto livre (site.profile.location) é a fonte pro mapa e pro Waze —
+// não exige que o dono tenha colado um link do Google Maps pra
+// funcionar, só o endereço que ele já preenche em Identidade.
+export function mapsQuery(site: ToqySite): string {
+  return (site.profile.location || site.profile.name || "").trim();
+}
+
+// Embed do Google Maps SEM chave de API (2026-09-08) — o projeto não tem
+// Google Maps API key configurada, e conseguir uma (Google Cloud,
+// billing, restrição de domínio) é escopo maior que "botão como chegar".
+// `maps.google.com/maps?q=...&output=embed` é o truque de mercado pra
+// embutir um mapa clicável com pino a partir só de um endereço em texto,
+// sem chave nenhuma — estável há anos, usado por incontáveis sites.
+export function mapsEmbedUrl(site: ToqySite): string {
+  const q = mapsQuery(site);
+  if (!q) return "";
+  return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=15&output=embed`;
+}
+
+// Abrir no Google Maps de verdade (app no celular, site no desktop).
+// Respeita um link customizado do dono (site.links.googleMapsUrl —
+// útil pra apontar pra uma FICHA específica do Google, não só o
+// endereço) quando existir; senão gera a partir do endereço.
+export function googleMapsExternalUrl(site: ToqySite): string {
+  if (site.links.googleMapsUrl) return ensureUrl(site.links.googleMapsUrl);
+  const q = mapsQuery(site);
+  return q ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}` : "";
+}
+
+// Waze (2026-09-08, pedido real) — link universal oficial do Waze
+// (waze.com/ul), abre o app no celular e o site no desktop, sem chave de
+// API. Sempre a partir do endereço — diferente do Maps, não tem campo
+// próprio pra link customizado (ninguém tem "ficha" no Waze pra apontar).
+export function wazeExternalUrl(site: ToqySite): string {
+  const q = mapsQuery(site);
+  return q ? `https://waze.com/ul?q=${encodeURIComponent(q)}&navigate=yes` : "";
+}
+
 export function buttonHref(site: ToqySite, button: ToqyButton): string {
   switch (button.type) {
     case "whatsapp": return whatsappUrl(site);
     case "instagram": return normalizeInstagram(site.contact.instagram);
     case "facebook": return ensureUrl(site.contact.facebook);
     case "phone": return site.contact.phone ? `tel:${normalizePhone(site.contact.phone)}` : "";
-    case "maps": return ensureUrl(site.links.googleMapsUrl);
+    case "maps": return googleMapsExternalUrl(site);
     case "review": return ensureUrl(site.links.googleReviewUrl);
     case "booking": return ensureUrl(site.links.bookingUrl);
     case "website": return ensureUrl(site.contact.website);
