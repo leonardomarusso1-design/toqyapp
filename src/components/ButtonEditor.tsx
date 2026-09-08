@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Copy, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { ArrowDown, ArrowUp, ChevronRight, Copy, Plus, Trash2 } from "lucide-react";
 import type { ToqyButton, ToqyLinkType, ToqySite } from "@/lib/types";
 import { buttonTypeOptions, defaultLabelForType, syncModulesFromButtons } from "@/lib/buttonSync";
 import { generateId, normalizeInstagram } from "@/lib/security";
@@ -12,9 +13,22 @@ const input = "mt-2 w-full rounded-2xl border border-border bg-card px-4 py-3 te
 const label = "text-sm font-black text-ink";
 
 export function ButtonEditor({ site, onChange }: Props) {
+  // Botões recolhidos por padrão (2026-09-08, mesmo pedido de "abro o
+  // catálogo o card já está gigante" — aqui era o mesmo problema, um
+  // por botão). Estado só de UI; botão recém-criado já entra aberto.
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+  const toggleOpen = (id: string) => setOpenIds((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
   function commit(next: ToqySite) { onChange(syncModulesFromButtons({ ...next, updatedAt: new Date().toISOString() })); }
   function updateButton(id: string, patch: Partial<ToqyButton>) { commit({ ...site, buttons: site.buttons.map((button) => button.id === id ? { ...button, ...patch } : button) }); }
-  function addButton() { commit({ ...site, buttons: [...site.buttons, { id: generateId("btn"), label: "Novo botão", type: "custom", url: "", enabled: true }] }); }
+  function addButton() {
+    const newId = generateId("btn");
+    commit({ ...site, buttons: [...site.buttons, { id: newId, label: "Novo botão", type: "custom", url: "", enabled: true }] });
+    setOpenIds((prev) => new Set(prev).add(newId));
+  }
   function removeButton(id: string) { commit({ ...site, buttons: site.buttons.filter((button) => button.id !== id) }); }
   function duplicateButton(button: ToqyButton) { commit({ ...site, buttons: [...site.buttons, { ...button, id: generateId("btn"), label: `${button.label} cópia` }] }); }
   // CTA primário (2026-09-06, mockup da auditoria externa: "UM CTA primário
@@ -72,6 +86,7 @@ export function ButtonEditor({ site, onChange }: Props) {
           <DragReorderList items={site.buttons} itemKey={(b) => b.id} onReorder={(next) => commit({ ...site, buttons: next })}>
             {(button, index, drag) => {
               const meta = buttonTypeOptions.find((item) => item.type === button.type) ?? buttonTypeOptions[buttonTypeOptions.length - 1];
+              const isOpen = openIds.has(button.id);
               return (
                 <article className={`rounded-3xl border p-4 ${button.enabled ? "border-border bg-card" : "border-border bg-surface opacity-80"}`}>
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -86,6 +101,16 @@ export function ButtonEditor({ site, onChange }: Props) {
                       <button type="button" onClick={() => removeButton(button.id)} className="rounded-xl border border-red-200 p-2 text-red-600"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   </div>
+                  {/* Recolhido por padrão (2026-09-08) — só o resumo (tipo +
+                      "Ativo") fica sempre visível; o formulário de
+                      configuração inteiro abre ao tocar. Botão recém-criado
+                      já entra aberto (ver addButton). */}
+                  <button type="button" onClick={() => toggleOpen(button.id)} className="mt-3 flex w-full items-center gap-2 rounded-2xl border border-border bg-surface px-3 py-2.5 text-left transition hover:border-accent">
+                    <span className="min-w-0 flex-1 truncate text-xs font-bold text-muted">{meta.label}{button.enabled ? "" : " · desativado"}</span>
+                    <ChevronRight className={`h-4 w-4 shrink-0 text-muted transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                  </button>
+                  {isOpen ? (
+                  <>
                   <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1fr_auto]">
                     <Field title="Nome do botão" value={button.label} onChange={(v) => updateButton(button.id, { label: v })} />
                     <label><span className={label}>Tipo do botão</span><select className={input} value={button.type} onChange={(e) => updateButton(button.id, { type: e.target.value as ToqyLinkType, label: button.label || defaultLabelForType(e.target.value as ToqyLinkType) })}>{buttonTypeOptions.map((item) => <option key={item.type} value={item.type}>{item.label}</option>)}</select></label>
@@ -159,6 +184,8 @@ export function ButtonEditor({ site, onChange }: Props) {
                     </div>
                   )}
                   <div className="mt-4">{destinationFields(button)}</div>
+                  </>
+                  ) : null}
                 </article>
               );
             }}

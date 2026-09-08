@@ -409,6 +409,22 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
   const [isSaving, setIsSaving] = useState(false);
   const publicLink = createPublicUrl(site.slug);
 
+  // Itens do catálogo e botões abertos/fechados (2026-09-08, pedido real:
+  // "tudo tem que estar desativo, ir ativando aos poucos, pq abro o
+  // catálogo o card já está gigante aberto"). Cada item vira um resumo
+  // (foto+nome, recolhido) até a pessoa tocar pra abrir o formulário
+  // inteiro — é estado só de UI (o que está aberto na tela agora), por
+  // isso vive aqui, não em site.catalog/site.buttons. Item recém-criado
+  // (via "Adicionar item"/"Adicionar botão") entra já aberto, porque é
+  // exatamente o que a pessoa quer preencher agora; os que já existiam
+  // quando a etapa abriu começam fechados.
+  const [openCatalogIds, setOpenCatalogIds] = useState<Set<string>>(new Set());
+  const toggleCatalogOpen = (id: string) => setOpenCatalogIds((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+
   // Bug real reportado ao vivo (2026-09-08): "sempre que clico em algo,
   // começa no final da página" — trocar de etapa/bloco não voltava o
   // scroll pro topo, então quem tivesse rolado pra baixo numa etapa
@@ -1213,7 +1229,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
               <h2 className="text-2xl font-black text-ink">Catalogo</h2>
               <p className="mt-1 text-sm text-muted">Configure itens, layout e textos do catalogo.</p>
             </div>
-            <button type="button" onClick={() => update((s) => ({ ...s, catalog: [...s.catalog, { id: generateId("prd"), name: "", description: "", price: "", imageUrl: "", imageLayout: "square", imageFit: "cover", imagePosition: "center", category: "Destaques", enabled: true, actionLabel: "", actionUrl: "" }] }))} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-3 text-sm font-black text-white"><Plus className="h-4 w-4" />Adicionar item</button>
+            <button type="button" onClick={() => { const newId = generateId("prd"); update((s) => ({ ...s, catalog: [...s.catalog, { id: newId, name: "", description: "", price: "", imageUrl: "", imageLayout: "square", imageFit: "cover", imagePosition: "center", category: "Destaques", enabled: true, actionLabel: "", actionUrl: "" }] })); setOpenCatalogIds((prev) => new Set(prev).add(newId)); }} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-3 text-sm font-black text-white"><Plus className="h-4 w-4" />Adicionar item</button>
           </div>
 
           <div className="mt-4">
@@ -1290,7 +1306,9 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
 
           <div className="mt-5 grid gap-4">
             <DragReorderList items={site.catalog} itemKey={(item) => item.id} onReorder={(next) => update((s) => ({ ...s, catalog: next }))}>
-              {(item, index, drag) => (
+              {(item, index, drag) => {
+              const isOpen = openCatalogIds.has(item.id);
+              return (
               <article className="rounded-3xl border border-border bg-card p-4 shadow-sm">
                 {/* Header do item com reordenação. flex-wrap (2026-09-08,
                     bug real: linha sem quebra — drag handle + 2 setas +
@@ -1327,7 +1345,26 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                     <button type="button" onClick={() => update((s) => ({ ...s, catalog: s.catalog.filter((_, i) => i !== index) }))} className="rounded-xl border border-red-100 bg-red-50 px-2.5 py-1.5 text-red-500 hover:bg-red-100"><Trash2 className="h-3.5 w-3.5" /></button>
                   </div>
                 </div>
-                <div className="grid gap-3 md:grid-cols-2">
+                {/* Card recolhido por padrão (2026-09-08, pedido real: "abro
+                    o catálogo o card já está gigante aberto na tela") —
+                    resumo (foto + nome + preço) sempre visível; o
+                    formulário inteiro só aparece ao tocar aqui. Item recém
+                    criado já entra aberto (ver botão "Adicionar item"). */}
+                <button type="button" onClick={() => toggleCatalogOpen(item.id)} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface p-2.5 text-left transition hover:border-accent">
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
+                  ) : (
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-border text-muted"><Images className="h-4 w-4" /></span>
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-black text-ink">{item.name || "Sem nome — só foto"}</span>
+                    <span className="block truncate text-xs font-semibold text-muted">{item.price || item.category || "Toque pra editar"}</span>
+                  </span>
+                  <ChevronRight className={`h-4 w-4 shrink-0 text-muted transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                </button>
+                {isOpen ? (
+                <>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
                   <label><span className={label}>Nome (opcional — deixe vazio pra só foto)</span><input className={field} placeholder="Ex: Corte degradê" value={item.name} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { name: e.target.value }) }))} /></label>
                   <label><span className={label}>Categoria</span><input className={field} placeholder="Ex: Cortes social" value={item.category ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { category: e.target.value }) }))} /></label>
                   <label>
@@ -1395,8 +1432,11 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                   <input className={field} placeholder="Texto do botão (ex: Agendar)" value={item.actionLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionLabel: e.target.value }) }))} />
                   <input className={field} placeholder="Link do botão (opcional)" value={item.actionUrl ?? ""} onChange={(e) => update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { actionUrl: e.target.value }) }))} />
                 </div>
+                </>
+                ) : null}
               </article>
-              )}
+              );
+              }}
             </DragReorderList>
           </div>
 
