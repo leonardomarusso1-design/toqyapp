@@ -163,6 +163,15 @@ export type BusinessHoursDay = {
 export type BusinessHours = {
   enabled: boolean;
   days: BusinessHoursDay[];
+  // Mostrar o card "Aberto agora" no bio site (2026-09-08, bug real
+  // reportado ao vivo: "eu coloco horário de funcionamento e ele
+  // aparece — tem gente que só quer ativar ele pra colocar junto com
+  // agendamento, não deveria ser obrigatório aparecer"). `enabled`
+  // continua controlando o AGENDAMENTO (generateSlotsForDay usa o
+  // horário como disponibilidade, sempre) — showOnSite é só sobre o
+  // CARD público. undefined = true (sites salvos antes deste campo
+  // continuam mostrando o card, sem mudar nada pra quem já usava).
+  showOnSite?: boolean;
 };
 
 // Agendamento nativo (2026-09-07, referência Coonexta — documento de

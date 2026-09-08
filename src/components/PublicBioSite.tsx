@@ -675,7 +675,7 @@ const BusinessHoursCard = ({ site }: { site: ToqySite }) => {
     return () => clearInterval(id);
   }, []);
 
-  if (!hours?.enabled || !hours.days.length) return null;
+  if (!hours?.enabled || !hours.days.length || hours.showOnSite === false) return null;
 
   const status = now ? businessHoursStatus(hours, now) : null;
   const accent = accentColor(site);

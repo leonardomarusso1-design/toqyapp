@@ -30,18 +30,38 @@ export default function NewBioSitePage() {
   // diferente) — só que a causa era o slug de partida não ser único.
   // generateId() dá um sufixo que nenhuma outra criação em paralelo
   // (mesmo negócio, mesmo instante) nunca vai repetir.
-  const [initialSite] = useState(() => createSiteFromSegmentTemplate("servicos", {
-    profile: {
-      name: "Novo negócio",
-      title: "Cartão digital TOQY",
-      description: "Atendimento, links e catálogo em uma página profissional.",
-      location: "",
-      logoSize: "medium",
-      logoShape: "circle",
-    },
-    slug: `novo-negocio-${generateId().slice(0, 8)}`,
-    catalog: [],
-  }));
+  const [initialSite] = useState(() => {
+    const base = createSiteFromSegmentTemplate("servicos", {
+      profile: {
+        name: "Novo negócio",
+        title: "Cartão digital TOQY",
+        description: "Atendimento, links e catálogo em uma página profissional.",
+        location: "",
+        logoSize: "medium",
+        logoShape: "circle",
+      },
+      slug: `novo-negocio-${generateId().slice(0, 8)}`,
+      catalog: [],
+    });
+    // Tudo desativado no início (2026-09-08, bug real reportado ao vivo,
+    // vídeo de teste: "quando abri o biosite pela primeira vez pra criar
+    // um do zero tem que estar tudo desativado... o mais praticidade está
+    // ativado, alguns botões já estão feito, eu acho que deve estar
+    // zerado" — mesmo raciocínio já aplicado em catalog:[] acima, agora
+    // completo: o template "servicos" vem com 5 botões de exemplo
+    // (WhatsApp/Instagram/Agendar/Pix/Serviços) e Pix/Wi-Fi pré-ativados
+    // nos módulos, pensado pra quem clona um modelo populado (galeria de
+    // modelos reais). Quem começa do zero aqui não pediu nada disso — vai
+    // ativando um por um enquanto preenche.
+    return {
+      ...base,
+      buttons: [],
+      pix: { ...base.pix, enabled: false },
+      wifi: { ...base.wifi, enabled: false },
+      modules: { ...base.modules, whatsapp: false, instagram: false, phone: false, maps: false, wifi: false, pix: false, pixHub: false, googleReview: false, booking: false, catalog: false },
+      promoCard: { enabled: false, title: "Mais praticidade em um só lugar", description: "Acesse contatos, Pix, Wi-Fi, catálogo, rotas e avaliações.", buttonLabel: "Ver mais" },
+    };
+  });
 
   async function handleSave(site: ToqySite) {
     // Garante slug normalizado antes de salvar

@@ -902,14 +902,27 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
               externa) — card "Aberto hoje • 7h às 18h" com selo verde no
               bio site. Sem gate de plano de propósito: horário é informação
               básica de negócio local, vale até no Gratuito. Desligado por
-              padrão — bio site que não mexer aqui continua idêntico. */}
+              padrão — bio site que não mexer aqui continua idêntico.
+              "Ativar" x "Mostrar no bio site" viraram 2 checkboxes
+              separados (2026-09-08, bug real reportado ao vivo: "eu coloco
+              horário e ele aparece — tem gente que só quer ativar ele pra
+              colocar junto com agendamento, não deveria ser obrigatório
+              aparecer"). `enabled` continua sendo o que alimenta os
+              horários disponíveis pro Agendamento (ver bookingSlots.ts) —
+              showOnSite só decide se o CARD público aparece. */}
           <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
             <p className="text-sm font-black text-ink">🕒 Horário de funcionamento</p>
-            <p className="mt-0.5 text-xs text-muted">Mostra um card com o horário de hoje, o endereço e um selo “Aberto”/“Fechado” calculado na hora que o cliente abre o link.</p>
+            <p className="mt-0.5 text-xs text-muted">Define quando o negócio atende — alimenta o Agendamento (etapa Serviços) e, se quiser, um card público com selo “Aberto”/“Fechado”.</p>
             <label className="mt-3 flex items-center gap-2 text-sm font-black text-ink">
               <input type="checkbox" checked={Boolean(site.businessHours?.enabled)} onChange={(e) => setBusinessHours({ enabled: e.target.checked })} />
-              Mostrar horário no bio site
+              Ativar horário de funcionamento
             </label>
+            {site.businessHours?.enabled ? (
+              <label className="mt-2 flex items-center gap-2 text-xs font-black text-muted">
+                <input type="checkbox" checked={site.businessHours?.showOnSite ?? true} onChange={(e) => setBusinessHours({ showOnSite: e.target.checked })} />
+                Mostrar card “Aberto agora” no bio site
+              </label>
+            ) : null}
             {site.businessHours?.enabled ? (
               <div className="mt-4 space-y-2">
                 {WEEKDAY_EDIT_ORDER.map((weekday) => {
