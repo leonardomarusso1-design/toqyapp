@@ -34,6 +34,7 @@ import { buttonHref, createVCard, googleMapsExternalUrl, mapsQuery, pixPayload, 
 import { resolveBodyBlockOrder } from "@/lib/bodyBlocks";
 import { ensureUrl, normalizeInstagram } from "@/lib/security";
 import { getPlan, resolvePlanTier } from "@/lib/subscriptions";
+import { generateSlotsForDay } from "@/lib/bookingSlots";
 import { colorSwatch, resolveColorStyle } from "@/lib/colorRoles";
 import { analytics, eventTypeForButtonType } from "@/lib/analytics";
 import { StickerIcon } from "./StickerIcon";
@@ -1363,7 +1364,7 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
       {modal === "wifi" ? <WifiModal site={site} onClose={() => setModal(null)} copied={copied} copyText={copyText} /> : null}
       {modal === "maps" ? <MapsModal site={site} onClose={() => setModal(null)} /> : null}
       {modal === "pix" ? <PixModal site={site} onClose={() => setModal(null)} copied={copied} copyText={copyText} selectedAmount={selectedAmount} setSelectedAmount={setSelectedAmount} /> : null}
-      {modal === "booking" ? <BookingModal site={site} onClose={() => setModal(null)} /> : null}
+      {modal === "booking" ? <BookingModal site={site} onClose={() => setModal(null)} isPreview={Boolean(instanceId)} /> : null}
     </div>
   );
 }
@@ -1798,7 +1799,22 @@ function MapsModal({ site, onClose }: { site: ToqySite; onClose: () => void }) {
 // próprio modal. Horários vêm de /api/biosite-booking/available (nunca
 // expõe quem reservou, só a lista de "HH:MM" livres); confirmar chama
 // /api/biosite-booking, que recalcula tudo de novo no servidor.
-function BookingModal({ site, onClose }: { site: ToqySite; onClose: () => void }) {
+//
+// isPreview (2026-09-08, bug real reportado ao vivo: "coloco horário de
+// funcionamento, ok... quando vou em serviço e coloco agendar, marco a
+// data, fala que não tem horário disponível") — dentro do EDITOR
+// (instanceId setado), a rota /available consulta o bio site já SALVO
+// no banco: um site novo ainda não publicado (ou horário editado mas
+// ainda não clicou "Salvar") não existe lá ainda, ou existe com os
+// dados ANTIGOS — a prévia sempre batia "sem horário disponível" sem
+// explicar por quê. Em preview, calcula os horários DIRETO do estado em
+// memória (mesma função pura generateSlotsForDay do servidor), sem rede
+// — reflete exatamente o que está sendo editado agora, salvo ou não.
+// ponytail: não sabe quais horários já foram reservados nesse caso (só
+// o banco sabe) — mostra todos os horários possíveis do expediente,
+// suficiente pra testar a configuração; horários de fato ocupados só
+// somem na PÁGINA PÚBLICA real (fetch de verdade, embaixo).
+function BookingModal({ site, onClose, isPreview }: { site: ToqySite; onClose: () => void; isPreview?: boolean }) {
   const services = (site.services ?? []).filter((s) => s.enabled);
   const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
   const [date, setDate] = useState("");
@@ -1817,13 +1833,24 @@ function BookingModal({ site, onClose }: { site: ToqySite; onClose: () => void }
     setTime("");
     setSlots([]);
     if (!serviceId || !date) return;
+    const service = services.find((s) => s.id === serviceId);
+    if (!service) return;
+
+    if (isPreview) {
+      const [year, month, day] = date.split("-").map(Number);
+      const weekday = new Date(year, month - 1, day).getDay();
+      setSlots(generateSlotsForDay(site.businessHours, weekday, service.durationMinutes, site.bookingSlotMinutes ?? 30, []));
+      return;
+    }
+
     setLoadingSlots(true);
     fetch(`/api/biosite-booking/available?bioSiteId=${encodeURIComponent(site.id)}&serviceId=${encodeURIComponent(serviceId)}&date=${date}`)
       .then((r) => r.json())
       .then((data) => setSlots(data.slots ?? []))
       .catch(() => setSlots([]))
       .finally(() => setLoadingSlots(false));
-  }, [serviceId, date, site.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceId, date, site.id, isPreview]);
 
   async function confirm() {
     setStatus("sending");
@@ -1885,6 +1912,8 @@ function BookingModal({ site, onClose }: { site: ToqySite; onClose: () => void }
                   <button key={slot} type="button" onClick={() => setTime(slot)} className={`rounded-xl px-3 py-2 text-xs font-black ${time === slot ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-700"}`}>{slot}</button>
                 ))}
               </div>
+            ) : !site.businessHours?.enabled ? (
+              <p className="mt-2 text-sm font-bold text-slate-400">Configure o &ldquo;Horário de funcionamento&rdquo; (aba Aparência) pra liberar horários de agendamento.</p>
             ) : (
               <p className="mt-2 text-sm font-bold text-slate-400">Sem horários disponíveis neste dia.</p>
             )}
