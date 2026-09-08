@@ -129,7 +129,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between px-2 py-4">
             <Link href="/" className="flex items-center gap-3">
-              <img src="/brand/favicon-toqy.png" alt="TOQY" className="h-8 w-8 rounded-lg" />
+              <img src="/brand/toqy-icon.svg" alt="TOQY" className="h-8 w-8 rounded-lg" />
               <span className="text-xl font-bold tracking-tight text-ink">Toqy</span>
             </Link>
           </div>
@@ -203,7 +203,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <div className="flex flex-col min-w-0">
         <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 lg:px-8 shadow-sm z-10">
           <div className="flex items-center gap-2">
-            <img src="/brand/favicon-toqy.png" alt="TOQY" className="h-7 w-7 rounded-lg lg:hidden" />
+            <img src="/brand/toqy-icon.svg" alt="TOQY" className="h-7 w-7 rounded-lg lg:hidden" />
             <span className="text-ink font-semibold">Meu painel</span>
           </div>
           <div className="flex items-center gap-3">

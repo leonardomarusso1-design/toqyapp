@@ -40,7 +40,7 @@ function ConfirmInner() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-[#f5fbf9] px-5 text-center">
-      <img src="/brand/logo-toqy-horizontal-dark.png" alt="TOQY" className="mb-10 h-9 w-auto" />
+      <img src="/brand/toqy-logo.svg" alt="TOQY" className="mb-10 h-9 w-auto" />
 
       {status === "loading" && (
         <div>

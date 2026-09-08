@@ -34,7 +34,15 @@ export const metadata: Metadata = {
   description: "Bio sites profissionais para QR Code, NFC, Pix e Wi-Fi.",
   keywords: ["bio site", "link na bio", "QR Code", "NFC", "Pix", "cartão digital", "cardápio digital"],
   icons: {
-    icon: "/favicon.png",
+    // SVG primeiro (2026-09-08, pacote visual novo — favicon.svg):
+    // navegador moderno usa o SVG (nítido em qualquer tamanho/tema);
+    // favicon.png (gerado do mesmo SVG via sharp) é o fallback pra quem
+    // não suporta. apple-touch-icon precisa ser raster mesmo (iOS não
+    // aceita SVG aqui), também gerado do favicon.svg, 180x180.
+    icon: [
+      { url: "/brand/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.png", type: "image/png" },
+    ],
     apple: "/brand/favicon-toqy.png",
   },
   alternates: {

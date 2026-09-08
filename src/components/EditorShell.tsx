@@ -23,7 +23,7 @@ export function EditorShell({ children }: { children: ReactNode }) {
             <ArrowLeft className="h-4 w-4" /> Voltar pros meus sites
           </Link>
           <Link href="/app" className="flex items-center gap-2">
-            <img src="/brand/favicon-toqy.png" alt="TOQY" className="h-7 w-7 rounded-lg" />
+            <img src="/brand/toqy-icon.svg" alt="TOQY" className="h-7 w-7 rounded-lg" />
           </Link>
         </div>
       </header>

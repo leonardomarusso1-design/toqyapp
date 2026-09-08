@@ -3,7 +3,7 @@ export const metadata = { title: "Domínio próprio liberado — TOQY" };
 export default function ObrigadoDominioProprio() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-bg px-5 text-center text-ink">
-      <img src="/brand/logo-toqy-horizontal-dark.png" alt="TOQY" className="mb-10 h-10 w-auto" />
+      <img src="/brand/toqy-logo.svg" alt="TOQY" className="mb-10 h-10 w-auto" />
       <div className="flex h-20 w-20 items-center justify-center rounded-full bg-accent/10 text-accent">
         <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
       </div>

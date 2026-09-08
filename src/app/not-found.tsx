@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-bg px-5 py-16 text-center text-ink">
-      <img src="/brand/logo-toqy-horizontal-dark.png" alt="TOQY" className="h-8 w-auto object-contain" />
+      <img src="/brand/toqy-logo.svg" alt="TOQY" className="h-8 w-auto object-contain" />
       <p className="mt-10 text-sm font-black uppercase tracking-[0.22em] text-accent">Erro 404</p>
       <h1 className="mt-3 text-4xl font-black tracking-tight md:text-5xl">Essa página não existe</h1>
       <p className="mt-4 max-w-md text-sm leading-relaxed text-muted">

@@ -133,7 +133,7 @@ export default async function LandingPage() {
       <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
           <Link href="/" className="flex items-center gap-3">
-            <img src="/brand/logo-toqy-horizontal-dark.png" alt="TOQY" className="h-14 w-auto object-contain md:h-16" />
+            <img src="/brand/toqy-logo.svg" alt="TOQY" className="h-14 w-auto object-contain md:h-16" />
           </Link>
           <nav className="hidden items-center gap-9 text-sm font-semibold text-muted md:flex">
             <a className="transition hover:text-accent" href="#exemplos">Resultados</a>
@@ -456,7 +456,7 @@ export default async function LandingPage() {
           <div className="grid gap-8 md:grid-cols-4">
             <div>
               <Link href="/" className="flex items-center gap-2">
-                <img src="/brand/favicon-toqy.png" alt="TOQY" className="h-8 w-8 rounded-lg" />
+                <img src="/brand/toqy-icon.svg" alt="TOQY" className="h-8 w-8 rounded-lg" />
                 <span className="text-lg font-black text-ink">TOQY</span>
               </Link>
               <p className="mt-3 text-sm text-muted">Bio sites profissionais para QR Code, NFC e plaquinhas.</p>
