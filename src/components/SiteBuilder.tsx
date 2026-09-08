@@ -1283,8 +1283,11 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
             <DragReorderList items={site.catalog} itemKey={(item) => item.id} onReorder={(next) => update((s) => ({ ...s, catalog: next }))}>
               {(item, index, drag) => (
               <article className="rounded-3xl border border-border bg-card p-4 shadow-sm">
-                {/* Header do item com reordenação */}
-                <div className="mb-3 flex items-center justify-between gap-2">
+                {/* Header do item com reordenação. flex-wrap (2026-09-08,
+                    bug real: linha sem quebra — drag handle + 2 setas +
+                    índice + 2 checkboxes + excluir — não cabe nos 375px
+                    de um celular real, ficava cortada/inacessível). */}
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <DragHandle {...drag} />
                     <button type="button" disabled={index === 0} onClick={() => update((s) => { const c = [...s.catalog]; [c[index-1],c[index]] = [c[index],c[index-1]]; return {...s,catalog:c}; })} className="rounded-lg border border-border p-1.5 text-muted hover:text-ink disabled:opacity-30"><ArrowUp className="h-3.5 w-3.5" /></button>
@@ -1438,7 +1441,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
           <div className="mt-5 grid gap-4">
             {(site.services ?? []).map((svc, index) => (
               <article key={svc.id} className="rounded-3xl border border-border bg-card p-4 shadow-sm">
-                <div className="mb-3 flex items-center justify-between gap-2">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs font-bold text-muted">#{index + 1}</span>
                   <div className="flex items-center gap-2">
                     <label className="flex items-center gap-1.5 text-xs font-black text-ink"><input type="checkbox" checked={svc.enabled} onChange={(e) => update((s) => ({ ...s, services: (s.services ?? []).map((it, i) => i === index ? { ...it, enabled: e.target.checked } : it) }))} />Ativo</label>
