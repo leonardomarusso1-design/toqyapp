@@ -387,16 +387,26 @@ function logoShape(site: ToqySite) {
 // Otimização de imagem (2026-09-01, auditoria de performance) — fotos
 // reais de cliente (Supabase Storage) chegam sem nenhum redimensionamento;
 // uma delas tinha 1,9MB pra aparecer num card de ~190px na vitrine da
-// landing. Passa pelo otimizador de imagem do próprio Next.js (rota
-// /_next/image, já embutida no framework) pedindo uma largura compatível
-// com onde a imagem realmente aparece -- funciona pra <img src> comum e
-// pra CSS background-image igual. Sem custo de infra extra (não é um
-// serviço novo, é recurso nativo do Next; precisa de `images.remotePatterns`
-// em next.config.ts liberando o domínio do Supabase Storage). Local assets
-// (`/brand/...`, `/images/...`) e URLs vazias/relativas passam direto.
-function optimizedImageUrl(url: string | undefined, width: number, quality = 75): string | undefined {
-  if (!url || !/^https?:\/\//i.test(url)) return url;
-  return `/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=${quality}`;
+// landing. Passava pelo otimizador de imagem do próprio Next.js (rota
+// /_next/image) pedindo uma largura compatível com onde a imagem realmente
+// aparece. DESATIVADO (2026-09-08, bug real reportado ao vivo: "a imagem
+// foi, mas não aparece no preview"). Causa raiz achada testando a URL de
+// produção direto: /_next/image estava devolvendo 402
+// "OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED" pra QUALQUER transformação
+// ainda não cacheada — cota de Image Optimization da Vercel estourada.
+// Imagem já vista antes (cache do w= específico) continuava servindo 200,
+// por isso só imagem NOVA (upload que acabou de acontecer, preview
+// incluído) quebrava — o resto do site "parecia" normal. Isso não afetava
+// só o preview do editor: TODO visitante vendo uma foto nova de qualquer
+// bio site (logo, catálogo, capa) estava vendo imagem quebrada.
+// Como as imagens de upload já passam pelo sharp no servidor (webp,
+// máx. 2000px, ver src/lib/imageStorage.ts) o redimensionamento do Next
+// Image era, na prática, redundante pra elas -- só as URLs coladas via
+// "Usar URL" (ImageUploadField) escapam desse pré-processamento, e mesmo
+// essas preferem carregar no tamanho real a não carregar nada. Link direto
+// pro Supabase Storage/URL original, sem depender de cota paga da Vercel.
+function optimizedImageUrl(url: string | undefined, _width: number, _quality = 75): string | undefined {
+  return url;
 }
 
 function backgroundImageUrl(site: ToqySite): string | undefined {
