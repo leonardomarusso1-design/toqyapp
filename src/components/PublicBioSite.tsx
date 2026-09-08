@@ -325,9 +325,9 @@ const SpotifyLinkBlock = ({ url, label, display, site }: { url: string; label: s
   return (
     <button type="button" onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
       className="flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98]"
-      style={buttonStyle(site)}>
+      style={buttonStyle(site).button}>
       <SpotifyIcon className="h-5 w-5 shrink-0" />
-      <span>{label}</span>
+      <span style={buttonStyle(site).text}>{label}</span>
     </button>
   );
 };
@@ -499,33 +499,53 @@ function glassCard(site: ToqySite): React.CSSProperties {
 // global (não faz sentido pedir separadamente pra cada botão, e evita
 // contraste ruim se a pessoa só trocar o fundo). Sem valor, comportamento
 // idêntico a antes desta feature existir.
-function buttonStyle(site: ToqySite, buttonOverride?: ColorValue): React.CSSProperties {
+// Devolve DOIS estilos separados — botão (fundo+borda) e texto — em vez de
+// um objeto só (2026-09-08, bug real reportado ao vivo: "o texto gradiente
+// não funciona"). Causa: texto em modo gradiente resolve pra
+// `{backgroundImage, backgroundClip:"text", color:"transparent", ...}` (ver
+// resolveColorStyle) — misturado num objeto ÚNICO aplicado no MESMO
+// elemento que já usa `background`/`backgroundImage` pro preenchimento do
+// botão, as duas propriedades colidem (só uma sobrevive) e o código antigo
+// ainda extraía só `.color` do resultado, descartando backgroundImage/
+// backgroundClip por completo — sobrava `color: "transparent"` sozinho,
+// texto literalmente invisível. Agora quem chama aplica `.button` no
+// elemento do botão e `.text` no <span> do rótulo — dois elementos, cada
+// propriedade no seu lugar, sem conflito.
+function buttonStyle(site: ToqySite, buttonOverride?: ColorValue): { button: React.CSSProperties; text: React.CSSProperties } {
   const colors = site.theme.colors;
   const fill = site.theme.buttonFill;
-  const textColor = resolveColorStyle(colors?.buttonText, "text", site.theme.mode === "light" ? "#ffffff" : "#F8FAFC").color as string;
+  const text = resolveColorStyle(colors?.buttonText, "text", site.theme.mode === "light" ? "#ffffff" : "#F8FAFC");
   if (buttonOverride) return {
-    ...resolveColorStyle(buttonOverride, "bg", site.theme.primary),
-    color: textColor,
-    borderColor: colorSwatch(colors?.buttonBorder, "rgba(255,255,255,0.18)"),
+    button: {
+      ...resolveColorStyle(buttonOverride, "bg", site.theme.primary),
+      borderColor: colorSwatch(colors?.buttonBorder, "rgba(255,255,255,0.18)"),
+    },
+    text,
   };
   // Glass e Gradiente (legado, seletor "Preenchimento") ignoram cores
   // granulares de FUNDO — são automáticos; o texto/borda continua
   // respeitando o role granular (solid ou gradiente via colorSwatch).
   if (fill === "glass") return {
-    background: site.theme.mode === "light" ? "rgba(255,255,255,0.66)" : "rgba(255,255,255,0.13)",
-    color: textColor,
-    borderColor: colorSwatch(colors?.buttonBorder, site.theme.mode === "light" ? "rgba(15,23,42,0.10)" : "rgba(255,255,255,0.18)"),
+    button: {
+      background: site.theme.mode === "light" ? "rgba(255,255,255,0.66)" : "rgba(255,255,255,0.13)",
+      borderColor: colorSwatch(colors?.buttonBorder, site.theme.mode === "light" ? "rgba(15,23,42,0.10)" : "rgba(255,255,255,0.18)"),
+    },
+    text,
   };
   if (fill === "gradient") return {
-    background: `linear-gradient(135deg, ${colorSwatch(colors?.buttonBg, site.theme.primary)}, ${site.theme.secondary})`,
-    color: textColor,
-    borderColor: "rgba(255,255,255,0.18)"
+    button: {
+      background: `linear-gradient(135deg, ${colorSwatch(colors?.buttonBg, site.theme.primary)}, ${site.theme.secondary})`,
+      borderColor: "rgba(255,255,255,0.18)",
+    },
+    text,
   };
   // Sólido (ou gradiente escolhido direto no role buttonBg)
   return {
-    ...resolveColorStyle(colors?.buttonBg, "bg", site.theme.primary),
-    color: textColor,
-    borderColor: colorSwatch(colors?.buttonBorder, "rgba(255,255,255,0.18)"),
+    button: {
+      ...resolveColorStyle(colors?.buttonBg, "bg", site.theme.primary),
+      borderColor: colorSwatch(colors?.buttonBorder, "rgba(255,255,255,0.18)"),
+    },
+    text,
   };
 }
 
@@ -564,11 +584,19 @@ function softTint(hex: string, alpha = "1F"): string {
 // resolveColorStyle) de propósito: em modo gradiente o resolver de TEXTO
 // devolve `color: transparent` + bg-clip, o que aqui apagaria o texto por
 // cima do fundo do próprio card — o swatch entrega uma cor sólida legível.
+//
+// Fallback de texto encadeia por buttonText ANTES de theme.text (2026-09-08,
+// bug real reportado ao vivo: "quando marco destaque, os outros botão fica
+// tudo preto" — secondaryButtonText é um role à parte que quase ninguém
+// preenche; sem essa cadeia, o texto caía direto no "Texto principal" da
+// página inteira, que não tem nenhuma relação com a cor que a pessoa já
+// escolheu pros botões, podendo ficar ilegível em cima do card claro.
 function secondaryButtonStyle(site: ToqySite): React.CSSProperties {
   const isLight = site.theme.mode === "light";
+  const textFallback = colorSwatch(site.theme.colors?.buttonText, site.theme.text);
   return {
     ...resolveColorStyle(site.theme.colors?.secondaryButtonBg, "bg", isLight ? "#FFFFFF" : "rgba(255,255,255,0.10)"),
-    color: colorSwatch(site.theme.colors?.secondaryButtonText, site.theme.text),
+    color: colorSwatch(site.theme.colors?.secondaryButtonText, textFallback),
     borderColor: isLight ? "rgba(15,23,42,0.06)" : "rgba(255,255,255,0.14)",
     boxShadow: isLight ? "0 6px 18px rgba(15,23,42,0.06)" : "0 8px 22px rgba(0,0,0,0.20)",
   };
@@ -1114,7 +1142,17 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
                       </button>
                     );
                   }
-                  const softBg = `${brandColor[button.type] ?? site.theme.primary}26`;
+                  // Fundo translúcido usa a cor ESCOLHIDA no editor
+                  // (socialIconBg) quando existir, não mais sempre a cor
+                  // fixa da marca (2026-09-08, bug real: "não consigo
+                  // mudar o fundo do translúcido, não muda" — antes o
+                  // círculo translúcido de WhatsApp/Instagram/Facebook/
+                  // Maps/YouTube SEMPRE usava a cor da marca, então
+                  // trocar "Fundo dos ícones sociais" no editor não tinha
+                  // nenhum efeito visível nesses 5 tipos, os mais usados).
+                  // Sem customização, cai na cor de marca de sempre — não
+                  // muda nada pra quem nunca mexeu nesse campo.
+                  const softBg = `${colorSwatch(site.theme.colors?.socialIconBg, brandColor[button.type] ?? site.theme.primary)}26`;
                   return (
                     <button key={button.id} type="button" onClick={() => handleButton(button)} aria-label={button.label}
                       className="flex h-12 w-12 items-center justify-center rounded-full shadow-md transition active:scale-90 hover:scale-105 backdrop-blur-sm"
@@ -1141,7 +1179,12 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
                 // socialIconStyle:"glass" (formato antigo) ainda é lido
                 // como equivalente a translucent=true, pra não quebrar
                 // bio sites salvos antes desta correção.
-                const baseBg = isBrandType ? brandColor[button.type] : colorSwatch(site.theme.colors?.socialIconBg, site.theme.primary);
+                // Mesmo fix do bloco IMAGE_ICON_TYPES acima: em modo
+                // translúcido, socialIconBg (se configurado) vence a cor
+                // de marca — sem isso, o campo "Fundo dos ícones sociais"
+                // não tinha efeito nenhum em ícone de marca translúcido.
+                const solidBg = isBrandType ? brandColor[button.type] : colorSwatch(site.theme.colors?.socialIconBg, site.theme.primary);
+                const baseBg = translucent ? colorSwatch(site.theme.colors?.socialIconBg, solidBg) : solidBg;
                 const bg = translucent ? `${baseBg}26` : baseBg;
                 // Bug real corrigido (2026-07-16): ícone branco fixo quebrava
                 // (sumia) quando o fundo caía no fallback theme.primary (tipo
@@ -1190,7 +1233,7 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
                   {mainButtons.map((button) => {
                     const showIcon = site.theme.mainButtonDisplay !== "text-only";
                     if (site.theme.buttonStyle === "icon") {
-                      return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex min-h-24 flex-col items-center justify-center gap-2 border p-3 text-center text-xs font-black shadow-lg transition active:scale-[0.98] ${button.pulse ? "pulse-attention" : ""}`} style={buttonStyle(site, button.color)}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span>{button.label}</span></button>;
+                      { const s = buttonStyle(site, button.color); return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex min-h-24 flex-col items-center justify-center gap-2 border p-3 text-center text-xs font-black shadow-lg transition active:scale-[0.98] ${button.pulse ? "pulse-attention" : ""}`} style={s.button}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span style={s.text}>{button.label}</span></button>; }
                     }
                     // Hierarquia do mockup (só quando algum botão foi
                     // marcado como principal — ver useButtonHierarchy):
@@ -1201,13 +1244,14 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
                     // min-h-[56px] (acima dos 44px mínimos de toque).
                     if (useButtonHierarchy) {
                       const isPrimary = button.isPrimary === true;
+                      const primary = isPrimary ? buttonStyle(site, button.color) : null;
                       return (
                         <button
                           key={button.id}
                           type="button"
                           onClick={() => handleButton(button)}
                           className={`${radiusClass(site)} flex min-h-[56px] w-full items-center gap-3 border px-3.5 py-3 text-left text-sm font-black transition active:scale-[0.98] ${button.pulse ? "pulse-attention" : ""}`}
-                          style={isPrimary ? buttonStyle(site, button.color) : secondaryButtonStyle(site)}
+                          style={primary ? primary.button : secondaryButtonStyle(site)}
                         >
                           {showIcon ? (
                             <span
@@ -1222,12 +1266,12 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
                               <ButtonIcon type={button.type} color={accent} />
                             </span>
                           ) : null}
-                          <span className="min-w-0 flex-1 truncate">{button.label}</span>
+                          <span className="min-w-0 flex-1 truncate" style={primary ? primary.text : undefined}>{button.label}</span>
                           <ChevronRight className="h-5 w-5 shrink-0 opacity-70" />
                         </button>
                       );
                     }
-                    return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex w-full items-center justify-center gap-2 border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98] ${button.pulse ? "pulse-attention" : ""}`} style={buttonStyle(site, button.color)}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span>{button.label}</span></button>;
+                    { const s = buttonStyle(site, button.color); return <button key={button.id} type="button" onClick={() => handleButton(button)} className={`${radiusClass(site)} flex w-full items-center justify-center gap-2 border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98] ${button.pulse ? "pulse-attention" : ""}`} style={s.button}>{showIcon ? <ButtonIcon type={button.type} /> : null}<span style={s.text}>{button.label}</span></button>; }
                   })}
                 </section>
               );
