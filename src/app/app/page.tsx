@@ -354,8 +354,19 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
                         conseguem cortar o texto como deveriam. */}
                     <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                       <div className="min-w-0 w-full sm:w-auto">
-                        <div className="flex items-center gap-2">
-                          <p className="font-black text-ink truncate">{name}</p>
+                        {/* min-w-0 aqui TAMBÉM (2026-09-08, mesmo bug,
+                            round 2 — "ainda tá cortando" de novo mesmo
+                            depois do fix acima): o ancestral esticar pra
+                            100% não basta — esta linha (flex items-center)
+                            é ELA MESMA um flex container, e um flex item
+                            sem min-w-0 mantém a largura mínima do próprio
+                            conteúdo (o <p> com truncate/nowrap = largura
+                            do texto INTEIRO) mesmo que o pai já tenha
+                            largura certa. Sem isso aqui, o texto vaza pra
+                            fora do card (mas ainda dentro da página) e só
+                            é cortado na borda real da tela. */}
+                        <div className="flex min-w-0 items-center gap-2">
+                          <p className="min-w-0 font-black text-ink truncate">{name}</p>
                           <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${site.status === "active" ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}`}>
                             {site.status === "active" ? "Online" : "Offline"}
                           </span>
