@@ -242,7 +242,14 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
                 const name = site.name || site.slug;
                 return (
                   <div key={site.id} className="rounded-2xl border border-border bg-surface p-4">
-                    <div className="flex items-start justify-between gap-3">
+                    {/* flex-col no celular (2026-09-08, bug real: "passando
+                        pro lado direito da tela, não dá pra ver nada") — a
+                        coluna de botões tinha shrink-0 (não encolhe) dentro
+                        de uma linha sem quebra; num celular real, ela
+                        simplesmente saía da tela pra direita, cortada pelo
+                        overflow-x:hidden da página. Empilhado por padrão,
+                        lado a lado só a partir de sm. */}
+                    <div className="flex flex-col items-start justify-between gap-3 sm:flex-row">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="font-black text-ink truncate">{name}</p>
