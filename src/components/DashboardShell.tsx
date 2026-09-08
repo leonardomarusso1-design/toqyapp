@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
-import { BarChart3, Crown, Globe, Handshake, Home, MoreHorizontal, Plus, QrCode, Settings, Users } from "lucide-react";
+import { BarChart3, Crown, Globe, Handshake, Headset, Home, MoreHorizontal, Plus, QrCode, Settings, Users } from "lucide-react";
 import { LogoutButton } from "@/components/LogoutButton";
+import { SupportChatWidget } from "@/components/SupportChatWidget";
 import { supabase } from "@/lib/supabaseClient";
 
 // "Artes com IA" removido do menu (2026-09-06, pedido do Leonardo: "tire o
@@ -68,6 +69,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [isSingleSitePlan, setIsSingleSitePlan] = useState(false);
   const [planTier, setPlanTier] = useState("free");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Fecha o painel "Mais" automaticamente ao navegar
   useEffect(() => { setMoreOpen(false); }, [pathname]);
@@ -83,7 +85,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       setUserInitial((meta?.full_name || meta?.name || session.user.email || "U").charAt(0).toUpperCase());
 
       const [{ data: profile }, { count }] = await Promise.all([
-        supabase.from("profiles").select("biosites_limit, plan_toqy, plan_tier").eq("id", session.user.id).maybeSingle(),
+        supabase.from("profiles").select("biosites_limit, plan_toqy, plan_tier, is_admin").eq("id", session.user.id).maybeSingle(),
         supabase.from("toqy_biosites").select("id", { count: "exact", head: true }).eq("owner_profile_id", session.user.id),
       ]);
 
@@ -91,6 +93,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       setAtLimit((count ?? 0) >= limit);
       setIsSingleSitePlan(limit <= 1);
       setPlanTier((profile?.plan_toqy || profile?.plan_tier || "free") as string);
+      setIsAdmin(Boolean((profile as { is_admin?: boolean } | null)?.is_admin));
     }
     checkLimit();
   }, [pathname]);
@@ -132,6 +135,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               const active = item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
               return <Nav key={item.href} href={item.href} icon={<item.icon className="h-5 w-5" />} label={item.label} active={active} />;
             })}
+            {/* Admin (2026-09-08) — só quem tem profiles.is_admin=true
+                (hoje, só o Leonardo) vê este item; a página em si também
+                confere de novo, não depende só de esconder o link. */}
+            {isAdmin ? (
+              <Nav href="/app/admin/suporte" icon={<Headset className="h-5 w-5" />} label="Suporte (admin)" active={pathname.startsWith("/app/admin")} />
+            ) : null}
             <div className="pt-4 border-t border-border">
               <LogoutButton />
             </div>
@@ -213,6 +222,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </div>
         </>
       ) : null}
+
+      {/* Chat de suporte flutuante (2026-09-08) — qualquer conta logada,
+          em toda página do painel. */}
+      <SupportChatWidget />
     </main>
   );
 }
