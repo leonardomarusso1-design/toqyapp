@@ -93,7 +93,7 @@ export function ButtonEditor({ site, onChange }: Props) {
                   </div>
                   <div className="mt-3">
                     <span className="text-xs font-black text-ink">Exibir como</span>
-                    <div className="mt-1.5 flex gap-2">
+                    <div className="mt-1.5 flex flex-wrap gap-2">
                       {[
                         { val: undefined, label: "Automático", hint: "O sistema decide" },
                         { val: "icon",   label: "⭕ Ícone circular", hint: "Grade de ícones sociais" },

@@ -74,7 +74,13 @@ export function ColorPicker({ label, hint, value, onChange }: { label: string; h
   const isGradient = value.mode === "gradient";
   return (
     <div className="rounded-2xl border border-border bg-card p-3">
-      <div className="flex items-center justify-between gap-2">
+      {/* flex-wrap (2026-09-08, bug real com print: linha sem quebra +
+          shrink-0 no toggle Sólida/Gradiente — quando o label+hint são
+          longos, o toggle não encolhia e saía da tela pra direita, num
+          celular real. Usado em ~19 cores da Aparência + "Cor deste
+          botão" do ButtonEditor, então cortava a tela inteira nos dois
+          lugares de uma vez). */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-black text-ink">{label}</p>
           <p className="truncate text-xs text-muted">{hint}</p>
