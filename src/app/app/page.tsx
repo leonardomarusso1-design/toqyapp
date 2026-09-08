@@ -288,29 +288,37 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
 
         {/* Lista de bio sites */}
         <section className="rounded-[2rem] border border-border bg-card p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between gap-3 mb-4">
             <h2 className="text-xl font-black text-ink">Meus bio sites</h2>
-            {/* Chave nova aparece UMA vez, aqui (2026-09-06). Depois disso
-                ela so volta a ser vista em /me pelo dono — nunca em
-                superficie publica, ver toPublicSite(). */}
-            {novaChave ? (
-              <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-                <p className="text-sm font-black text-emerald-900">Nova chave de {novaChave.slug}</p>
-                <p className="mt-1 font-mono text-2xl font-black text-emerald-700">{novaChave.chave}</p>
-                <p className="mt-2 text-xs font-semibold text-emerald-800">
-                  A chave antiga parou de funcionar agora. Envie esta para quem edita o bio site.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => { navigator.clipboard.writeText(novaChave.chave); setNovaChave(null); }}
-                  className="mt-3 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black text-white hover:bg-emerald-700"
-                >
-                  Copiar e fechar
-                </button>
-              </div>
-            ) : null}
             <Link href="/app/novo" className="inline-flex items-center gap-2 rounded-2xl bg-accent px-4 py-2.5 text-sm font-black text-white hover:bg-accent-dim">+ Novo</Link>
           </div>
+          {/* Chave nova aparece UMA vez, aqui (2026-09-06). Depois disso ela
+              so volta a ser vista em /me pelo dono — nunca em superficie
+              publica, ver toPublicSite(). Bloco tirado da linha do
+              cabeçalho (2026-09-08, bug real reportado ao vivo: "painel
+              mobile, tá cortando a página em /app") — vivia como 3º irmão
+              flex ao lado de "Meus bio sites"/"+ Novo" numa linha SEM
+              flex-wrap; a chave (fonte grande, texto explicativo, botão)
+              é larga demais pra caber ao lado dos outros dois num celular,
+              e overflow-x:hidden global (globals.css) corta em vez de
+              rolar — exatamente o sintoma relatado. Bloco próprio, w-full,
+              sem concorrer com mais nada na mesma linha. */}
+          {novaChave ? (
+            <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+              <p className="text-sm font-black text-emerald-900">Nova chave de {novaChave.slug}</p>
+              <p className="mt-1 font-mono text-2xl font-black text-emerald-700">{novaChave.chave}</p>
+              <p className="mt-2 text-xs font-semibold text-emerald-800">
+                A chave antiga parou de funcionar agora. Envie esta para quem edita o bio site.
+              </p>
+              <button
+                type="button"
+                onClick={() => { navigator.clipboard.writeText(novaChave.chave); setNovaChave(null); }}
+                className="mt-3 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black text-white hover:bg-emerald-700"
+              >
+                Copiar e fechar
+              </button>
+            </div>
+          ) : null}
           {biosites.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border py-10 text-center">
               <p className="text-sm font-bold text-muted">Nenhum bio site criado ainda.</p>
