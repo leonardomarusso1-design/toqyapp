@@ -1727,14 +1727,23 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
   // mandou) — 100% DERIVADO de campos que já existem em ToqySite, sem
   // nenhum campo novo no banco: só reflete o que já foi preenchido.
   const checklistItems = [
-    { label: "Nome do negócio", done: Boolean(site.profile.name && site.profile.name !== "Novo negócio") },
-    { label: "Descrição", done: Boolean(site.profile.description?.trim()) },
-    { label: "Foto de perfil ou logo", done: Boolean(site.profile.profileImageUrl || site.profile.logoUrl) },
-    { label: "Pelo menos 1 rede social", done: Boolean(site.contact.instagram || site.contact.facebook || site.contact.whatsapp) },
-    { label: "Pelo menos 1 botão ativo", done: site.buttons.some((b) => b.enabled) },
+    { label: "Nome do negócio", done: Boolean(site.profile.name && site.profile.name !== "Novo negócio"), step: 1 },
+    { label: "Descrição", done: Boolean(site.profile.description?.trim()), step: 1 },
+    { label: "Foto de perfil ou logo", done: Boolean(site.profile.profileImageUrl || site.profile.logoUrl), step: 1 },
+    { label: "Pelo menos 1 rede social", done: Boolean(site.contact.instagram || site.contact.facebook || site.contact.whatsapp), step: 2 },
+    { label: "Pelo menos 1 botão ativo", done: site.buttons.some((b) => b.enabled), step: 2 },
   ];
   const checklistDone = checklistItems.filter((i) => i.done).length;
   const checklistPercent = Math.round((checklistDone / checklistItems.length) * 100);
+  // Pendência clicável leva direto pra etapa que resolve (2026-09-08,
+  // Parte C do doc "Toqy vs Coonexta"). No celular isso significa sair da
+  // lista de blocos e abrir o editor da etapa certa direto — mesmo
+  // caminho que clicar num bloco da lista já faz (ver mais abaixo).
+  function goToChecklistStep(stepIndex: number) {
+    setStep(stepIndex);
+    setMobileTab(STEP_META[stepIndex].group);
+    setMobileOpen(true);
+  }
 
   return (
     // fieldset disabled (2026-09-07, referência Coonexta — "Acesso do
@@ -1860,9 +1869,18 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
             </div>
             <ul className="mt-4 grid gap-1.5 sm:grid-cols-2">
               {checklistItems.map((item) => (
-                <li key={item.label} className={`flex items-center gap-2 text-xs font-bold ${item.done ? "text-muted line-through" : "text-ink"}`}>
-                  <CheckCircle2 className={`h-4 w-4 shrink-0 ${item.done ? "text-emerald-500" : "text-border"}`} />
-                  {item.label}
+                <li key={item.label}>
+                  {item.done ? (
+                    <span className="flex items-center gap-2 text-xs font-bold text-muted line-through">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                      {item.label}
+                    </span>
+                  ) : (
+                    <button type="button" onClick={() => goToChecklistStep(item.step)} className="flex w-full items-center gap-2 rounded-lg text-left text-xs font-bold text-ink transition hover:text-accent-dim">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-border" />
+                      {item.label}
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
