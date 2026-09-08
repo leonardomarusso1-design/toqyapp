@@ -591,19 +591,22 @@ function softTint(hex: string, alpha = "1F"): string {
 // devolve `color: transparent` + bg-clip, o que aqui apagaria o texto por
 // cima do fundo do próprio card — o swatch entrega uma cor sólida legível.
 //
-// Fallback de texto encadeia por buttonText ANTES de theme.text (2026-09-08,
-// bug real reportado ao vivo: "quando marco destaque, os outros botão fica
-// tudo preto" — secondaryButtonText é um role à parte que quase ninguém
-// preenche; sem essa cadeia, o texto caía direto no "Texto principal" da
-// página inteira, que não tem nenhuma relação com a cor que a pessoa já
-// escolheu pros botões, podendo ficar ilegível em cima do card claro.
+// Fundo e texto SEMPRE claros de verdade, nos dois temas (2026-09-08, 2ª
+// correção do mesmo bug real, agora com print: "quando marco destaque, os
+// outros botão fica tudo preto" — a 1ª correção só ajustou o fallback do
+// TEXTO; o fundo continuava `rgba(255,255,255,0.10)` em tema escuro — 10%
+// de branco por cima de um fundo já escuro renderiza quase idêntico a
+// preto de novo, não o "card claro" que o texto da tela promete ("os
+// outros viram cards claros"). Fundo e texto agora são fixos (não
+// derivam de theme.text/buttonText, que são calibrados pro fundo da
+// PÁGINA, não pra este card) — sempre um cinza bem claro com texto
+// escuro, legível em cima de qualquer tema.
 function secondaryButtonStyle(site: ToqySite): React.CSSProperties {
   const isLight = site.theme.mode === "light";
-  const textFallback = colorSwatch(site.theme.colors?.buttonText, site.theme.text);
   return {
-    ...resolveColorStyle(site.theme.colors?.secondaryButtonBg, "bg", isLight ? "#FFFFFF" : "rgba(255,255,255,0.10)"),
-    color: colorSwatch(site.theme.colors?.secondaryButtonText, textFallback),
-    borderColor: isLight ? "rgba(15,23,42,0.06)" : "rgba(255,255,255,0.14)",
+    ...resolveColorStyle(site.theme.colors?.secondaryButtonBg, "bg", "#F1F5F9"),
+    color: colorSwatch(site.theme.colors?.secondaryButtonText, "#0F172A"),
+    borderColor: "rgba(15,23,42,0.08)",
     boxShadow: isLight ? "0 6px 18px rgba(15,23,42,0.06)" : "0 8px 22px rgba(0,0,0,0.20)",
   };
 }

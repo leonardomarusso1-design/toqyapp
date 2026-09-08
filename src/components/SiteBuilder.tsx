@@ -145,8 +145,12 @@ function roleFallback(role: ColorRole, site: ToqySite): string {
     // externa): o padrão é card claro/neutro — o contrário do CTA, que é o
     // único preenchido com a cor cheia. Em tema escuro o "card" do tema já
     // é o tom certo pra isso.
-    secondaryButtonBg: t.mode === "light" ? "#FFFFFF" : t.card,
-    secondaryButtonText: t.text,
+    // Sempre claro/escuro fixos, nos 2 temas (2026-09-08) — mesmo motivo
+    // do fallback em PublicBioSite.tsx: usar t.card aqui mostrava um
+    // valor ESCURO no seletor de cor de temas escuros, e esse card
+    // precisa ser claro sempre (é o contrário visual do CTA principal).
+    secondaryButtonBg: "#F1F5F9",
+    secondaryButtonText: "#0F172A",
     hoursCardBg: t.mode === "light" ? "#FFFFFF" : t.card,
     hoursText: t.text,
     socialIconBg: t.primary,
