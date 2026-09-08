@@ -231,4 +231,36 @@ export const blogPostsIntencao: BlogPost[] = [
       text: "Crie a página do seu negócio de graça e compare com o que você usa hoje — leva menos de dez minutos.",
     },
   },
+  {
+    id: "10",
+    slug: "como-colocar-varios-links-na-bio-do-instagram",
+    title: "Como colocar vários links na bio do Instagram: passo a passo",
+    excerpt: "O Instagram só aceita um link no perfil. Veja como reunir WhatsApp, catálogo e Pix em uma única página — o conceito de link na bio.",
+    content: `
+      <h2>O problema: o Instagram só aceita um link</h2>
+      <p>Se você já tentou colocar mais de um link na bio do Instagram, sabe o problema: o campo "site" do perfil só aceita <strong>um único endereço</strong>. É aí que entra o conceito de <strong>bio site</strong> (ou "link na bio"): uma página única que reúne todos os seus links — Instagram, WhatsApp, catálogo, cardápio, agenda — em um só lugar.</p>
+      <h2>Passo a passo</h2>
+      <h3>1. Escolha uma ferramenta de link na bio</h3>
+      <p>Existem várias opções no mercado, mas vale escolher uma rápida de configurar e, de preferência, em português — evita confusão na hora de editar. O Toqy é uma dessas ferramentas: você cria sua página em poucos minutos, direto do celular, sem precisar programar.</p>
+      <h3>2. Monte sua página com os links principais</h3>
+      <p>Adicione seu WhatsApp (já com mensagem pronta, pra o cliente não precisar digitar nada), seu Instagram, seu catálogo de produtos ou serviços, e sua localização no mapa se você tem um ponto físico.</p>
+      <h3>3. Personalize o visual</h3>
+      <p>Cores, fotos e ícones de rede social devem seguir a identidade da sua marca. Um editor visual permite isso sem precisar de designer.</p>
+      <h3>4. Ative o link no seu perfil do Instagram</h3>
+      <p>Copie o link gerado e cole no campo "site" da bio do seu perfil.</p>
+      <h3>5. Use o link em outros lugares</h3>
+      <p>Coloque o QR Code do seu bio site em plaquinhas, cartões de visita ou no balcão da loja — assim ele não fica restrito só ao Instagram.</p>
+      <h2>Por que não é só "juntar links"</h2>
+      <p>Uma página que só agrupa links resolve a limitação do Instagram, mas para por aí. Ferramentas com Pix, WhatsApp pré-preenchido e catálogo embutido — como o Toqy — vão além: além de organizar seus links, você já consegue vender sem sair da página.</p>
+    `,
+    date: "2026-09-08",
+    author: "Equipe Toqy",
+    category: "Tutoriais",
+    image: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=800&q=80",
+    cta: {
+      label: "Criar meu link na bio grátis",
+      href: "/onboarding",
+      text: "Monte sua página com WhatsApp, catálogo e Pix em minutos — sem precisar programar.",
+    },
+  },
 ];

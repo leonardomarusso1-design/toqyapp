@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getSupabaseAdmin } from "@/lib/supabaseServer";
 import { blogPosts } from "@/data/blogPosts";
+import { nichePages } from "@/data/nichePages";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_APP_URL ??
@@ -16,6 +17,12 @@ const staticRoutes: MetadataRoute.Sitemap = [
   // sendo conteúdo de busca ("toqy é seguro?", "como funciona o pix").
   { url: `${siteUrl}/para-mim`, changeFrequency: "weekly", priority: 0.9 },
   { url: `${siteUrl}/para-vender`, changeFrequency: "weekly", priority: 0.9 },
+  // Páginas de recurso único e de nicho (2026-09-08, pacote de SEO/GEO) —
+  // cada uma ranqueia pra uma keyword de cauda longa que os concorrentes
+  // genéricos não cobrem ("bio site com pix", "link na bio pra barbearia").
+  { url: `${siteUrl}/biosite-com-pix`, changeFrequency: "monthly", priority: 0.8 },
+  { url: `${siteUrl}/biosite-com-whatsapp`, changeFrequency: "monthly", priority: 0.8 },
+  ...nichePages.map((p) => ({ url: `${siteUrl}/para/${p.slug}`, changeFrequency: "monthly" as const, priority: 0.8 })),
   { url: `${siteUrl}/faq`, changeFrequency: "monthly", priority: 0.7 },
   { url: `${siteUrl}/blog`, changeFrequency: "weekly", priority: 0.8 },
   { url: `${siteUrl}/login`, changeFrequency: "monthly", priority: 0.5 },

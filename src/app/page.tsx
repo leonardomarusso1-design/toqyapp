@@ -483,6 +483,19 @@ export default async function LandingPage() {
                 <li><Link href="/para-vender" className="hover:text-accent">Pra vender (Essencial/Freelancer/Agência)</Link></li>
               </ul>
             </div>
+            {/* Páginas de recurso/nicho (2026-09-08, pacote de SEO) — link
+                interno pras páginas novas, pra rastreador e usuário acharem. */}
+            <div>
+              <p className="text-sm font-black text-ink">Pra cada negócio</p>
+              <ul className="mt-3 space-y-2 text-sm text-muted">
+                <li><Link href="/biosite-com-pix" className="hover:text-accent">Bio site com Pix</Link></li>
+                <li><Link href="/biosite-com-whatsapp" className="hover:text-accent">Bio site com WhatsApp</Link></li>
+                <li><Link href="/para/salao-de-beleza" className="hover:text-accent">Pra salão de beleza</Link></li>
+                <li><Link href="/para/barbearia" className="hover:text-accent">Pra barbearia</Link></li>
+                <li><Link href="/para/restaurante" className="hover:text-accent">Pra restaurante</Link></li>
+                <li><Link href="/para/autonomos" className="hover:text-accent">Pra autônomos</Link></li>
+              </ul>
+            </div>
             <div>
               <p className="text-sm font-black text-ink">Conta</p>
               <ul className="mt-3 space-y-2 text-sm text-muted">
