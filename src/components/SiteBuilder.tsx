@@ -1040,7 +1040,13 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
             <p className="mt-0.5 text-xs text-muted">Arraste pra decidir o que aparece primeiro: botões, horário, catálogo, música ou Instagram.</p>
             <div className="mt-3 space-y-2">
               <DragReorderList
-                items={resolveBodyBlockOrder(site.bodyBlockOrder)}
+                // "leadForm" fica de fora desta lista (2026-09-08) — virou
+                // modal sobreposto, sem posição no fluxo do corpo pra
+                // arrastar (ver LeadCaptureForm.tsx/LeadCaptureModal).
+                // Continua saindo em resolveBodyBlockOrder por
+                // compatibilidade com a ordem já salva de sites antigos —
+                // só filtrado aqui, na hora de EXIBIR a lista arrastável.
+                items={resolveBodyBlockOrder(site.bodyBlockOrder).filter((item) => item !== "leadForm")}
                 itemKey={(item) => item}
                 onReorder={(next) => update((s) => ({ ...s, bodyBlockOrder: next }))}
               >
@@ -1064,7 +1070,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
               <input type="checkbox" checked={site.leadForm?.enabled === true} onChange={(e) => update((s) => ({ ...s, leadForm: { ...s.leadForm, enabled: e.target.checked } }))} />
               📋 Formulário de captura de contato
             </label>
-            <p className="mt-0.5 text-xs text-muted">Um formulário no bio site pra visitante deixar nome e contato. Aparece na lista &quot;Ordem das seções&quot; acima quando ligado.</p>
+            <p className="mt-0.5 text-xs text-muted">Aparece sobreposto na primeira visita, com o bio site meio visível atrás. Quem não quiser preencher toca em &quot;Recusar&quot; e não vê de novo naquele aparelho.</p>
             {site.leadForm?.enabled ? (
               <div className="mt-3 grid gap-3 md:grid-cols-2">
                 <label><span className={label}>Título</span><input className={field} value={site.leadForm?.title ?? ""} onChange={(e) => update((s) => ({ ...s, leadForm: { ...s.leadForm, title: e.target.value } }))} placeholder="Deixe seu contato" /></label>

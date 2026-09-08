@@ -36,7 +36,7 @@ import { getPlan, resolvePlanTier } from "@/lib/subscriptions";
 import { colorSwatch, resolveColorStyle } from "@/lib/colorRoles";
 import { analytics, eventTypeForButtonType } from "@/lib/analytics";
 import { StickerIcon } from "./StickerIcon";
-import { LeadCaptureForm } from "./LeadCaptureForm";
+import { LeadCaptureModal } from "./LeadCaptureForm";
 import { bioSiteFontById } from "@/lib/bioSiteFonts";
 import { TrackingPixels } from "./TrackingPixels";
 
@@ -1250,9 +1250,15 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
             // tirar"). site.instagramPosts continua salvo em quem já
             // tinha configurado — só parou de renderizar publicamente.
             if (blockType === "instagram") return null;
-            if (blockType === "leadForm") {
-              return <LeadCaptureForm key="leadForm" site={site} />;
-            }
+            // Formulário de captura virou modal sobreposto (2026-09-08,
+            // pedido real: "deveria aparecer sobreposto, com pouca
+            // opacidade em cima do biosite... não ficar jogado no meio
+            // do biosite") — não tem mais posição no fluxo do corpo, ver
+            // <LeadCaptureModal> renderizado fora deste loop, junto dos
+            // outros modais (QR/Pix/Wi-Fi). Continua em
+            // DEFAULT_BODY_BLOCK_ORDER só por compatibilidade com a
+            // ordem já salva de bio sites antigos (ver bodyBlocks.ts).
+            if (blockType === "leadForm") return null;
             return null;
           })}
 
@@ -1324,6 +1330,14 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
           </footer>
         </main>
       </div>
+
+      {/* Formulário de captura como modal sobreposto, não bloco inline
+          (ver nota grande no loop de blocos acima). Renderizado fora do
+          fluxo do corpo, incondicional a bodyBlockOrder — o próprio
+          componente decide sozinho se aparece (config.enabled + ainda
+          não visto/recusado neste navegador + só na página pública de
+          verdade, nunca no preview do editor). */}
+      <LeadCaptureModal site={site} isPublicInstance={!instanceId} />
 
       {qrModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm" onClick={() => setQrModal(false)}>

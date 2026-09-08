@@ -10,6 +10,11 @@ import type { BodyBlock } from "./types";
 // "leadForm" (2026-09-07, referência Coonexta) entra no FIM — inserir no
 // meio empurraria pra baixo blocos de bio sites já publicados (ver o
 // comentário grande de resolveBodyBlockOrder logo abaixo).
+// "leadForm" virou modal sobreposto (2026-09-08, PublicBioSite.tsx +
+// LeadCaptureForm.tsx) — não tem mais posição no corpo pra renderizar,
+// mas continua aqui/em BODY_BLOCK_LABELS por compatibilidade (bio sites
+// antigos têm "leadForm" salvo em bodyBlockOrder; SiteBuilder filtra
+// antes de mostrar a lista arrastável).
 export const DEFAULT_BODY_BLOCK_ORDER: BodyBlock[] = ["buttons", "hours", "catalog", "music", "instagram", "leadForm"];
 
 // Rótulos exibidos na lista arrastável do editor.
