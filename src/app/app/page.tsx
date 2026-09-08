@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 // Limpeza (2026-09-06, auditoria externa): CheckCircle2 foi removido do
 // import — nenhum JSX desta página usava o ícone, só pesava o bundle.
-import { Check, Copy, MoreVertical, Plus } from "lucide-react";
+import { Copy, MoreVertical, Plus } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { DashboardHero } from "@/components/DashboardHero";
 import { PLAN_BIOSITE_LIMITS } from "@/lib/planLimits";
@@ -21,39 +21,6 @@ type BioSiteRow = {
   editKey?: string;
 };
 
-// Dados mínimos do site_data usados só pra montar o checklist abaixo — não
-// vale a pena tipar ToqySite inteiro aqui, a página não edita nada disso.
-type ChecklistSiteData = {
-  profile?: { logoUrl?: string; profileImageUrl?: string };
-  contact?: { whatsapp?: string };
-  pix?: { enabled?: boolean; key?: string };
-  catalog?: unknown[];
-  services?: unknown[];
-  leadForm?: { enabled?: boolean };
-  businessHours?: { enabled?: boolean };
-};
-
-// Checklist operacional da CONTA (2026-09-08, Parte B do doc "Toqy vs
-// Coonexta" — SEM números de tráfego agregados: essa parte foi tirada de
-// propósito, ver nota grande em DashboardHero.tsx sobre a decisão de
-// 2026-09-07 de não misturar estatísticas de clientes diferentes numa
-// conta de revenda. Isso aqui é diferente — é "sua operação está com a
-// base configurada?", não visitas/cliques, e olha o portfólio inteiro
-// (OR entre os sites), não soma nada). Cada item só conta o que dá pra
-// provar com dado real já carregado — nada de item tipo "QR baixado" que
-// a gente não rastreia hoje.
-function buildChecklist(rows: Array<{ status: string; data: ChecklistSiteData }>) {
-  const some = (fn: (d: ChecklistSiteData) => boolean) => rows.some((r) => fn(r.data));
-  return [
-    { label: "Primeiro bio site publicado", done: rows.some((r) => r.status === "active") },
-    { label: "Logo ou foto configurada", done: some((d) => Boolean(d.profile?.logoUrl || d.profile?.profileImageUrl)) },
-    { label: "WhatsApp configurado", done: some((d) => Boolean(d.contact?.whatsapp?.trim())) },
-    { label: "Pix configurado", done: some((d) => Boolean(d.pix?.enabled && d.pix?.key?.trim())) },
-    { label: "Catálogo ou serviço adicionado", done: some((d) => Boolean(d.catalog?.length || d.services?.length)) },
-    { label: "Formulário de contatos ativo", done: some((d) => Boolean(d.leadForm?.enabled)) },
-    { label: "Horário de funcionamento configurado", done: some((d) => Boolean(d.businessHours?.enabled)) },
-  ];
-}
 
 type Profile = {
   id: string;
@@ -89,7 +56,6 @@ export default function PainelPage() {
   const [novaChave, setNovaChave] = useState<{ slug: string; chave: string } | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
-  const [checklistRows, setChecklistRows] = useState<Array<{ status: string; data: ChecklistSiteData }>>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   function copyEditKey(site: BioSiteRow) {
@@ -156,9 +122,8 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
       // quando eu esquecer, e o cliente também, mandar pra ele") — vem do
       // mesmo site_data.editKey que o editor já mostra na tela de "salvo
       // com sucesso", só que aqui, de uma vez, pra todos os sites.
-      const rows = (biositesData ?? []) as Array<BioSiteRow & { site_data?: ChecklistSiteData & { editKey?: string } }>;
+      const rows = (biositesData ?? []) as Array<BioSiteRow & { site_data?: { editKey?: string } }>;
       setBiosites(rows.map((row) => ({ ...row, editKey: row.site_data?.editKey })));
-      setChecklistRows(rows.map((row) => ({ status: row.status, data: row.site_data ?? {} })));
       const meta = session.user.user_metadata;
       setAvatarUrl(meta?.avatar_url || meta?.picture || null);
       setLoading(false);
@@ -201,7 +166,6 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
   // no meio do caminho). Essencial/Freelancer/Agência (revenda) mantêm
   // o painel de sempre, sem nenhuma mudança abaixo.
   const isSingleSitePlan = planLimit <= 1;
-  const checklist = buildChecklist(checklistRows);
   const draftSites = biosites.filter((s) => s.status === "draft");
 
   useEffect(() => {
@@ -279,26 +243,6 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
                 </Link>
               </div>
             ))}
-          </section>
-        ) : null}
-
-        {/* Checklist operacional da conta (2026-09-08, Parte B) — só
-            "portfólio configurado ou não", sem número de tráfego (ver
-            buildChecklist acima pro motivo). Some sozinho quando tudo
-            está marcado. */}
-        {!loading && checklist.some((c) => !c.done) ? (
-          <section className="min-w-0 rounded-[2rem] border border-border bg-card p-6 shadow-sm">
-            <h2 className="text-sm font-black uppercase tracking-wide text-muted">Seu portfólio está pronto?</h2>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {checklist.map((item) => (
-                <div key={item.label} className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold ${item.done ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-border bg-surface text-muted"}`}>
-                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${item.done ? "bg-emerald-500 text-white" : "border border-border bg-card"}`}>
-                    {item.done ? <Check className="h-3.5 w-3.5" /> : null}
-                  </span>
-                  {item.label}
-                </div>
-              ))}
-            </div>
           </section>
         ) : null}
 
