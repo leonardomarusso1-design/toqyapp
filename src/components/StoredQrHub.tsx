@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { generatePixBRCode } from "@/lib/pixBrCode";
-import { supabase } from "@/lib/supabaseClient";
 
 type QrCodeRow = {
   seq_number: number;
@@ -26,15 +25,19 @@ export default function StoredQrHub({ slug }: { slug: string }) {
   const [row, setRow] = useState<QrCodeRow | null | undefined>(undefined);
   const [copied, setCopied] = useState(false);
 
+  // Busca pela rota de servidor, não mais direto no Supabase com a chave
+  // anon (2026-09-08, auditoria de segurança — ver comentário em
+  // /api/qr-codes/public/[slug]/route.ts: a RLS pública dessa tabela
+  // permitia ler TODAS as linhas de uma vez, não só esta).
   useEffect(() => {
     let active = true;
-    supabase
-      .from("toqy_qr_codes")
-      .select("seq_number, mode, label, pix_key, pix_receiver_name, pix_city, pix_amount, target_url")
-      .eq("slug", slug)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (active) setRow(data as QrCodeRow | null);
+    fetch(`/api/qr-codes/public/${encodeURIComponent(slug)}`)
+      .then((res) => res.json())
+      .then((data: { qrCode?: QrCodeRow | null }) => {
+        if (active) setRow(data.qrCode ?? null);
+      })
+      .catch(() => {
+        if (active) setRow(null);
       });
     return () => {
       active = false;

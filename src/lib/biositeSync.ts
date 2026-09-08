@@ -103,21 +103,20 @@ export async function syncBiositeToSupabase(site: ToqySite): Promise<{ ok: boole
 }
 
 export async function loadBiositeFromSupabase(slug: string): Promise<ToqySite | null> {
+  // Busca via /api/biosites/[slug] (2026-09-08, auditoria de segurança) —
+  // antes esta função consultava toqy_biosites DIRETO do navegador com a
+  // chave anon (a RLS pública de "status=active" permitia). Achado real:
+  // isso devolvia site_data CRU, com a chave de edição em texto puro,
+  // pro estado do React de /[slug]/pix (StoredPixHub) — inspecionável
+  // pelo DevTools/aba de rede por qualquer visitante. A rota de servidor
+  // já existe e já sanitiza (toPublicSite() remove editKey antes de
+  // responder, ver /api/biosites/[slug]/route.ts) — mesmo caminho que
+  // showcaseSiteCache.ts já usa pra vitrine da landing.
   try {
-    // Busca pelo slug — a política RLS permite leitura pública de biosites com status=active
-    const { data, error } = await supabase
-      .from("toqy_biosites")
-      .select("site_data")
-      .eq("slug", slug)
-      .eq("status", "active")
-      .maybeSingle();
-
-    if (error) {
-      console.error("[biositeSync] loadBiosite error:", error.message, error.code);
-      return null;
-    }
-    if (data?.site_data) return data.site_data as ToqySite;
-    return null;
+    const res = await fetch(`/api/biosites/${encodeURIComponent(slug)}`);
+    if (!res.ok) return null;
+    const data: { site?: ToqySite } = await res.json();
+    return data.site ?? null;
   } catch (err) {
     console.error("[biositeSync] loadBiosite catch:", err);
     return null;
