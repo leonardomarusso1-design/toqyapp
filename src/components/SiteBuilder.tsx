@@ -7,7 +7,7 @@ import { QRCodeSVG } from "qrcode.react";
 // Limpeza (2026-09-06, auditoria externa): o tipo CatalogLayout e o helper
 // createEditUrl saíram dos imports — o tipo não era referenciado em nenhuma
 // anotação e createEditUrl só alimentava a const editLink, também morta.
-import type { BusinessHoursDay, CatalogItem, ColorRole, ColorValue, ThemePreset, ToqySite } from "@/lib/types";
+import type { BusinessHoursDay, CatalogItem, ColorRole, ColorValue, ToqySite } from "@/lib/types";
 import { createPublicUrl, generateSlug } from "@/lib/dataProvider";
 import { COLOR_ROLES } from "@/lib/colorRoles";
 import { ColorPicker } from "./ColorPicker";
@@ -27,7 +27,6 @@ import { LiveBioSitePreview } from "./LiveBioSitePreview";
 import { PublicBioSite } from "./PublicBioSite";
 import { StickerIcon } from "./StickerIcon";
 import { STICKER_LIBRARY } from "@/lib/stickerLibrary";
-import { ThemePresetPicker } from "./ThemePresetPicker";
 import { ButtonEditor } from "./ButtonEditor";
 import { generateId } from "@/lib/security";
 import { syncModulesFromButtons } from "@/lib/buttonSync";
@@ -475,26 +474,6 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
     return typeof raw === "string" ? { mode: "solid", value: raw } : raw;
   }
 
-  function selectTheme(preset: ThemePreset) {
-    update((s) => ({
-      ...s,
-      themePresetId: preset.id,
-      theme: {
-        ...s.theme,
-        mode: preset.mode,
-        background: preset.background,
-        gradientFrom: preset.gradientFrom,
-        gradientTo: preset.gradientTo,
-        card: preset.card,
-        text: preset.text,
-        muted: preset.muted,
-        primary: preset.primary,
-        secondary: preset.secondary,
-        accent: preset.accent,
-      },
-    }));
-  }
-
   async function save() {
     if (isSaving) return;
 
@@ -757,14 +736,6 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
             </label>
           </div>
 
-          {/* Paleta pronta — ponto de partida rápido, sobrescreve as
-              cores acima de uma vez (ThemePresetPicker já existia, só
-              mudou de lugar pra cá). */}
-          <div className="mt-5">
-            <span className={label}>Ou comece de uma paleta pronta</span>
-            <div className="mt-2"><ThemePresetPicker selectedPresetId={site.themePresetId} onSelect={selectTheme} /></div>
-          </div>
-
           {/* CORES AVANÇADAS — recolhido por padrão (2026-09-07). Mesmo
               conteúdo de sempre (ver COLOR_ROLES em colorRoles.ts),
               nada removido — só deixou de ser a primeira coisa que a
@@ -979,68 +950,13 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                     </div>
                   ) : null}
                 </div>
-                <div>
-                  <span className={label}>Posts do Instagram (adicione quantos quiser)</span>
-                  <div className="mt-2 space-y-2">
-                    {(site.instagramPosts ?? []).map((post) => (
-                      <div key={post.id} className="flex items-center gap-2">
-                        <input
-                          className={`${field} mt-0 min-w-0 flex-1`}
-                          value={post.url}
-                          onChange={(e) => update((s) => ({ ...s, instagramPosts: (s.instagramPosts ?? []).map((p) => (p.id === post.id ? { ...p, url: e.target.value } : p)) }))}
-                          placeholder="https://www.instagram.com/p/XXXXXXX/"
-                        />
-                        {/* Tamanho por post (2026-09-06, 2ª revisão — o
-                            Leonardo testou e reportou "estão de vários
-                            tamanhos, poderia escolher": antes era 1
-                            tamanho pra TODOS os posts do bloco; cada
-                            post tem sua própria proporção no embed da
-                            Meta mesmo com a mesma largura, então faz
-                            mais sentido cada um escolher o seu. */}
-                        {/* Bug real corrigido (2026-09-06): `field` já
-                            traz "w-full" — combinado com "w-28" aqui,
-                            as 2 classes de largura competem com a MESMA
-                            especificidade CSS, e o navegador não segue
-                            a ordem em que aparecem no atributo className
-                            (só a ordem em que o Tailwind gerou as
-                            regras). Resultado ao vivo: o select tentava
-                            ocupar 100% da linha, espremendo o campo de
-                            URL ao lado até virar só uma bolinha. Agora o
-                            select tem classes próprias, sem herdar
-                            "w-full" de lugar nenhum. */}
-                        <select
-                          className="mt-0 w-28 shrink-0 rounded-2xl border border-border bg-card px-2 py-3 text-sm text-ink outline-none transition focus:border-accent focus:ring-4 focus:ring-accent/10"
-                          value={post.size ?? "md"}
-                          onChange={(e) => update((s) => ({ ...s, instagramPosts: (s.instagramPosts ?? []).map((p) => (p.id === post.id ? { ...p, size: e.target.value as "sm" | "md" | "lg" } : p)) }))}
-                        >
-                          <option value="sm">Pequeno</option>
-                          <option value="md">Médio</option>
-                          <option value="lg">Grande</option>
-                        </select>
-                        <button type="button" onClick={() => update((s) => ({ ...s, instagramPosts: (s.instagramPosts ?? []).filter((p) => p.id !== post.id) }))} className="shrink-0 text-red-500"><Trash2 className="h-4 w-4" /></button>
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => update((s) => ({ ...s, instagramPosts: [...(s.instagramPosts ?? []), { id: generateId("ig"), url: "" }] }))}
-                      className="inline-flex items-center gap-2 rounded-2xl border-2 border-dashed border-border px-4 py-2.5 text-sm font-black text-muted hover:border-accent hover:text-accent"
-                    >
-                      <Plus className="h-4 w-4" /> Adicionar post
-                    </button>
-                  </div>
-                  {(site.instagramPosts ?? []).length ? (
-                    <div className="mt-3">
-                      {/* Só "Layout" aqui — o tamanho agora é por post,
-                          escolhido junto de cada URL acima (2ª revisão,
-                          2026-09-06). "Carrossel" virou slide de verdade:
-                          1 post por vez, com bolinhas de navegação, sem
-                          rolar sozinho (era o que o Leonardo reportou
-                          como "ficou muito feio"). */}
-                      <label><span className="text-xs font-black text-ink">Layout</span><select className={field} value={site.instagramLayout ?? "carousel"} onChange={(e) => update((s) => ({ ...s, instagramLayout: e.target.value as "carousel" | "list" }))}><option value="carousel">Slide (1 por vez, com navegação)</option><option value="list">Lista (um embaixo do outro)</option></select></label>
-                    </div>
-                  ) : null}
-                  <p className="mt-1 text-xs text-muted">Cada post aparece embutido e ao vivo (curtidas/comentários atualizados pelo próprio Instagram). Não puxa automaticamente do perfil — cole o link de cada post que quiser mostrar.</p>
-                </div>
+                {/* Posts do Instagram removidos (2026-09-08, pedido real:
+                    "tire o post do Instagram, não deu muito certo, pode
+                    tirar"). site.instagramPosts continua no tipo (sites
+                    salvos antes disso não perdem o que já tinham
+                    configurado — a renderização pública também foi
+                    desligada, ver PublicBioSite.tsx), só a UI de editar
+                    saiu daqui. */}
               </div>
             ) : (
               <div className="mt-3 rounded-2xl border border-violet/20 bg-violet/10 p-4 text-sm font-bold text-violet">
@@ -1340,41 +1256,15 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
             </label>
           </div>
 
-          {/* Layout do catalogo - escolha única (2026-07-16, simplificado)
-              Antes permitia marcar até 3 layouts, e o site mostrava TODOS
-              em sequência — isso que causava a página duplicar (ex:
-              "Destaques" seguido de "Lista completa" com os MESMOS
-              produtos) — bug real reportado por cliente. Também removida
-              a opção "Carrossel por categoria": virou redundante com o
-              painel "Exibição por categoria" abaixo, que já faz isso por
-              categoria, sem duplicar nem esconder. Este seletor agora só
-              define o estilo padrão pra categorias que não tiverem uma
-              exibição específica escolhida ali embaixo. */}
-          <div className="mt-4 rounded-3xl border border-border bg-surface p-4">
-            <span className={label}>Estilo padrão do catálogo</span>
-            <p className="mb-3 mt-1 text-xs text-muted">Vale pras categorias que não tiverem uma exibição específica escolhida no painel &quot;Exibição por categoria&quot; abaixo.</p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {([
-                ["carousel", "Carrossel horizontal", "Capa por categoria, arrasta para o lado — clique abre as outras fotos"],
-                ["grid",     "Grade 2 colunas",      "Visual de loja, dois itens por linha"],
-                ["stack",    "Lista vertical",       "Uma foto grande embaixo da outra"],
-              ] as const).map(([value, lbl2, desc]) => {
-                const active = (site.catalogLayout ?? "carousel") === value;
-                return (
-                  <button key={value} type="button" onClick={() => update((s) => ({ ...s, catalogLayout: value, catalogLayouts: [value] }))}
-                    className={"flex items-start gap-3 rounded-2xl border p-3 text-left transition " + (active ? "border-accent bg-accent/10" : "border-border bg-card hover:border-accent")}>
-                    <span className={"mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-xs font-black " + (active ? "border-accent bg-accent text-white" : "border-border bg-card text-muted")}>
-                      {active ? "✓" : ""}
-                    </span>
-                    <div>
-                      <p className={"text-sm font-black " + (active ? "text-accent-dim" : "text-ink")}>{lbl2}</p>
-                      <p className="mt-0.5 text-xs text-muted">{desc}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          {/* "Estilo padrão do catálogo" removido (2026-09-08, pedido real:
+              "tire o estilo padrão do catálogo, e deixe apenas pra
+              selecionar em cada categoria") — a opção "padrão" (Capa +
+              clique abre galeria) do painel "Exibição por categoria"
+              abaixo já é um modo completo por si só, não depende deste
+              seletor global pra fazer sentido. site.catalogLayout
+              continua existindo no tipo (seedado como "carousel" na
+              criação do site, usado só na seção "Destaques"), só sem
+              controle de edição aqui. */}
 
           <CatalogCategoryDisplayControl
             catalog={site.catalog}
@@ -1608,6 +1498,23 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
               verdade — ver enablePixels em PublicBioSite.tsx. */}
           <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
             <p className="text-sm font-black text-ink">🎯 Pixel &amp; Rastreio</p>
+
+            {/* Mini-tutorial (2026-09-08, pedido real: "as pessoas não vão
+                entender pra que serve, tente colocar um mini tutorial
+                escrito de como funciona") — explica o PORQUÊ antes dos
+                campos técnicos: sem contexto, "Meta Pixel ID"/"ID de
+                medição" não dizem nada pra quem nunca rodou anúncio. */}
+            <div className="mt-3 rounded-2xl border border-border bg-card p-4 text-xs leading-relaxed text-muted">
+              <p className="font-black text-ink">Pra que serve isso?</p>
+              <p className="mt-1">Se você anuncia este negócio no Instagram/Facebook (Meta Ads) ou no Google, esses campos avisam SUAS contas de anúncio toda vez que alguém visita a página ou clica num botão — sem isso, o anúncio não sabe se está funcionando.</p>
+              <p className="mt-2 font-black text-ink">Como pegar cada código:</p>
+              <ol className="mt-1 list-decimal space-y-1 pl-4">
+                <li><b>Meta Pixel ID</b>: entre no <a href="https://business.facebook.com/events_manager" target="_blank" rel="noreferrer" className="underline">Gerenciador de Eventos</a> da sua conta do Meta → escolha o Pixel → o número de 15-16 dígitos aparece no topo.</li>
+                <li><b>Google Analytics</b>: entre no <a href="https://analytics.google.com" target="_blank" rel="noreferrer" className="underline">Google Analytics</a> → Administrador → Fluxos de dados → escolha o site → copie o &quot;ID de medição&quot; (começa com &quot;G-&quot;).</li>
+              </ol>
+              <p className="mt-2">Não anuncia ainda? Pode deixar em branco — não muda nada no bio site pro visitante.</p>
+            </div>
+
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               <label>
                 <span className={label}>Meta Pixel ID</span>

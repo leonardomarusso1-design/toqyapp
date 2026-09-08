@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 // Limpeza (2026-09-06, auditoria externa): CheckCircle2 foi removido do
 // import — nenhum JSX desta página usava o ícone, só pesava o bundle.
-import { Plus } from "lucide-react";
+import { Copy, Plus } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { DashboardHero } from "@/components/DashboardHero";
 import { PLAN_BIOSITE_LIMITS } from "@/lib/planLimits";
@@ -18,6 +18,7 @@ type BioSiteRow = {
   slug: string;
   status: string;
   name?: string;
+  editKey?: string;
 };
 
 type Profile = {
@@ -53,6 +54,14 @@ export default function PainelPage() {
   const [rotatingId, setRotatingId] = useState<string | null>(null);
   const [novaChave, setNovaChave] = useState<{ slug: string; chave: string } | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+
+  function copyEditKey(site: BioSiteRow) {
+    if (!site.editKey) return;
+    navigator.clipboard.writeText(site.editKey);
+    setCopiedKeyId(site.id);
+    setTimeout(() => setCopiedKeyId((id) => (id === site.id ? null : id)), 2000);
+  }
 
   async function handleRotateKey(site: BioSiteRow) {
     if (!window.confirm(`Gerar nova chave para "${site.slug}"?
@@ -90,7 +99,7 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
 
       const [{ data: profileData, error: profileError }, { data: biositesData, error: biositesError }] = await Promise.all([
         supabase.from("profiles").select("id, email, full_name, plan_tier, plan_toqy, biosites_limit, biosites_count, subscription_status").eq("id", session.user.id).single(),
-        supabase.from("toqy_biosites").select("id, slug, status, name").eq("owner_profile_id", session.user.id).order("created_at", { ascending: false }),
+        supabase.from("toqy_biosites").select("id, slug, status, name, site_data").eq("owner_profile_id", session.user.id).order("created_at", { ascending: false }),
       
       ]);
 
@@ -107,7 +116,11 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
       }
 
       setProfile(profileData as Profile);
-      setBiosites((biositesData ?? []) as BioSiteRow[]);
+      // Chave de acesso visível na lista (2026-09-07, pedido real: "pra
+      // quando eu esquecer, e o cliente também, mandar pra ele") — vem do
+      // mesmo site_data.editKey que o editor já mostra na tela de "salvo
+      // com sucesso", só que aqui, de uma vez, pra todos os sites.
+      setBiosites(((biositesData ?? []) as Array<BioSiteRow & { site_data?: { editKey?: string } }>).map((row) => ({ ...row, editKey: row.site_data?.editKey })));
       const meta = session.user.user_metadata;
       setAvatarUrl(meta?.avatar_url || meta?.picture || null);
       setLoading(false);
@@ -238,6 +251,19 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
                           </span>
                         </div>
                         <p className="mt-0.5 text-xs font-mono text-muted">toqy.com.br/b/<strong>{site.slug}</strong></p>
+                        {/* Chave de acesso visível aqui (2026-09-07, pedido
+                            real: "pra quando eu esquecer, e o cliente
+                            também, mandar pra ele") — antes só aparecia uma
+                            vez na tela de "salvo com sucesso" ou via "Nova
+                            chave" (que invalida a antiga); isso aqui só lê,
+                            não gera nada novo. */}
+                        {site.editKey ? (
+                          <button type="button" onClick={() => copyEditKey(site)} className="mt-1 inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1 font-mono text-xs text-muted transition hover:border-accent hover:text-ink">
+                            <Copy className="h-3 w-3 shrink-0" />
+                            Chave: <strong>{site.editKey}</strong>
+                            {copiedKeyId === site.id ? <span className="text-emerald-600">Copiado!</span> : null}
+                          </button>
+                        ) : null}
                       </div>
                       <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
                         <button
