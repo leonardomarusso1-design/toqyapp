@@ -336,9 +336,24 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
                         de uma linha sem quebra; num celular real, ela
                         simplesmente saía da tela pra direita, cortada pelo
                         overflow-x:hidden da página. Empilhado por padrão,
-                        lado a lado só a partir de sm. */}
-                    <div className="flex flex-col items-start justify-between gap-3 sm:flex-row">
-                      <div className="min-w-0">
+                        lado a lado só a partir de sm.
+                        `items-start` só a partir de sm (2026-09-08, MESMO
+                        bug reaberto — "ainda tá cortando"): em flex-col,
+                        align-items controla a LARGURA (eixo cruzado vira
+                        horizontal). `items-start` fazia o bloco de nome
+                        (com `truncate`) encolher pro tamanho do PRÓPRIO
+                        texto em vez de esticar pra largura do cartão —
+                        nome de negócio comprido (ex: "Dra. Thaís Hassum -
+                        Odontologia e Harmonização") nunca truncava,
+                        alargava o card, e como o card mora no MESMO grid
+                        de "Meus bio sites"/checklist/banner de rascunho,
+                        alargava a página inteira junto — cortada pelo
+                        overflow-x:hidden global. Sem `items-start` no
+                        mobile, o padrão (stretch) faz o bloco esticar pra
+                        100% da linha, e aí sim `min-w-0` + `truncate`
+                        conseguem cortar o texto como deveriam. */}
+                    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                      <div className="min-w-0 w-full sm:w-auto">
                         <div className="flex items-center gap-2">
                           <p className="font-black text-ink truncate">{name}</p>
                           <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${site.status === "active" ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}`}>

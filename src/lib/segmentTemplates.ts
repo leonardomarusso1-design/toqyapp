@@ -170,6 +170,51 @@ const clinicaButtons = [b("whatsapp", "WhatsApp"), b("booking", "Agendamento"), 
 const petButtons = [b("whatsapp", "WhatsApp"), b("instagram", "Instagram"), b("maps", "Como chegar"), b("pix", "Pix"), b("booking", "Agendar"), b("catalog", "Serviços")];
 const servicosButtons = [b("whatsapp", "WhatsApp"), b("instagram", "Instagram"), b("booking", "Agendar"), b("pix", "Pix"), b("catalog", "Serviços")];
 
+// Ação principal por segmento (2026-09-08, Parte D do doc "Toqy vs
+// Coonexta" — "fallback inteligente por segmento": salão/barbearia
+// agenda, restaurante WhatsApp, clínica agenda, loja catálogo, prestador
+// orçamento). A HIERARQUIA em si (1 CTA cheio + resto em cards claros)
+// já existia inteira — `ToqyButton.isPrimary`, ver types.ts e
+// PublicBioSite.tsx `useButtonHierarchy`. O que faltava era escolher
+// automaticamente QUAL botão vira o principal num bio site novo, sem
+// obrigar o dono a saber que esse controle existe e ir marcar na mão.
+//
+// Só entra em ação se NENHUM botão já tiver isPrimary (nunca sobrescreve
+// escolha explícita do dono) e o tipo escolhido realmente existir e
+// estiver ativo entre os botões do site — sem isso, fallback por
+// PRIORIDADE genérica despacha o que fizer mais sentido pra qualquer
+// segmento não mapeado aqui (inclusive os que caem no fallbackTemplate
+// de "servicos", ver getSegmentTemplate).
+const SEGMENT_PRIMARY_TYPE: Partial<Record<Segment, ToqyButton["type"]>> = {
+  barbearia: "booking",
+  salao: "booking",
+  clinica: "booking",
+  dentista: "booking",
+  petshop: "booking",
+  fotografo: "booking",
+  restaurante: "whatsapp",
+  pastelaria: "whatsapp",
+  lanchonete: "whatsapp",
+  delivery: "whatsapp",
+  assistencia_tecnica: "whatsapp",
+  oficina: "whatsapp",
+  servicos: "whatsapp",
+  loja: "catalog",
+};
+const PRIMARY_TYPE_FALLBACK_PRIORITY: ToqyButton["type"][] = ["booking", "whatsapp", "catalog", "menu"];
+
+function withDefaultPrimaryAction(buttons: ToqyButton[], segment: Segment): ToqyButton[] {
+  if (buttons.some((btn) => btn.isPrimary)) return buttons; // escolha explícita já feita, não mexe
+  const candidates = SEGMENT_PRIMARY_TYPE[segment] ? [SEGMENT_PRIMARY_TYPE[segment]!, ...PRIMARY_TYPE_FALLBACK_PRIORITY] : PRIMARY_TYPE_FALLBACK_PRIORITY;
+  const winnerType = candidates.find((type) => buttons.some((btn) => btn.type === type && btn.enabled));
+  if (!winnerType) return buttons; // nenhum tipo elegível presente — mantém sem principal (comportamento antigo)
+  let picked = false;
+  return buttons.map((btn) => {
+    if (!picked && btn.type === winnerType && btn.enabled) { picked = true; return { ...btn, isPrimary: true }; }
+    return btn;
+  });
+}
+
 export const segmentTemplates: SegmentTemplate[] = [
   {
     segment: "barbearia",
@@ -347,7 +392,7 @@ export function createSiteFromSegmentTemplate(segment: Segment, overrides: Parti
     wifi: { enabled: template.modules.wifi, ssid: "", password: "", encryption: "WPA", checkinUrl: "", checkinLabel: "Fazer check-in", ...overrides.wifi },
     catalogLayout: overrides.catalogLayout ?? template.catalogLayout ?? "carousel",
     modules: { ...template.modules, ...overrides.modules },
-    buttons: overrides.buttons ? [...overrides.buttons] : template.buttons.map((item) => ({ ...item, id: generateId("btn") })),
+    buttons: overrides.buttons ? [...overrides.buttons] : withDefaultPrimaryAction(template.buttons.map((item) => ({ ...item, id: generateId("btn") })), segment),
     catalog: overrides.catalog ? [...overrides.catalog] : template.catalog.map((item) => ({ ...item, id: generateId("prd") })),
     editKey: overrides.editKey ?? generateEditKey(),
     createdAt: overrides.createdAt ?? now,
@@ -366,7 +411,7 @@ export function applySegmentTemplate(site: ToqySite, segment: Segment): ToqySite
     profile: { ...site.profile, title: template.templateName, description: site.profile.description || template.description, backgroundImageUrl: visual.backgroundImageUrl },
     themePresetId: preset.id,
     theme: { ...site.theme, mode: preset.mode, background: preset.background, gradientFrom: preset.gradientFrom, gradientTo: preset.gradientTo, card: preset.card, text: preset.text, muted: preset.muted, primary: preset.primary, secondary: preset.secondary, accent: preset.accent, ...visual.theme },
-    buttons: template.buttons.map((item) => ({ ...item, id: generateId("btn") })),
+    buttons: withDefaultPrimaryAction(template.buttons.map((item) => ({ ...item, id: generateId("btn") })), segment),
     catalog: template.catalog.map((item) => ({ ...item, id: generateId("prd") })),
     catalogLayout: template.catalogLayout ?? site.catalogLayout ?? "carousel",
     modules: { ...template.modules },
