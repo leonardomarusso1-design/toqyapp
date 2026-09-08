@@ -71,15 +71,28 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
 
   useEffect(() => {
     params.then(async ({ slug }) => {
-      const { data } = await supabase
-        .from("toqy_biosites")
-        .select("site_data, slug, status")
-        .eq("slug", slug)
-        .maybeSingle();
+      // Fix de bug real reportado ao vivo (2026-09-08): "não entra nas
+      // páginas pra editar, pelo nome e senha... fala que não foi
+      // encontrado" — TODO cliente sem conta caía aqui, sempre. Causa
+      // raiz: este load inicial consultava toqy_biosites DIRETO com o
+      // client anônimo (mesmo padrão que biositeSync.ts tinha e foi
+      // corrigido antes nesta mesma sessão) — e o endurecimento de RLS
+      // que fechou o vazamento de editKey (mesma sessão, migration
+      // 2026-09-08_critical_rls_hardening.sql) também bloqueou essa
+      // leitura anônima direta, que ESTA página ainda fazia (não tinha
+      // sido migrada junto). Resultado: `data` sempre vinha vazio pra
+      // quem não tem conta — "Página não encontrada" pra 100% dos
+      // clientes tentando editar pela chave, exatamente o sintoma
+      // relatado. Troca pra GET /api/biosites/[slug] (service role,
+      // ignora RLS, já sanitiza editKey via toPublicSite — tela de
+      // "digite sua chave" não precisa da chave real antes de destravar).
+      const res = await fetch(`/api/biosites/${encodeURIComponent(slug)}`);
+      const body = await res.json().catch(() => null);
+      const data = res.ok && body?.site ? (body.site as ToqySite & { id?: string }) : null;
 
       if (!data) { setLoading(false); return; }
 
-      setSite({ ...(data.site_data as ToqySite), slug: data.slug, status: data.status });
+      setSite({ ...data, slug: data.slug ?? slug, status: data.status });
 
       // Auto-unlock com chave da URL
       const keyFromUrl = (searchParams.get("key") ?? "").trim();
