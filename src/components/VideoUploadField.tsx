@@ -11,7 +11,26 @@ import { supabase } from "@/lib/supabaseClient";
 const MAX_BYTES = 3.5 * 1024 * 1024;
 const MAX_SECONDS = 12;
 
-function fileToDataUrl(file: File): Promise<string> {
+// Compressão no navegador (2026-09-08, bug real reportado ao vivo: "gravei
+// um vídeo no próprio celular meu, de 4 segundos, não consegui colocar
+// pq falou que tava pesado"). Causa raiz: ao contrário de imagem (que já
+// passa por resize no canvas + reencode no servidor via sharp — ver
+// imageStorage.ts), vídeo subia CRU, do jeito que o celular gravou. Um
+// celular moderno grava 1080p/4K a dezenas de Mbps — 4 segundos disso
+// facilmente passam de 3.5MB, mesmo sendo um clipe bem curto. O teto de
+// 3.5MB em si NÃO dá pra subir (é o corpo de requisição real que a Vercel
+// aceita, ~4.5MB, menos a inflação de ~33% do base64 — já calibrado no
+// limite, subir o número só move a falha pra dentro da própria
+// plataforma). A correção de verdade é comprimir ANTES de virar base64:
+// reduz resolução e bitrate no próprio navegador (canvas + MediaRecorder,
+// sem biblioteca nova) antes de mandar pro servidor. Um clipe de poucos
+// segundos vira algumas centenas de KB a ~1MB depois disso — cabe
+// folgado no teto que já existe.
+const COMPRESS_MAX_DIM = 480; // banner de topo tem ~224px de altura, catálogo é ainda menor — 480px é mais que suficiente
+const COMPRESS_BITRATE = 1_200_000; // ~1.2Mbps, qualidade boa pra um clipe curto e decorativo
+const COMPRESS_FPS = 24;
+
+function fileToDataUrl(file: File | Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
@@ -20,19 +39,103 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-function getVideoDuration(file: File): Promise<number> {
+function loadVideoElement(file: File): Promise<HTMLVideoElement> {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
     video.preload = "metadata";
-    video.onloadedmetadata = () => { resolve(video.duration); URL.revokeObjectURL(video.src); };
+    video.muted = true;
+    video.playsInline = true;
+    video.onloadedmetadata = () => resolve(video);
     video.onerror = () => reject(new Error("Não foi possível ler o arquivo de vídeo."));
     video.src = URL.createObjectURL(file);
   });
 }
 
+function getVideoDuration(file: File): Promise<number> {
+  return loadVideoElement(file).then((video) => {
+    const duration = video.duration;
+    URL.revokeObjectURL(video.src);
+    return duration;
+  });
+}
+
+/**
+ * Recomprime o vídeo desenhando cada frame num canvas menor e gravando o
+ * resultado com MediaRecorder (webm, sem áudio — o vídeo de capa/catálogo
+ * é sempre mudo). Suportado em todo navegador moderno (canvas.captureStream
+ * + MediaRecorder), sem dependência nova. Se o navegador não suportar (ou
+ * a compressão falhar por qualquer motivo), o chamador cai de volta pro
+ * arquivo original — MAX_BYTES continua sendo a rede de segurança final.
+ */
+async function compressVideo(file: File): Promise<Blob> {
+  if (typeof MediaRecorder === "undefined" || !document.createElement("canvas").captureStream) {
+    throw new Error("Navegador sem suporte à compressão de vídeo.");
+  }
+
+  const video = await loadVideoElement(file);
+  try {
+    const scale = Math.min(1, COMPRESS_MAX_DIM / Math.max(video.videoWidth, video.videoHeight));
+    const width = Math.max(2, Math.round(video.videoWidth * scale));
+    const height = Math.max(2, Math.round(video.videoHeight * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Não foi possível processar o vídeo neste navegador.");
+
+    const stream = (canvas as HTMLCanvasElement).captureStream(COMPRESS_FPS);
+    const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm";
+    const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: COMPRESS_BITRATE });
+    const chunks: BlobPart[] = [];
+    recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+
+    const recorded = new Promise<Blob>((resolve, reject) => {
+      recorder.onstop = () => resolve(new Blob(chunks, { type: "video/webm" }));
+      recorder.onerror = () => reject(new Error("Falha ao comprimir o vídeo."));
+    });
+
+    let raf = 0;
+    const drawFrame = () => {
+      ctx.drawImage(video, 0, 0, width, height);
+      raf = requestAnimationFrame(drawFrame);
+    };
+
+    await new Promise<void>((resolve, reject) => {
+      video.onended = () => resolve();
+      video.play().then(() => {
+        recorder.start();
+        drawFrame();
+      }).catch(reject);
+    });
+
+    cancelAnimationFrame(raf);
+    recorder.stop();
+    return await recorded;
+  } finally {
+    URL.revokeObjectURL(video.src);
+  }
+}
+
+async function uploadVideoDataUrl(dataUrl: string, slug?: string, editKey?: string): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+
+  const res = await fetch("/api/upload-video", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ dataUrl, slug, editKey }),
+  });
+  const data: { url?: string; error?: string } = await res.json();
+  if (!res.ok || !data.url) throw new Error(data.error || "Upload falhou");
+  return data.url;
+}
+
 export function VideoUploadField({ value, onChange, slug, editKey }: { value?: string; onChange: (url: string) => void; slug?: string; editKey?: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+  const [compressing, setCompressing] = useState(false);
   const [error, setError] = useState("");
   // Mesmo toggle de AudioUploadField.tsx — quem já tem o vídeo hospedado
   // em outro lugar (Drive, CDN próprio) só cola o link, sem passar pelo
@@ -44,29 +147,28 @@ export function VideoUploadField({ value, onChange, slug, editKey }: { value?: s
     setError("");
     try {
       if (!file.type.startsWith("video/")) throw new Error("Selecione um arquivo de vídeo (mp4 ou webm).");
-      if (file.size > MAX_BYTES) throw new Error(`Arquivo muito grande (máx. ${Math.round(MAX_BYTES / 1024 / 1024)}MB, ~${MAX_SECONDS}s em baixa/média qualidade).`);
+      if (file.size > MAX_BYTES * 6) throw new Error("Arquivo original grande demais — grave um trecho mais curto e tente de novo.");
 
       const duration = await getVideoDuration(file).catch(() => 0);
       if (duration > MAX_SECONDS) throw new Error(`Vídeo muito longo (máx. ${MAX_SECONDS}s) — corte um trecho antes de enviar.`);
 
+      setCompressing(true);
+      const compressed = await compressVideo(file).catch(() => null);
+      setCompressing(false);
+      const toUpload: File | Blob = compressed ?? file;
+
+      if (toUpload.size > MAX_BYTES) {
+        throw new Error(`Vídeo muito grande mesmo após compressão (máx. ${Math.round(MAX_BYTES / 1024 / 1024)}MB) — grave um trecho mais curto.`);
+      }
+
       setLoading(true);
-      const dataUrl = await fileToDataUrl(file);
-
-      const { data: { session } } = await supabase.auth.getSession();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-
-      const res = await fetch("/api/upload-video", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ dataUrl, slug, editKey }),
-      });
-      const data: { url?: string; error?: string } = await res.json();
-      if (!res.ok || !data.url) throw new Error(data.error || "Upload falhou");
-      onChange(data.url);
+      const dataUrl = await fileToDataUrl(toUpload);
+      const url = await uploadVideoDataUrl(dataUrl, slug, editKey);
+      onChange(url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível enviar o vídeo.");
     } finally {
+      setCompressing(false);
       setLoading(false);
       if (inputRef.current) inputRef.current.value = "";
     }
@@ -98,17 +200,17 @@ export function VideoUploadField({ value, onChange, slug, editKey }: { value?: s
             />
           ) : (
             <>
-              <input ref={inputRef} type="file" accept="video/mp4,video/webm" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
+              <input ref={inputRef} type="file" accept="video/mp4,video/webm,video/quicktime" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
               <button
                 type="button"
                 onClick={() => inputRef.current?.click()}
-                disabled={loading}
+                disabled={loading || compressing}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-card px-4 py-3 text-sm font-black text-muted transition hover:border-accent hover:text-accent-dim disabled:opacity-60"
               >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
-                {loading ? "Enviando..." : "Enviar vídeo do dispositivo"}
+                {loading || compressing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
+                {compressing ? "Comprimindo vídeo..." : loading ? "Enviando..." : "Enviar vídeo do dispositivo"}
               </button>
-              <p className="mt-1 text-xs font-semibold text-muted">MP4 ou WebM — até {MAX_SECONDS}s e {Math.round(MAX_BYTES / 1024 / 1024)}MB. Corte um trecho curto antes de enviar.</p>
+              <p className="mt-1 text-xs font-semibold text-muted">MP4, MOV ou WebM — até {MAX_SECONDS}s. Comprimimos automaticamente antes de enviar.</p>
             </>
           )}
         </div>
