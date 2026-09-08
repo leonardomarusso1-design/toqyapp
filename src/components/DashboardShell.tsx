@@ -75,7 +75,12 @@ function singleSiteNavItems(planTier: string) {
   return [
     { href: "/app", icon: Home, label: "Meu biosite" },
     { href: "/app/configuracoes", icon: Settings, label: "Meu perfil" },
-    { href: "/#planos", icon: Crown, label: planTier === "free" ? "Assinar PRO" : "Meu plano" },
+    // /#planos era o fork "Pra mim / Pra vender" da home — pra quem já é
+    // conta de 1 site só, isso jogava direto nas opções de revenda junto
+    // (bug real reportado ao vivo: "assinar pro nao é pra jogar em
+    // planos essencial, freelancer e agencia"). /para-mim#planos vai
+    // direto pro cartão Pro (R$9,90) com o botão de pagamento Kiwify.
+    { href: "/para-mim#planos", icon: Crown, label: planTier === "free" ? "Assinar PRO" : "Meu plano" },
   ];
 }
 
