@@ -45,19 +45,31 @@ html {
      a causa é que NENHUM lugar tinha uma trava de overflow-x — basta
      UM elemento em QUALQUER página passar 100% da largura (uma grade
      antiga com min-width fixo, uma linha flex sem wrap, etc.) pra abrir
-     rolagem/zoom horizontal na página inteira. html+body com
-     overflow-x:hidden é a trava padrão de mercado pra isso: contém
-     qualquer estouro lateral sem exigir caçar elemento por elemento em
-     cada página, e não afeta rolagem horizontal INTENCIONAL contida
-     (overflow-x-auto do carrossel de catálogo, do gráfico de
-     analytics, etc.), que continua funcionando normalmente dentro do
-     próprio contêiner. */
-  overflow-x: hidden;
+     rolagem/zoom horizontal na página inteira. overflow-x:hidden aqui
+     é a trava padrão de mercado pra isso: contém qualquer estouro
+     lateral sem exigir caçar elemento por elemento em cada página, e
+     não afeta rolagem horizontal INTENCIONAL contida (overflow-x-auto
+     do carrossel de catálogo, do gráfico de analytics, etc.), que
+     continua funcionando normalmente dentro do próprio contêiner.
+
+     SÓ no html, não repetir no body (2026-09-08, bug real reportado ao
+     vivo: "o preview não acompanha a página quando desço, fica lá em
+     cima" — position:sticky quebrado, virava static, no editor
+     inteiro). Causa: overflow-x:hidden em html E body ao mesmo tempo
+     força overflow-y:auto implícito nos dois (regra do CSS: se um eixo
+     não é visible/clip, o outro vira auto) — dois scroll containers
+     independentes na mesma árvore. Todo sticky da página passa a
+     calcular a posição "grudada" contra o body (que nunca rola de
+     verdade, quem rola é o html/documentElement), então nunca gruda,
+     rola junto com o resto. Testado isolado: com a regra nos dois,
+     sticky nunca funciona, em NENHUM elemento sticky da página; só no
+     html, gruda certinho e o corte horizontal continua contido do
+     mesmo jeito (um único scroll container já resolve, não precisa
+     duplicar). */
 }
 
 body {
   margin: 0;
-  overflow-x: hidden;
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-body), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
