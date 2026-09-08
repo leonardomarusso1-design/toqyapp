@@ -87,7 +87,11 @@ type Props = { mode: "create" | "edit"; initialSite: ToqySite; onSave: (site: To
 // acesso do cliente) ou não existiam ainda (parceria só linkava pra
 // /app/revenda de outro lugar do painel). Sidebar agora bate 1:1 com o
 // documento de análise da Coonexta enviado pelo Leonardo.
-const steps = ["Modelo", "Aparência", "Links e Botões", "Pix e Wi-Fi", "Catálogo", "Serviços", "Integrações", "Configurações", "Parceria", "Salvar"];
+// Ordem reorganizada (2026-09-08, bug real reportado ao vivo — ver
+// comentário grande no `if (step === 1)` mais abaixo): conteúdo/
+// informações primeiro, Aparência (visual) por último, antes de
+// Integrações/Configurações/Parceria/Salvar.
+const steps = ["Modelo", "Perfil e Contato", "Links e Botões", "Pix e Wi-Fi", "Catálogo", "Serviços", "Aparência", "Integrações", "Configurações", "Parceria", "Salvar"];
 
 // Editor por blocos no celular (2026-09-06, mockup da auditoria externa).
 // A auditoria apontou: "o editor deve abandonar a lógica de painel desktop
@@ -104,11 +108,12 @@ type StepGroup = "conteudo" | "design" | "publicar";
 
 const STEP_META: { icon: typeof User; subtitle: string; group: StepGroup }[] = [
   { icon: LayoutGrid, subtitle: "Comece de um modelo pronto", group: "design" },
-  { icon: Palette, subtitle: "Logo, capa, cores, fonte, nome e descrição", group: "design" },
+  { icon: User, subtitle: "Nome, contato, horário e o que aparece", group: "conteudo" },
   { icon: Link2, subtitle: "WhatsApp, Instagram e seus links", group: "conteudo" },
   { icon: Wallet, subtitle: "Receba no Pix e mostre a senha do Wi-Fi", group: "conteudo" },
   { icon: ShoppingBag, subtitle: "Produtos, serviços e cardápio", group: "conteudo" },
   { icon: CalendarClock, subtitle: "Serviços e horários pra agendar", group: "conteudo" },
+  { icon: Palette, subtitle: "Logo, cores, fonte e capa do bio site", group: "conteudo" },
   { icon: Target, subtitle: "Pixel do Meta e Google Analytics", group: "publicar" },
   { icon: Lock, subtitle: "Acesso do cliente à edição", group: "publicar" },
   { icon: Handshake, subtitle: "Comissão por indicação", group: "publicar" },
@@ -646,7 +651,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
       );
     }
 
-    if (step === 1) {
+    if (step === 6) {
       // Preset "Operacional" (2026-09-07, referência Coonexta — "Acesso
       // do cliente"): a identidade visual do bio site fica fora do
       // alcance de quem só tem acesso operacional — mexe no dia a dia
@@ -663,18 +668,21 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
       }
       return (
         <Section>
-          {/* Perfil + Visual viraram UMA etapa só (2026-09-07, referência
-              Coonexta — prints enviados pelo Leonardo: "a personalização
-              do biosite igual a dele... o layout, a personalização,
-              mantendo funções que o Toqy tem e eles não, porém adaptando
-              naquele estilo"). Ordem abaixo segue a página deles: logo →
-              cor principal/texto → fonte → capa (imagem/vídeo) → paleta
-              pronta → cores avançadas (recolhível) → estilo avançado
-              (recolhível) → nome/descrição/contato → horário → extras.
-              Nada foi apagado — as ~19 cores por elemento e os selects de
-              layout continuam existindo, só foram pra dentro de
-              <details> pra não competir visualmente com os controles
-              simples que a maioria vai usar. */}
+          {/* Perfil + Visual eram UMA etapa só (2026-09-07, referência
+              Coonexta). Separados de novo em 2026-09-08 (bug real
+              reportado ao vivo, vídeo de teste: "eu acho que a gente deve
+              preencher todas as informações primeiro... pra depois vim
+              organizando as cores... se a gente vai trocando as cores
+              depois a gente vê que está tudo desorganizado") — nome,
+              descrição, contato e horário viraram a etapa "Perfil e
+              Contato" (logo no início, ver step 1 acima); esta etapa
+              "Aparência" ficou só com o visual de verdade (logo, cores,
+              fonte, capa, figurinhas/música, ordem das seções, white
+              label) e foi pro FIM do preenchimento de conteúdo, antes de
+              Integrações/Configurações. Nada foi apagado — as ~19 cores
+              por elemento e os selects de layout continuam existindo, só
+              foram pra dentro de <details> pra não competir visualmente
+              com os controles simples que a maioria vai usar. */}
           <h2 className="text-2xl font-black text-ink">Aparência</h2>
           <p className="mt-1 text-sm text-muted">Logo, cores, fonte e capa do bio site.</p>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -869,85 +877,6 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
               <label><span className={label}>Alinhamento da localização</span><select className={field} value={site.theme.locationAlign ?? "left"} onChange={(e) => setTheme({ locationAlign: e.target.value as "left" | "center" })}><option value="left">Esquerda (recomendado p/ endereços longos)</option><option value="center">Centralizado</option></select></label>
             </div>
           </details>
-
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <label><span className={label}>Título/subtítulo</span><input className={field} value={site.profile.title ?? ""} onChange={(e) => setProfile({ title: e.target.value })} /></label>
-            <label><span className={label}>Localização</span><input className={field} value={site.profile.location} onChange={(e) => setProfile({ location: e.target.value })} /></label>
-            <label className="md:col-span-2"><span className={label}>Descrição</span><textarea className={field} rows={3} value={site.profile.description} onChange={(e) => setProfile({ description: e.target.value })} /></label>
-            <label>
-              <span className={label}>WhatsApp</span>
-              <input className={field} value={site.contact.whatsapp} onChange={(e) => setContact({ whatsapp: e.target.value })} placeholder="5519999999999" />
-              <p className="mt-1 text-xs text-muted">Formato: <strong>wa.me/55 + DDD + número</strong> — ex: 5519999999999</p>
-            </label>
-            <label>
-              <span className={label}>Telefone (salvar contato)</span>
-              <input className={field} value={site.contact.phone} onChange={(e) => setContact({ phone: e.target.value })} placeholder="+5519999999999" />
-              <p className="mt-1 text-xs text-muted">Com DDI+DDD — ex: +5519999999999. Ao clicar, salva na agenda do celular.</p>
-            </label>
-            <label>
-              <span className={label}>Instagram</span>
-              <input className={field} value={site.contact.instagram ?? ""} onChange={(e) => setContact({ instagram: e.target.value })} placeholder="https://instagram.com/seuperfil" />
-              <p className="mt-1 text-xs text-muted">Cole o link completo do perfil, não apenas o @.</p>
-            </label>
-            <label>
-              <span className={label}>Facebook</span>
-              <input className={field} value={site.contact.facebook ?? ""} onChange={(e) => setContact({ facebook: e.target.value })} placeholder="https://facebook.com/suapagina" />
-              <p className="mt-1 text-xs text-muted">Cole o link completo da página ou perfil.</p>
-            </label>
-            <label><span className={label}>E-mail</span><input className={field} value={site.contact.email ?? ""} onChange={(e) => setContact({ email: e.target.value })} /></label>
-            <label><span className={label}>Site</span><input className={field} value={site.contact.website ?? ""} onChange={(e) => setContact({ website: e.target.value })} /></label>
-          </div>
-
-          {/* HORÁRIO DE FUNCIONAMENTO (2026-09-06, mockup da auditoria
-              externa) — card "Aberto hoje • 7h às 18h" com selo verde no
-              bio site. Sem gate de plano de propósito: horário é informação
-              básica de negócio local, vale até no Gratuito. Desligado por
-              padrão — bio site que não mexer aqui continua idêntico.
-              "Ativar" x "Mostrar no bio site" viraram 2 checkboxes
-              separados (2026-09-08, bug real reportado ao vivo: "eu coloco
-              horário e ele aparece — tem gente que só quer ativar ele pra
-              colocar junto com agendamento, não deveria ser obrigatório
-              aparecer"). `enabled` continua sendo o que alimenta os
-              horários disponíveis pro Agendamento (ver bookingSlots.ts) —
-              showOnSite só decide se o CARD público aparece. */}
-          <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
-            <p className="text-sm font-black text-ink">🕒 Horário de funcionamento</p>
-            <p className="mt-0.5 text-xs text-muted">Define quando o negócio atende — alimenta o Agendamento (etapa Serviços) e, se quiser, um card público com selo “Aberto”/“Fechado”.</p>
-            <label className="mt-3 flex items-center gap-2 text-sm font-black text-ink">
-              <input type="checkbox" checked={Boolean(site.businessHours?.enabled)} onChange={(e) => setBusinessHours({ enabled: e.target.checked })} />
-              Ativar horário de funcionamento
-            </label>
-            {site.businessHours?.enabled ? (
-              <label className="mt-2 flex items-center gap-2 text-xs font-black text-muted">
-                <input type="checkbox" checked={site.businessHours?.showOnSite ?? true} onChange={(e) => setBusinessHours({ showOnSite: e.target.checked })} />
-                Mostrar card “Aberto agora” no bio site
-              </label>
-            ) : null}
-            {site.businessHours?.enabled ? (
-              <div className="mt-4 space-y-2">
-                {WEEKDAY_EDIT_ORDER.map((weekday) => {
-                  const day = site.businessHours?.days.find((item) => item.weekday === weekday) ?? { weekday, closed: true, open: "09:00", close: "18:00" };
-                  return (
-                    <div key={weekday} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card px-3 py-2.5">
-                      <span className="w-32 shrink-0 text-sm font-black text-ink">{WEEKDAY_LABELS[weekday]}</span>
-                      <label className="flex items-center gap-2 text-xs font-black text-muted">
-                        <input type="checkbox" checked={day.closed} onChange={(e) => setBusinessHoursDay(weekday, { closed: e.target.checked })} />
-                        Fechado
-                      </label>
-                      {day.closed ? null : (
-                        <div className="flex items-center gap-2">
-                          <input type="time" className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-ink outline-none focus:border-accent" value={day.open} onChange={(e) => setBusinessHoursDay(weekday, { open: e.target.value })} />
-                          <span className="text-xs font-black text-muted">às</span>
-                          <input type="time" className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-ink outline-none focus:border-accent" value={day.close} onChange={(e) => setBusinessHoursDay(weekday, { close: e.target.value })} />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                <p className="text-xs text-muted">Vira a madrugada? É só colocar o fechamento menor que a abertura — ex: 18:00 às 02:00.</p>
-              </div>
-            ) : null}
-          </div>
 
           {/* FIGURINHAS + MÚSICA + INSTAGRAM (2026-09-05/06, pedido do
               Leonardo) — liberado a partir do Pro Pessoal e planos de
@@ -1166,6 +1095,147 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
       );
     }
 
+    if (step === 1) {
+      // Perfil e Contato (2026-09-08, bug real reportado ao vivo, vídeo
+      // de teste: "eu acho que a gente deve preencher todas as
+      // informações primeiro do biosite... pra depois vim organizando as
+      // cores... primeiro a gente tem que vim alimentando as
+      // informações, porque se a gente vai trocando as cores depois a
+      // gente vê que está tudo desorganizado"). Nome/descrição/contato/
+      // horário SAÍRAM da etapa "Aparência" (que tinha as duas coisas
+      // misturadas) e viraram esta etapa própria, logo depois de Modelo —
+      // é a PRIMEIRA coisa preenchida, antes de qualquer cor/fonte/logo.
+      // "O que aparece no bio site" reúne aqui os 2 toggles que o
+      // Leonardo reportou estarem "escondidos" em etapas erradas (Salvar
+      // Contato morava em Pix e Wi-Fi; Mais praticidade morava em
+      // Catálogo) — "essas coisas deveriam estar no começo, pra mim
+      // saber o que que vai ter no meu biosite, não lá no final".
+      return (
+        <Section>
+          <h2 className="text-2xl font-black text-ink">Perfil e Contato</h2>
+          <p className="mt-1 text-sm text-muted">Nome, descrição, contato e horário — o básico do seu negócio.</p>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <label><span className={label}>Título/subtítulo</span><input className={field} value={site.profile.title ?? ""} onChange={(e) => setProfile({ title: e.target.value })} /></label>
+            <label><span className={label}>Localização</span><input className={field} value={site.profile.location} onChange={(e) => setProfile({ location: e.target.value })} /></label>
+            <label className="md:col-span-2"><span className={label}>Descrição</span><textarea className={field} rows={3} value={site.profile.description} onChange={(e) => setProfile({ description: e.target.value })} /></label>
+            <label>
+              <span className={label}>WhatsApp</span>
+              <input className={field} value={site.contact.whatsapp} onChange={(e) => setContact({ whatsapp: e.target.value })} placeholder="5519999999999" />
+              <p className="mt-1 text-xs text-muted">Formato: <strong>wa.me/55 + DDD + número</strong> — ex: 5519999999999</p>
+            </label>
+            <label>
+              <span className={label}>Telefone (salvar contato)</span>
+              <input className={field} value={site.contact.phone} onChange={(e) => setContact({ phone: e.target.value })} placeholder="+5519999999999" />
+              <p className="mt-1 text-xs text-muted">Com DDI+DDD — ex: +5519999999999. Ao clicar, salva na agenda do celular.</p>
+            </label>
+            <label>
+              <span className={label}>Instagram</span>
+              <input className={field} value={site.contact.instagram ?? ""} onChange={(e) => setContact({ instagram: e.target.value })} placeholder="https://instagram.com/seuperfil" />
+              <p className="mt-1 text-xs text-muted">Cole o link completo do perfil, não apenas o @.</p>
+            </label>
+            <label>
+              <span className={label}>Facebook</span>
+              <input className={field} value={site.contact.facebook ?? ""} onChange={(e) => setContact({ facebook: e.target.value })} placeholder="https://facebook.com/suapagina" />
+              <p className="mt-1 text-xs text-muted">Cole o link completo da página ou perfil.</p>
+            </label>
+            <label><span className={label}>E-mail</span><input className={field} value={site.contact.email ?? ""} onChange={(e) => setContact({ email: e.target.value })} /></label>
+            <label><span className={label}>Site</span><input className={field} value={site.contact.website ?? ""} onChange={(e) => setContact({ website: e.target.value })} /></label>
+          </div>
+
+          {/* HORÁRIO DE FUNCIONAMENTO (2026-09-06, mockup da auditoria
+              externa) — card "Aberto hoje • 7h às 18h" com selo verde no
+              bio site. Sem gate de plano de propósito: horário é informação
+              básica de negócio local, vale até no Gratuito. Desligado por
+              padrão — bio site que não mexer aqui continua idêntico.
+              "Ativar" x "Mostrar no bio site" viraram 2 checkboxes
+              separados (2026-09-08, bug real reportado ao vivo: "eu coloco
+              horário e ele aparece — tem gente que só quer ativar ele pra
+              colocar junto com agendamento, não deveria ser obrigatório
+              aparecer"). `enabled` continua sendo o que alimenta os
+              horários disponíveis pro Agendamento (ver bookingSlots.ts) —
+              showOnSite só decide se o CARD público aparece. */}
+          <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
+            <p className="text-sm font-black text-ink">🕒 Horário de funcionamento</p>
+            <p className="mt-0.5 text-xs text-muted">Define quando o negócio atende — alimenta o Agendamento (etapa Serviços) e, se quiser, um card público com selo “Aberto”/“Fechado”.</p>
+            <label className="mt-3 flex items-center gap-2 text-sm font-black text-ink">
+              <input type="checkbox" checked={Boolean(site.businessHours?.enabled)} onChange={(e) => setBusinessHours({ enabled: e.target.checked })} />
+              Ativar horário de funcionamento
+            </label>
+            {site.businessHours?.enabled ? (
+              <label className="mt-2 flex items-center gap-2 text-xs font-black text-muted">
+                <input type="checkbox" checked={site.businessHours?.showOnSite ?? true} onChange={(e) => setBusinessHours({ showOnSite: e.target.checked })} />
+                Mostrar card “Aberto agora” no bio site
+              </label>
+            ) : null}
+            {site.businessHours?.enabled ? (
+              <div className="mt-4 space-y-2">
+                {WEEKDAY_EDIT_ORDER.map((weekday) => {
+                  const day = site.businessHours?.days.find((item) => item.weekday === weekday) ?? { weekday, closed: true, open: "09:00", close: "18:00" };
+                  return (
+                    <div key={weekday} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card px-3 py-2.5">
+                      <span className="w-32 shrink-0 text-sm font-black text-ink">{WEEKDAY_LABELS[weekday]}</span>
+                      <label className="flex items-center gap-2 text-xs font-black text-muted">
+                        <input type="checkbox" checked={day.closed} onChange={(e) => setBusinessHoursDay(weekday, { closed: e.target.checked })} />
+                        Fechado
+                      </label>
+                      {day.closed ? null : (
+                        <div className="flex items-center gap-2">
+                          <input type="time" className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-ink outline-none focus:border-accent" value={day.open} onChange={(e) => setBusinessHoursDay(weekday, { open: e.target.value })} />
+                          <span className="text-xs font-black text-muted">às</span>
+                          <input type="time" className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-ink outline-none focus:border-accent" value={day.close} onChange={(e) => setBusinessHoursDay(weekday, { close: e.target.value })} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                <p className="text-xs text-muted">Vira a madrugada? É só colocar o fechamento menor que a abertura — ex: 18:00 às 02:00.</p>
+              </div>
+            ) : null}
+          </div>
+
+          {/* O QUE APARECE NO BIO SITE (2026-09-08) — 2 toggles que
+              moraram em etapas erradas (Pix/Wi-Fi e Catálogo) juntados
+              aqui, no início, junto com o resto do que define a
+              identidade do negócio. */}
+          <div className="mt-5 rounded-3xl border border-border bg-surface p-5">
+            <p className="text-sm font-black text-ink">👁️ O que aparece no bio site</p>
+            <div className="mt-4 space-y-4">
+              <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4">
+                <div>
+                  <p className="font-black text-ink">Botão &quot;Salvar Contato&quot;</p>
+                  <p className="text-xs text-muted mt-0.5">Aparece no bio site para o cliente salvar o contato na agenda</p>
+                </div>
+                <div className="relative w-10 h-6 shrink-0 ml-3" onClick={() => update((s) => ({ ...s, modules: { ...s.modules, saveContact: !(s.modules?.saveContact ?? true) } }))}>
+                  <div className={"w-10 h-6 rounded-full cursor-pointer transition-colors " + ((site.modules?.saveContact ?? true) ? "bg-accent" : "bg-border")} />
+                  <div className={"absolute top-1 h-4 w-4 rounded-full bg-card shadow transition-transform " + ((site.modules?.saveContact ?? true) ? "translate-x-5" : "translate-x-1")} />
+                </div>
+              </div>
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex items-center justify-between">
+                  <span className={label}>Card &quot;Mais praticidade...&quot;</span>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <span className="text-xs font-bold text-muted">{(site.promoCard?.enabled ?? true) ? "Visível" : "Oculto"}</span>
+                    <div className="relative w-10 h-6" onClick={() => update((s) => ({ ...s, promoCard: { enabled: !(s.promoCard?.enabled ?? true), title: s.promoCard?.title ?? "Mais praticidade em um só lugar", description: s.promoCard?.description ?? "Acesse contatos, Pix, Wi-Fi, catálogo, rotas e avaliações.", buttonLabel: s.promoCard?.buttonLabel ?? "Ver mais" } }))}>
+                      <div className={"w-10 h-6 rounded-full cursor-pointer transition-colors " + ((site.promoCard?.enabled ?? true) ? "bg-accent" : "bg-border")} />
+                      <div className={"absolute top-1 h-4 w-4 rounded-full bg-card shadow transition-transform " + ((site.promoCard?.enabled ?? true) ? "translate-x-5" : "translate-x-1")} />
+                    </div>
+                  </label>
+                </div>
+                {(site.promoCard?.enabled ?? true) ? (
+                  <div className="mt-3 grid gap-3">
+                    <label><span className={label}>Titulo</span><input className={field} value={site.promoCard?.title ?? ""} onChange={(e) => update((s) => ({ ...s, promoCard: { ...s.promoCard, enabled: true, title: e.target.value, description: s.promoCard?.description ?? "", buttonLabel: s.promoCard?.buttonLabel ?? "Ver mais" } }))} /></label>
+                    <label><span className={label}>Descricao</span><input className={field} value={site.promoCard?.description ?? ""} onChange={(e) => update((s) => ({ ...s, promoCard: { ...s.promoCard, enabled: true, title: s.promoCard?.title ?? "", description: e.target.value, buttonLabel: s.promoCard?.buttonLabel ?? "Ver mais" } }))} /></label>
+                    <label><span className={label}>Texto do botao</span><input className={field} value={site.promoCard?.buttonLabel ?? "Ver mais"} onChange={(e) => update((s) => ({ ...s, promoCard: { ...s.promoCard, enabled: true, title: s.promoCard?.title ?? "", description: s.promoCard?.description ?? "", buttonLabel: e.target.value } }))} /></label>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </Section>
+      );
+    }
+
     if (step === 2) return <ButtonEditor site={site} onChange={(next) => update(next)} />;
 
     if (step === 3) {
@@ -1173,19 +1243,6 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
         <Section>
           <h2 className="text-2xl font-black text-ink">Pix e Wi-Fi</h2>
           <p className="mt-1 text-sm text-muted">Configure Pix com comprovante e Wi-Fi com check-in/avaliação.</p>
-
-          <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-black text-slate-800">Botão &quot;Salvar Contato&quot;</p>
-                <p className="text-xs text-slate-500 mt-0.5">Aparece no bio site para o cliente salvar o contato na agenda</p>
-              </div>
-              <div className="relative w-10 h-6 shrink-0 ml-3" onClick={() => update((s) => ({ ...s, modules: { ...s.modules, saveContact: !(s.modules?.saveContact ?? true) } }))}>
-                <div className={"w-10 h-6 rounded-full cursor-pointer transition-colors " + ((site.modules?.saveContact ?? true) ? "bg-[#31c4a8]" : "bg-slate-300")} />
-                <div className={"absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform " + ((site.modules?.saveContact ?? true) ? "translate-x-5" : "translate-x-1")} />
-              </div>
-            </div>
-          </div>
 
           <div className="mt-5 grid gap-5 lg:grid-cols-2">
             <div className="rounded-3xl border border-accent/20 bg-accent/5 p-4">
@@ -1324,27 +1381,6 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
           <>
           <div className="mt-4">
             <BulkCatalogPhotoAdd slug={site.slug} catalog={site.catalog} onAdd={(items) => update((s) => ({ ...s, catalog: [...s.catalog, ...items] }))} editKey={site.editKey} />
-          </div>
-
-          {/* Card promo editavel */}
-          <div className="mt-5 rounded-3xl border border-border bg-surface p-4">
-            <div className="flex items-center justify-between">
-              <span className={label}>Card &quot;Mais praticidade...&quot;</span>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <span className="text-xs font-bold text-muted">{(site.promoCard?.enabled ?? true) ? "Visível" : "Oculto"}</span>
-                <div className="relative w-10 h-6" onClick={() => update((s) => ({ ...s, promoCard: { enabled: !(s.promoCard?.enabled ?? true), title: s.promoCard?.title ?? "Mais praticidade em um só lugar", description: s.promoCard?.description ?? "Acesse contatos, Pix, Wi-Fi, catálogo, rotas e avaliações.", buttonLabel: s.promoCard?.buttonLabel ?? "Ver mais" } }))}>
-                  <div className={"w-10 h-6 rounded-full cursor-pointer transition-colors " + ((site.promoCard?.enabled ?? true) ? "bg-accent" : "bg-border")} />
-                  <div className={"absolute top-1 h-4 w-4 rounded-full bg-card shadow transition-transform " + ((site.promoCard?.enabled ?? true) ? "translate-x-5" : "translate-x-1")} />
-                </div>
-              </label>
-            </div>
-            {(site.promoCard?.enabled ?? true) ? (
-              <div className="mt-3 grid gap-3">
-                <label><span className={label}>Titulo</span><input className={field} value={site.promoCard?.title ?? ""} onChange={(e) => update((s) => ({ ...s, promoCard: { ...s.promoCard, enabled: true, title: e.target.value, description: s.promoCard?.description ?? "", buttonLabel: s.promoCard?.buttonLabel ?? "Ver mais" } }))} /></label>
-                <label><span className={label}>Descricao</span><input className={field} value={site.promoCard?.description ?? ""} onChange={(e) => update((s) => ({ ...s, promoCard: { ...s.promoCard, enabled: true, title: s.promoCard?.title ?? "", description: e.target.value, buttonLabel: s.promoCard?.buttonLabel ?? "Ver mais" } }))} /></label>
-                <label><span className={label}>Texto do botao</span><input className={field} value={site.promoCard?.buttonLabel ?? "Ver mais"} onChange={(e) => update((s) => ({ ...s, promoCard: { ...s.promoCard, enabled: true, title: s.promoCard?.title ?? "", description: s.promoCard?.description ?? "", buttonLabel: e.target.value } }))} /></label>
-              </div>
-            ) : null}
           </div>
 
           {/* Titulo e subtitulo do catalogo */}
@@ -1644,7 +1680,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
     // sidebar, antes vivia embutido dentro da Aparência). Mesma regra de
     // acesso "operational" que a Aparência já tinha: quem só edita o
     // dia-a-dia (links/Pix/catálogo) não mexe em pixel de campanha.
-    if (step === 6) {
+    if (step === 7) {
       if (accessLevel === "operational") {
         return (
           <Section>
@@ -1703,7 +1739,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
     // (/api/biosite/save) também recusa qualquer tentativa de um cliente
     // mudar isto sozinho, então esconder o controle é só a primeira
     // camada, não a única.
-    if (step === 7) {
+    if (step === 8) {
       if (!isOwner) {
         return (
           <Section>
@@ -1744,7 +1780,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
     // Toqy já tem o programa de indicação/revenda em /app/revenda
     // (comissão automática pra quem assina Freelancer ou Agência) — este
     // item só entrega o mesmo lugar, no lugar certo da navegação.
-    if (step === 8) {
+    if (step === 9) {
       return (
         <Section>
           <h2 className="text-2xl font-black text-ink">Parceria</h2>
@@ -1849,9 +1885,16 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
   // tem campo de disponibilidade no modelo de dados hoje, então não dá
   // pra validar isso sem inventar um campo que não existe).
   const checklistItems = [
-    { label: "Nome do negócio", done: Boolean(site.profile.name && site.profile.name !== "Novo negócio"), step: 1 },
+    // step corrigido (2026-09-08, junto da reorganização das etapas):
+    // "Nome do negócio" mora na etapa Modelo (step 0), não em Perfil —
+    // já estava assim antes desta reorganização, só nunca tinha sido
+    // notado porque apontava pro meio errado (a etapa Aparência antiga)
+    // de qualquer forma. "Foto de perfil ou logo" agora aponta pra
+    // Aparência (step 6), onde o campo "Logo do negócio" mora depois da
+    // separação Perfil/Aparência.
+    { label: "Nome do negócio", done: Boolean(site.profile.name && site.profile.name !== "Novo negócio"), step: 0 },
     { label: "Descrição", done: Boolean(site.profile.description?.trim()), step: 1 },
-    { label: "Foto de perfil ou logo", done: Boolean(site.profile.profileImageUrl || site.profile.logoUrl), step: 1 },
+    { label: "Foto de perfil ou logo", done: Boolean(site.profile.profileImageUrl || site.profile.logoUrl), step: 6 },
     { label: "Pelo menos 1 rede social", done: Boolean(site.contact.instagram || site.contact.facebook || site.contact.whatsapp), step: 2 },
     { label: "Pelo menos 1 botão ativo", done: site.buttons.some((b) => b.enabled), step: 2 },
     ...(site.pix.enabled ? [{ label: "Chave Pix preenchida", done: Boolean(site.pix.key?.trim()), step: 3 }] : []),
@@ -1947,9 +1990,10 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
         {steps.map((item, index) => (
           <div key={item}>
             {index === 5 ? <p className="mt-2 px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Agenda</p> : null}
-            {index === 6 ? <p className="mt-2 px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Integrações</p> : null}
-            {index === 7 ? <p className="mt-2 px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Configurações</p> : null}
-            {index === 8 ? <p className="mt-2 px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Parceria</p> : null}
+            {index === 6 ? <p className="mt-2 px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Aparência</p> : null}
+            {index === 7 ? <p className="mt-2 px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Integrações</p> : null}
+            {index === 8 ? <p className="mt-2 px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Configurações</p> : null}
+            {index === 9 ? <p className="mt-2 px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-wider text-muted">Parceria</p> : null}
             <button
               type="button"
               onClick={() => setStep(index)}
