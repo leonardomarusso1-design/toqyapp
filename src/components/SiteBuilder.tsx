@@ -15,7 +15,7 @@ import { BODY_BLOCK_LABELS, resolveBodyBlockOrder } from "@/lib/bodyBlocks";
 import { RealTemplateGallery } from "./RealTemplateGallery";
 import { syncBiositeToSupabase } from "@/lib/biositeSync";
 import { checkBiositeLimit } from "@/lib/planLimits";
-import { OVERAGE_LINKS, canUseStickersAndMusic, canUseWhiteLabel, resolvePlanTier, type PlanType } from "@/lib/subscriptions";
+import { OVERAGE_LINKS, canUseStickersAndMusic, canUseWhiteLabel, getPlan, resolvePlanTier, type PlanType } from "@/lib/subscriptions";
 import { supabase } from "@/lib/supabaseClient";
 import { validateSite } from "@/lib/validation";
 import { ImageGuidelineHint } from "./ImageGuidelineHint";
@@ -474,6 +474,10 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
     })();
     return () => { active = false; };
   }, []);
+  // Objeto Plan resolvido (hasPix/hasWifi/hasCatalog/...) — usado pra
+  // gatear os CAMPOS do editor por plano (ver step 3 "Pix e Wi-Fi" e
+  // step 4 "Catálogo"), não só a renderização pública.
+  const ownerPlan = getPlan(ownerPlanTier);
 
   function update(next: ToqySite | ((current: ToqySite) => ToqySite)) {
     setSite((current) => {
@@ -1174,6 +1178,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
             <div className="rounded-3xl border border-accent/20 bg-accent/5 p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-black text-ink">Pix premium</h3>
+                {ownerPlan.hasPix ? (
                 <label className="flex items-center gap-2 cursor-pointer">
                   <span className="text-xs font-black text-ink">Ativar Pix</span>
                   <div className="relative w-10 h-6" onClick={() => update((s) => {
@@ -1187,8 +1192,23 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                     <div className={"absolute top-1 h-4 w-4 rounded-full bg-card shadow transition-transform " + (site.pix.enabled ? "translate-x-5" : "translate-x-1")} />
                   </div>
                 </label>
+                ) : null}
               </div>
-              {(site.pix.enabled ?? false) ? (
+              {/* Gate de plano (2026-09-08, bug real reportado ao vivo:
+                  "confere o que vai ser bloqueado no gratuito e liberado no
+                  pro, pq to conseguindo fazer td no gratuito") — o campo já
+                  ficava escondido na PÁGINA PÚBLICA pra quem é Gratuito
+                  (plan.hasPix em PublicBioSite.tsx), mas o EDITOR deixava
+                  preencher chave Pix, valores etc. à vontade, sem nenhum
+                  aviso — o dono só descobriria que não aparece indo
+                  conferir a página pública de verdade. Mesmo padrão visual
+                  já usado em Figurinhas/Música (canUseStickersAndMusic)
+                  logo abaixo. */}
+              {!ownerPlan.hasPix ? (
+                <div className="rounded-2xl border border-violet/20 bg-violet/10 p-4 text-sm font-bold text-violet">
+                  Disponível a partir do plano Pro. <Link href="/para-mim#planos" className="underline">Ver planos</Link>
+                </div>
+              ) : (site.pix.enabled ?? false) ? (
               <div className="grid gap-4">
                 <label><span className={label}>Chave Pix</span><input className={field} value={site.pix.key} onChange={(e) => update((s) => ({ ...s, pix: { ...s.pix, key: e.target.value, enabled: true } }))} /></label>
                 <label><span className={label}>Recebedor</span><input className={field} value={site.pix.receiver} onChange={(e) => update((s) => ({ ...s, pix: { ...s.pix, receiver: e.target.value } }))} /></label>
@@ -1220,6 +1240,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
             <div className="rounded-3xl border border-accent/20 bg-accent/5 p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-black text-ink">Wi-Fi + check-in</h3>
+                {ownerPlan.hasWifi ? (
                 <label className="flex items-center gap-2 cursor-pointer">
                   <span className="text-xs font-black text-ink">Ativar Wi-Fi</span>
                   <div className="relative">
@@ -1234,8 +1255,13 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                     </div>
                   </div>
                 </label>
+                ) : null}
               </div>
-              {(site.wifi.enabled ?? false) ? (
+              {!ownerPlan.hasWifi ? (
+                <div className="rounded-2xl border border-violet/20 bg-violet/10 p-4 text-sm font-bold text-violet">
+                  Disponível a partir do plano Pro. <Link href="/para-mim#planos" className="underline">Ver planos</Link>
+                </div>
+              ) : (site.wifi.enabled ?? false) ? (
               <div className="grid gap-4">
                 <label className="flex items-center justify-between rounded-2xl border border-border bg-card p-3">
                   <div>
@@ -1274,6 +1300,15 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
             <button type="button" onClick={() => { const newId = generateId("prd"); update((s) => ({ ...s, catalog: [...s.catalog, { id: newId, name: "", description: "", price: "", imageUrl: "", imageLayout: "square", imageFit: "cover", imagePosition: "center", category: "Destaques", enabled: true, actionLabel: "", actionUrl: "" }] })); setOpenCatalogIds((prev) => new Set(prev).add(newId)); }} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-3 text-sm font-black text-white"><Plus className="h-4 w-4" />Adicionar item</button>
           </div>
 
+          {/* Gate de plano (2026-09-08, mesmo bug/motivo do gate de Pix e
+              Wi-Fi acima — editor deixava montar o catálogo inteiro no
+              Gratuito, só a PÁGINA PÚBLICA escondia depois). */}
+          {!ownerPlan.hasCatalog ? (
+            <div className="mt-5 rounded-2xl border border-violet/20 bg-violet/10 p-4 text-sm font-bold text-violet">
+              Catálogo disponível a partir do plano Pro. <Link href="/para-mim#planos" className="underline">Ver planos</Link>
+            </div>
+          ) : (
+          <>
           <div className="mt-4">
             <BulkCatalogPhotoAdd slug={site.slug} catalog={site.catalog} onAdd={(items) => update((s) => ({ ...s, catalog: [...s.catalog, ...items] }))} editKey={site.editKey} />
           </div>
@@ -1532,6 +1567,8 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
               <input className={field} placeholder="Não encontrou o que procura? Fale com a gente!" value={site.catalogWaLabel ?? ""} onChange={(e) => update((s) => ({ ...s, catalogWaLabel: e.target.value }))} />
             </div>
           </div>
+          </>
+          )}
         </Section>
       );
     }
