@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
+import { escapeHtml } from "@/lib/htmlEscape";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,19 +35,8 @@ const MAX_EMAIL_LENGTH = 254;
 // domínio sem ponto etc. A validação de verdade é o e-mail chegar.
 const EMAIL_REGEX = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 
-// Escapa HTML antes de interpolar dados do usuário no corpo do e-mail
-// (2026-09-06, auditoria externa). O nome vinha CRU dentro do template
-// HTML enviado pelo Resend: qualquer pessoa podia cadastrar um "nome"
-// com <a>/<img>/<style> e o destinatário receberia esse HTML renderizado,
-// assinado pelo nosso domínio.
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+// escapeHtml extraído pra src/lib/htmlEscape.ts (2026-09-09) — mesma
+// lógica, reusada agora também em api/biosite-booking/route.ts.
 
 export async function POST(request: Request) {
   try {

@@ -375,6 +375,14 @@ export type ToqySite = {
   // zero mudança pra quem não configurar nada disso).
   services?: BookingService[];
   bookingSlotMinutes?: number; // padrão 30
+  // Notificação de novo agendamento pro dono (2026-09-09, pedido ao vivo:
+  // "quando uma pessoa faz um agendamento, o comerciante recebe alguma
+  // notificação?" — resposta era não, nada). Por enquanto só e-mail
+  // (via Resend, mesmo canal já usado no ebook) — WhatsApp/Instagram
+  // ficaram fora desta rodada de propósito: exigem WhatsApp Business
+  // API/Meta Cloud API de verdade (conta própria, aprovação, custo por
+  // mensagem), não é um toggle que já funciona hoje. Padrão ligado.
+  notifyBookingByEmail?: boolean;
   catalogLayout: CatalogLayout;
   catalogLayouts?: CatalogLayout[];
   catalogTitle?: string;

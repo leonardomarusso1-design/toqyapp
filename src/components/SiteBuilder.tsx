@@ -1778,6 +1778,21 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
             </select>
             <p className="mt-3 text-xs text-muted">Os horários disponíveis usam o mesmo &quot;Horário de funcionamento&quot; configurado na etapa Aparência.</p>
           </div>
+
+          {/* Notificação de agendamento (2026-09-09, pedido ao vivo: "quando
+              uma pessoa faz um agendamento, o comerciante recebe alguma
+              notificação?" — resposta era não, nada). Por enquanto só
+              e-mail — WhatsApp/Instagram exigem integração própria (Meta
+              Cloud API/WhatsApp Business), não é um toggle que já
+              funciona hoje; ficam de fora até essa integração existir de
+              verdade, pra não mostrar opção que não faz nada. */}
+          <div className="mt-4 rounded-3xl border border-border bg-surface p-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={site.notifyBookingByEmail ?? true} onChange={(e) => update((s) => ({ ...s, notifyBookingByEmail: e.target.checked }))} />
+              <span className="text-sm font-black text-ink">Avisar por e-mail quando alguém agendar</span>
+            </label>
+            <p className="mt-1 text-xs text-muted">Vai pro e-mail da sua conta Toqy. WhatsApp e Instagram estão nos planos, ainda não disponíveis.</p>
+          </div>
         </Section>
       );
     }
