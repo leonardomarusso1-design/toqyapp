@@ -87,10 +87,20 @@ function safeSegment(value: string, fallback: string): string {
 const SIZE_ERROR = `Áudio muito grande (máx. ${Math.round(MAX_AUDIO_BYTES / 1024 / 1024)}MB, ~${MAX_AUDIO_SECONDS}s em boa qualidade).`;
 
 function parseAudioDataUrl(dataUrl: string): { buffer: Buffer; contentType: string; ext: AllowedAudioExt } {
-  const match = /^data:audio\/([a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl.trim());
+  // Bug real reportado ao vivo (2026-09-08): "tentei colocar uma música
+  // de 16seg do meu computador direto, não consegui" — gravação de voz
+  // do Windows/Mac (.m4a) às vezes chega no navegador com `file.type`
+  // vazio, e `FileReader.readAsDataURL()` então gera um data URL tipo
+  // `data:application/octet-stream;base64,...` (ou até `data:;base64,`)
+  // em vez de `data:audio/...`. O regex exigia o prefixo `audio/` — mas
+  // quem REALMENTE valida o formato são os magic bytes (detectAudioExt
+  // abaixo), então exigir o MIME aqui só rejeitava áudio de verdade com
+  // rótulo "errado". Agora aceita qualquer `data:<mime>;base64,...`; o
+  // MIME declarado nunca é usado pra decidir nada, só pra casar a regex.
+  const match = /^data:[a-zA-Z0-9.+/-]*;base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl.trim());
   if (!match) throw new UploadValidationError("Formato de áudio não reconhecido. Envie um mp3, m4a, ogg ou wav.");
 
-  const base64 = match[2];
+  const base64 = match[1];
 
   // Limite ANTES do decode (achado da auditoria): antes disso o
   // Buffer.from() rodava primeiro e só depois o tamanho era conferido.
@@ -142,7 +152,11 @@ export async function uploadAudioIfBase64(
   slug: string,
   value: string | undefined
 ): Promise<string | undefined> {
-  if (!value || !value.startsWith("data:audio")) return value;
+  // Não filtra mais por "data:audio" aqui (mesmo motivo do regex em
+  // parseAudioDataUrl: o MIME declarado pode vir vazio/errado do
+  // navegador) — só descarta o que claramente não é um data URL/já é uma
+  // URL comum (link externo colado, ver "Usar link externo" no editor).
+  if (!value || !value.startsWith("data:")) return value;
 
   const parsed = parseAudioDataUrl(value);
 

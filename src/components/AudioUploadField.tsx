@@ -45,7 +45,15 @@ export function AudioUploadField({ value, onChange, slug, editKey }: { value?: s
     if (!file) return;
     setError("");
     try {
-      if (!file.type.startsWith("audio/")) throw new Error("Selecione um arquivo de áudio (mp3, ogg ou wav).");
+      // Bug real reportado ao vivo (2026-09-08): "tentei colocar uma
+      // música de 16seg do meu computador direto, não consegui" —
+      // gravação feita no app de voz do Windows/Mac costuma salvar como
+      // .m4a, e o navegador às vezes entrega `file.type` vazio ou um MIME
+      // que o checker não reconhecia (`file.type.startsWith("audio/")`
+      // falhava mesmo sendo áudio de verdade). Agora aceita também pela
+      // EXTENSÃO do arquivo quando o MIME não vem preenchido/reconhecido.
+      const looksLikeAudio = file.type.startsWith("audio/") || /\.(mp3|wav|ogg|m4a|aac|webm|flac)$/i.test(file.name);
+      if (!looksLikeAudio) throw new Error("Selecione um arquivo de áudio (mp3, wav, ogg, m4a, aac...).");
       if (file.size > MAX_BYTES) throw new Error(`Arquivo muito grande (máx. ${Math.round(MAX_BYTES / 1024 / 1024)}MB, ~${MAX_SECONDS}s em boa qualidade).`);
 
       const duration = await getAudioDuration(file).catch(() => 0);
