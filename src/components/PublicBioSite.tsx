@@ -267,9 +267,26 @@ const BackgroundMusicPlayer = ({ url, volume }: { url: string; volume: number })
     const onFirstInteraction = () => tryPlay();
     document.addEventListener("click", onFirstInteraction, { once: true });
     document.addEventListener("touchstart", onFirstInteraction, { once: true });
+    // Bug real reportado ao vivo (2026-09-09): "eu acabei de incluir uma
+    // musica de fundo... só que quando saio do biosite, ela ainda
+    // continua tocando no celular" — acontece quando um botão do próprio
+    // bio site abre outro link em nova aba (target="_blank", ver
+    // buttonHref/window.open nesta mesma tela): a aba do bio site não
+    // fecha, só sai de foco, e o áudio HTML continua rodando escondido
+    // atrás. Pausa quando a aba/app fica em segundo plano (Page
+    // Visibility API — mesmo comportamento educado de qualquer player de
+    // música real) e retoma quando volta ao primeiro plano.
+    function onVisibilityChange() {
+      if (!audio) return;
+      if (document.hidden) audio.pause();
+      else tryPlay();
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
       document.removeEventListener("click", onFirstInteraction);
       document.removeEventListener("touchstart", onFirstInteraction);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      audio.pause();
     };
   }, [url, volume]);
   // eslint-disable-next-line jsx-a11y/media-has-caption
