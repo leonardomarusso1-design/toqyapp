@@ -619,9 +619,24 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
     setIsSaving(true);
     try {
       const result = await syncBiositeToSupabase(siteToValidate);
-      if (!result.ok) {
+      // Bug real e crítico reportado ao vivo (2026-09-09): "cliente disse
+      // que criou todo o biosite dele, salvou e ao atualizar a página não
+      // salvou nada do que ele tinha feito". Causa: syncBiositeToSupabase
+      // devolve `ok: true` mesmo quando cai no fallback de localStorage
+      // (sessão expirada/ausente) — só `source` diferencia "salvou de
+      // verdade no servidor" de "só guardou neste navegador por
+      // enquanto". Este código só checava `result.ok`, então tratava os
+      // dois casos como sucesso igual: mostrava a tela de "Publicar" com
+      // link/QR/chave pra entregar ao cliente, MESMO sem nada persistido
+      // — o link entregue nem existia de verdade, e um F5/outro
+      // dispositivo perdia tudo. NÃO é só do plano gratuito: sessão
+      // expirar no meio de uma edição longa pode acontecer em qualquer
+      // plano — a checagem abaixo vale pra todos.
+      if (!result.ok || result.source !== "supabase") {
         const isNetwork = result.error?.toLowerCase().includes("fetch") || result.error?.toLowerCase().includes("network") || result.error?.toLowerCase().includes("failed");
-        const msg = isNetwork
+        const msg = result.source === "local"
+          ? "Sua sessão expirou ou caiu. O que você fez ficou guardado só neste navegador — AINDA NÃO está salvo no servidor. Recarregue a página, faça login de novo e salve outra vez antes de sair ou compartilhar o link."
+          : isNetwork
           ? "Erro de conexão com o servidor. Verifique sua internet e tente novamente. Se persistir, recarregue a página (F5)."
           : `Erro ao salvar: ${result.error ?? "tente novamente"}`;
         setErrors([msg]);

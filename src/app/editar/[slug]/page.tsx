@@ -144,7 +144,13 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
         // Logado — salva normalmente via Supabase client
         const { syncBiositeToSupabase } = await import("@/lib/biositeSync");
         const result = await syncBiositeToSupabase(updated);
-        if (!result.ok) throw new Error(result.error ?? "Erro ao salvar");
+        // Mesmo bug crítico corrigido em SiteBuilder.tsx (2026-09-09):
+        // syncBiositeToSupabase devolve `ok: true` mesmo caindo no
+        // fallback de localStorage (sessão expirou entre o getSession()
+        // daqui e a checagem de dentro da função) — só `source` prova
+        // que salvou de verdade no servidor. Sem isso, "salvava" sem
+        // erro nenhum e sumia tudo num F5.
+        if (!result.ok || result.source !== "supabase") throw new Error(result.source === "local" ? "Sua sessão expirou. Recarregue a página, entre de novo e salve outra vez — o que você fez ficou só neste navegador." : (result.error ?? "Erro ao salvar"));
       } else {
         // Não logado — salva via API com chave de acesso (cliente externo)
         const res = await fetch("/api/biosite/save", {
