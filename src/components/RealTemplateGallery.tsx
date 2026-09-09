@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import type { Segment } from "@/lib/types";
 import { segmentOptions } from "@/lib/segmentTemplates";
 import { cloneRealTemplate } from "@/lib/realTemplates";
 import type { TemplatePreview } from "@/lib/realTemplates";
 import { fetchShowcaseSite } from "@/lib/showcaseSiteCache";
+import { ScaledSitePreview } from "./ScaledSitePreview";
 import type { ToqySite } from "@/lib/types";
 
 const SEGMENT_LABELS = Object.fromEntries(segmentOptions.map((item) => [item.value, item.label])) as Record<Segment, string>;
@@ -24,39 +25,84 @@ function TemplateCard({
   applying: boolean;
   onSelect: (slug: string) => void;
 }) {
+  // Prévia de verdade em vez de só foto+nome (2026-09-09, pedido ao vivo:
+  // "aparece os previews dos modelos, para pessoa saber como é" — 9 dos
+  // 12 modelos nem têm foto de perfil cadastrada, então o card antigo
+  // mostrava só um círculo com iniciais, sem dar noção nenhuma de como o
+  // bio site fica). Reusa o MESMO padrão já validado em
+  // LandingBioSiteCard.tsx (busca o site completo uma vez via
+  // fetchShowcaseSite, que já cacheia — várias dessas prévias já
+  // convivem lado a lado na home sem problema): ScaledSitePreview
+  // renderiza o PublicBioSite de verdade encolhido, sem precisar de
+  // biblioteca de screenshot. Só busca quando a ABA do segmento está
+  // visível (RealTemplateGallery só monta os cards do segmento ativo),
+  // então nunca são muitos de uma vez.
+  const [site, setSite] = useState<ToqySite | null>(null);
+  const [failed, setFailed] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [previewWidth, setPreviewWidth] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchShowcaseSite(preview.slug).then((result) => {
+      if (cancelled) return;
+      if (result) setSite(result); else setFailed(true);
+    });
+    return () => { cancelled = true; };
+  }, [preview.slug]);
+
+  useEffect(() => {
+    const el = previewRef.current;
+    if (!el) return;
+    const update = () => setPreviewWidth(el.clientWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   return (
-    <button
-      type="button"
-      disabled={applying}
-      onClick={() => onSelect(preview.slug)}
-      className="card-glow group overflow-hidden rounded-[1.75rem] border border-border bg-white text-left shadow-sm transition hover:border-accent disabled:cursor-wait disabled:opacity-70"
-    >
-      {/* Card estático (foto + nome) — só busca o site completo ao clicar,
-          em vez de renderizar a preview interativa completa pra cada item
-          (era pesado e algumas instâncias falhavam ao carregar juntas). */}
+    <div className="card-glow group overflow-hidden rounded-[1.75rem] border border-border bg-white text-left shadow-sm transition hover:border-accent">
+      {/* Área da prévia: clicável (mesma ação do botão embaixo), mas o
+          CONTEÚDO do bio site em si fica pointer-events-none — é só um
+          gostinho visual, não dá pra abrir o WhatsApp/link de dentro de
+          um modelo de exemplo. */}
       <div
-        className="flex h-40 w-full items-center justify-center"
+        ref={previewRef}
+        role="button"
+        tabIndex={0}
+        onClick={() => !applying && onSelect(preview.slug)}
+        onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && !applying) onSelect(preview.slug); }}
+        className={`relative h-56 w-full cursor-pointer overflow-hidden ${applying ? "pointer-events-none opacity-70" : ""}`}
         style={{ background: `linear-gradient(135deg, ${preview.primary}33, ${preview.background})` }}
       >
-        {preview.photo ? (
-          <img src={preview.photo} alt={preview.name} className="h-20 w-20 rounded-full object-cover shadow-lg" />
-        ) : (
-          <div
-            className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-black text-white shadow-lg"
-            style={{ background: preview.primary }}
-          >
-            {getInitials(preview.name)}
+        {site && previewWidth > 0 ? (
+          <div className="pointer-events-none">
+            <ScaledSitePreview site={site} instanceId={`template-${preview.slug}`} cardWidth={previewWidth} />
           </div>
+        ) : failed ? (
+          <div className="flex h-full items-center justify-center">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-black text-white shadow-lg" style={{ background: preview.primary }}>
+              {getInitials(preview.name)}
+            </div>
+          </div>
+        ) : (
+          <div className="flex h-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted" /></div>
         )}
       </div>
       <div className="p-3">
         <p className="truncate text-sm font-bold text-ink">{preview.name}</p>
-        <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-accent/10 px-3 py-1 text-xs font-black text-accent-dim transition group-hover:bg-accent group-hover:text-white">
+        <button
+          type="button"
+          disabled={applying}
+          onClick={() => onSelect(preview.slug)}
+          className="mt-2 inline-flex items-center gap-1 rounded-full bg-accent/10 px-3 py-1 text-xs font-black text-accent-dim transition group-hover:bg-accent group-hover:text-white disabled:cursor-wait disabled:opacity-70"
+        >
           {applying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
           {applying ? "Aplicando..." : "Usar este modelo"}
-        </p>
+        </button>
       </div>
-    </button>
+    </div>
   );
 }
 
