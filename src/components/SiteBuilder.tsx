@@ -2337,11 +2337,17 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
         </>
       ) : null}
 
-      {/* Painel deslizante da sidebar "Análise" — ver comentário no
-          analysisPanel state e nos botões da nav acima. */}
+      {/* Painel "Análise" (2026-09-08, redesenhado — pedido ao vivo com
+          print: "olha como fica os menus estaticas e outros links
+          abertos... coloca no centro da pagina, mas com fundo branco,
+          sobreposto, bonitinho"). ANTES era um drawer colado na borda
+          direita, ocupando a tela inteira de altura — agora é um card
+          centralizado, com respiro nas bordas, mesmo espírito do
+          bottom-sheet "Compartilhar" acima (fundo escurecido + card com
+          sombra), só que centralizado em vez de vindo de baixo. */}
       {analysisPanel ? (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-[2px]" onClick={() => setAnalysisPanel(null)}>
-          <div className="flex h-full w-full max-w-lg flex-col bg-background shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-ink/40 p-4 backdrop-blur-[2px]" onClick={() => setAnalysisPanel(null)}>
+          <div className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-border px-6 py-4">
               <h2 className="text-lg font-black text-ink">
                 {analysisPanel === "stats" ? "Estatísticas" : analysisPanel === "links" ? "Meus Links" : analysisPanel === "leads" ? "Cadastros deste site" : "Agendamentos"}
