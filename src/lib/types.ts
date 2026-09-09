@@ -254,6 +254,11 @@ export type ToqySite = {
     // senão o navegador bloqueia o autoplay). Ver videoStorage.ts pro
     // limite de tamanho/duração do upload direto.
     backgroundVideoUrl?: string;
+    // Foto de capa no topo (2026-09-08, ideia de uma usuária: "e se pudesse
+    // colocar uma imagem ali também, não só vídeo?") — mesma faixa de topo
+    // do backgroundVideoUrl, só que com foto parada em vez de vídeo. Se os
+    // dois estiverem preenchidos, o vídeo tem prioridade (ver PublicBioSite.tsx).
+    topImageUrl?: string;
   };
   themePresetId?: string;
   theme: {

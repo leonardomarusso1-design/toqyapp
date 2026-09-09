@@ -828,6 +828,26 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                 editKey={site.editKey}
               />
             </label>
+            {/* Foto de capa no topo (2026-09-08, ideia de uma usuária: "e
+                se pudesse colocar uma imagem ali também, não só vídeo?") —
+                mesma faixa/efeito do vídeo acima, com foto parada. Se os
+                dois estiverem preenchidos, o vídeo tem prioridade (ver
+                PublicBioSite.tsx) — por isso o aviso abaixo. */}
+            <label>
+              <span className={label}>Foto de capa no topo (opcional)</span>
+              <div className="mb-2 rounded-2xl border border-border bg-surface p-3 text-xs text-muted">
+                Mesmo efeito do vídeo acima, com uma foto parada em vez de vídeo. {site.profile.backgroundVideoUrl ? "Com vídeo preenchido, o vídeo aparece — apague o vídeo pra usar a foto." : "Não mexe na imagem de fundo, que continua no resto da página."}
+              </div>
+              <ImageUploadField
+                label=""
+                value={site.profile.topImageUrl}
+                onChange={(url) => setProfile({ topImageUrl: url })}
+                placeholder="URL da foto de capa"
+                slug={site.slug}
+                fieldId="top-image"
+                editKey={site.editKey}
+              />
+            </label>
           </div>
 
           {/* CORES AVANÇADAS — recolhido por padrão (2026-09-07). Mesmo

@@ -971,6 +971,17 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/10" />
           </div>
+        ) : site.profile.topImageUrl ? (
+          // Foto de capa no topo (2026-09-08, ideia de uma usuária) — mesma
+          // faixa/efeito do vídeo de topo acima, só que com foto parada.
+          <div className="relative -mb-14 h-56 w-full overflow-hidden bg-black">
+            <img
+              src={optimizedImageUrl(site.profile.topImageUrl, 860)}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/10" />
+          </div>
         ) : null}
         <main className="mx-auto w-full max-w-[430px] px-4 py-6">
           <div className="mb-6 flex items-center justify-between gap-3">
