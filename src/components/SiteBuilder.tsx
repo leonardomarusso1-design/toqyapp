@@ -1953,9 +1953,16 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
         <p className="mt-1 text-sm text-muted">Confira, salve e entregue o link junto com a chave de acesso.</p>
         {errors.length ? <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">{errors.map((err) => <p key={err}>{err}</p>)}</div> : null}
         {limitState ? <div className="mt-4 rounded-[1.75rem] border border-violet/20 bg-gradient-to-br from-violet/10 via-card to-surface p-5 shadow-sm"><p className="text-lg font-black text-ink">Você atingiu o limite do plano gratuito. Faça upgrade!</p><p className="mt-2 text-sm font-medium leading-relaxed text-muted">Seu plano <span className="font-black text-violet">{limitState.planTier}</span> permite até <span className="font-black text-ink">{limitState.limit}</span> biosites e você já possui <span className="font-black text-ink">{limitState.current}</span>.</p><div className="mt-4 flex flex-wrap gap-3">
-          {limitState.planTier === "freelancer" ? (
-            // Cobrança de excedente (2026-07-17) — só Freelancer, Agência já
-            // tem limite generoso (100 sites). Ver OVERAGE_LINKS em subscriptions.ts.
+          {limitState.planTier === "freelancer" || limitState.planTier === "community" ? (
+            // Cobrança de excedente (2026-07-17, corrigido 2026-09-09 —
+            // pedido ao vivo: "quando alguem tem plano de revenda ativo...
+            // atinja por exemplo 10 biosite, mas não quer mudar de plano,
+            // apenas comprar um a mais, ele pode ter essa opção"). O
+            // Essencial (id interno "community", limite 10) é justamente
+            // o plano de revenda mais provável de bater no teto — tinha
+            // ficado de fora, só Freelancer (limite 20) mostrava o botão.
+            // Agência (limite 100) continua de fora — teto generoso o
+            // bastante pra não precisar. Ver OVERAGE_LINKS em subscriptions.ts.
             <a href={OVERAGE_LINKS.biosite} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-3 text-sm font-black text-emerald-600 transition hover:bg-emerald-500/20">Comprar mais 1 por R$5,99</a>
           ) : null}
           <Link href="/#planos" className="inline-flex items-center justify-center rounded-2xl bg-violet px-5 py-3 text-sm font-black text-white transition hover:opacity-90">Ver planos e fazer upgrade</Link><Link href="/app" className="inline-flex items-center justify-center rounded-2xl border border-border bg-card px-5 py-3 text-sm font-black text-ink transition hover:border-violet/30 hover:text-violet">Voltar para meus biosites</Link></div></div> : null}
