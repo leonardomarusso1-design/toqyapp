@@ -555,6 +555,22 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
   function handleStickerMove(id: string, x: number, y: number) {
     update((s) => ({ ...s, stickers: (s.stickers ?? []).map((st) => (st.id === id ? { ...st, x, y } : st)) }));
   }
+  // Edição rápida clicando no preview (2026-09-09, pedido ao vivo: "no
+  // próprio preview, clicar nos botões... poder mudar a cor do botão, do
+  // texto... deixar centralizado ou lado esquerdo ou lado direito") — ver
+  // painel flutuante em LiveBioSitePreview.tsx. Não é arrastar livre pra
+  // qualquer lugar da tela (confirmado com o Leonardo): só os ajustes que
+  // o Toqy já permite (cor, alinhamento), agora acessíveis clicando no
+  // elemento em vez de procurar o botão certo na lista do editor.
+  const [selectedButtonId, setSelectedButtonId] = useState<string | undefined>(undefined);
+  function updateButton(id: string, patch: { color?: ColorValue; textAlign?: "left" | "center" | "right" }) {
+    update((s) => ({ ...s, buttons: s.buttons.map((b) => (b.id === id ? { ...b, ...patch } : b)) }));
+  }
+  // "X" pra tirar o selo "mais vendido"/highlight de UM item de catálogo,
+  // clicando direto no preview (mesmo pedido, exemplo dado ao vivo).
+  function removeCatalogHighlight(itemId: string) {
+    update((s) => ({ ...s, catalog: s.catalog.map((item) => (item.id === itemId ? { ...item, highlight: "" } : item)) }));
+  }
   // Normaliza pra ColorValue mesmo se o site foi salvo antes da reforma
   // (valor antigo era string simples — vira sólido automaticamente).
   function getColor(key: ColorRole, fallback: string): ColorValue {
@@ -2325,7 +2341,14 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
           </nav>
         ) : null}
       </div>
-      <LiveBioSitePreview site={previewSite} onStickerMove={handleStickerMove} />
+      <LiveBioSitePreview
+        site={previewSite}
+        onStickerMove={handleStickerMove}
+        selectedButtonId={selectedButtonId}
+        onSelectButton={setSelectedButtonId}
+        onUpdateButton={updateButton}
+        onRemoveCatalogHighlight={removeCatalogHighlight}
+      />
       </div>
 
       {/* Botão flutuante de preview no mobile — levantado (bottom-24) pra não
@@ -2355,7 +2378,12 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
               analytics (inflava visualização toda vez que alguém abria
               o preview no celular) e agora também dispararia o modal de
               captura de leads dentro do próprio editor. */}
-          <div className="flex-1 overflow-y-auto"><PublicBioSite site={previewSite} instanceId="editor" onStickerMove={handleStickerMove} /></div>
+          {/* Painel flutuante de cor/alinhamento fica só no preview desktop
+              (LiveBioSitePreview, xl+) — aqui no preview mobile (aba
+              própria, sem sidebar sobrando pro painel) o clique continua
+              abrindo o link normalmente, mesmo comportamento de sempre.
+              O X do selo do catálogo funciona igual nos dois. */}
+          <div className="flex-1 overflow-y-auto"><PublicBioSite site={previewSite} instanceId="editor" onStickerMove={handleStickerMove} onRemoveCatalogHighlight={removeCatalogHighlight} /></div>
         </div>
       ) : null}
 

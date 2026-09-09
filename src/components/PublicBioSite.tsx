@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 // Limpeza (2026-09-06, auditoria externa): ChevronLeft e MessageCircle
 // saíram do import — nenhum dos dois era renderizado (o carrossel usa
@@ -835,7 +835,17 @@ function representativeItemsByCategory(items: CatalogItem[]): CatalogItem[] {
   return result;
 }
 
-export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enableBackgroundMusic = false, enableTrackingPixels = false }: { site: ToqySite; publicUrl?: string; instanceId?: string; onStickerMove?: (id: string, x: number, y: number) => void; enableBackgroundMusic?: boolean; enableTrackingPixels?: boolean }) {
+// Contexto pra edição inline do catálogo (2026-09-09, pedido ao vivo:
+// "clica por exemplo no catálogo, em 'mais vendido' e poder aparecer um
+// X pra tirar aquele 'mais vendido' daquele catálogo, sempre individual
+// sem mexer em outros do lado"). CatalogCard fica vários níveis abaixo
+// de PublicBioSite (PublicBioSite → CatalogSection → CatalogScroller/
+// renderLayout → CatalogCard, em 6 pontos de chamada diferentes) — usar
+// Context em vez de passar a prop por todo esse caminho evita reescrever
+// as assinaturas de 3 componentes intermediários só pra repassar 1 callback.
+const CatalogEditContext = createContext<{ onRemoveHighlight?: (itemId: string) => void }>({});
+
+export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enableBackgroundMusic = false, enableTrackingPixels = false, onSelectButton, selectedButtonId, onRemoveCatalogHighlight }: { site: ToqySite; publicUrl?: string; instanceId?: string; onStickerMove?: (id: string, x: number, y: number) => void; enableBackgroundMusic?: boolean; enableTrackingPixels?: boolean; onSelectButton?: (id: string) => void; selectedButtonId?: string; onRemoveCatalogHighlight?: (itemId: string) => void }) {
   const [modal, setModal] = useState<Modal>(null);
   const [qrModal, setQrModal] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
@@ -1331,12 +1341,22 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
                     // tamanho, mesma cor própria.
                     const isFeatured = useButtonHierarchy && button.isPrimary === true;
                     const s = buttonStyle(site, button.color);
+                    // Alinhamento do texto dentro do botão (2026-09-09,
+                    // pedido ao vivo: "deixar centralizado ou lado
+                    // esquerdo ou lado direito, hoje só fica no meio").
+                    const justifyClass = button.textAlign === "left" ? "justify-start" : button.textAlign === "right" ? "justify-end" : "justify-center";
+                    // Selecionar em vez de navegar, só no editor
+                    // (onSelectButton só é passado pelo SiteBuilder — ver
+                    // painel flutuante em LiveBioSitePreview.tsx). No
+                    // bio site público de verdade, clique continua abrindo
+                    // o link normal.
+                    const isSelected = onSelectButton && selectedButtonId === button.id;
                     return (
                       <button
                         key={button.id}
                         type="button"
-                        onClick={() => handleButton(button)}
-                        className={`${radiusClass(site)} flex w-full items-center justify-center gap-2 border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98] ${button.pulse ? "pulse-attention" : ""} ${isFeatured ? "scale-[1.03]" : ""}`}
+                        onClick={onSelectButton ? () => onSelectButton(button.id) : () => handleButton(button)}
+                        className={`${radiusClass(site)} flex w-full items-center ${justifyClass} gap-2 border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98] ${button.pulse ? "pulse-attention" : ""} ${isFeatured ? "scale-[1.03]" : ""} ${isSelected ? "outline outline-2 outline-offset-2 outline-accent" : ""}`}
                         style={isFeatured ? { ...s.button, boxShadow: `0 0 0 3px ${accent}55, 0 10px 24px ${accent}40` } : s.button}
                       >
                         {showIcon ? <ButtonIcon type={button.type} /> : null}
@@ -1353,7 +1373,11 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
               return <BusinessHoursCard key="hours" site={site} />;
             }
             if (blockType === "catalog") {
-              return activeCatalog.length ? <CatalogSection key="catalog" site={site} items={activeCatalog} layout={catalogLayout} catalogId={catalogId} /> : null;
+              return activeCatalog.length ? (
+                <CatalogEditContext.Provider key="catalog" value={{ onRemoveHighlight: onRemoveCatalogHighlight }}>
+                  <CatalogSection site={site} items={activeCatalog} layout={catalogLayout} catalogId={catalogId} />
+                </CatalogEditContext.Provider>
+              ) : null;
             }
             if (blockType === "music") {
               // 2ª revisão (2026-09-06): este bloco não é mais o player de
@@ -1697,6 +1721,7 @@ function CatalogScroller({ site, items, onOpenGallery, categoryCounts }: { site:
 }
 
 function CatalogCard({ site, item, compact = false, stacked = false, onOpenGallery, categoryCount = 1 }: { site: ToqySite; item: CatalogItem; compact?: boolean; stacked?: boolean; onOpenGallery?: (category: string) => void; categoryCount?: number }) {
+  const { onRemoveHighlight } = useContext(CatalogEditContext);
   const width = stacked ? "w-full" : compact ? "w-full" : "min-w-[275px]";
   let imageHeight = compact ? "h-28" : "h-52";
   if (!compact) {
@@ -1733,7 +1758,22 @@ function CatalogCard({ site, item, compact = false, stacked = false, onOpenGalle
         ) : null}
       </div>
       <div className={compact ? "p-3" : "p-4"}>
-        {item.highlight ? <span className="mb-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-black" style={{ background: site.theme.colors?.catalogItemHighlight ? colorSwatch(site.theme.colors.catalogItemHighlight, "#b45309") + "22" : "#fef3c7", ...resolveColorStyle(site.theme.colors?.catalogItemHighlight, "text", "#b45309") }}>{item.highlight}</span> : null}
+        {item.highlight ? (
+          <span className="mb-2 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-black" style={{ background: site.theme.colors?.catalogItemHighlight ? colorSwatch(site.theme.colors.catalogItemHighlight, "#b45309") + "22" : "#fef3c7", ...resolveColorStyle(site.theme.colors?.catalogItemHighlight, "text", "#b45309") }}>
+            {item.highlight}
+            {/* X pra tirar o selo INDIVIDUALMENTE (2026-09-09, pedido ao
+                vivo: "clica no catálogo, em 'mais vendido' e poder
+                aparecer um X pra tirar aquele mais vendido daquele
+                catálogo, sempre individual sem mexer em outros do
+                lado"). Só aparece no editor (onRemoveHighlight vem do
+                contexto, ver CatalogEditContext acima). */}
+            {onRemoveHighlight ? (
+              <button type="button" onClick={(e) => { e.stopPropagation(); onRemoveHighlight(item.id); }} aria-label="Remover selo" className="rounded-full p-0.5 hover:bg-black/10">
+                <X className="h-3 w-3" />
+              </button>
+            ) : null}
+          </span>
+        ) : null}
         {/* Item "só foto" (2026-07-16) — nome/descrição agora são opcionais
             (ver BulkCatalogPhotoAdd/SiteBuilder). Sem isso, um item sem nome
             mostrava um <h3> vazio ocupando espaço em branco no card. */}

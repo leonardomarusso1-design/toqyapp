@@ -143,6 +143,11 @@ export type ToqyButton = {
   // principal (WhatsApp, agendamento). Reaproveita a keyframe
   // `glowPulse` que já existe em globals.css.
   pulse?: boolean;
+  // Alinhamento do texto DENTRO do botão (2026-09-09, pedido ao vivo:
+  // "clica no texto mudar a cor, deixar centralizado ou lado esquerdo
+  // ou lado direito, hoje só fica no meio"). Sem valor = "center" (zero
+  // mudança nos bio sites que já existem).
+  textAlign?: "left" | "center" | "right";
 };
 
 // Horário de funcionamento (2026-09-06, mockup da auditoria externa — card
