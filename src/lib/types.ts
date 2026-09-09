@@ -442,6 +442,13 @@ export type ToqySite = {
   // dos botões" (mesmo padrão do `color` de cada botão normal em
   // ToqyButton, ver buttonOverride em PublicBioSite.tsx).
   spotifyColor?: ColorValue;
+  // "Conectar Spotify" sem OAuth de conta (2026-09-08, pedido ao vivo —
+  // perguntado o que a integração deveria fazer de verdade, resposta:
+  // "link vira multi-plataforma automático"). Liga botões extras de
+  // Apple Music/YouTube Music/Deezer/Amazon Music gerados a partir do
+  // MESMO spotifyUrl via API pública do Odesli (song.link) — ver
+  // /api/music-links/route.ts. Não guarda token nem faz login de conta.
+  spotifyShowOtherPlatforms?: boolean;
   // Captura de leads (2026-09-07, referência Coonexta — menu "Captura de
   // leads" visto no vídeo do Leonardo: "Suas ferramentas de captura de
   // público"). Formulário simples no bio site público que grava nome +

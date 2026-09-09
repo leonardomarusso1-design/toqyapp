@@ -1013,6 +1013,17 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                           ) : null}
                         </div>
                       ) : null}
+                      {/* "Conectar Spotify" (2026-09-08, pedido ao vivo) —
+                          esclarecido que o resultado esperado era gerar os
+                          links de outras plataformas automaticamente, não
+                          login de conta (OAuth de verdade exigiria criar
+                          um app no Spotify Developer Dashboard). Usa a API
+                          pública do Odesli/song.link a partir do mesmo
+                          link acima — ver /api/music-links/route.ts. */}
+                      <label className="sm:col-span-2 flex items-center gap-1.5 text-xs font-black text-ink">
+                        <input type="checkbox" checked={site.spotifyShowOtherPlatforms ?? false} onChange={(e) => update((s) => ({ ...s, spotifyShowOtherPlatforms: e.target.checked }))} />
+                        Mostrar também em Apple Music, YouTube Music, Deezer e Amazon Music
+                      </label>
                     </div>
                   ) : null}
                 </div>

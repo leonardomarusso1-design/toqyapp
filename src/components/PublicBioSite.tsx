@@ -289,23 +289,67 @@ function toSpotifyEmbedUrl(url: string): string {
   }
 }
 
+type MusicLinks = { appleMusic?: string; youtubeMusic?: string; deezer?: string; amazonMusic?: string };
+const MUSIC_PLATFORM_LABELS: Record<keyof MusicLinks, string> = {
+  appleMusic: "Apple Music",
+  youtubeMusic: "YouTube Music",
+  deezer: "Deezer",
+  amazonMusic: "Amazon Music",
+};
+
+// "Ouça em outras plataformas" (2026-09-08) — pedido ao vivo de
+// "conectar via OAuth", esclarecido que o resultado esperado era o link
+// virar multi-plataforma automático, não login de conta. Busca uma vez
+// (não refaz a cada render) via /api/music-links, que usa a API pública
+// do Odesli/song.link a partir do MESMO link de Spotify já configurado.
+function OtherPlatformsLinks({ spotifyUrl }: { spotifyUrl: string }) {
+  const [links, setLinks] = useState<MusicLinks | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch(`/api/music-links?url=${encodeURIComponent(spotifyUrl)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (active) setLinks(data); })
+      .catch(() => { if (active) setLinks(null); });
+    return () => { active = false; };
+  }, [spotifyUrl]);
+
+  const entries = links ? (Object.keys(MUSIC_PLATFORM_LABELS) as (keyof MusicLinks)[]).filter((k) => links[k]) : [];
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="mt-2 flex flex-wrap justify-center gap-2">
+      {entries.map((key) => (
+        <a key={key} href={links![key]} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-border/40 bg-black/5 px-3 py-1.5 text-xs font-bold backdrop-blur-xl transition hover:bg-black/10">
+          {MUSIC_PLATFORM_LABELS[key]}
+        </a>
+      ))}
+    </div>
+  );
+}
+
 // Botão do Spotify (2026-09-06) — molde do "Music Link" do Linktree que
 // o Leonardo mandou print: 3 formatos de exibição, sem precisar de OAuth
-// de conta (isso fica pro roadmap) — só um link direto pra uma
-// faixa/álbum/playlist.
+// de conta — só um link direto pra uma faixa/álbum/playlist. Botões das
+// outras plataformas (Apple Music etc, ver OtherPlatformsLinks acima)
+// são opcionais, ligados por spotifyShowOtherPlatforms.
 const SpotifyLinkBlock = ({ url, label, display, site }: { url: string; label: string; display: "icon" | "button" | "preview"; site: ToqySite }) => {
+  const otherPlatforms = site.spotifyShowOtherPlatforms ? <OtherPlatformsLinks spotifyUrl={url} /> : null;
   if (display === "preview") {
     return (
-      <div className="overflow-hidden rounded-2xl">
-        <iframe
-          src={toSpotifyEmbedUrl(url)}
-          width="100%"
-          height="152"
-          style={{ border: 0, borderRadius: 12 }}
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy"
-          title="Spotify"
-        />
+      <div>
+        <div className="overflow-hidden rounded-2xl">
+          <iframe
+            src={toSpotifyEmbedUrl(url)}
+            width="100%"
+            height="152"
+            style={{ border: 0, borderRadius: 12 }}
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="lazy"
+            title="Spotify"
+          />
+        </div>
+        {otherPlatforms}
       </div>
     );
   }
@@ -313,11 +357,14 @@ const SpotifyLinkBlock = ({ url, label, display, site }: { url: string; label: s
     // Mesmo padrão dos ícones de imagem própria (whatsapp/instagram, ver
     // IMAGE_ICON_TYPES) — sem círculo de fundo, o próprio SVG já é colorido.
     return (
-      <div className="flex justify-center">
-        <button type="button" onClick={() => window.open(url, "_blank", "noopener,noreferrer")} aria-label={label}
-          className="flex items-center justify-center p-1 transition active:scale-90 hover:scale-105">
-          <SpotifyIcon className="h-12 w-12" />
-        </button>
+      <div>
+        <div className="flex justify-center">
+          <button type="button" onClick={() => window.open(url, "_blank", "noopener,noreferrer")} aria-label={label}
+            className="flex items-center justify-center p-1 transition active:scale-90 hover:scale-105">
+            <SpotifyIcon className="h-12 w-12" />
+          </button>
+        </div>
+        {otherPlatforms}
       </div>
     );
   }
@@ -328,12 +375,15 @@ const SpotifyLinkBlock = ({ url, label, display, site }: { url: string; label: s
   // botões normais já usam (ToqyButton.color).
   const spotifyStyle = buttonStyle(site, site.spotifyColor);
   return (
-    <button type="button" onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
-      className="flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98]"
-      style={spotifyStyle.button}>
-      <SpotifyIcon className="h-5 w-5 shrink-0" />
-      <span style={spotifyStyle.text}>{label}</span>
-    </button>
+    <div>
+      <button type="button" onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3.5 text-center text-sm font-black shadow-md backdrop-blur-xl transition active:scale-[0.98]"
+        style={spotifyStyle.button}>
+        <SpotifyIcon className="h-5 w-5 shrink-0" />
+        <span style={spotifyStyle.text}>{label}</span>
+      </button>
+      {otherPlatforms}
+    </div>
   );
 };
 
