@@ -507,6 +507,17 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
   // gatear os CAMPOS do editor por plano (ver step 3 "Pix e Wi-Fi" e
   // step 4 "Catálogo"), não só a renderização pública.
   const ownerPlan = getPlan(ownerPlanTier);
+  // Conteúdo já feito continua editável pra sempre, mesmo se o plano
+  // vencer/cair depois (2026-09-09, pedido direto do Leonardo: "não pode
+  // sumir, apenas bloquear pra não criar mais, mas aquele que fiz na
+  // época que estava com plano ainda deveria continuar conseguindo
+  // mexer"). Mesmo critério do lado público (PublicBioSite.tsx) — plano
+  // atual só bloqueia COMEÇAR um recurso do zero; quem já tem chave Pix/
+  // SSID/algum item de catálogo salvo continua podendo editar (inclusive
+  // ligar/desligar) esse recurso já existente, mesmo sem plano pago.
+  const canUsePix = ownerPlan.hasPix || !!site.pix.key;
+  const canUseWifi = ownerPlan.hasWifi || !!site.wifi.ssid;
+  const canUseCatalog = ownerPlan.hasCatalog || site.catalog.length > 0;
 
   function update(next: ToqySite | ((current: ToqySite) => ToqySite)) {
     setSite((current) => {
@@ -1332,7 +1343,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
             <div className="rounded-3xl border border-accent/20 bg-accent/5 p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-black text-ink">Pix premium</h3>
-                {ownerPlan.hasPix ? (
+                {canUsePix ? (
                 <label className="flex items-center gap-2 cursor-pointer">
                   <span className="text-xs font-black text-ink">Ativar Pix</span>
                   <div className="relative w-10 h-6" onClick={() => update((s) => {
@@ -1358,7 +1369,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                   conferir a página pública de verdade. Mesmo padrão visual
                   já usado em Figurinhas/Música (canUseStickersAndMusic)
                   logo abaixo. */}
-              {!ownerPlan.hasPix ? (
+              {!canUsePix ? (
                 <div className="rounded-2xl border border-violet/20 bg-violet/10 p-4 text-sm font-bold text-violet">
                   Disponível a partir do plano Pro. <Link href="/para-mim#planos" className="underline">Ver planos</Link>
                 </div>
@@ -1394,7 +1405,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
             <div className="rounded-3xl border border-accent/20 bg-accent/5 p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-black text-ink">Wi-Fi + check-in</h3>
-                {ownerPlan.hasWifi ? (
+                {canUseWifi ? (
                 <label className="flex items-center gap-2 cursor-pointer">
                   <span className="text-xs font-black text-ink">Ativar Wi-Fi</span>
                   <div className="relative">
@@ -1411,7 +1422,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                 </label>
                 ) : null}
               </div>
-              {!ownerPlan.hasWifi ? (
+              {!canUseWifi ? (
                 <div className="rounded-2xl border border-violet/20 bg-violet/10 p-4 text-sm font-bold text-violet">
                   Disponível a partir do plano Pro. <Link href="/para-mim#planos" className="underline">Ver planos</Link>
                 </div>
@@ -1451,13 +1462,24 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
               <h2 className="text-2xl font-black text-ink">Catalogo</h2>
               <p className="mt-1 text-sm text-muted">Configure itens, layout e textos do catalogo.</p>
             </div>
+            {/* Gate de plano no PRÓPRIO botão (2026-09-09, achado ao revisar
+                o gate abaixo: este botão ficava FORA do bloco gateado,
+                então dava pra criar item de catálogo no Gratuito mesmo com
+                a seção "bloqueada" logo abaixo — e com o grandfathering
+                novo isso destravaria o catálogo pra sempre sem nunca ter
+                pago, já que "tem item = pode continuar mexendo"). */}
+            {canUseCatalog ? (
             <button type="button" onClick={() => { const newId = generateId("prd"); update((s) => ({ ...s, catalog: [...s.catalog, { id: newId, name: "", description: "", price: "", imageUrl: "", imageLayout: "square", imageFit: "cover", imagePosition: "center", category: "Destaques", enabled: true, actionLabel: "", actionUrl: "" }] })); setOpenCatalogIds((prev) => new Set(prev).add(newId)); }} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-3 text-sm font-black text-white"><Plus className="h-4 w-4" />Adicionar item</button>
+            ) : null}
           </div>
 
           {/* Gate de plano (2026-09-08, mesmo bug/motivo do gate de Pix e
               Wi-Fi acima — editor deixava montar o catálogo inteiro no
-              Gratuito, só a PÁGINA PÚBLICA escondia depois). */}
-          {!ownerPlan.hasCatalog ? (
+              Gratuito, só a PÁGINA PÚBLICA escondia depois). Grandfathering
+              (2026-09-09): quem já tem pelo menos 1 item continua editando
+              o catálogo pra sempre, mesmo se o plano vencer/cair depois —
+              só bloqueia quem nunca teve nenhum item e está sem plano. */}
+          {!canUseCatalog ? (
             <div className="mt-5 rounded-2xl border border-violet/20 bg-violet/10 p-4 text-sm font-bold text-violet">
               Catálogo disponível a partir do plano Pro. <Link href="/para-mim#planos" className="underline">Ver planos</Link>
             </div>

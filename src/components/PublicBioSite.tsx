@@ -874,15 +874,28 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
   // algum motivo vier vazio, cai em "free" (mais restritivo, nunca libera
   // por engano).
   const plan = getPlan(resolvePlanTier(site.ownerPlan));
+  // Conteúdo já feito continua funcionando pra sempre, mesmo se o plano
+  // vencer/cair depois (2026-09-09, pedido direto do Leonardo: "não pode
+  // sumir, apenas bloquear pra não criar mais, mas aquele que fiz na
+  // época que estava com plano ainda deveria continuar conseguindo
+  // mexer"). Plano atual só bloqueia COMEÇAR a usar um recurso do zero
+  // (ver SiteBuilder.tsx pro lado do editor) — se já existe conteúdo
+  // real configurado, ele segue visível/ativo independente do plano de
+  // hoje. hasPix/hasWifi/hasCatalog viram "tem plano OU já tem
+  // conteúdo", nunca o contrário (baixar plano nunca revoga o que
+  // já existia).
+  const hasPix = plan.hasPix || !!site.pix.key;
+  const hasWifi = plan.hasWifi || !!site.wifi.ssid;
+  const hasCatalog = plan.hasCatalog || site.catalog.length > 0;
   const activeButtons = site.buttons
     .filter((button) => button.enabled)
     .filter((button) => {
-      if ((button.type === "pix" || button.type === "pixHub") && !plan.hasPix) return false;
-      if (button.type === "wifi" && !plan.hasWifi) return false;
-      if (button.type === "catalog" && !plan.hasCatalog) return false;
+      if ((button.type === "pix" || button.type === "pixHub") && !hasPix) return false;
+      if (button.type === "wifi" && !hasWifi) return false;
+      if (button.type === "catalog" && !hasCatalog) return false;
       return true;
     });
-  const activeCatalog = plan.hasCatalog ? site.catalog.filter((item) => item.enabled) : [];
+  const activeCatalog = hasCatalog ? site.catalog.filter((item) => item.enabled) : [];
   const catalogLayout: CatalogLayout = site.catalogLayout ?? "carousel";
   const vcard = useMemo(() => createVCard(site), [site]);
 
@@ -948,7 +961,7 @@ export function PublicBioSite({ site, publicUrl, instanceId, onStickerMove, enab
   const socialButtons = activeButtons.filter((b) =>
     b.displayAs === "icon" || (!b.displayAs && SOCIAL_TYPES.includes(b.type))
   ).filter(b => b.displayAs !== "button");
-  const wifiInline = plan.hasWifi && site.wifi?.enabled && site.wifi.ssid && site.wifi.showInline !== false;
+  const wifiInline = hasWifi && site.wifi?.enabled && site.wifi.ssid && site.wifi.showInline !== false;
   const mainButtons = activeButtons.filter((b) =>
     b.displayAs === "button" || (!b.displayAs && !SOCIAL_TYPES.includes(b.type) && b.type !== "phone" && !(wifiInline && b.type === "wifi"))
   );
