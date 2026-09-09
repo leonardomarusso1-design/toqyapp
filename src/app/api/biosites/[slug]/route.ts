@@ -23,8 +23,29 @@ export async function GET(_req: Request, { params }: Params) {
       // de edicao em texto puro. Confirmado ao vivo em producao antes da
       // correcao: GET /api/biosites/yakisabor entregava "editKey".
       const site = toPublicSite(data.site_data as ToqySite);
+
+      // Plano de quem É DONO deste bio site, não de quem está pedindo
+      // (2026-09-09, bug real reportado ao vivo com print: cliente da
+      // agência do Leonardo — que pagou o plano Essencial — monta um
+      // bio site e manda o link de edição pro CLIENTE DELE (sem conta,
+      // só chave de acesso via /editar/[slug]?key=...); esse cliente
+      // final abria o editor e via Catálogo/Pix/Wi-Fi bloqueados como
+      // "Disponível a partir do plano Pro" — mesmo o dono tendo pago.
+      // Causa raiz: SiteBuilder.tsx resolvia o plano via
+      // `supabase.auth.getSession()` do NAVEGADOR de quem está editando
+      // — pra um cliente final sem conta (só chave), não existe sessão
+      // nenhuma, então caía sempre no fallback "free". Devolver aqui
+      // (rota pública, sem autenticação, já usada pelo load inicial do
+      // editor) o plano de quem É DONO de verdade resolve pros dois
+      // casos: dono logado E cliente final sem conta.
+      let ownerPlanTier: string | undefined;
+      if (data.owner_profile_id) {
+        const { data: profile } = await supabase.from("profiles").select("plan_toqy, plan_tier").eq("id", data.owner_profile_id).maybeSingle();
+        ownerPlanTier = profile?.plan_toqy ?? profile?.plan_tier ?? undefined;
+      }
+
       return Response.json(
-        { site: { ...site, id: data.id, slug: data.slug, status: data.status }, source: "supabase" },
+        { site: { ...site, id: data.id, slug: data.slug, status: data.status }, ownerPlanTier, source: "supabase" },
         { headers: CACHE_HEADERS }
       );
     }

@@ -71,7 +71,7 @@ function defaultBusinessHoursDays(): BusinessHoursDay[] {
 // descobrisse o controle poderia tentar se promover (o servidor já
 // bloqueia isso em /api/biosite/save, mas nem mostrar o controle é
 // a primeira camada).
-type Props = { mode: "create" | "edit"; initialSite: ToqySite; onSave: (site: ToqySite) => unknown | Promise<unknown>; accessLevel?: "full" | "operational" | "readonly"; isOwner?: boolean };
+type Props = { mode: "create" | "edit"; initialSite: ToqySite; onSave: (site: ToqySite) => unknown | Promise<unknown>; accessLevel?: "full" | "operational" | "readonly"; isOwner?: boolean; ownerPlanTierOverride?: string };
 
 // Perfil + Visual viraram uma etapa só, "Aparência" (2026-09-07,
 // referência Coonexta — prints enviados pelo Leonardo: "a personalização
@@ -396,7 +396,7 @@ function BulkCatalogPhotoAdd({ slug, catalog, onAdd, editKey }: { slug: string; 
   );
 }
 
-export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", isOwner = true }: Props) {
+export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", isOwner = true, ownerPlanTierOverride }: Props) {
   const isReadOnly = accessLevel === "readonly";
   const [site, setSite] = useState<ToqySite>({ ...initialSite, catalogLayout: initialSite.catalogLayout ?? "carousel" });
   // Slug de partida (2026-09-08, bug real: "dando não autorizado" ao subir
@@ -477,8 +477,22 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
   // incluindo SEMPRE no modo "edit") `limitState` é `null`, e
   // `resolvePlanTier(undefined)` cai em "free". Busca o plano de verdade
   // uma vez, ao montar, independente do fluxo de limite de sites.
-  const [ownerPlanTier, setOwnerPlanTier] = useState<PlanType>("free");
+  // Bug real corrigido (2026-09-09, print ao vivo): cliente da agência do
+  // Leonardo (plano Essencial pago) manda o link de edição do bio site
+  // pro CLIENTE DELE, sem conta — só chave de acesso (/editar/[slug]?
+  // key=...). Esse cliente final via Catálogo/Pix/Wi-Fi bloqueados como
+  // "Disponível a partir do plano Pro", mesmo o dono real tendo pago.
+  // Causa: o efeito abaixo só resolvia o plano via `supabase.auth.
+  // getSession()` do NAVEGADOR de quem está editando — sem sessão (caso
+  // de TODO cliente final via chave), sempre caía em "free". Agora usa
+  // ownerPlanTierOverride quando o chamador já sabe o plano de dono
+  // (editar/[slug]/page.tsx busca via GET /api/biosites/[slug], rota
+  // pública que resolve o plano de quem É DONO, não de quem está
+  // pedindo) — só cai na sessão do navegador quando não há override
+  // (mode "create", sempre dono logado criando um site novo).
+  const [ownerPlanTier, setOwnerPlanTier] = useState<PlanType>(resolvePlanTier(ownerPlanTierOverride));
   useEffect(() => {
+    if (ownerPlanTierOverride !== undefined) return;
     let active = true;
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -488,7 +502,7 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
       setOwnerPlanTier(resolvePlanTier(profile?.plan_toqy ?? profile?.plan_tier));
     })();
     return () => { active = false; };
-  }, []);
+  }, [ownerPlanTierOverride]);
   // Objeto Plan resolvido (hasPix/hasWifi/hasCatalog/...) — usado pra
   // gatear os CAMPOS do editor por plano (ver step 3 "Pix e Wi-Fi" e
   // step 4 "Catálogo"), não só a renderização pública.

@@ -22,6 +22,13 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
   // destrava por SESSÃO (dono logado) é isOwner; quem destrava por
   // CHAVE (client final, sem conta) sempre respeita site.clientAccessLevel.
   const [isOwner, setIsOwner] = useState(false);
+  // Plano de quem É DONO do bio site (2026-09-09, bug real reportado ao
+  // vivo) — vem do GET inicial abaixo (rota pública, resolve o plano do
+  // DONO de verdade no servidor), não da sessão de quem está editando.
+  // Vale pros dois casos: dono logado editando o próprio site, e cliente
+  // final sem conta editando via chave — ver comentário completo em
+  // SiteBuilder.tsx (ownerPlanTierOverride).
+  const [ownerPlanTier, setOwnerPlanTier] = useState<string | undefined>(undefined);
 
   // Fix de segurança real (2026-07-17, auditoria): o carregamento inicial
   // buscava site_data E edit_key_hash juntos, direto do navegador — a
@@ -93,6 +100,7 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
       if (!data) { setLoading(false); return; }
 
       setSite({ ...data, slug: data.slug ?? slug, status: data.status });
+      if (typeof body?.ownerPlanTier === "string") setOwnerPlanTier(body.ownerPlanTier);
 
       // Auto-unlock com chave da URL
       const keyFromUrl = (searchParams.get("key") ?? "").trim();
@@ -198,7 +206,7 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
 
   return (
     <ClientShell fullWidth>
-      <SiteBuilder mode="edit" initialSite={site} onSave={handleSave} accessLevel={isOwner ? "full" : (site.clientAccessLevel ?? "full")} isOwner={isOwner} />
+      <SiteBuilder mode="edit" initialSite={site} onSave={handleSave} accessLevel={isOwner ? "full" : (site.clientAccessLevel ?? "full")} isOwner={isOwner} ownerPlanTierOverride={ownerPlanTier} />
       {saving && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
           <div className="rounded-2xl bg-white px-6 py-4 font-black text-slate-800 shadow-xl">Salvando...</div>
