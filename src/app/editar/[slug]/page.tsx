@@ -211,7 +211,18 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
   );
 
   return (
-    <ClientShell fullWidth>
+    // action customizado (2026-09-09, bug real reportado ao vivo: "estou
+    // testando aqui o site... mas não consigo voltar para o meu painel
+    // para exclusão do bio que comecei") — sem isso, ClientShell mostrava
+    // o link padrão "Minha página" (→ /me), que não serve pro DONO
+    // logado testando/editando um site já existente: /me é a entrada do
+    // CLIENTE final (sem conta), não o painel de verdade onde fica
+    // excluir. Cliente final (isOwner=false, entrou por chave) continua
+    // vendo o padrão, que faz sentido pro caso dele.
+    <ClientShell
+      fullWidth
+      action={isOwner ? <Link href="/app" className="text-sm font-bold text-muted transition hover:text-accent">Voltar pro painel</Link> : undefined}
+    >
       <SiteBuilder mode="edit" initialSite={site} onSave={handleSave} accessLevel={isOwner ? "full" : (site.clientAccessLevel ?? "full")} isOwner={isOwner} ownerPlanTierOverride={ownerPlanTier} />
       {saving && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
