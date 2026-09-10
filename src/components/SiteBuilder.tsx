@@ -1651,12 +1651,21 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                       — virou "Exibição por categoria" acima, uma escolha só
                       pra categoria inteira. O checkbox "Destaque" (no header
                       do item) continua sendo a única exceção por item. */}
-                  {/* Preço com R$ automático */}
+                  {/* Preço com R$ automático. "Preço de" (2026-09-10, ideia
+                      de usuário: normal + promocional) — quando preenchido,
+                      aparece riscado antes do preço normal, que vira o "por". */}
                   <label>
-                    <span className={label}>Preço</span>
+                    <span className={label}>Preço {item.originalPrice ? "(por)" : ""}</span>
                     <div className="flex items-center gap-0">
                       <span className="flex h-[42px] items-center rounded-l-xl border border-r-0 border-border bg-surface px-3 text-sm font-black text-muted">R$</span>
                       <input className="h-[42px] flex-1 rounded-r-xl border border-border bg-card px-3 text-sm font-black outline-none focus:border-accent" placeholder="80,00" value={item.price?.replace(/^R\$\s?/, "") ?? ""} onChange={(e) => { const v = e.target.value.replace(/[^0-9,.]/g, ""); update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { price: v ? `R$ ${v}` : "" }) })); }} />
+                    </div>
+                  </label>
+                  <label>
+                    <span className={label}>Preço de (opcional, promoção)</span>
+                    <div className="flex items-center gap-0">
+                      <span className="flex h-[42px] items-center rounded-l-xl border border-r-0 border-border bg-surface px-3 text-sm font-black text-muted">R$</span>
+                      <input className="h-[42px] flex-1 rounded-r-xl border border-border bg-card px-3 text-sm font-black outline-none focus:border-accent" placeholder="120,00" value={item.originalPrice?.replace(/^R\$\s?/, "") ?? ""} onChange={(e) => { const v = e.target.value.replace(/[^0-9,.]/g, ""); update((s) => ({ ...s, catalog: updateCatalogItem(s.catalog, index, { originalPrice: v ? `R$ ${v}` : "" }) })); }} />
                     </div>
                   </label>
                   <label>

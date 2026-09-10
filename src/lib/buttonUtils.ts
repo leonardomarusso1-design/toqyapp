@@ -1,4 +1,4 @@
-import type { ToqyButton, ToqySite } from "./types";
+import type { CatalogItem, ToqyButton, ToqySite } from "./types";
 import { ensureUrl, normalizeInstagram, normalizePhone } from "./security";
 import { extractCityFromLocation, generatePixBRCode } from "./pixBrCode";
 
@@ -6,6 +6,22 @@ export function whatsappUrl(site: ToqySite) {
   const phone = normalizePhone(site.contact.whatsapp || site.contact.phone);
   if (!phone) return "";
   return `https://wa.me/${phone}?text=${encodeURIComponent(site.contact.whatsappMessage || "Olá! Vim pelo Toqy.")}`;
+}
+
+// WhatsApp com contexto do item do catálogo (2026-09-10, ideia de
+// usuário: "ao clicar no whatsapp... ir também a foto/imagem do produto".
+// Foto por link do wa.me é impossível — o wa.me só aceita texto. O que dá
+// é mandar NOME + PREÇO + link do bio site no texto, pro lojista saber
+// exatamente qual produto). Cai no whatsappUrl(site) normal se o item não
+// tem nome nenhum.
+export function catalogItemWhatsappUrl(site: ToqySite, item: CatalogItem, publicUrl?: string): string {
+  const phone = normalizePhone(site.contact.whatsapp || site.contact.phone);
+  if (!phone) return "";
+  if (!item.name?.trim()) return whatsappUrl(site);
+  const priceText = item.price?.trim() ? ` (${item.price.trim()})` : "";
+  const linkText = publicUrl ? `\n${publicUrl}` : "";
+  const msg = `Olá! Tenho interesse em *${item.name.trim()}*${priceText}.${linkText}`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
 }
 
 // "Como chegar" com mapa embutido (2026-09-08, pedido real com print de

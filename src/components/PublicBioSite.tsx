@@ -29,7 +29,7 @@ import {
   X,
 } from "lucide-react";
 import type { BusinessHours, CatalogItem, CatalogLayout, ColorValue, ToqyButton, ToqyLinkType, ToqySite } from "@/lib/types";
-import { buttonHref, createVCard, googleMapsExternalUrl, mapsQuery, pixPayload, wazeExternalUrl, whatsappUrl, wifiPayload } from "@/lib/buttonUtils";
+import { buttonHref, catalogItemWhatsappUrl, createVCard, googleMapsExternalUrl, mapsQuery, pixPayload, wazeExternalUrl, whatsappUrl, wifiPayload } from "@/lib/buttonUtils";
 import { resolveBodyBlockOrder } from "@/lib/bodyBlocks";
 import { ensureUrl, normalizeInstagram } from "@/lib/security";
 import { getPlan, resolvePlanTier } from "@/lib/subscriptions";
@@ -1729,6 +1729,10 @@ function CatalogCard({ site, item, compact = false, stacked = false, onOpenGalle
     if (item.imageLayout === "vertical") imageHeight = "h-72";
   }
   const whatsapp = whatsappUrl(site);
+  // WhatsApp com nome + preço do item no texto (2026-09-10) — ver
+  // catalogItemWhatsappUrl. Link do bio site montado no clique (browser),
+  // pra não depender de threading de publicUrl até aqui.
+  const itemWhatsapp = () => catalogItemWhatsappUrl(site, item, typeof window !== "undefined" ? `${window.location.origin}/b/${site.slug}` : undefined);
   // Vitrine por categoria: só clicável quando tem mais de 1 item na mesma
   // categoria (senão não há "mais peças" pra mostrar na galeria).
   const canOpenGallery = Boolean(onOpenGallery) && categoryCount > 1;
@@ -1780,9 +1784,14 @@ function CatalogCard({ site, item, compact = false, stacked = false, onOpenGalle
         {item.name ? <h3 className={compact ? "text-sm font-black leading-tight" : "text-lg font-black"} style={resolveColorStyle(site.theme.colors?.catalogItemName, "text", site.theme.text)}>{item.name}</h3> : null}
         {item.description ? <p className={compact ? "mt-1 line-clamp-3 text-xs leading-relaxed" : "mt-2 text-sm leading-relaxed"} style={resolveColorStyle(site.theme.colors?.catalogItemDesc, "text", site.theme.muted)}>{item.description}</p> : null}
         <div className="mt-4 flex items-center justify-between gap-3">
-          {item.price ? <span className={compact ? "text-xs font-black" : "font-black"} style={resolveColorStyle(site.theme.colors?.catalogItemPrice, "text", site.theme.accent)}>{item.price}</span> : <span />}
+          {item.price || item.originalPrice ? (
+            <span className={compact ? "text-xs font-black" : "font-black"} style={resolveColorStyle(site.theme.colors?.catalogItemPrice, "text", site.theme.accent)}>
+              {item.originalPrice ? <span className="mr-1.5 font-bold line-through opacity-50">{item.originalPrice}</span> : null}
+              {item.price}
+            </span>
+          ) : <span />}
           <div className="flex items-center gap-2">
-            {whatsapp && site.showCatalogWhatsapp !== false ? <button type="button" aria-label="Falar no WhatsApp" onClick={() => window.open(whatsapp, "_blank", "noopener,noreferrer")} className="flex h-9 w-9 items-center justify-center rounded-full border" style={{ borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.12)" : "rgba(255,255,255,0.18)", color: site.theme.text }}><WhatsAppIcon className="h-4 w-4" /></button> : null}
+            {whatsapp && site.showCatalogWhatsapp !== false ? <button type="button" aria-label="Falar no WhatsApp" onClick={() => { const h = itemWhatsapp(); if (h) window.open(h, "_blank", "noopener,noreferrer"); }} className="flex h-9 w-9 items-center justify-center rounded-full border" style={{ borderColor: site.theme.mode === "light" ? "rgba(15,23,42,0.12)" : "rgba(255,255,255,0.18)", color: site.theme.text }}><WhatsAppIcon className="h-4 w-4" /></button> : null}
             {/* Bug real corrigido (2026-07-16): botão "Ver" aparecia em TODO
                 item enquanto o toggle geral "Botão Ver nos itens" estivesse
                 ligado, mesmo em fotos sem nenhum texto/link configurado —
@@ -1790,7 +1799,7 @@ function CatalogCard({ site, item, compact = false, stacked = false, onOpenGalle
                 aparece se o próprio item tem "Texto do botão" ou "Link do
                 botão" preenchido — item vazio (só foto) não mostra botão,
                 mesmo com o toggle geral ligado. */}
-            {site.showCatalogAction !== false && (item.actionLabel || item.actionUrl) ? <button type="button" onClick={() => { const href = item.actionUrl ? ensureUrl(item.actionUrl) : whatsapp; if (href) window.open(href, "_blank", "noopener,noreferrer"); }} className="rounded-full px-4 py-2 text-xs font-black" style={{ ...resolveColorStyle(site.theme.colors?.catalogActionBg, "bg", site.theme.primary), ...resolveColorStyle(site.theme.colors?.catalogActionText, "text", site.theme.mode === "light" ? "#fff" : "#06111F") }}>{item.actionLabel || "Ver"}</button> : null}
+            {site.showCatalogAction !== false && (item.actionLabel || item.actionUrl) ? <button type="button" onClick={() => { const href = item.actionUrl ? ensureUrl(item.actionUrl) : itemWhatsapp(); if (href) window.open(href, "_blank", "noopener,noreferrer"); }} className="rounded-full px-4 py-2 text-xs font-black" style={{ ...resolveColorStyle(site.theme.colors?.catalogActionBg, "bg", site.theme.primary), ...resolveColorStyle(site.theme.colors?.catalogActionText, "text", site.theme.mode === "light" ? "#fff" : "#06111F") }}>{item.actionLabel || "Ver"}</button> : null}
           </div>
         </div>
       </div>
@@ -1803,7 +1812,6 @@ function CatalogCard({ site, item, compact = false, stacked = false, onOpenGalle
 // categoria em grade. Reusa o ModalShell já usado pelo Pix/Wi-Fi, mesmo
 // padrão visual (bottom-sheet no mobile, fecha ao tocar fora ou no X).
 function CategoryGalleryModal({ site, category, items, onClose }: { site: ToqySite; category: string; items: CatalogItem[]; onClose: () => void }) {
-  const whatsapp = whatsappUrl(site);
   return (
     <ModalShell title={category} onClose={onClose} site={site} icon={<Images className="h-6 w-6" />}>
       <div className="grid grid-cols-2 gap-3">
@@ -1822,13 +1830,13 @@ function CategoryGalleryModal({ site, category, items, onClose }: { site: ToqySi
                 mostra rodapé nenhum (nome vazio + botão "Ver" abrindo o
                 WhatsApp do site por padrão não fazia sentido pra uma foto
                 solta de galeria, ex: "Diretoria"). */}
-            {(item.name || item.price || item.actionUrl) ? (
+            {(item.name || item.price || item.originalPrice || item.actionUrl) ? (
               <div className="p-2.5">
                 {item.name ? <p className="line-clamp-2 text-xs font-black leading-tight" style={resolveColorStyle(site.theme.colors?.catalogItemName, "text", site.theme.text)}>{item.name}</p> : null}
-                {item.price ? <p className="mt-1 text-xs font-black" style={resolveColorStyle(site.theme.colors?.catalogItemPrice, "text", site.theme.accent)}>{item.price}</p> : null}
+                {item.price || item.originalPrice ? <p className="mt-1 text-xs font-black" style={resolveColorStyle(site.theme.colors?.catalogItemPrice, "text", site.theme.accent)}>{item.originalPrice ? <span className="mr-1.5 font-bold line-through opacity-50">{item.originalPrice}</span> : null}{item.price}</p> : null}
                 <button
                   type="button"
-                  onClick={() => { const href = item.actionUrl ? ensureUrl(item.actionUrl) : whatsapp; if (href) window.open(href, "_blank", "noopener,noreferrer"); }}
+                  onClick={() => { const href = item.actionUrl ? ensureUrl(item.actionUrl) : catalogItemWhatsappUrl(site, item, typeof window !== "undefined" ? `${window.location.origin}/b/${site.slug}` : undefined); if (href) window.open(href, "_blank", "noopener,noreferrer"); }}
                   className="mt-2 w-full rounded-full px-2 py-1.5 text-[11px] font-black"
                   style={{ ...resolveColorStyle(site.theme.colors?.catalogActionBg, "bg", site.theme.primary), ...resolveColorStyle(site.theme.colors?.catalogActionText, "text", site.theme.mode === "light" ? "#fff" : "#06111F") }}
                 >

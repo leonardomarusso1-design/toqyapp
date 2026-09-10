@@ -199,6 +199,11 @@ export type CatalogItem = {
   name: string;
   description: string;
   price?: string;
+  // Preço "de" (riscado), pra promoção/oferta (2026-09-10, ideia de
+  // usuário: "ter opção de colocar preço normal e também preço
+  // promocional"). Quando preenchido, renderiza riscado antes do `price`
+  // (que passa a ser o "por"). Texto livre igual `price`.
+  originalPrice?: string;
   priceValue?: number;
   imageUrl?: string;
   // Vídeo no lugar da foto (2026-09-08, pedido real — "o pessoal tá
