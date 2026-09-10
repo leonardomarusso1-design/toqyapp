@@ -143,8 +143,15 @@ export default function DominioPage() {
         <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-muted">
           <li>Escolha, na lista abaixo, o bio site que vai usar o domínio.</li>
           <li>Digite o domínio que você já possui (ex: <span className="font-mono text-ink">meunegocio.com.br</span>) e clique em <strong className="text-ink">&quot;Conectar domínio&quot;</strong>.</li>
-          <li>Vá até o painel do seu provedor de domínio (Registro.br, GoDaddy, Hostinger, etc.) e crie um registro <strong className="text-ink">CNAME</strong> apontando esse domínio para <span className="font-mono text-ink">cname.vercel-dns.com</span> — a tela abaixo mostra o registro exato a criar assim que você conectar.</li>
-          <li>Pode levar de alguns minutos a algumas horas pra propagar.</li>
+          <li>
+            Vá até o painel do seu provedor de domínio (Registro.br, GoDaddy, Hostinger, Namecheap, etc.) e crie o registro que a tela abaixo indicar assim que você conectar:
+            <ul className="mt-1 list-disc space-y-1 pl-5">
+              <li>Subdomínio (ex: <span className="font-mono text-ink">www.seunegocio.com</span> ou <span className="font-mono text-ink">links.seunegocio.com</span>): registro <strong className="text-ink">CNAME</strong> para <span className="font-mono text-ink">cname.vercel-dns.com</span>.</li>
+              <li>Domínio raiz, sem nada na frente (ex: <span className="font-mono text-ink">seunegocio.com</span> ou <span className="font-mono text-ink">seunegocio.co.uk</span>): registro <strong className="text-ink">A</strong> para <span className="font-mono text-ink">76.76.21.21</span> — a maioria dos provedores não aceita CNAME no domínio raiz.</li>
+            </ul>
+            Sempre siga o que a tabela abaixo mostrar: ela vem direto da Vercel com o registro exato do seu caso.
+          </li>
+          <li>Funciona com qualquer extensão (.com, .com.br, .co.uk, .io, etc.). Pode levar de alguns minutos a algumas horas pra propagar.</li>
           <li>Volte aqui e clique em <strong className="text-ink">&quot;Verificar&quot;</strong> — quando aparecer <span className="text-emerald-600 font-black">&quot;Conectado e servindo o bio site&quot;</span>, está pronto.</li>
           <li>Repita pra cada bio site/domínio diferente que quiser conectar.</li>
         </ol>
@@ -220,7 +227,7 @@ export default function DominioPage() {
                 {status.status !== "verified" ? (
                   <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
                     <p className="font-black">Configure o DNS no seu provedor de domínio</p>
-                    <p className="mt-1 font-medium">Crie um registro CNAME (ou o tipo indicado abaixo) apontando <strong>{status.domain}</strong> para <strong>cname.vercel-dns.com</strong>. Pode levar até algumas horas pra propagar.</p>
+                    <p className="mt-1 font-medium">Crie no seu provedor o registro indicado abaixo apontando <strong>{status.domain}</strong>. Subdomínio (www., links.): <strong>CNAME</strong> para <strong>cname.vercel-dns.com</strong>. Domínio raiz: <strong>A</strong> para <strong>76.76.21.21</strong>. Pode levar até algumas horas pra propagar.</p>
                     {status.verification?.length ? (
                       <div className="mt-3 overflow-x-auto rounded-xl border border-amber-200 bg-white">
                         <table className="w-full text-left text-xs">
