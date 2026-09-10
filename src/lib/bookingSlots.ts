@@ -11,16 +11,18 @@ export function generateSlotsForDay(
   durationMinutes: number,
   slotIntervalMinutes = 30,
   takenTimes: string[] = [],
-  // Horários fixos do serviço (academia de luta/dança etc). Se não vazio,
-  // esses são os únicos horários — ignora duração e intervalo. Os dias em
-  // que valem continuam vindo do horário de funcionamento (dia fechado =
-  // sem horários).
+  // Horários fixos JÁ RESOLVIDOS pro dia da semana pedido (academia de
+  // luta/dança etc). Use resolveFixedTimes(service, weekday) pra montar.
+  //   undefined  -> serviço não usa horário fixo: gera pelo intervalo.
+  //   []         -> usa horário fixo, mas esse dia não tem nenhum: 0 slots.
+  //   ["HH:MM"]  -> esses são os únicos horários (ignora duração/intervalo).
+  // Dia fechado no horário de funcionamento nunca agenda, de qualquer forma.
   fixedTimes?: string[]
 ): string[] {
   const day = businessHours?.days.find((d) => d.weekday === weekday);
   if (!businessHours?.enabled || !day || day.closed) return [];
 
-  if (fixedTimes?.length) {
+  if (fixedTimes) {
     const taken = new Set(takenTimes);
     return [...new Set(fixedTimes)]
       .filter((t) => /^\d{2}:\d{2}$/.test(t) && !taken.has(t))
@@ -45,4 +47,17 @@ export function generateSlotsForDay(
     if (!taken.has(label)) slots.push(label);
   }
   return slots;
+}
+
+// Resolve os horários fixos que valem pra um dia da semana específico.
+// Prioridade: override por dia (fixedTimesByWeekday[weekday], mesmo que
+// seja lista vazia = "sem horário nesse dia") -> lista padrão (fixedTimes)
+// -> undefined (serviço não usa horário fixo).
+export function resolveFixedTimes(
+  service: { fixedTimes?: string[]; fixedTimesByWeekday?: Record<number, string[]> },
+  weekday: number
+): string[] | undefined {
+  const perDay = service.fixedTimesByWeekday?.[weekday];
+  if (perDay !== undefined) return perDay;
+  return service.fixedTimes;
 }

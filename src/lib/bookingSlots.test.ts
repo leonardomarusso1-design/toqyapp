@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateSlotsForDay } from "./bookingSlots";
+import { generateSlotsForDay, resolveFixedTimes } from "./bookingSlots";
 import type { BusinessHours } from "./types";
 
 const hours: BusinessHours = {
@@ -30,5 +30,26 @@ describe("generateSlotsForDay", () => {
 
   it("dia fechado não tem horário nem com horários fixos", () => {
     expect(generateSlotsForDay(hours, 0, 60, 30, [], ["18:30"])).toEqual([]);
+  });
+
+  it("lista fixa vazia = usa horário fixo mas 0 slots nesse dia", () => {
+    expect(generateSlotsForDay(hours, 1, 60, 30, [], [])).toEqual([]);
+  });
+});
+
+describe("resolveFixedTimes", () => {
+  const svc = { fixedTimes: ["19:30"], fixedTimesByWeekday: { 5: [], 1: ["18:30", "19:30"] } };
+
+  it("dia sem override usa a lista padrão", () => {
+    expect(resolveFixedTimes(svc, 3)).toEqual(["19:30"]);
+  });
+  it("dia com override usa a lista do dia", () => {
+    expect(resolveFixedTimes(svc, 1)).toEqual(["18:30", "19:30"]);
+  });
+  it("override com lista vazia (sexta sem aula) devolve []", () => {
+    expect(resolveFixedTimes(svc, 5)).toEqual([]);
+  });
+  it("serviço sem horário fixo devolve undefined", () => {
+    expect(resolveFixedTimes({}, 2)).toBeUndefined();
   });
 });

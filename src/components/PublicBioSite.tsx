@@ -33,7 +33,7 @@ import { buttonHref, catalogItemWhatsappUrl, createVCard, googleMapsExternalUrl,
 import { resolveBodyBlockOrder } from "@/lib/bodyBlocks";
 import { ensureUrl, normalizeInstagram } from "@/lib/security";
 import { getPlan, resolvePlanTier } from "@/lib/subscriptions";
-import { generateSlotsForDay } from "@/lib/bookingSlots";
+import { generateSlotsForDay, resolveFixedTimes } from "@/lib/bookingSlots";
 import { colorSwatch, resolveColorStyle } from "@/lib/colorRoles";
 import { analytics, eventTypeForButtonType } from "@/lib/analytics";
 import { StickerIcon } from "./StickerIcon";
@@ -2027,7 +2027,7 @@ function BookingModal({ site, onClose, isPreview }: { site: ToqySite; onClose: (
     if (isPreview) {
       const [year, month, day] = date.split("-").map(Number);
       const weekday = new Date(year, month - 1, day).getDay();
-      setSlots(dropPastSlots(generateSlotsForDay(site.businessHours, weekday, service.durationMinutes, site.bookingSlotMinutes ?? 30, [], service.fixedTimes)));
+      setSlots(dropPastSlots(generateSlotsForDay(site.businessHours, weekday, service.durationMinutes, site.bookingSlotMinutes ?? 30, [], resolveFixedTimes(service, weekday))));
       return;
     }
 

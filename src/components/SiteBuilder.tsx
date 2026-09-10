@@ -1829,6 +1829,42 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                   />
                   <span className="mt-1 block text-xs text-muted">Pra academia de luta/dança e afins: só esses horários ficam disponíveis pra agendar. Deixe vazio pra usar o intervalo automático abaixo.</span>
                 </label>
+
+                {/* Override por dia da semana (2026-09-10, mesmo cliente:
+                    "todo dia tem 19:30, menos sexta"). Dia marcado usa a
+                    lista dele; campo vazio = sem horário nesse dia. */}
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-xs font-black text-ink">Horários diferentes por dia da semana</summary>
+                  <div className="mt-2 space-y-1.5">
+                    {WEEKDAY_EDIT_ORDER.map((wd) => {
+                      const override = svc.fixedTimesByWeekday?.[wd];
+                      const custom = override !== undefined;
+                      const setWd = (value: string[] | undefined) => update((s) => ({ ...s, services: (s.services ?? []).map((it, i) => {
+                        if (i !== index) return it;
+                        const map: Record<number, string[]> = { ...(it.fixedTimesByWeekday ?? {}) };
+                        if (value === undefined) delete map[wd]; else map[wd] = value;
+                        return { ...it, fixedTimesByWeekday: Object.keys(map).length ? map : undefined };
+                      }) }));
+                      return (
+                        <div key={wd} className="flex flex-wrap items-center gap-2">
+                          <label className="flex w-32 shrink-0 items-center gap-1.5 text-xs font-bold text-ink">
+                            <input type="checkbox" checked={custom} onChange={(e) => setWd(e.target.checked ? (override ?? []) : undefined)} />
+                            {WEEKDAY_LABELS[wd]}
+                          </label>
+                          {custom ? (
+                            <input
+                              key={`${svc.id}-${wd}`}
+                              className={`${field} flex-1`}
+                              defaultValue={(override ?? []).join(", ")}
+                              placeholder="vazio = sem horário nesse dia"
+                              onBlur={(e) => setWd([...new Set((e.target.value.match(/\d{1,2}:\d{2}/g) ?? []).map((t) => t.padStart(5, "0")))].sort())}
+                            />
+                          ) : <span className="text-xs text-muted">usa o padrão de cima</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </details>
               </article>
             ))}
           </div>

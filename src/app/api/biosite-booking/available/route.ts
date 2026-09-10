@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { getSupabaseAdmin, hasSupabaseEnv } from "@/lib/supabaseServer";
-import { generateSlotsForDay } from "@/lib/bookingSlots";
+import { generateSlotsForDay, resolveFixedTimes } from "@/lib/bookingSlots";
 import type { ToqySite } from "@/lib/types";
 
 // Horários disponíveis pra um dia (2026-09-07, referência Coonexta —
@@ -51,6 +51,6 @@ export async function GET(request: NextRequest) {
     .eq("status", "confirmed");
   const taken = (existing ?? []).map((r) => String(r.booking_time).slice(0, 5));
 
-  const slots = generateSlotsForDay(siteData.businessHours, weekday, service.durationMinutes, siteData.bookingSlotMinutes ?? 30, taken, service.fixedTimes);
+  const slots = generateSlotsForDay(siteData.businessHours, weekday, service.durationMinutes, siteData.bookingSlotMinutes ?? 30, taken, resolveFixedTimes(service, weekday));
   return Response.json({ slots });
 }

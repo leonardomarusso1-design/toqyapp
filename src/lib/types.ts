@@ -199,6 +199,12 @@ export type BookingService = {
   // `bookingSlotMinutes` são ignorados. Vazio/ausente = comportamento de
   // sempre (slots gerados pelo intervalo dentro do horário de funcionamento).
   fixedTimes?: string[];
+  // Override de horário fixo POR DIA DA SEMANA (2026-09-10, mesmo cliente:
+  // "todo dia tem 19:30, menos sexta"). Chave = weekday 0-6 (Date.getDay()).
+  // Um dia presente aqui usa esta lista no lugar de `fixedTimes`; lista
+  // vazia = esse dia não tem nenhum horário. Dia ausente = usa `fixedTimes`.
+  // Ver resolveFixedTimes() em bookingSlots.ts.
+  fixedTimesByWeekday?: Record<number, string[]>;
 };
 
 export type CatalogItem = {

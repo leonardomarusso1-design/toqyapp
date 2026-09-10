@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getSupabaseAdmin, hasSupabaseEnv } from "@/lib/supabaseServer";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
-import { generateSlotsForDay } from "@/lib/bookingSlots";
+import { generateSlotsForDay, resolveFixedTimes } from "@/lib/bookingSlots";
 import { escapeHtml } from "@/lib/htmlEscape";
 import type { BookingService, ToqySite } from "@/lib/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     .eq("status", "confirmed");
   const taken = (existing ?? []).map((r) => String(r.booking_time).slice(0, 5));
 
-  const validSlots = generateSlotsForDay(siteData.businessHours, weekday, service.durationMinutes, siteData.bookingSlotMinutes ?? 30, taken, service.fixedTimes);
+  const validSlots = generateSlotsForDay(siteData.businessHours, weekday, service.durationMinutes, siteData.bookingSlotMinutes ?? 30, taken, resolveFixedTimes(service, weekday));
   if (!validSlots.includes(body.time)) {
     return Response.json({ error: "Este horário não está mais disponível. Escolha outro." }, { status: 409 });
   }
