@@ -266,14 +266,51 @@ GOOGLE_PLACES_API_KEY=
 
 ---
 
-## 11. Decisões que ainda faltam (respostas antes da Fase 1)
+## 11. Decisões fechadas (2026-09-10, respostas do Leonardo)
 
-1. **Nome do lote / código**: formato `LOTE-000010` (spec) ou outro? Sequencial global ou por revendedor?
-2. **Item no menu `/app`**: "Placas & avaliações" sempre visível pra todo mundo (é entrada de venda) ou só pra quem já comprou?
-3. **Preços dos lotes**: os do print (1x R$99 / 3x R$237 / 5x R$370 / 10x R$690 / 20x R$1180) são os definitivos pro MVP? E os lotes de revenda maiores (100/1000)?
-4. **Produto físico no catálogo**: começar com quantos formatos? (print mostra 1: "AvaliaCard" cartão único). Sugiro começar com 1-2 e o admin cadastra o resto.
-5. **Arte**: no MVP a arte é sempre padrão + logo do cliente, ou já entra editor visual? (Sugiro: padrão + upload de logo + prévia simples. Editor visual = fase depois.)
-6. **NFC**: você grava o chip na produção com o link `/r/token`? (Confirmar que o fluxo físico bate com o dinâmico.)
+1. **Código de lote**: `LOTE-` + 8 chars base32 aleatórios (ex `LOTE-7K2M9QX4`).
+   **Não** sequencial global (na escala de 1M não dá pra coordenar/travar, e
+   sequencial deixa adivinhar o próximo). `internal_serial` da unidade =
+   sequencial DENTRO do lote (`0001`, `0002`...) só pro numerinho impresso no
+   canto da peça (mesmo padrão do `toqy_qr_codes.seq_number` que já existe).
+   `public_token` = 16 bytes aleatórios base32, sempre.
+2. **Menu**: "Placas & avaliações" **sempre visível** pra todo mundo no `/app`.
+3. **Preços**: definidos DEPOIS pelo Leonardo, editáveis no admin
+   (`toqy_plate_product_types.unit_price`). Nada hardcoded. Wizard lê do catálogo.
+4. **Catálogo inicial — 3 produtos**, todos só pra avaliação Google, arte padrão,
+   sem logo/nome de empresa:
+   - `business_card` — Cartão de visita
+   - `square_10` — Plaquinha quadrada 10x10 (adesiva)
+   - `l_stand_10x15` — Plaquinha 10x15 em L
+   Todos `technology = qr_nfc`.
+5. **Arte**: SEMPRE padrão. Cliente **só escolhe o formato**, não escolhe arte,
+   não envia logo. → **Corta do MVP**: tabela `toqy_plate_artworks`, etapa de
+   arte no wizard, aprovação de arte no admin. A arte física é feita pelo
+   Leonardo fora do sistema.
+6. **Fulfillment** (define o comportamento de ativação):
+   - **Individual (pra ele mesmo)**: a placa já sai **configurada**. No pedido a
+     gente já tem o negócio (busca Google) → cria a unidade + `public_token` +
+     grava a `destination` = URL de avaliação do Google → unidade nasce
+     `activated`. Sem etapa de ativação separada. Leonardo grava o NFC na
+     produção com `toqy.com.br/r/{token}`, QR impresso com o mesmo link.
+   - **Revenda (lote)**: QR e chip **vazios**. Unidades nascem
+     `available_for_activation`, com `public_token` + `activation_code`, **sem
+     destino**. O revendedor ativa cada uma pelo `/app/placas/ativar` (cola
+     código → escolhe/cadastra negócio → confirma link Google). O chip físico
+     vai em branco — Leonardo manda um cartãozinho com os **códigos de
+     ativação** + tutorial de como gravar o NFC com o app "NFC Tools". O link
+     `toqy.com.br/r/{token}` de cada unidade o revendedor pega no próprio
+     painel (`Meus lotes` → baixar relação, ou depois de ativar aparece na tela
+     "grave este link no chip") — não vai em papel solto.
+
+### Impacto das decisões no escopo (o que sai)
+
+- **Sai**: `toqy_plate_artworks`, etapa de arte, aprovação de arte no admin,
+  cálculo de frete, telas de upsell do AvaliaCard ("quantas avaliações quer",
+  "projeção de crescimento" — fluff de marketing, não pedido).
+- **Wizard individual fica enxuto**: buscar negócio Google → confirmar → escolher
+  formato → contato → endereço → resumo → pagar → pronto (já configurado).
+- Sistema de ativação só é exercido no fluxo de **revenda**.
 
 ---
 
@@ -315,6 +352,54 @@ Cada fase = `tsc` + `lint` (mesmo baseline) + `test` + `build` limpos, commit di
 
 ---
 
-## 15. Próximo passo
+## 15. Fase 1 — Fundação (detalhe, sem dependência externa)
 
-Leonardo responde as 6 pendências do §11 → eu monto o PLAN.md da Fase 1 (arquivos exatos, ordem, migrations) e começo pela fundação (que não depende de appmax nem Google).
+Ordem de implementação. Cada passo = commit próprio, `tsc`/`lint`/`test`/`build` limpos.
+
+### 1.1 — Migration `supabase/migrations/2026-09-XX_plate_module_foundation.sql`
+Cria (schema do §3, menos `toqy_plate_artworks`):
+`toqy_plate_product_types`, `toqy_plate_orders`, `toqy_plate_order_items`,
+`toqy_plate_batches`, `toqy_plate_units`, `toqy_plate_businesses`,
+`toqy_plate_destinations`, `toqy_plate_activations`, `toqy_plate_scan_events`,
+`toqy_plate_funnel_events`, `toqy_plate_audit_log`.
+- Todas com RLS ligado + GRANT explícito (`anon`/`authenticated`/`service_role`
+  conforme o caso — este projeto não tem grant automático).
+- Política por dono (`owner_profile_id = auth.uid()`) onde aplica.
+- `toqy_plate_product_types`: leitura pública só `active = true`.
+- Função `generate_plate_batch(p_order_id uuid, p_quantity int)` transacional,
+  `gen_random_bytes` + loop anti-colisão, idempotente por `order_id`.
+- Trigger de auditoria em `toqy_plate_orders`/`toqy_plate_units` (status change → `toqy_plate_audit_log`).
+- Seed dos 3 produtos (§11.4) com `unit_price = 0` (Leonardo ajusta no admin depois).
+
+### 1.2 — Tipos + state machine
+- `src/lib/plate/types.ts` — todos os tipos TS das entidades.
+- `src/lib/plate/stateMachine.ts` — `PLATE_UNIT_TRANSITIONS`, `PLATE_ORDER_TRANSITIONS`,
+  `ACTIVATION_CODE_TRANSITIONS` (objetos `{from: [to]}`) + `canTransition(kind, from, to)`.
+- `src/lib/plate/tokens.ts` — `newPublicToken()` (16 bytes → base32 sem 0/O/1/l),
+  `newActivationCode()` (8 chars legível), `hashActivationCode()` / `verifyActivationCode()`.
+- `src/lib/plate/stateMachine.test.ts` — cobre a tabela de transições inteira + tokens.
+
+### 1.3 — Navegação
+- `DashboardShell.tsx` — novo item "Placas & avaliações" → `/app/placas` (sempre visível).
+- `src/app/app/placas/page.tsx` — shell vazio ("em breve" / visão geral zerada).
+
+### 1.4 — Landing pública
+- `src/app/placas/page.tsx` — landing própria. Hero "Aproximou. Clicou. Avaliou.",
+  2 CTAs: `/placas/comprar` e `/placas/revenda` (rotas ainda 404/placeholder nesta fase).
+  Identidade visual própria mas usando os tokens de tema do Toqy (não quebra a marca).
+- `src/app/page.tsx` (home do Toqy) — 1 seção nova com CTA → `/placas`.
+- `src/app/app/qr/page.tsx` — 1 banner no topo: "Quer o fornecedor de placas prontas? Clique aqui" → `/placas`.
+- `src/app/api/plate/funnel/route.ts` — registra `landing_view` etc. em `toqy_plate_funnel_events`.
+
+### 1.5 — Catálogo (leitura)
+- `src/lib/plate/catalog.ts` — `getPlateProducts()` (rota pública, cache curto).
+- `src/app/api/plate/products/route.ts` — GET lista de produtos ativos.
+
+**Entregável da Fase 1**: navegação separada existe, landing no ar, catálogo com 3
+produtos, todo o schema + state machine + tokens testados. Nada de pagamento, nada
+de Google ainda. Biosites intactos.
+
+## 16. Próximo passo
+
+Leonardo aprova a Fase 1 (§15) → começo pela migration `1.1`. Schema é decisão de
+estrutura de dados — **não avanço sem o ok explícito**.
