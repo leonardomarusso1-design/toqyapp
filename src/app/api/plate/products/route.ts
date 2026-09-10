@@ -15,6 +15,7 @@ type Row = {
   technology: PlateProductType["technology"];
   unit_price: number | string;
   active: boolean;
+  coming_soon: boolean;
   stock_quantity: number | null;
   images: unknown;
 };
@@ -25,8 +26,9 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("toqy_plate_product_types")
-    .select("id, name, slug, description, format, technology, unit_price, active, stock_quantity, images")
+    .select("id, name, slug, description, format, technology, unit_price, active, coming_soon, stock_quantity, images")
     .eq("active", true)
+    .order("coming_soon", { ascending: true })
     .order("name", { ascending: true });
 
   if (error) {
@@ -43,6 +45,7 @@ export async function GET() {
     technology: r.technology,
     unitPrice: Number(r.unit_price) || 0,
     active: r.active,
+    comingSoon: Boolean(r.coming_soon),
     stockQuantity: r.stock_quantity,
     images: Array.isArray(r.images) ? (r.images as string[]) : [],
   }));

@@ -13,12 +13,13 @@ export default function RevendaPlacaPage() {
       <PlateFunnelPing event="click_reseller" />
       <LandingHeader />
       <section className="mx-auto max-w-lg px-5 py-24 text-center">
-        <h1 className="text-2xl font-black md:text-3xl">Compra em lote pra revender — em breve</h1>
+        <p className="text-xs font-black uppercase tracking-wider text-accent-dim">Pré-venda de lançamento</p>
+        <h1 className="mt-2 text-2xl font-black md:text-3xl">Compra em lote pra revender — abrindo em breve</h1>
         <p className="mt-3 text-muted">
-          O painel de revenda de placas está sendo montado. Chame no WhatsApp pra reservar seu lote.
+          O painel de revenda de placas está sendo montado. Entre no grupo de lançamento no WhatsApp pra reservar seu lote com preço de lançamento.
         </p>
         <Link href="/placas" className="mt-6 inline-flex rounded-full border border-border bg-white px-6 py-3 text-sm font-black text-ink transition hover:border-accent">
-          Voltar
+          Ver o grupo de lançamento
         </Link>
       </section>
     </main>

@@ -13,12 +13,13 @@ export default function ComprarPlacaPage() {
       <PlateFunnelPing event="click_individual" />
       <LandingHeader />
       <section className="mx-auto max-w-lg px-5 py-24 text-center">
-        <h1 className="text-2xl font-black md:text-3xl">Compra pro seu negócio — em breve</h1>
+        <p className="text-xs font-black uppercase tracking-wider text-accent-dim">Pré-venda de lançamento</p>
+        <h1 className="mt-2 text-2xl font-black md:text-3xl">Compra pro seu negócio — abrindo em breve</h1>
         <p className="mt-3 text-muted">
-          Estamos finalizando o fluxo de compra. Enquanto isso, chame no WhatsApp que a gente resolve seu pedido.
+          O fluxo de compra está sendo finalizado. Entre no grupo de lançamento no WhatsApp pra garantir sua placa com preço de lançamento e ser avisado assim que abrir.
         </p>
         <Link href="/placas" className="mt-6 inline-flex rounded-full border border-border bg-white px-6 py-3 text-sm font-black text-ink transition hover:border-accent">
-          Voltar
+          Ver o grupo de lançamento
         </Link>
       </section>
     </main>

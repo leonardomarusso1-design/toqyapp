@@ -13,6 +13,7 @@ export type PlateProductType = {
   technology: PlateTechnology;
   unitPrice: number;
   active: boolean;
+  comingSoon: boolean;   // aparece no catálogo mas não é pedível ainda
   stockQuantity: number | null;
   images: string[];
 };
