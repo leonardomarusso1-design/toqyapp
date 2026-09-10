@@ -1,6 +1,7 @@
 # Plano técnico — Módulo "Placas & Avaliações" (produto lateral do Toqy)
 
-> Status: **plano, aguardando aprovação do Leonardo antes de qualquer código.**
+> Status: **Fase 1 (Fundação) ENTREGUE** (2026-09-10). Fases 2-6 aguardam appmax +
+> Google Places do Leonardo (Fase 2) — Fases 3, 4, 5, 6 não têm dep. externa.
 > Criado: 2026-09-10. Baseado no prompt/spec do Leonardo + 17 prints de referência
 > do AvaliaCard + inspeção do repo toqyapp.
 
@@ -320,7 +321,7 @@ Vira uma milestone própria no `.planning/ROADMAP.md` (ex: Phase 13 — Módulo 
 
 | Fase | Entrega | Dep. externa |
 |---|---|---|
-| **1 — Fundação** | migrations (todas as tabelas), state machine + testes, `toqy_plate_product_types` + seed, nav lateral `/app/placas` (vazio), landing `/placas` | Nenhuma — **pode começar já** |
+| **1 — Fundação** ✅ | migration (11 tabelas + `generate_plate_batch` + seed), `stateMachine.ts`/`tokens.ts` + 13 testes, nav `/app/placas`, landing `/placas` + `/placas/comprar`+`/placas/revenda` (placeholder), banner `/app/qr`, faixa na home, `/api/plate/products` + `/api/plate/funnel`. Commits c0fa924, 98392dc, e4e69d0. | Nenhuma — **feito 2026-09-10** |
 | **2 — Compra individual** | wizard `/placas/comprar`, `GoogleBusinessProvider` (real + fallback), seleção de produto, arte (upload+prévia), endereço, `PaymentProvider` (mock + appmax), pedido no admin | appmax + Google (mock cobre dev) |
 | **3 — QR dinâmico** | `public_token`, rota `/r/[token]`, redirect, tela de ativação, `scan_events` | Nenhuma |
 | **4 — Revenda** | lotes, `generate_plate_batch` transacional, dashboard `/app/placas`, ativação, empresas atendidas, export PDF de códigos + manual | Nenhuma |
