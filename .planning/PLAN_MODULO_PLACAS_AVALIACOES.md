@@ -1,7 +1,8 @@
 # Plano técnico — Módulo "Placas & Avaliações" (produto lateral do Toqy)
 
-> Status: **Fase 1 (Fundação) ENTREGUE** (2026-09-10). Fases 2-6 aguardam appmax +
-> Google Places do Leonardo (Fase 2) — Fases 3, 4, 5, 6 não têm dep. externa.
+> Status: **Fases 1 e 3 ENTREGUES** (2026-09-10). Fase 2 (compra individual) aguarda
+> appmax + Google Places do Leonardo. Fases 4 (revenda) e 5 (admin) sem dep. externa,
+> próximas na fila.
 > Criado: 2026-09-10. Baseado no prompt/spec do Leonardo + 17 prints de referência
 > do AvaliaCard + inspeção do repo toqyapp.
 
@@ -323,8 +324,8 @@ Vira uma milestone própria no `.planning/ROADMAP.md` (ex: Phase 13 — Módulo 
 |---|---|---|
 | **1 — Fundação** ✅ | migration (11 tabelas + `generate_plate_batch` + seed), `stateMachine.ts`/`tokens.ts` + 13 testes, nav `/app/placas`, landing `/placas` + `/placas/comprar`+`/placas/revenda` (placeholder), banner `/app/qr`, faixa na home, `/api/plate/products` + `/api/plate/funnel`. Commits c0fa924, 98392dc, e4e69d0. | Nenhuma — **feito 2026-09-10** |
 | **2 — Compra individual** | wizard `/placas/comprar`, `GoogleBusinessProvider` (real + fallback), seleção de produto, arte (upload+prévia), endereço, `PaymentProvider` (mock + appmax), pedido no admin | appmax + Google (mock cobre dev) |
-| **3 — QR dinâmico** | `public_token`, rota `/r/[token]`, redirect, tela de ativação, `scan_events` | Nenhuma |
-| **4 — Revenda** | lotes, `generate_plate_batch` transacional, dashboard `/app/placas`, ativação, empresas atendidas, export PDF de códigos + manual | Nenhuma |
+| **3 — QR dinâmico** ✅ | rota `/r/[token]` (force-dynamic), redirect 307 pro Google, tela de ativação, `scan_events`, `isSafePlateDestination` (só https + host Google/Toqy, anti open-redirect). Commit 49b15d9. | Nenhuma — **feito 2026-09-10** |
+| **4 — Revenda** | dashboard `/app/placas` de verdade, fluxo de ativação `/app/placas/ativar` (cola código → nº negócio → confirma Google), empresas atendidas, export PDF de códigos + manual. `generate_plate_batch` já existe (Fase 1). | Nenhuma — **próxima** |
 | **5 — Operação** | aprovação de arte, estados de produção, rastreio, notificação por e-mail (Resend), relatórios admin | Nenhuma |
 | **6 — Segurança & qualidade** | 19 testes da spec §17, rate limit fino, auditoria completa, revisão de permissões, verificação manual do fluxo E2E | Nenhuma |
 
