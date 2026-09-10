@@ -238,6 +238,14 @@ export default function QRPage() {
         </div>
       </div>
 
+      {/* Ponte pro módulo de Placas (2026-09-10, decisão do Leonardo: a
+          ÚNICA chamada do produto de placas dentro do painel de bio sites
+          fica aqui, na área de QR/NFC individual). */}
+      <Link href="/placas" className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-accent/30 bg-accent/5 px-4 py-3 text-sm transition hover:bg-accent/10">
+        <span className="font-black text-ink">Quer o fornecedor das placas prontas? Cartão, adesivo e placa em L com QR + NFC.</span>
+        <span className="shrink-0 font-black text-accent-dim">Ver placas →</span>
+      </Link>
+
       <div className="mt-6 flex flex-wrap gap-2">
         {([
           { key: "biosite" as Mode, label: "Bio site" },
