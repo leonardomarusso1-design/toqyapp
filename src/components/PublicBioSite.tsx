@@ -2027,7 +2027,7 @@ function BookingModal({ site, onClose, isPreview }: { site: ToqySite; onClose: (
     if (isPreview) {
       const [year, month, day] = date.split("-").map(Number);
       const weekday = new Date(year, month - 1, day).getDay();
-      setSlots(dropPastSlots(generateSlotsForDay(site.businessHours, weekday, service.durationMinutes, site.bookingSlotMinutes ?? 30, [])));
+      setSlots(dropPastSlots(generateSlotsForDay(site.businessHours, weekday, service.durationMinutes, site.bookingSlotMinutes ?? 30, [], service.fixedTimes)));
       return;
     }
 

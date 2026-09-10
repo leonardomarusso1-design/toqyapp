@@ -51,6 +51,6 @@ export async function GET(request: NextRequest) {
     .eq("status", "confirmed");
   const taken = (existing ?? []).map((r) => String(r.booking_time).slice(0, 5));
 
-  const slots = generateSlotsForDay(siteData.businessHours, weekday, service.durationMinutes, siteData.bookingSlotMinutes ?? 30, taken);
+  const slots = generateSlotsForDay(siteData.businessHours, weekday, service.durationMinutes, siteData.bookingSlotMinutes ?? 30, taken, service.fixedTimes);
   return Response.json({ slots });
 }

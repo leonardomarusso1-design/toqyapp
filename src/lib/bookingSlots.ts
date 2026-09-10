@@ -10,10 +10,22 @@ export function generateSlotsForDay(
   weekday: number,
   durationMinutes: number,
   slotIntervalMinutes = 30,
-  takenTimes: string[] = []
+  takenTimes: string[] = [],
+  // Horários fixos do serviço (academia de luta/dança etc). Se não vazio,
+  // esses são os únicos horários — ignora duração e intervalo. Os dias em
+  // que valem continuam vindo do horário de funcionamento (dia fechado =
+  // sem horários).
+  fixedTimes?: string[]
 ): string[] {
   const day = businessHours?.days.find((d) => d.weekday === weekday);
   if (!businessHours?.enabled || !day || day.closed) return [];
+
+  if (fixedTimes?.length) {
+    const taken = new Set(takenTimes);
+    return [...new Set(fixedTimes)]
+      .filter((t) => /^\d{2}:\d{2}$/.test(t) && !taken.has(t))
+      .sort();
+  }
 
   const [openH, openM] = day.open.split(":").map(Number);
   const [closeH, closeM] = day.close.split(":").map(Number);

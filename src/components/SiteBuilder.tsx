@@ -1814,13 +1814,28 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
                     </div>
                   </label>
                 </div>
+                <label className="mt-3 block">
+                  <span className={label}>Horários fixos (opcional)</span>
+                  <input
+                    className={field}
+                    placeholder="Ex: 08:30, 16:00, 18:30, 19:30"
+                    defaultValue={(svc.fixedTimes ?? []).join(", ")}
+                    onBlur={(e) => {
+                      const times = [...new Set(
+                        (e.target.value.match(/\d{1,2}:\d{2}/g) ?? []).map((t) => t.padStart(5, "0")),
+                      )].sort();
+                      update((s) => ({ ...s, services: (s.services ?? []).map((it, i) => i === index ? { ...it, fixedTimes: times.length ? times : undefined } : it) }));
+                    }}
+                  />
+                  <span className="mt-1 block text-xs text-muted">Pra academia de luta/dança e afins: só esses horários ficam disponíveis pra agendar. Deixe vazio pra usar o intervalo automático abaixo.</span>
+                </label>
               </article>
             ))}
           </div>
 
           <div className="mt-6 rounded-3xl border border-border bg-surface p-4">
             <span className={label}>Intervalo entre horários (minutos)</span>
-            <p className="mb-2 mt-1 text-xs text-muted">Define de quanto em quanto tempo um novo horário fica disponível pro cliente escolher (ex: a cada 30 min).</p>
+            <p className="mb-2 mt-1 text-xs text-muted">Define de quanto em quanto tempo um novo horário fica disponível pro cliente escolher (ex: a cada 30 min). Vale só pros serviços SEM &quot;horários fixos&quot; configurados.</p>
             <select className={field} value={site.bookingSlotMinutes ?? 30} onChange={(e) => update((s) => ({ ...s, bookingSlotMinutes: Number(e.target.value) }))}>
               <option value={15}>15 minutos</option>
               <option value={30}>30 minutos</option>

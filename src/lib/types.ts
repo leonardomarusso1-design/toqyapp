@@ -192,6 +192,13 @@ export type BookingService = {
   durationMinutes: number;
   price?: number; // opcional — alguns serviços não têm preço fixo
   enabled: boolean;
+  // Horários fixos de aula/turma (2026-09-10, pedido de cliente: academia
+  // de luta/dança tem horário fixo — ex: 08:30, 16:00, 18:30, 19:30 — não
+  // um rolo contínuo a cada 30 min). Se preenchido (["HH:MM", ...]), esses
+  // são EXATAMENTE os horários agendáveis do serviço; `durationMinutes` e
+  // `bookingSlotMinutes` são ignorados. Vazio/ausente = comportamento de
+  // sempre (slots gerados pelo intervalo dentro do horário de funcionamento).
+  fixedTimes?: string[];
 };
 
 export type CatalogItem = {

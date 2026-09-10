@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     .eq("status", "confirmed");
   const taken = (existing ?? []).map((r) => String(r.booking_time).slice(0, 5));
 
-  const validSlots = generateSlotsForDay(siteData.businessHours, weekday, service.durationMinutes, siteData.bookingSlotMinutes ?? 30, taken);
+  const validSlots = generateSlotsForDay(siteData.businessHours, weekday, service.durationMinutes, siteData.bookingSlotMinutes ?? 30, taken, service.fixedTimes);
   if (!validSlots.includes(body.time)) {
     return Response.json({ error: "Este horário não está mais disponível. Escolha outro." }, { status: 409 });
   }
