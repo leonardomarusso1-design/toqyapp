@@ -206,7 +206,11 @@ si, só dependem de 1), 9 por último.
 | 10. Domínio próprio | 1/1 (código) | Código completo, aguardando setup manual | 2026-09-05 |
 | 11. Segmentação de público | 1/1 (código) | Código completo, aguardando 2 produtos Kiwify | 2026-09-05 |
 | 12. Parity de app (Linktree) | 0/TBD | Mapeado, não iniciado — itens grandes, priorizar quando quiser | 2026-09-06 |
-| 13. Módulo Placas & Avaliações | Fase 1/6 | Fundação entregue (schema, state machine, nav, landing). Fase 2 (compra individual) espera appmax + Google Places do Leonardo. Ver `.planning/PLAN_MODULO_PLACAS_AVALIACOES.md` | 2026-09-10 |
+
+<!-- O módulo de Placas & Avaliações foi TIRADO do Toqy em 2026-09-10 —
+     virou negócio próprio do Leonardo com um sócio, marca/Supabase/domínio
+     separados. O código migrou pra projects/orbita (codinome temporário). -->
+
 
 \* Fase 2: código 100% completo (backend + frontend). Resta 1 passo manual
 fora de código, por revendedor: Leonardo cadastra o afiliado na Kiwify e

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
-import { BarChart3, Crown, Globe, Handshake, Headset, Home, MoreHorizontal, Nfc, Plus, QrCode, Settings, Users } from "lucide-react";
+import { BarChart3, Crown, Globe, Handshake, Headset, Home, MoreHorizontal, Plus, QrCode, Settings, Users } from "lucide-react";
 import { LogoutButton } from "@/components/LogoutButton";
 import { SupportChatWidget } from "@/components/SupportChatWidget";
 import { supabase } from "@/lib/supabaseClient";
@@ -45,13 +45,6 @@ const NAV_GROUPS = [
     { href: "/app/analytics", icon: BarChart3, label: "Analytics" },
     { href: "/app/revenda", icon: Handshake, label: "Revenda" },
   ] },
-  // Produto lateral (2026-09-10) — placas físicas com QR/NFC pra avaliação
-  // Google. Módulo separado dos biosites (ver
-  // .planning/PLAN_MODULO_PLACAS_AVALIACOES.md); aqui é só a porta de
-  // entrada. Visível pra todo mundo (é entrada de venda).
-  { label: "Placas & avaliações", items: [
-    { href: "/app/placas", icon: Nfc, label: "Placas & avaliações" },
-  ] },
   { label: "Conta", items: [
     { href: "/app/configuracoes", icon: Settings, label: "Configurações" },
   ] },
@@ -81,7 +74,6 @@ const MOBILE_MORE_ITEMS = [navByHref("/onboarding"), navByHref("/app/dominio"), 
 function singleSiteNavItems(planTier: string) {
   return [
     { href: "/app", icon: Home, label: "Meu biosite" },
-    { href: "/app/placas", icon: Nfc, label: "Placas & avaliações" },
     { href: "/app/configuracoes", icon: Settings, label: "Meu perfil" },
     // /#planos era o fork "Pra mim / Pra vender" da home — pra quem já é
     // conta de 1 site só, isso jogava direto nas opções de revenda junto

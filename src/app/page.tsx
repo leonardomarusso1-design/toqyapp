@@ -442,22 +442,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Módulo lateral: Placas & avaliações (2026-09-10). Produto separado
-          — QR/NFC físico pra avaliação Google. Só uma faixa com CTA pra
-          landing própria (/placas), não mistura com as seções de bio site. */}
-      <section className="border-t border-border bg-ink px-5 py-16 text-white">
-        <div className="mx-auto flex max-w-4xl flex-col items-center gap-4 text-center md:flex-row md:text-left">
-          <div className="flex-1">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-accent">Também no Toqy</p>
-            <h2 className="mt-2 text-2xl font-black md:text-3xl">Placas de avaliação com QR Code e NFC</h2>
-            <p className="mt-2 text-sm text-white/70">A placa que leva o cliente direto pra avaliar seu negócio no Google. Pro seu negócio ou em lote pra revender.</p>
-          </div>
-          <Link href="/placas" className="inline-flex shrink-0 items-center gap-2 rounded-full bg-accent px-7 py-3.5 font-black text-white transition hover:bg-accent-dim">
-            Conhecer as placas <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </section>
-
       {/* CTA FINAL — reforça a escolha dos 2 caminhos (2026-09-05), em vez
           de um CTA genérico só pro público de revenda como era antes. */}
       <section className="bg-bg px-5 py-20 text-center border-t border-border">
