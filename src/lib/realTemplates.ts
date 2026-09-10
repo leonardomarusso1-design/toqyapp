@@ -230,8 +230,15 @@ export function cloneRealTemplate(source: ToqySite, overrides: { name: string })
       website: "",
     },
     links: { googleMapsUrl: "", googleReviewUrl: "", bookingUrl: "", menuUrl: "" },
-    pix: { ...source.pix, key: "", receiver: "", bank: "", whatsappProofNumber: "" },
-    wifi: { ...source.wifi, ssid: "", password: "" },
+    // enabled: false ao clonar (2026-09-10, bug real reportado ao vivo:
+    // free clonava template com pix.enabled=true, key vazia -> não
+    // conseguia adicionar chave (gate de plano) NEM desativar (toggle
+    // some quando !canUsePix) -> validateSite travava o save pra sempre
+    // ("adicione uma chave Pix ou desative essa função"), deadlock).
+    // Template clonado começa com Pix/Wi-Fi DESLIGADOS — a pessoa liga
+    // se tiver o plano.
+    pix: { ...source.pix, enabled: false, key: "", receiver: "", bank: "", whatsappProofNumber: "" },
+    wifi: { ...source.wifi, enabled: false, ssid: "", password: "" },
     plaqueTheme: source.plaqueTheme ? { ...source.plaqueTheme, useSameBackground: false, backgroundImageUrl: "" } : undefined,
     buttons: source.buttons.map((button) => ({
       ...button,

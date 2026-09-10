@@ -221,7 +221,7 @@ function EditPageInner({ params }: { params: Promise<{ slug: string }> }) {
     // vendo o padrão, que faz sentido pro caso dele.
     <ClientShell
       fullWidth
-      action={isOwner ? <Link href="/app" className="text-sm font-bold text-muted transition hover:text-accent">Voltar pro painel</Link> : undefined}
+      action={isOwner ? <Link href="/app?lista=1" className="text-sm font-bold text-muted transition hover:text-accent">Voltar pro painel</Link> : undefined}
     >
       <SiteBuilder mode="edit" initialSite={site} onSave={handleSave} accessLevel={isOwner ? "full" : (site.clientAccessLevel ?? "full")} isOwner={isOwner} ownerPlanTierOverride={ownerPlanTier} />
       {saving && (

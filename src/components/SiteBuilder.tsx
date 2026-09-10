@@ -1403,6 +1403,13 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
               {!canUsePix ? (
                 <div className="rounded-2xl border border-violet/20 bg-violet/10 p-4 text-sm font-bold text-violet">
                   Disponível a partir do plano Pro. <Link href="/para-mim#planos" className="underline">Ver planos</Link>
+                  {/* Escape hatch (2026-09-10): se por algum motivo o Pix
+                      chegou LIGADO sem a pessoa poder editar (template
+                      antigo, plano vencido), sempre dá pra desligar — se
+                      não, validateSite trava o save pra sempre. */}
+                  {site.pix.enabled ? (
+                    <button type="button" onClick={() => update((s) => ({ ...s, pix: { ...s.pix, enabled: false }, buttons: s.buttons.filter((b) => b.type !== "pix") }))} className="mt-2 block text-xs font-black text-violet underline">Desativar Pix</button>
+                  ) : null}
                 </div>
               ) : (site.pix.enabled ?? false) ? (
               <div className="grid gap-4">
@@ -1456,6 +1463,9 @@ export function SiteBuilder({ mode, initialSite, onSave, accessLevel = "full", i
               {!canUseWifi ? (
                 <div className="rounded-2xl border border-violet/20 bg-violet/10 p-4 text-sm font-bold text-violet">
                   Disponível a partir do plano Pro. <Link href="/para-mim#planos" className="underline">Ver planos</Link>
+                  {site.wifi.enabled ? (
+                    <button type="button" onClick={() => update((s) => ({ ...s, wifi: { ...s.wifi, enabled: false }, buttons: s.buttons.filter((b) => b.type !== "wifi") }))} className="mt-2 block text-xs font-black text-violet underline">Desativar Wi-Fi</button>
+                  ) : null}
                 </div>
               ) : (site.wifi.enabled ?? false) ? (
               <div className="grid gap-4">

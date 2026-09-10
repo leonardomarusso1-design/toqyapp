@@ -168,13 +168,22 @@ A chave atual para de funcionar na hora. Quem usa a antiga (voce ou o cliente) p
   const isSingleSitePlan = planLimit <= 1;
   const draftSites = biosites.filter((s) => s.status === "draft");
 
+  // ?lista=1 pula o auto-redirect pro editor (2026-09-10, bug real
+  // reportado ao vivo: free/pro tem plano de 1 site só, então /app
+  // redireciona direto pro editor — e o botão "Voltar pro painel" do
+  // editor caía de volta no editor num loop, sem deixar a pessoa chegar
+  // na LISTA pra excluir o bio site de teste. Com ?lista=1 mostra a
+  // lista normal, que tem o excluir). Lido de window (sem useSearchParams
+  // pra não precisar de Suspense boundary nesta página client).
+  const forceList = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("lista") === "1";
+
   useEffect(() => {
-    if (!loading && isSingleSitePlan && biosites.length >= 1) {
+    if (!loading && isSingleSitePlan && biosites.length >= 1 && !forceList) {
       router.replace(`/editar/${biosites[0].slug}`);
     }
-  }, [loading, isSingleSitePlan, biosites, router]);
+  }, [loading, isSingleSitePlan, biosites, router, forceList]);
 
-  if (isSingleSitePlan && !loading) {
+  if (isSingleSitePlan && !loading && !forceList) {
     if (biosites.length >= 1) {
       // Redireciona pro editor do único site (efeito acima) — este
       // retorno só evita piscar a tela de "criar" por uma fração de
