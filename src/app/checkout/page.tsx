@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, CheckCircle2, ExternalLink, Loader2, ShieldCheck } from 'lucide-react';
@@ -14,7 +14,7 @@ const PLAN_NAMES: Record<Exclude<PlanType, 'free'>, string> = {
   agency: 'Agência',
 };
 
-export default function CheckoutPage() {
+function CheckoutPageInner() {
   const router = useRouter();
   const params = useSearchParams();
   const plan = params.get('plan') as Exclude<PlanType, 'free'> | null;
@@ -54,4 +54,8 @@ export default function CheckoutPage() {
       </section>
     </main>
   );
+}
+
+export default function CheckoutPage() {
+  return <Suspense fallback={<main className="flex min-h-screen items-center justify-center bg-bg text-muted"><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Carregando checkout...</main>}><CheckoutPageInner /></Suspense>;
 }
