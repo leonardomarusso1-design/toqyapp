@@ -144,7 +144,10 @@ export default function LoginPage() {
         email: form.email,
         password: form.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/confirm`,
+            // Mantém o destino do checkout após a confirmação do e-mail;
+            // sem isso o novo usuário era enviado ao /app e precisava
+            // reencontrar manualmente o plano que pretendia comprar.
+            emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(destinoPosLogin())}`,
           data: {
             full_name: form.fullName,
             phone: form.phone,

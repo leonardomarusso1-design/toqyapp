@@ -224,8 +224,11 @@ export async function POST(request: Request) {
 
   if (isApproved) {
     // Busca o usuário — tenta profiles primeiro, depois auth.users como fallback
+    // E-mail não diferencia maiúsculas/minúsculas. A Kiwify envia normalmente
+    // em lowercase, mas contas antigas podem ter sido criadas com capitalização
+    // diferente; usar eq() aqui fazia a compra virar "pending" mesmo com conta.
     const { data: existingProfile } = await supabase
-      .from("profiles").select("id, email").eq("email", email).maybeSingle();
+      .from("profiles").select("id, email").ilike("email", email).maybeSingle();
 
     // Fallback: busca direto no auth.users se não achou em profiles
     let userId = existingProfile?.id;
@@ -237,7 +240,7 @@ export async function POST(request: Request) {
 
     if (userId) {
       // Usuário existe → atualiza o plano direto
-      await supabase.from("profiles").update({
+      const { error: planUpdateError } = await supabase.from("profiles").update({
         plan_toqy: planInfo.plan,
         biosites_limit: planInfo.limit,
         plan_toqy_since: new Date().toISOString(),
@@ -246,6 +249,10 @@ export async function POST(request: Request) {
         subscription_status: "active",
         updated_at: new Date().toISOString(),
       }).eq("id", userId);
+      if (planUpdateError) {
+        console.error("[kiwify webhook] falha ao ativar plano:", planUpdateError.message);
+        return Response.json({ error: "Falha ao ativar plano" }, { status: 500 });
+      }
 
       // Garante que o perfil existe (cria se necessário)
       await supabase.from("profiles").upsert({
@@ -400,7 +407,7 @@ export async function POST(request: Request) {
     const { data: profileForCheck } = await supabase
       .from("profiles")
       .select("legacy_lifetime_access")
-      .eq("email", email)
+      .ilike("email", email)
       .maybeSingle();
 
     if (!shouldDowngradeOnCancel(profileForCheck)) {
@@ -416,8 +423,8 @@ export async function POST(request: Request) {
       plan_toqy: "free", biosites_limit: 1,
       plan_toqy_expires_at: new Date().toISOString(),
       subscription_status: "canceled", updated_at: new Date().toISOString(),
-    }).eq("email", email);
-    await supabase.from("toqy_pending_plans").delete().eq("email", email);
+    }).ilike("email", email);
+    await supabase.from("toqy_pending_plans").delete().ilike("email", email);
     return Response.json({ ok: true, downgraded: true });
   }
 

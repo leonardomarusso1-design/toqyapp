@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   const { data: pending } = await supabase
     .from("toqy_pending_plans")
     .select("plan_toqy, biosites_limit")
-    .eq("email", email)
+    .ilike("email", email)
     .maybeSingle();
 
   if (!pending) return Response.json({ ok: true, applied: false });
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "Falha ao aplicar plano" }, { status: 500 });
   }
 
-  await supabase.from("toqy_pending_plans").delete().eq("email", email);
+  await supabase.from("toqy_pending_plans").delete().ilike("email", email);
 
   return Response.json({ ok: true, applied: true, plan: pending.plan_toqy });
 }

@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { EbookLeadForm } from "@/components/EbookLeadForm";
 import { LandingHeader } from "@/components/LandingHeader";
-import { KIWIFY_LINKS } from "@/lib/subscriptions";
 import { resellerPlans } from "@/lib/landingPlans";
 import { RESELLER_TIERS } from "@/lib/resellerTiers";
 import {
@@ -189,9 +188,9 @@ export default function ParaVenderPage() {
                     );
                   })}
                 </div>
-                <a href={plan.name === "Essencial" ? KIWIFY_LINKS.community : plan.name === "Freelancer" ? KIWIFY_LINKS.freelancer : KIWIFY_LINKS.agency} target="_blank" rel="noreferrer noopener" className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}>
+                <Link href={`/checkout?plan=${plan.name === "Essencial" ? "community" : plan.name === "Freelancer" ? "freelancer" : "agency"}`} className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}>
                   {plan.cta}
-                </a>
+                </Link>
               </article>
             ))}
           </div>

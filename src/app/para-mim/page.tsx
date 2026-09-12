@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { LandingHeader } from "@/components/LandingHeader";
-import { KIWIFY_LINKS } from "@/lib/subscriptions";
 import { personalPlans } from "@/lib/landingPlans";
 import {
   ArrowLeft,
@@ -113,11 +112,7 @@ export default function ParaMimPage() {
                   ))}
                 </div>
                 {plan.name === "Pro" ? (
-                  KIWIFY_LINKS.pro ? (
-                    <a href={KIWIFY_LINKS.pro} target="_blank" rel="noreferrer noopener" className="btn-glow mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5">{plan.cta}</a>
-                  ) : (
-                    <Link href="/login" className="btn-glow mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5">Criar conta e assinar depois</Link>
-                  )
+                  <Link href="/checkout?plan=pro" className="btn-glow mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5">{plan.cta}</Link>
                 ) : (
                   <Link href="/login" className="mt-7 inline-flex w-full items-center justify-center rounded-full border border-border px-5 py-3 text-sm font-bold text-ink transition hover:-translate-y-0.5 hover:border-accent">{plan.cta}</Link>
                 )}
