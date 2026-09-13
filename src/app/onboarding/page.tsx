@@ -317,10 +317,10 @@ export default function OnboardingPage() {
         </p>
         <p className="mt-2 text-sm text-muted">Faça upgrade para criar mais bio sites para seus clientes.</p>
         <div className="mt-6 flex flex-col gap-3">
-          <a href={KIWIFY_LINKS.community} target="_blank" rel="noopener noreferrer"
+          <Link href="/checkout/community"
             className="block rounded-2xl bg-accent px-5 py-4 font-black text-white hover:bg-accent-dim">
             Fazer upgrade — Essencial R$29,90/mês
-          </a>
+          </Link>
           <Link href="/#planos" className="block rounded-2xl border border-border px-5 py-4 font-black text-ink hover:border-accent">
             Ver todos os planos
           </Link>

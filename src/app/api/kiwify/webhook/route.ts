@@ -179,7 +179,9 @@ export async function POST(request: Request) {
     const { data: overageProfile } = await supabase
       .from("profiles")
       .select("id, overage_biosites, overage_ai_art_credits, custom_domain_addon")
-      .eq("email", email)
+      // CORREÇÃO 2026-09-12: ilike = case-insensitive. Antes usava .eq() —
+      // se usuário tinha capitalização diferente no email, não encontrava.
+      .ilike("email", email)
       .maybeSingle();
 
     // Sem fallback pra auth.admin.listUsers() nem toqy_pending_plans de
@@ -223,10 +225,13 @@ export async function POST(request: Request) {
   if (!email) return Response.json({ error: "No email" }, { status: 400 });
 
   if (isApproved) {
-    // Busca o usuário — tenta profiles primeiro, depois auth.users como fallback
-    // E-mail não diferencia maiúsculas/minúsculas. A Kiwify envia normalmente
-    // em lowercase, mas contas antigas podem ter sido criadas com capitalização
-    // diferente; usar eq() aqui fazia a compra virar "pending" mesmo com conta.
+    // Busca o usuário — tenta profiles primeiro (ilike = case-insensitive),
+    // depois auth.users como fallback (comparação lower bilateral).
+    // CORREÇÃO 2026-09-12: antes usava .eq("email", email) = case-sensitive,
+    // se o usuário cadastrou com "LucasxMarciel@gmail.com" e a Kiwify
+    // enviou "lucasxmarciel@gmail.com", não encontrava → ficava pendente
+    // e só era resolvido no signup (handle_new_user) — mas se a conta já
+    // existia antes, nunca aplicava o plano.
     const { data: existingProfile } = await supabase
       .from("profiles").select("id, email").ilike("email", email).maybeSingle();
 
@@ -234,7 +239,7 @@ export async function POST(request: Request) {
     let userId = existingProfile?.id;
     if (!userId) {
       const { data: authUsers } = await supabase.auth.admin.listUsers();
-      const authUser = authUsers?.users?.find(u => u.email?.toLowerCase() === email);
+      const authUser = authUsers?.users?.find(u => (u.email?.toLowerCase() ?? "") === email);
       userId = authUser?.id;
     }
 
@@ -407,6 +412,8 @@ export async function POST(request: Request) {
     const { data: profileForCheck } = await supabase
       .from("profiles")
       .select("legacy_lifetime_access")
+      // CORREÇÃO 2026-09-12: ilike (case-insensitive) — antes usava .eq()
+      // e não encontrava o profile se o email tivesse caixa diferente.
       .ilike("email", email)
       .maybeSingle();
 
@@ -419,12 +426,26 @@ export async function POST(request: Request) {
       return Response.json({ ok: true, downgraded: false, reason: "legacy_lifetime_access" });
     }
 
-    await supabase.from("profiles").update({
-      plan_toqy: "free", biosites_limit: 1,
-      plan_toqy_expires_at: new Date().toISOString(),
-      subscription_status: "canceled", updated_at: new Date().toISOString(),
-    }).ilike("email", email);
-    await supabase.from("toqy_pending_plans").delete().ilike("email", email);
+    // CORREÇÃO 2026-09-12: pega o profile.id primeiro via ilike (não usa
+    // .ilike("email", email) no UPDATE direto — evita multi-match caso
+    // extremo, já que usamos lower(trim) bilateralmente), depois atualiza
+    // só aquela linha. Para pending plans, deleta match por match com
+    // lower bilateral (consistente com handle_new_user).
+    const { data: canceledProfile } = await supabase
+      .from("profiles").select("id").ilike("email", email).maybeSingle();
+    if (canceledProfile?.id) {
+      await supabase.from("profiles").update({
+        plan_toqy: "free", biosites_limit: 1,
+        plan_toqy_expires_at: new Date().toISOString(),
+        subscription_status: "canceled", updated_at: new Date().toISOString(),
+      }).eq("id", canceledProfile.id);
+    }
+    // Limpa pending plans — lower bilateralmente.
+    const { data: pendRows } = await supabase.from("toqy_pending_plans").select("email");
+    const toDelete = (pendRows ?? []).filter(r => (r.email ?? "").toLowerCase().trim() === email).map(r => r.email);
+    for (const e of toDelete) {
+      await supabase.from("toqy_pending_plans").delete().eq("email", e);
+    }
     return Response.json({ ok: true, downgraded: true });
   }
 

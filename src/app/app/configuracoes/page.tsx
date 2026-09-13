@@ -21,25 +21,23 @@ type Profile = {
 };
 
 const PLAN_LABELS: Record<string, string> = {
-  free: "Gratuito", community: "Essencial", freelancer: "Freelancer", agency: "Agência",
+  free: "Gratuito", pro: "Pro", community: "Essencial", freelancer: "Freelancer", agency: "Agência",
 };
 const PLAN_COLORS: Record<string, string> = {
-  free: "bg-surface text-muted", community: "bg-emerald-100 text-emerald-800",
+  free: "bg-surface text-muted", pro: "bg-sky-100 text-sky-700", community: "bg-emerald-100 text-emerald-800",
   freelancer: "bg-violet/10 text-violet", agency: "bg-amber-100 text-amber-800",
 };
 // Links de checkout: fonte única em src/lib/subscriptions.ts (KIWIFY_LINKS)
-// desde a Fase 1 do roadmap (2026-07-16) — antes disso este mapa duplicava
-// os mesmos links definidos em outros 4 arquivos, e podia divergir deles
-// (achado real: SubscriptionPlansDisplay.tsx tinha links diferentes destes
-// pros mesmos planos). Mantido como const local só pra não reescrever as
-// referências abaixo (`PLAN_KIWIFY.xxx`), mas os valores vêm todos de KIWIFY_LINKS.
-// agency removido (2026-07-15) — não tem mais checkout Kiwify, virou
-// gratuita (revenue-share, ver src/lib/subscriptions.ts). Confirmado por
-// grep antes desta mudança: PLAN_KIWIFY.agency não era referenciado em
-// nenhum outro lugar deste arquivo.
+// desde a Fase 1 do roadmap (2026-07-16). Adicionado 'pro' (R$9,90) em
+// 2026-09-12 e agency (agência, R$99,90) de volta — estava comentado como
+// "removido" mas SUBSCRIPTIONS_PLANS.agency continua existindo como
+// assinatura paga. Verificações de 2026-09-05: Agência voltou a ser mensal
+// paga (R$99,90) em subscriptions.ts.
 const PLAN_KIWIFY: Record<string, string> = {
+  pro: KIWIFY_LINKS.pro,
   community: KIWIFY_LINKS.community,
   freelancer: KIWIFY_LINKS.freelancer,
+  agency: KIWIFY_LINKS.agency,
 };
 
 export default function ConfiguracoesPage() {
@@ -276,8 +274,10 @@ export default function ConfiguracoesPage() {
                 <p className="mt-1 text-xs font-black text-emerald-600">🎉 Você tem {couponCode === "REVENDA15" ? "15%" : "10%"} de desconto aplicado automaticamente</p>
               ) : null}
               <div className="mt-3 flex gap-2 flex-wrap">
-                <a href={applyResellerAttribution(PLAN_KIWIFY.community, couponCode, kiwifyAffiliateId)} target="_blank" className="rounded-2xl bg-violet px-4 py-2.5 text-sm font-black text-white hover:opacity-90">Essencial R$29,90</a>
-                <Link href="/#planos" className="rounded-2xl border border-violet/30 px-4 py-2.5 text-sm font-black text-violet hover:bg-violet/10">Ver planos</Link>
+                <Link href="/checkout/community" className="rounded-2xl bg-violet px-4 py-2.5 text-sm font-black text-white hover:opacity-90">Essencial R$29,90</Link>
+                <Link href="/checkout/freelancer" className="rounded-2xl bg-violet/80 px-4 py-2.5 text-sm font-black text-white hover:opacity-90">Freelancer R$39,90</Link>
+                <Link href="/checkout/pro" className="rounded-2xl border border-violet/30 px-4 py-2.5 text-sm font-black text-violet hover:bg-violet/10">Pro R$9,90</Link>
+                <Link href="/#planos" className="rounded-2xl border border-violet/30 px-4 py-2.5 text-sm font-black text-violet hover:bg-violet/10">Ver todos</Link>
               </div>
             </div>
           )}

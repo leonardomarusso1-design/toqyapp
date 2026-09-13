@@ -25,6 +25,12 @@ export async function POST(request: Request) {
   const email = userData.user.email?.toLowerCase().trim();
   if (!email) return Response.json({ ok: true, applied: false });
 
+  // CORREÇÃO 2026-09-12 (merge com origin/master):
+  //   Versão local fazia um find() manual em allPending (mais robusto, pois
+  //   usava lower bilateral, mas puxava a tabela toda).
+  //   Origin/master já tinha usado .ilike() nativo do Postgres (igualmente
+  //   case-insensitive, muito mais performático — usa índice do banco).
+  // Escolhemos a versão do origin/master.
   const { data: pending } = await supabase
     .from("toqy_pending_plans")
     .select("plan_toqy, biosites_limit")

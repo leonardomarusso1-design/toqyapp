@@ -15,13 +15,22 @@ import { PLAN_BIOSITE_LIMITS } from "@/lib/planConstants";
 // sistema usa (PLAN_BIOSITE_LIMITS), nunca mais duplica o número.
 export function resolvePlan(productName: string): { plan: string; limit: number } | null {
   const n = productName.toLowerCase();
-  // "TOQY Pro" (2026-09-05) — match estrito em "toqy pro" (não só "pro"
-  // solto) pra nunca colidir por engano com outro nome de produto que
-  // contenha essas 3 letras.
-  // Limite de palavra (2026-09-06, bug real achado por teste): includes()
-  // casava "toqy pro" dentro de "TOQY Promocao de Natal" e concedia plano
-  // Pro por causa de um produto promocional.  garante palavra inteira.
-  if (/toqy pro(?![a-z])/.test(n)) return { plan: "pro", limit: PLAN_BIOSITE_LIMITS.pro };
+  // "TOQY Pro" (R$9,90) — ORDEM IMPORTA: checar ANTES de "community",
+  // "freelancer", etc. por que "pro" é substring menor. O regex precisa
+  // ser mais flexível que o original (2026-09-06) porque na Kiwify real
+  // o nome do produto pode ser "Plano Pro", "Toqy - Pro Pessoal",
+  // "TOQY Pro R$9,90", etc. Sem exagerar na liberdade: exigimos que a
+  // palavra "pro" exista como palavra INTEIRA E que "toqy" também exista
+  // em algum lugar, ou alternativamente "plano pro" / "pro pessoal".
+  // Desta forma "TOQY Promoção de Natal" continua não casando (não tem
+  // "pro" como palavra inteira — tem "promoção").
+  const hasToqy = n.includes("toqy");
+  const hasProWord = /(^|[^a-z])pro([^a-z]|$)/.test(n);
+  const hasPessoal = n.includes("pessoal");
+  const hasR990 = n.includes("9,90") || n.includes("9.90") || n.includes("r$9");
+  if ((hasToqy && hasProWord) || (hasProWord && (hasPessoal || hasR990))) {
+    return { plan: "pro", limit: PLAN_BIOSITE_LIMITS.pro };
+  }
   if (n.includes("comunidade")) return { plan: "community", limit: PLAN_BIOSITE_LIMITS.community };
   if (n.includes("freelancer")) return { plan: "freelancer", limit: PLAN_BIOSITE_LIMITS.freelancer };
   if (n.includes("agencia") || n.includes("agência")) return { plan: "agency", limit: PLAN_BIOSITE_LIMITS.agency };

@@ -188,7 +188,10 @@ export default function ParaVenderPage() {
                     );
                   })}
                 </div>
-                <Link href={`/checkout?plan=${plan.name === "Essencial" ? "community" : plan.name === "Freelancer" ? "freelancer" : "agency"}`} className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}>
+                <Link
+                  href={plan.name === "Essencial" ? "/checkout/community" : plan.name === "Freelancer" ? "/checkout/freelancer" : "/checkout/agency"}
+                  className={`mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition hover:-translate-y-0.5 ${plan.highlight ? "btn-glow text-white" : "border border-border text-ink hover:border-accent"}`}
+                >
                   {plan.cta}
                 </Link>
               </article>
