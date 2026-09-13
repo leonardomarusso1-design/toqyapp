@@ -47,9 +47,9 @@ export default function ObrigadoComunidade() {
       </div>
       <h1 className="mt-8 text-3xl font-black">Acesso restrito</h1>
       <p className="mt-4 max-w-md text-muted">Esta página é exclusiva para membros com plano ativo. Adquira o plano Essencial para ter acesso a todos os recursos.</p>
-      <a href={KIWIFY_LINKS.community} className="mt-8 inline-flex rounded-2xl bg-accent px-8 py-4 font-black text-white transition hover:bg-accent-dim">
+      <Link href="/checkout/community" className="mt-8 inline-flex rounded-2xl bg-accent px-8 py-4 font-black text-white transition hover:bg-accent-dim">
         Assinar Essencial — R$29,90/mês
-      </a>
+      </Link>
       <Link href="/" className="mt-4 text-sm text-muted hover:text-ink">Voltar para o início</Link>
     </main>
   );

@@ -112,7 +112,7 @@ export default function ParaMimPage() {
                   ))}
                 </div>
                 {plan.name === "Pro" ? (
-                  <Link href="/checkout?plan=pro" className="btn-glow mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5">{plan.cta}</Link>
+                  <Link href="/checkout/pro" className="btn-glow mt-7 inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5">{plan.cta}</Link>
                 ) : (
                   <Link href="/login" className="mt-7 inline-flex w-full items-center justify-center rounded-full border border-border px-5 py-3 text-sm font-bold text-ink transition hover:-translate-y-0.5 hover:border-accent">{plan.cta}</Link>
                 )}
